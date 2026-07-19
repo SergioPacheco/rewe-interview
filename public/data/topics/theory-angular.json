@@ -1,0 +1,48 @@
+[
+  {
+    "id": "theory-angular-basics",
+    "title": "Angular — Core Concepts for Backend Developers",
+    "sections": [
+      {
+        "heading": "What is Angular? (and why TRAB uses it)",
+        "content": "Angular is a TypeScript framework for building SPAs (Single Page Applications). TRAB uses <strong>Angular 19</strong> for logistics interfaces — dashboards, planning tools, driver management.\n\n<strong>For a Java developer, Angular maps naturally:</strong>\n<table>\n<tr><th>Java/Spring concept</th><th>Angular equivalent</th></tr>\n<tr><td>@Service (singleton bean)</td><td>@Injectable() service</td></tr>\n<tr><td>@Controller (REST endpoint)</td><td>@Component (UI component)</td></tr>\n<tr><td>Constructor injection</td><td>inject() function or constructor DI</td></tr>\n<tr><td>Spring Security filter</td><td>Route Guard + HTTP Interceptor</td></tr>\n<tr><td>@RequestMapping(\"/path\")</td><td>RouterModule routes</td></tr>\n<tr><td>DTO (data transfer)</td><td>TypeScript interface/type</td></tr>\n<tr><td>Optional&lt;T&gt;</td><td>T | null (union types)</td></tr>\n<tr><td>Spring Events</td><td>Signals / RxJS Observables</td></tr>\n</table>\n\n<strong>Your honest position:</strong>\n\"I built the SinapiPRO frontend with Angular 19, using Signals, standalone components, and PrimeNG. I understand the mental model — components, services, routing, interceptors. I'm not an Angular expert, but I can build functional interfaces and contribute to frontend tasks.\""
+      },
+      {
+        "heading": "Components — the building blocks",
+        "content": "A component = a reusable UI piece with template (HTML) + logic (TypeScript) + styles (CSS).\n\n<pre><code>// delivery-list.component.ts (Standalone — no NgModule!)\n@Component({\n  selector: 'app-delivery-list',\n  standalone: true,\n  imports: [CommonModule, TableModule, ButtonModule],\n  template: `\n    &lt;p-table [value]=\"deliveries()\" [paginator]=\"true\" [rows]=\"20\"&gt;\n      &lt;ng-template pTemplate=\"header\"&gt;\n        &lt;tr&gt;\n          &lt;th&gt;ID&lt;/th&gt;\n          &lt;th&gt;Status&lt;/th&gt;\n          &lt;th&gt;Driver&lt;/th&gt;\n          &lt;th&gt;Scheduled&lt;/th&gt;\n        &lt;/tr&gt;\n      &lt;/ng-template&gt;\n      &lt;ng-template pTemplate=\"body\" let-delivery&gt;\n        &lt;tr&gt;\n          &lt;td&gt;{{ delivery.id }}&lt;/td&gt;\n          &lt;td&gt;&lt;p-tag [severity]=\"statusSeverity(delivery.status)\"&gt;{{ delivery.status }}&lt;/p-tag&gt;&lt;/td&gt;\n          &lt;td&gt;{{ delivery.driverName }}&lt;/td&gt;\n          &lt;td&gt;{{ delivery.scheduledAt | date:'short' }}&lt;/td&gt;\n        &lt;/tr&gt;\n      &lt;/ng-template&gt;\n    &lt;/p-table&gt;\n  `\n})\nexport class DeliveryListComponent {\n  private deliveryService = inject(DeliveryService);\n  deliveries = signal&lt;Delivery[]&gt;([]);\n\n  ngOnInit() {\n    this.deliveryService.findAll().subscribe(data =&gt; this.deliveries.set(data));\n  }\n}</code></pre>\n\n<strong>Key concepts:</strong>\n• <code>standalone: true</code> — modern Angular (no NgModules needed)\n• <code>signal&lt;T&gt;</code> — reactive state (Angular 16+, replaces BehaviorSubject)\n• <code>inject()</code> — dependency injection (like Spring @Autowired)\n• Template uses PrimeNG components (like PrimeFaces for Angular)"
+      }
+    ]
+  },
+  {
+    "id": "theory-angular-services",
+    "title": "Angular Services, HTTP & State",
+    "sections": [
+      {
+        "heading": "Services — like Spring @Service",
+        "content": "<pre><code>// delivery.service.ts\n@Injectable({ providedIn: 'root' })  // singleton — like @Service\nexport class DeliveryService {\n  private http = inject(HttpClient);\n  private baseUrl = '/api/v1/deliveries';\n\n  findAll(): Observable&lt;Delivery[]&gt; {\n    return this.http.get&lt;Delivery[]&gt;(this.baseUrl);\n  }\n\n  findById(id: number): Observable&lt;Delivery&gt; {\n    return this.http.get&lt;Delivery&gt;(`${this.baseUrl}/${id}`);\n  }\n\n  create(request: CreateDeliveryRequest): Observable&lt;Delivery&gt; {\n    return this.http.post&lt;Delivery&gt;(this.baseUrl, request);\n  }\n\n  dispatch(id: number): Observable&lt;Delivery&gt; {\n    return this.http.post&lt;Delivery&gt;(`${this.baseUrl}/${id}/dispatch`, {});\n  }\n}\n\n// TypeScript interfaces (like Java DTOs)\ninterface Delivery {\n  id: number;\n  status: DeliveryStatus;\n  driverName: string;\n  scheduledAt: string;\n  stops: Stop[];\n}\n\ntype DeliveryStatus = 'PLANNED' | 'DISPATCHED' | 'IN_TRANSIT' | 'DELIVERED';</code></pre>\n\n<strong>Observable vs Promise:</strong>\n• Observable (RxJS): lazy, cancellable, can emit multiple values (streams)\n• Used for HTTP calls, WebSocket, real-time data\n• <code>.subscribe()</code> triggers the HTTP call (lazy — nothing happens until subscribed)"
+      },
+      {
+        "heading": "Signals — modern reactive state (Angular 16+)",
+        "content": "<pre><code>// Signals replace BehaviorSubject for component state\nexport class DeliveryDashboardComponent {\n  // Writable signal (state)\n  deliveries = signal&lt;Delivery[]&gt;([]);\n  selectedDelivery = signal&lt;Delivery | null&gt;(null);\n\n  // Computed signal (derived — like a computed property)\n  activeCount = computed(() =&gt;\n    this.deliveries().filter(d =&gt; d.status === 'ACTIVE').length\n  );\n\n  delayedCount = computed(() =&gt;\n    this.deliveries().filter(d =&gt; d.status === 'DELAYED').length\n  );\n\n  // Update signal\n  loadDeliveries() {\n    this.deliveryService.findAll().subscribe(data =&gt; {\n      this.deliveries.set(data);  // triggers re-render of anything using deliveries()\n    });\n  }\n\n  selectDelivery(d: Delivery) {\n    this.selectedDelivery.set(d);\n  }\n}\n\n// In template:\n// {{ activeCount() }} active deliveries\n// {{ delayedCount() }} delayed</code></pre>\n\n<strong>Signals vs RxJS:</strong>\n• Signals: simple synchronous state, auto-tracks dependencies, no memory leaks\n• RxJS: async streams, complex transformations, HTTP calls\n• Modern Angular: Signals for component state, RxJS for async operations"
+      },
+      {
+        "heading": "HTTP Interceptors — like Servlet Filters",
+        "content": "<pre><code>// auth.interceptor.ts — injects JWT token into every request\nexport var authInterceptor: HttpInterceptorFn = (req, next) =&gt; {\n  var token = inject(AuthService).getToken();\n\n  if (token) {\n    req = req.clone({\n      setHeaders: { Authorization: `Bearer ${token}` }\n    });\n  }\n\n  return next(req);\n};\n\n// error.interceptor.ts — handles 401/403 globally\nexport var errorInterceptor: HttpInterceptorFn = (req, next) =&gt; {\n  return next(req).pipe(\n    catchError(error =&gt; {\n      if (error.status === 401) {\n        inject(Router).navigate(['/login']);\n      }\n      return throwError(() =&gt; error);\n    })\n  );\n};\n\n// Register in app config:\nprovideHttpClient(withInterceptors([authInterceptor, errorInterceptor]))</code></pre>\n\nSame pattern as Spring Security filters — intercept request, add auth header, handle errors globally."
+      }
+    ]
+  },
+  {
+    "id": "theory-angular-routing",
+    "title": "Angular Routing, Guards & PrimeNG",
+    "sections": [
+      {
+        "heading": "Routing — like Spring @RequestMapping",
+        "content": "<pre><code>// app.routes.ts\nexport var routes: Routes = [\n  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },\n  { path: 'login', component: LoginComponent },\n  {\n    path: 'dashboard',\n    component: DashboardComponent,\n    canActivate: [authGuard]  // like Spring Security — must be authenticated\n  },\n  {\n    path: 'deliveries',\n    canActivate: [authGuard],\n    children: [\n      { path: '', component: DeliveryListComponent },\n      { path: ':id', component: DeliveryDetailComponent },\n      { path: ':id/edit', component: DeliveryEditComponent }\n    ]\n  },\n  { path: '**', component: NotFoundComponent }  // 404\n];\n\n// Route guard (like @PreAuthorize)\nexport var authGuard: CanActivateFn = () =&gt; {\n  var auth = inject(AuthService);\n  var router = inject(Router);\n  return auth.isAuthenticated() ? true : router.navigate(['/login']);\n};</code></pre>"
+      },
+      {
+        "heading": "PrimeNG — like PrimeFaces for Angular",
+        "content": "<strong>If you know PrimeFaces (JSF), you know PrimeNG:</strong>\n\n<table>\n<tr><th>PrimeFaces (Java EE)</th><th>PrimeNG (Angular)</th></tr>\n<tr><td>&lt;p:dataTable&gt;</td><td>&lt;p-table&gt;</td></tr>\n<tr><td>&lt;p:dialog&gt;</td><td>&lt;p-dialog&gt;</td></tr>\n<tr><td>&lt;p:autoComplete&gt;</td><td>&lt;p-autoComplete&gt;</td></tr>\n<tr><td>&lt;p:chart&gt;</td><td>&lt;p-chart&gt; (or ECharts)</td></tr>\n<tr><td>&lt;p:calendar&gt;</td><td>&lt;p-datePicker&gt;</td></tr>\n<tr><td>&lt;p:commandButton&gt;</td><td>&lt;p-button&gt;</td></tr>\n<tr><td>LazyDataModel</td><td>[lazy]=\"true\" + (onLazyLoad)</td></tr>\n<tr><td>rendered=\"#{}\"</td><td>*ngIf / @if</td></tr>\n<tr><td>value=\"#{bean.list}\"</td><td>[value]=\"deliveries()\"</td></tr>\n</table>\n\n<strong>Interview answer:</strong> \"I've used PrimeFaces extensively — PrimeNG is the same component library for Angular. The concepts transfer: data tables with lazy loading, dialogs, forms with validation, charts. The API is different but the mental model is identical.\""
+      }
+    ]
+  }
+]

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "theory-testing-pyramid",
+    "title": "Testing Pyramid & Strategy",
+    "sections": [
+      {
+        "heading": "The testing pyramid",
+        "content": "<pre><code>        /‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾       /   E2E Tests (few)          ← slow, expensive, fragile\n      /  Integration (some)         ← real DB, real Kafka\n     /   Unit Tests (many)          ← fast, isolated, focused\n    /‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾‾</code></pre>\n\n<strong>Distribution:</strong>\n• Unit tests: 70-80% — test business logic in isolation (milliseconds)\n• Integration: 15-20% — test DB queries, serialization, config (seconds)\n• E2E: 5-10% — test critical user journeys (minutes)\n\n<strong>What to test at each level:</strong>\n| Level | Test what | Don't test |\n|-------|-----------|------------|\n| Unit | Business rules, validation, calculations | Framework behavior, DB queries |\n| Integration | Queries, serialization, wiring | Business logic (covered by unit) |\n| E2E | Critical paths end-to-end | Every edge case (covered by unit) |"
+      },
+      {
+        "heading": "Test Driven Development (TDD)",
+        "content": "<strong>Red → Green → Refactor cycle:</strong>\n\n<pre><code>// 1. RED — write a failing test first\n@Test\nvoid shouldRejectDispatchWhenDeliveryAlreadyCompleted() {\n    Delivery d = DeliveryFixture.completed();\n    assertThrows(IllegalStateException.class, () -> d.dispatch());\n}\n// Compile → FAIL (dispatch doesn't check status yet)\n\n// 2. GREEN — write minimum code to pass\npublic void dispatch() {\n    if (status == COMPLETED) throw new IllegalStateException(\"Already completed\");\n    this.status = DISPATCHED;\n}\n// Test → PASS ✅\n\n// 3. REFACTOR — improve without changing behavior\npublic void dispatch() {\n    if (!status.canTransitionTo(DISPATCHED))\n        throw new InvalidTransitionException(status, DISPATCHED);\n    this.status = DISPATCHED;\n}\n// Test → still PASS ✅ (behavior unchanged)</code></pre>\n\n<strong>When TDD helps most:</strong>\n• Complex business rules (many edge cases)\n• Bug fixes (write test that reproduces → fix → test passes)\n• Domain logic that must be correct (financial, state machines)\n\n<strong>When TDD is overkill:</strong>\n• Simple CRUD with no logic\n• UI layout testing\n• Exploration/prototyping (test after)"
+      }
+    ]
+  },
+  {
+    "id": "theory-testing-junit",
+    "title": "JUnit 5 + Mockito — Unit Testing",
+    "sections": [
+      {
+        "heading": "JUnit 5 structure",
+        "content": "<pre><code>@ExtendWith(MockitoExtension.class)\nclass DeliveryServiceTest {\n\n    @Mock private DeliveryRepository repo;\n    @Mock private EventPublisher events;\n    @InjectMocks private DeliveryService service;\n\n    @Nested\n    @DisplayName(\"dispatch()\")\n    class Dispatch {\n\n        @Test\n        @DisplayName(\"should dispatch when delivery is PLANNED\")\n        void shouldDispatchWhenPlanned() {\n            // Arrange\n            var delivery = DeliveryFixture.planned();\n            when(repo.findById(1L)).thenReturn(Optional.of(delivery));\n\n            // Act\n            service.dispatch(1L, \"driver-42\");\n\n            // Assert\n            assertEquals(DISPATCHED, delivery.getStatus());\n            verify(events).publish(any(DeliveryDispatched.class));\n        }\n\n        @Test\n        @DisplayName(\"should throw when delivery is already COMPLETED\")\n        void shouldThrowWhenCompleted() {\n            var delivery = DeliveryFixture.completed();\n            when(repo.findById(1L)).thenReturn(Optional.of(delivery));\n\n            assertThrows(InvalidStateException.class,\n                () -> service.dispatch(1L, \"driver-42\"));\n\n            verify(events, never()).publish(any());\n        }\n    }\n}</code></pre>\n\n<strong>Conventions:</strong>\n• `@Nested` groups tests by method under test\n• `@DisplayName` for readable test reports\n• AAA pattern: Arrange → Act → Assert (visually separated)\n• One behavior per test (not one method per test)"
+      },
+      {
+        "heading": "Mockito essentials",
+        "content": "<pre><code>// Stubbing (define return values)\nwhen(repo.findById(1L)).thenReturn(Optional.of(delivery));\nwhen(repo.findById(99L)).thenReturn(Optional.empty());\nwhen(repo.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));\n\n// Verification (check interactions)\nverify(events).publish(any(DeliveryDispatched.class));\nverify(events, never()).publish(any(DeliveryFailed.class));\nverify(repo, times(1)).save(any());\n\n// Argument capture (inspect what was passed)\n@Captor ArgumentCaptor&lt;DeliveryEvent&gt; eventCaptor;\n\nverify(events).publish(eventCaptor.capture());\nDeliveryEvent published = eventCaptor.getValue();\nassertEquals(\"D-42\", published.driverId());\n\n// Exception stubbing\nwhen(repo.findById(1L)).thenThrow(new DatabaseException(\"Connection refused\"));</code></pre>\n\n<strong>Rules:</strong>\n• Mock interfaces/abstractions, not concrete classes\n• Don't mock entities — use builders/fixtures\n• verify() for side effects (events, saves), assertEquals() for return values\n• If you need >3 mocks → class probably has too many dependencies (SRP signal)"
+      }
+    ]
+  },
+  {
+    "id": "theory-testing-integration",
+    "title": "Integration Testing — Testcontainers",
+    "sections": [
+      {
+        "heading": "Why Testcontainers over H2?",
+        "content": "<strong>H2 problems:</strong>\n• Different SQL dialect (PostgreSQL-specific syntax fails)\n• No schemas support\n• No JSONB, DISTINCT ON, window functions\n• Different date handling, collation\n• \"Works on H2, breaks on Postgres\" → false confidence\n\n<strong>Testcontainers:</strong> real PostgreSQL in Docker, spun up per test class.\n\n<pre><code>@DataJpaTest\n@Testcontainers\n@AutoConfigureTestDatabase(replace = NONE)\nclass DeliveryRepositoryTest {\n\n    @Container\n    static PostgreSQLContainer&lt;?&gt; postgres =\n        new PostgreSQLContainer&lt;&gt;(\"postgres:15\");\n\n    @DynamicPropertySource\n    static void dbProperties(DynamicPropertyRegistry registry) {\n        registry.add(\"spring.datasource.url\", postgres::getJdbcUrl);\n        registry.add(\"spring.datasource.username\", postgres::getUsername);\n        registry.add(\"spring.datasource.password\", postgres::getPassword);\n    }\n\n    @Autowired private DeliveryRepository repo;\n\n    @Test\n    void shouldFindActiveByDriver() {\n        repo.save(new Delivery(\"D-42\", ACTIVE, LocalDateTime.now()));\n        repo.save(new Delivery(\"D-42\", COMPLETED, LocalDateTime.now()));\n\n        var result = repo.findByDriverIdAndStatus(\"D-42\", ACTIVE);\n\n        assertThat(result).hasSize(1);\n        assertThat(result.get(0).getStatus()).isEqualTo(ACTIVE);\n    }\n}</code></pre>\n\n<strong>CI:</strong> Works in GitHub Actions, GitLab CI — Docker available in CI runners."
+      },
+      {
+        "heading": "Testing Kafka with EmbeddedKafka",
+        "content": "<pre><code>@SpringBootTest\n@EmbeddedKafka(topics = \"delivery-events\")\nclass DeliveryEventIntegrationTest {\n\n    @Autowired private KafkaTemplate&lt;String, DeliveryEvent&gt; producer;\n    @Autowired private DeliveryEventConsumer consumer;\n\n    @Test\n    void shouldProcessDeliveryCompletedEvent() {\n        var event = new DeliveryCompletedEvent(\"4567\", Instant.now(), 12);\n\n        producer.send(\"delivery-events\", \"4567\", event);\n\n        // Wait for async processing\n        await().atMost(5, SECONDS).untilAsserted(() ->\n            assertTrue(invoiceRepo.existsByDeliveryId(\"4567\"))\n        );\n    }\n}</code></pre>\n\n<strong>Test levels for Kafka:</strong>\n• Unit: mock KafkaTemplate, verify send() called with correct args\n• Integration: EmbeddedKafka or Testcontainers Kafka\n• Don't test: Kafka itself (it works — test YOUR logic)"
+      }
+    ]
+  }
+]

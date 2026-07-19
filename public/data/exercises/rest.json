@@ -1,0 +1,281 @@
+[
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "HTTP Verbs",
+    "mission": "Which HTTP status code should this endpoint return on success?",
+    "code": "@PostMapping(\"/api/v1/deliveries\")\npublic ResponseEntity<DeliveryDTO> create(@Valid @RequestBody CreateDeliveryRequest req) {\n    Delivery d = service.create(req);\n    URI location = ServletUriComponentsBuilder.fromCurrentRequest()\n        .path(\"/{id}\").buildAndExpand(d.getId()).toUri();\n    return ResponseEntity.???(location).body(toDTO(d));\n}",
+    "choices": [
+      "200 OK",
+      "201 Created",
+      "204 No Content",
+      "202 Accepted"
+    ],
+    "answer": "201 Created",
+    "explain": "POST that creates a resource returns 201 Created with a Location header pointing to the new resource. 200 is for general success (GET, PUT). 204 is for success with no body (DELETE). 202 is for async processing started.",
+    "topic": "rest",
+    "id": "rest-http-verbs-01"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "API Design",
+    "question": "You need an endpoint to change a delivery's status from PLANNED to DISPATCHED. How do you design it?",
+    "options": [
+      {
+        "label": "A) PATCH /deliveries/123 with body {\"status\": \"DISPATCHED\"}",
+        "description": "Generic partial update — client can set any status value."
+      },
+      {
+        "label": "B) POST /deliveries/123/dispatch",
+        "description": "Action as sub-resource — server validates the transition."
+      },
+      {
+        "label": "C) PUT /deliveries/123/status with body \"DISPATCHED\"",
+        "description": "Replace the status field specifically."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "POST to action sub-resource (B) is best for state transitions:\n\n```\nPOST /api/v1/deliveries/123/dispatch   → 200 (or 409 if invalid state)\nPOST /api/v1/deliveries/123/complete   → 200 (or 409 if not dispatched)\nPOST /api/v1/deliveries/123/cancel     → 200 (or 409 if already completed)\n```\n\n**Why B wins:**\n• Server ENFORCES valid transitions (PLANNED → DISPATCHED ok, COMPLETED → DISPATCHED rejected)\n• Endpoint name documents the business operation\n• Can add operation-specific parameters (e.g., dispatch needs driverId)\n• Returns 409 Conflict for invalid transitions (clear semantics)\n\n**Why NOT A:** Client can set ANY status — bypasses business rules. \"PATCH status=COMPLETED\" without going through DISPATCHED first? Server must still validate, but the API suggests it's a simple field update.\n\n**Why NOT C:** PUT implies replacing a resource. Status isn't really a \"resource\" — it's the result of a business operation.",
+    "tags": [
+      "state-transitions",
+      "api-design",
+      "resources"
+    ],
+    "topic": "rest",
+    "id": "rest-api-design-02"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Error Handling",
+    "question": "How do you design error responses for a REST API? Show a consistent format.",
+    "modelAnswer": "**Consistent error response format:**\n```json\n{\n  \"code\": \"DELIVERY_NOT_FOUND\",\n  \"message\": \"Delivery with ID 4567 does not exist\",\n  \"timestamp\": \"2026-07-19T10:30:00Z\",\n  \"path\": \"/api/v1/deliveries/4567\"\n}\n\n// Validation errors (400):\n{\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"Request validation failed\",\n  \"details\": [\n    { \"field\": \"driverId\", \"error\": \"must not be blank\" },\n    { \"field\": \"scheduledAt\", \"error\": \"must be a future date\" }\n  ]\n}\n```\n\n**Rules:**\n• Machine-readable `code` (for client switch/if statements)\n• Human-readable `message` (for debugging/logs)\n• NEVER expose stack traces or internal class names\n• NEVER return 200 with error in body\n• Consistent format across ALL endpoints\n\n**Status code mapping:**\n• Validation failed → 400 Bad Request\n• Not authenticated → 401 Unauthorized\n• No permission → 403 Forbidden\n• Not found → 404\n• Business rule violation → 409 Conflict\n• Server bug → 500 (generic message only)",
+    "followUp": "How do you handle errors from downstream services in your API response?",
+    "tags": [
+      "errors",
+      "format",
+      "consistency"
+    ],
+    "topic": "rest",
+    "id": "rest-error-handling-03"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Idempotency",
+    "question": "A client calls POST /deliveries but gets a network timeout. It doesn't know if the delivery was created. How do you handle this?",
+    "modelAnswer": "**Problem:** POST is not idempotent. Retrying might create a duplicate delivery.\n\n**Solution: Idempotency Key**\n```\nPOST /api/v1/deliveries\nHeaders:\n  Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000\n  Content-Type: application/json\n\nBody: { \"driverId\": \"D-42\", \"scheduledAt\": \"...\" }\n```\n\n**Server implementation:**\n```java\n@PostMapping\npublic ResponseEntity<DeliveryDTO> create(\n        @RequestHeader(\"Idempotency-Key\") String idempotencyKey,\n        @Valid @RequestBody CreateDeliveryRequest req) {\n\n    // Check if already processed\n    Optional<DeliveryDTO> existing = idempotencyStore.find(idempotencyKey);\n    if (existing.isPresent()) {\n        return ResponseEntity.ok(existing.get()); // return original response\n    }\n\n    // Process\n    DeliveryDTO result = service.create(req);\n\n    // Store for dedup (expires after 24h)\n    idempotencyStore.save(idempotencyKey, result);\n\n    return ResponseEntity.created(uri).body(result);\n}\n```\n\n**Rules:**\n• Same key + same body → return stored response (no duplicate)\n• Same key + different body → 409 Conflict (key reuse attempt)\n• Key expires after 24h (don't store forever)\n• Store in database, not in-memory (survives pod restart)",
+    "followUp": "Which endpoints need idempotency keys and which don't?",
+    "tags": [
+      "idempotency",
+      "retry",
+      "reliability"
+    ],
+    "topic": "rest",
+    "id": "rest-idempotency-04"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "Status Codes",
+    "mission": "Match the scenario to the correct HTTP status code:",
+    "code": "Scenario 1: DELETE /deliveries/123 succeeds (delivery deleted)\nScenario 2: GET /deliveries/999 but ID 999 doesn't exist\nScenario 3: POST /deliveries with {\"driverId\": \"\"} (blank required field)\nScenario 4: POST /deliveries/123/dispatch but delivery is already COMPLETED",
+    "choices": [
+      "204, 404, 400, 409",
+      "200, 404, 400, 400",
+      "204, 400, 422, 409",
+      "200, 404, 422, 500"
+    ],
+    "answer": "204, 404, 400, 409",
+    "explain": "204 No Content = successful DELETE (no body to return). 404 Not Found = resource doesn't exist. 400 Bad Request = validation failure (blank required field). 409 Conflict = business state conflict (can't dispatch a completed delivery).",
+    "topic": "rest",
+    "id": "rest-status-codes-05"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Versioning",
+    "question": "When do you create a new API version? How do you manage the transition?",
+    "modelAnswer": "**Create new version when:**\n• Removing a field from response\n• Changing type or meaning of existing field\n• Making optional parameter required\n• Changing response structure\n\n**DON'T need new version:**\n• Adding optional field to response (backward-compatible)\n• Adding new endpoint\n• Adding optional query parameter\n\n**Transition strategy:**\n```\n/api/v1/deliveries  ← old clients (maintained, deprecated)\n/api/v2/deliveries  ← new clients (current)\n```\n\n```java\n// V1 and V2 share business logic — only adapters differ\n@RestController @RequestMapping(\"/api/v1/deliveries\")\nclass DeliveryControllerV1 {\n    DeliveryDTO findById(Long id) {\n        return mapperV1.toDTO(service.findById(id));\n    }\n}\n\n@RestController @RequestMapping(\"/api/v2/deliveries\")\nclass DeliveryControllerV2 {\n    DeliveryResponseV2 findById(Long id) {\n        return mapperV2.toResponse(service.findById(id));\n    }\n}\n```\n\n**Rules:**\n• NEVER duplicate business logic between versions\n• Each version is a thin adapter (request mapping + response mapping)\n• Announce deprecation with timeline (Sunset header)\n• Monitor usage of old version before decommissioning\n• Security fixes apply to ALL supported versions",
+    "followUp": "How do you communicate breaking changes to API consumers?",
+    "tags": [
+      "versioning",
+      "breaking-changes",
+      "strategy"
+    ],
+    "topic": "rest",
+    "id": "rest-versioning-06"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Pagination",
+    "question": "Your delivery listing endpoint returns 2 million records total. How do you paginate?",
+    "options": [
+      {
+        "label": "A) OFFSET + LIMIT with total count",
+        "description": "GET /deliveries?offset=100&limit=50 — returns items + total count for page buttons."
+      },
+      {
+        "label": "B) Cursor-based (keyset) without total count",
+        "description": "GET /deliveries?after=lastId&limit=50 — returns items + next cursor."
+      },
+      {
+        "label": "C) No pagination — return all and var client filter",
+        "description": "Client downloads full dataset and handles display."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Cursor/keyset pagination (B) is best for large datasets:\n\n```\nGET /api/v1/deliveries?afterId=4567&limit=50&sort=scheduledAt,desc\n\nResponse:\n{\n  \"items\": [...50 deliveries...],\n  \"cursor\": {\n    \"next\": \"afterId=4517&sort=scheduledAt,desc\",\n    \"hasMore\": true\n  }\n}\n```\n\n**Why B over A:**\n• OFFSET 249950 LIMIT 50 → DB scans and discards 249,950 rows (SLOW)\n• Cursor (WHERE id < 4517) → index seek directly to the right position (FAST)\n• No COUNT(*) on 2M rows (expensive query avoided)\n\n**Trade-off:** no random page access (\"jump to page 5000\"). But for 2M records, nobody clicks page 5000 — they use filters.\n\n**When OFFSET is acceptable:**\n• Small datasets (<100K rows)\n• Admin dashboards where pages 1-10 are enough\n• When \"total count\" is required by UI design\n\n**Always enforce:**\n• Max limit server-side (e.g., 100)\n• Deterministic sort (include ID as tiebreaker)\n• Never accept limit=0 or limit=99999999",
+    "tags": [
+      "pagination",
+      "cursor",
+      "performance"
+    ],
+    "topic": "rest",
+    "id": "rest-pagination-07"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Security",
+    "question": "How do you secure a REST API? What layers of protection do you need?",
+    "modelAnswer": "**Layer 1 — Transport:** HTTPS always (never HTTP in production)\n\n**Layer 2 — Authentication:** \"Who are you?\"\n```\nAuthorization: Bearer eyJhbGciOiJSUzI1NiIs...\n```\n• JWT token validated per request (signature + expiration)\n• Token issued by identity provider (Keycloak, Auth0)\n• Stateless — server doesn't store sessions\n\n**Layer 3 — Authorization:** \"Are you allowed?\"\n• Coarse: endpoint-level (@PreAuthorize, SecurityFilterChain)\n• Fine: business-level (\"is this YOUR delivery?\")\n```java\npublic Delivery findById(Long id) {\n    Delivery d = repo.findById(id).orElseThrow();\n    if (!d.getOwnerId().equals(currentUser.getId()))\n        throw new ForbiddenException(); // resource-level authz\n    return d;\n}\n```\n\n**Layer 4 — Input validation:**\n• Bean Validation (@NotBlank, @Size, @Max)\n• Reject oversized payloads (max request size)\n• Parameterized queries (NEVER concatenate user input into SQL)\n\n**Layer 5 — Rate limiting:**\n• Per-client quotas (API gateway or application-level)\n• Prevent abuse and protect backend resources\n\n**Layer 6 — Output:**\n• Never expose stack traces\n• Never leak internal IDs/paths in error messages\n• Don't return more data than the client needs",
+    "followUp": "How do you handle authentication between internal microservices?",
+    "tags": [
+      "security",
+      "jwt",
+      "authorization"
+    ],
+    "topic": "rest",
+    "id": "rest-security-08"
+  },
+  {
+    "type": "CODE_REFACTOR",
+    "difficulty": "inter",
+    "subtopic": "API Design Anti-patterns",
+    "question": "What problems do you see in these endpoint designs?",
+    "code": "// Endpoint 1\nPOST /api/createDelivery\n\n// Endpoint 2\nGET /api/deliveries/getByDriver?driverId=42\n\n// Endpoint 3\nPOST /api/deliveries/123/delete\n\n// Endpoint 4\nGET /api/deliveries?data={\"status\":\"ACTIVE\",\"limit\":50}\n\n// Endpoint 5\nPOST /api/deliveries/search\nBody: { \"driverId\": 42 }  // simple filter that fits in URL",
+    "problems": [
+      "Endpoint 1: verb in URL (createDelivery) — use POST /deliveries",
+      "Endpoint 2: verb in URL (getByDriver) — use GET /deliveries?driverId=42",
+      "Endpoint 3: using POST for deletion — use DELETE /deliveries/123",
+      "Endpoint 4: JSON in query param — use proper query params: ?status=ACTIVE&limit=50",
+      "Endpoint 5: POST for simple search — use GET with query params (unless body is truly complex)"
+    ],
+    "refactored": "// ✅ Corrected:\nPOST   /api/v1/deliveries              // create\nGET    /api/v1/deliveries?driverId=42  // filter by driver\nDELETE /api/v1/deliveries/123          // delete\nGET    /api/v1/deliveries?status=ACTIVE&limit=50  // filter + paginate\nGET    /api/v1/deliveries?driverId=42  // simple filter → GET\n\n// POST for search is acceptable ONLY when:\n// - Body contains list of IDs (too many for URL)\n// - Filters are complex/nested (JSON structure)\n// - Sensitive data that shouldn't be in URL/logs\nPOST /api/v1/deliveries/search  // complex body = acceptable",
+    "tags": [
+      "anti-patterns",
+      "restful",
+      "clean-urls"
+    ],
+    "topic": "rest",
+    "id": "rest-api-design-anti-patterns-09",
+    "answer": "**Refactored:**\n```java\n// ✅ Corrected:\nPOST   /api/v1/deliveries              // create\nGET    /api/v1/deliveries?driverId=42  // filter by driver\nDELETE /api/v1/deliveries/123          // delete\nGET    /api/v1/deliveries?status=ACTIVE&limit=50  // filter + paginate\nGET    /api/v1/deliveries?driverId=42  // simple filter → GET\n\n// POST for search is acceptable ONLY when:\n// - Body contains list of IDs (too many for URL)\n// - Filters are complex/nested (JSON structure)\n// - Sensitive data that shouldn't be in URL/logs\nPOST /api/v1/deliveries/search  // complex body = acceptable\n```\n\n**Problems:** Endpoint 1: verb in URL (createDelivery) — use POST /deliveries; Endpoint 2: verb in URL (getByDriver) — use GET /deliveries?driverId=42; Endpoint 3: using POST for deletion — use DELETE /deliveries/123; Endpoint 4: JSON in query param — use proper query params: ?status=ACTIVE&limit=50; Endpoint 5: POST for simple search — use GET with query params (unless body is truly complex)"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "HATEOAS",
+    "question": "What is HATEOAS? Do you use it in practice?",
+    "modelAnswer": "**HATEOAS** = Hypermedia As The Engine Of Application State\n\nResponses include LINKS to available actions:\n```json\n{\n  \"id\": 4567,\n  \"status\": \"PLANNED\",\n  \"driverId\": \"D-42\",\n  \"_links\": {\n    \"self\": { \"href\": \"/api/v1/deliveries/4567\" },\n    \"dispatch\": { \"href\": \"/api/v1/deliveries/4567/dispatch\", \"method\": \"POST\" },\n    \"cancel\": { \"href\": \"/api/v1/deliveries/4567/cancel\", \"method\": \"POST\" },\n    \"driver\": { \"href\": \"/api/v1/drivers/D-42\" }\n  }\n}\n```\n\n**Theory:** Client discovers available actions from the response — no hardcoded URLs.\n\n**Practice:** Most teams skip HATEOAS for internal APIs because:\n• Clients are known (same team builds frontend + backend)\n• API documentation (OpenAPI/Swagger) serves the same purpose\n• Adds payload size and implementation effort\n• Frontend frameworks prefer typed API clients over link discovery\n\n**Honest answer:**\n\"I understand HATEOAS as the highest level of REST maturity. In practice, for internal microservice APIs, I prioritize clear documentation (OpenAPI), consistent URL patterns, and proper status codes. HATEOAS adds value for public APIs where clients are unknown and must discover capabilities. For REWE's internal services, I'd follow the team's existing convention.\"",
+    "followUp": "What is the Richardson Maturity Model?",
+    "tags": [
+      "hateoas",
+      "rest-maturity",
+      "pragmatism"
+    ],
+    "topic": "rest",
+    "id": "rest-hateoas-10"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "GraphQL vs REST",
+    "question": "When would you choose GraphQL over REST?",
+    "modelAnswer": "**Choose REST when:**\n• CRUD operations with well-defined resources\n• Caching is important (HTTP cache works naturally with REST)\n• Simple client needs (mobile apps with predictable data)\n• Team is already proficient with REST\n• API gateway handles routing/auth\n• Most REWE internal services → REST\n\n**Choose GraphQL when:**\n• Multiple clients need different views of same data (mobile vs desktop)\n• Frontend needs to reduce roundtrips (single request for complex page)\n• Over-fetching is a real problem (returning 50 fields when client needs 5)\n• Relationships between entities are complex and variable\n• API evolution without versioning (clients request only fields they know)\n\n**Trade-offs:**\n| Aspect | REST | GraphQL |\n|--------|------|---------|\n| Caching | ✅ Built-in (HTTP) | ❌ Complex (custom) |\n| Simplicity | ✅ Familiar | ❌ Learning curve |\n| Flexibility | ❌ Fixed response | ✅ Client chooses fields |\n| File upload | ✅ Straightforward | ❌ Requires multipart hack |\n| N+1 on server | Standard | ⚠️ DataLoader pattern needed |\n| Monitoring | ✅ Per-endpoint metrics | ❌ All queries hit one endpoint |\n\n**For REWE TRAB:**\nREST is the pragmatic choice. Well-defined resources (deliveries, drivers, routes), standard CRUD patterns, easy caching, team familiarity. GraphQL adds complexity without clear benefit for logistics APIs.",
+    "followUp": "Can you use GraphQL and REST in the same application?",
+    "tags": [
+      "graphql",
+      "rest",
+      "comparison"
+    ],
+    "topic": "rest",
+    "id": "rest-graphql-vs-rest-11"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Documentation",
+    "question": "How do you document a REST API?",
+    "modelAnswer": "**OpenAPI/Swagger (standard):**\n```java\n@Operation(summary = \"Find delivery by ID\",\n    responses = {\n        @ApiResponse(responseCode = \"200\", description = \"Delivery found\"),\n        @ApiResponse(responseCode = \"404\", description = \"Delivery not found\")\n    })\n@GetMapping(\"/{id}\")\npublic ResponseEntity<DeliveryDTO> findById(\n        @Parameter(description = \"Delivery ID\") @PathVariable Long id) {\n    return ResponseEntity.ok(service.findById(id));\n}\n```\n\n**Spring Boot auto-generates OpenAPI spec:**\n```yaml\n# pom.xml\nspringdoc-openapi-starter-webmvc-ui\n\n# application.yml\nspringdoc.api-docs.path=/api-docs\nspringdoc.swagger-ui.path=/swagger-ui.html\n```\n\n**Good documentation includes:**\n• Request/response examples (not just schemas)\n• Error response formats and codes\n• Authentication requirements\n• Rate limits\n• Pagination parameters\n• Deprecation notices\n\n**What makes API docs excellent:**\n• Generated FROM code (always up-to-date, not stale wiki)\n• Runnable examples (\"try it\" button in Swagger UI)\n• Versioned alongside the API\n• Reviewed in PRs (API changes = doc changes)",
+    "followUp": "How do you ensure documentation stays in sync with the actual implementation?",
+    "tags": [
+      "openapi",
+      "swagger",
+      "documentation"
+    ],
+    "topic": "rest",
+    "id": "rest-documentation-12"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "senior",
+    "subtopic": "Async Operations",
+    "question": "Route optimization takes 10 seconds. The client calls POST /deliveries/123/optimize-route. How do you handle the long operation?",
+    "options": [
+      {
+        "label": "A) Synchronous — client waits 10 seconds for response",
+        "description": "Simple request-response. Client blocks until route is calculated."
+      },
+      {
+        "label": "B) 202 Accepted + polling — return immediately, client polls for result",
+        "description": "Accept request, process async, client checks GET /deliveries/123/route until ready."
+      },
+      {
+        "label": "C) WebSocket — push result when ready",
+        "description": "Client opens WebSocket, server pushes route when optimization completes."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "202 Accepted + polling (B) is the standard REST pattern for long operations:\n\n```\n// 1. Client initiates\nPOST /api/v1/deliveries/123/optimize-route → 202 Accepted\nResponse: {\n  \"status\": \"PROCESSING\",\n  \"statusUrl\": \"/api/v1/deliveries/123/route\",\n  \"estimatedCompletion\": \"2026-07-19T10:30:10Z\"\n}\n\n// 2. Client polls\nGET /api/v1/deliveries/123/route → 200\nResponse: { \"status\": \"PROCESSING\" }  // still working\n\n// 3. Eventually\nGET /api/v1/deliveries/123/route → 200\nResponse: { \"status\": \"COMPLETED\", \"route\": { ... } }\n```\n\n**Why B:**\n• Client isn't blocked (can show spinner, do other work)\n• Survives client disconnection (result is stored)\n• Works with any HTTP client (no WebSocket required)\n• Load balancers/proxies handle short-lived connections well\n• Retry-friendly (just poll again)\n\n**Why NOT A:** 10s is too long. HTTP timeouts, impatient users, load balancer might cut the connection.\n\n**Why NOT C (usually):** WebSocket adds complexity (connection management, reconnection, load balancing). Use only when you need continuous real-time updates (chat, live tracking).",
+    "tags": [
+      "async",
+      "long-running",
+      "202-accepted"
+    ],
+    "topic": "rest",
+    "id": "rest-async-operations-13"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Content Negotiation",
+    "question": "How does content negotiation work in REST? When do you need it?",
+    "modelAnswer": "**Content negotiation:** Client and server agree on response format via headers.\n\n```\nGET /api/v1/deliveries/123\nAccept: application/json          → returns JSON\nAccept: application/xml           → returns XML (if supported)\nAccept: text/csv                  → returns CSV (for exports)\n```\n\n**In Spring Boot:**\n```java\n@GetMapping(value = \"/{id}\",\n    produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })\npublic DeliveryDTO findById(@PathVariable Long id) { ... }\n\n// Different format for export\n@GetMapping(value = \"/export\", produces = \"text/csv\")\npublic void exportCsv(HttpServletResponse response) { ... }\n```\n\n**When you need it:**\n• API serves multiple client types (web=JSON, legacy=XML)\n• Export functionality (CSV, Excel alongside JSON)\n• Versioning via Accept header (alternative to URL versioning)\n• Language negotiation (Accept-Language for i18n)\n\n**In practice for REWE:**\nMost internal APIs only need JSON. Content negotiation is overkill unless there's a real multi-format requirement. Use `produces = APPLICATION_JSON_VALUE` explicitly and keep it simple.",
+    "followUp": "How would you implement a CSV export endpoint for delivery reports?",
+    "tags": [
+      "content-negotiation",
+      "headers",
+      "formats"
+    ],
+    "topic": "rest",
+    "id": "rest-content-negotiation-14"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Rate Limiting",
+    "question": "How do you implement rate limiting for a REST API?",
+    "modelAnswer": "**Levels of rate limiting:**\n\n**1. API Gateway (preferred — Kong, AWS API Gateway, Nginx):**\n```yaml\n# Nginx example\nlimit_req_zone $binary_remote_addr zone=api:10m rate=100r/s;\nlimit_req zone=api burst=20 nodelay;\n```\nBest: centralized, no application code, handles all endpoints.\n\n**2. Application-level (Bucket4j, Guava RateLimiter):**\n```java\n@Component\npublic class RateLimitFilter implements Filter {\n    private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();\n\n    public void doFilter(ServletRequest req, ...) {\n        String clientId = extractClientId(req);\n        Bucket bucket = buckets.computeIfAbsent(clientId,\n            id -> Bucket.builder()\n                .addLimit(Bandwidth.classic(100, Refill.intervally(100, Duration.ofMinutes(1))))\n                .build());\n\n        if (bucket.tryConsume(1)) {\n            chain.doFilter(req, res);\n        } else {\n            ((HttpServletResponse) res).setStatus(429);\n            ((HttpServletResponse) res).setHeader(\"Retry-After\", \"60\");\n        }\n    }\n}\n```\n\n**Response when rate limited:**\n```\nHTTP/1.1 429 Too Many Requests\nRetry-After: 60\nX-RateLimit-Limit: 100\nX-RateLimit-Remaining: 0\nX-RateLimit-Reset: 1721384400\n```\n\n**Different limits per tier:**\n• Internal services: higher limits (1000/min)\n• External partners: medium (100/min)\n• Public API: lower (20/min)\n• Per-endpoint: expensive operations get stricter limits",
+    "followUp": "How do you rate-limit across multiple pods of the same service?",
+    "tags": [
+      "rate-limiting",
+      "throttling",
+      "429"
+    ],
+    "topic": "rest",
+    "id": "rest-rate-limiting-15"
+  }
+]

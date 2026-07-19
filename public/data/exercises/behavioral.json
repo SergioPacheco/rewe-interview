@@ -1,0 +1,422 @@
+[
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Tell me about a time you had to learn a new technology quickly to deliver a project.",
+    "context": "REWE uses Spring Boot + Kafka. You come from Java EE. How do you demonstrate adaptability?",
+    "modelAnswer": "SITUATION: Our team was tasked with integrating a real-time notification system, and the architect chose ActiveMQ Artemis — a technology nobody on the team had used before. I was responsible for the messaging layer.\n\nTASK: Deliver a working JMS integration within 2 sprints (4 weeks), including MDB consumers, retry logic, and dead-letter handling.\n\nACTION: I dedicated the first 3 days to structured learning — reading the Artemis documentation, building a proof-of-concept with a simple producer/consumer, and testing failure scenarios. I documented patterns for the team (idempotency, redelivery config). By day 4, I was writing production code.\n\nRESULT: We delivered on time. The messaging layer handled 80+ queues reliably. More importantly, the patterns I documented became team standards used across all subsequent JMS implementations.\n\nBRIDGE TO REWE: \"For Spring Boot and Kafka, I'm following the same approach — structured learning of the API surface while leveraging my deep understanding of messaging patterns (idempotency, ordering, error handling) that transfer directly.\"",
+    "followUp": "What specific resources do you use when learning a new technology?",
+    "tags": [
+      "adaptability",
+      "learning",
+      "self-starter"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-01"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Describe a situation where you disagreed with a technical decision made by a colleague or lead.",
+    "context": "REWE values collaboration and open communication. Show you can disagree respectfully.",
+    "modelAnswer": "SITUATION: A colleague proposed using inheritance (BaseService) to share 5 common dependencies across 40+ service classes. I believed this was the wrong pattern.\n\nTASK: Convince the team that composition via DI would be better, without creating conflict or dismissing the colleague's intent.\n\nACTION: Instead of saying \"that's wrong,\" I prepared a comparison. I showed: (1) how the base class would grow over time as new common needs emerged, (2) a concrete example where one service needed only 2 of the 5 dependencies, (3) how testing required mocking all 5 even when testing one method. I presented it as \"var me show an alternative\" rather than \"your approach is bad.\"\n\nRESULT: The colleague agreed after seeing the testing argument. We adopted constructor injection with explicit dependencies. The codebase became easier to test and maintain. No relationship damaged — we continued collaborating well.\n\nKEY POINT: \"I focus on showing trade-offs with evidence, not on being right. If the team still chooses differently after seeing the data, I commit to that decision fully.\"",
+    "followUp": "What if the team had chosen the inheritance approach despite your concerns?",
+    "tags": [
+      "conflict",
+      "collaboration",
+      "communication"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-02"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Tell me about a production incident you resolved. Walk me through your process.",
+    "context": "REWE transport logistics runs 24/7. They need people who stay calm under pressure.",
+    "modelAnswer": "SITUATION: On a Monday morning, the student enrollment system became unresponsive. 500+ users were blocked. The monitoring showed database connection pool exhausted — all connections in use.\n\nTASK: Restore service immediately, then find and fix the root cause.\n\nACTION:\n1. IMMEDIATE: Identified the symptom (pool exhaustion) via monitoring tools\n2. DIAGNOSIS: Found a REST call to an external LDAP service was timing out inside an active database transaction — holding JDBC connections for 30+ seconds\n3. ROOT CAUSE: No timeout configured on the LDAP client, AND the call was inside a transactional method (connection retained)\n4. FIX: Separated the transaction from the external call (orchestrator pattern: TX → external I/O → TX), added explicit timeouts (5s connect, 10s read)\n5. PREVENTION: Added connection pool monitoring alerts, documented the pattern as a team standard\n\nRESULT: Service restored within 20 minutes. The fix prevented recurrence. The pattern \"never do external I/O inside a transaction\" became a hard rule in our code reviews.",
+    "followUp": "How do you monitor for these issues proactively?",
+    "tags": [
+      "incident",
+      "problem-solving",
+      "pressure"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-03"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "How do you handle working on a legacy codebase that you didn't write?",
+    "context": "REWE team TRAB has existing services. You'll inherit code from others.",
+    "modelAnswer": "SITUATION: I joined a project with a 2000-table monolithic system (SGN3) — 6+ years of development, multiple teams had contributed. No single person understood all modules.\n\nTASK: Be productive in unfamiliar modules without breaking existing functionality.\n\nACTION: My approach:\n1. READ before writing — trace the full flow from UI to database before making any change\n2. Map the area — identify entry points, dependencies, callers, and database tables involved\n3. Respect existing patterns — even if I'd design differently, consistency matters more than personal preference\n4. Small, focused changes — one concern per commit, easy to review and revert\n5. Add tests for the behavior I'm changing — document what exists before modifying it\n6. Ask questions early — \"why was this done this way?\" before assuming it's wrong\n\nRESULT: I became productive in new modules within 1-2 weeks. My changes rarely caused regressions because I invested time understanding before acting.\n\nBRIDGE TO REWE: \"I expect to inherit existing Spring Boot services. My approach would be the same: understand the existing patterns, respect conventions, contribute improvements incrementally.\"",
+    "followUp": "What do you do when the legacy code has no tests?",
+    "tags": [
+      "legacy",
+      "patience",
+      "discipline"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-04"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Give an example of how you improved a process or developer experience for your team.",
+    "context": "REWE values initiative and continuous improvement.",
+    "modelAnswer": "SITUATION: Our code review process was inconsistent — some PRs got rubber-stamped, others blocked for style preferences. No clear criteria for what constituted a valid concern.\n\nTASK: Improve review quality without slowing down delivery or creating bureaucracy.\n\nACTION: I created a lightweight review checklist with objective criteria:\n- Security: parameterized queries? Input validated?\n- Performance: N+1 queries? Missing indexes?\n- Resilience: timeouts on external calls? Error handling?\n- Clarity: would a new team member understand this in 6 months?\n\nI also introduced the rule: \"style suggestions are optional, security/performance findings are blockers.\" This eliminated subjective debates.\n\nRESULT: Review time decreased (less back-and-forth on style), but quality improved (real issues caught more consistently). Two production bugs that would have shipped were caught in the first month.",
+    "followUp": "How do you handle reviewers who are too strict or too lenient?",
+    "tags": [
+      "initiative",
+      "process-improvement",
+      "teamwork"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-05"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Tell me about a time you had to deliver under tight deadlines. How did you prioritize?",
+    "context": "Transport logistics has real deadlines — deliveries must happen.",
+    "modelAnswer": "SITUATION: We had 3 weeks to deliver an education census integration that normally would take 6 weeks. External deadline from the government — non-negotiable.\n\nTASK: Deliver a functional integration on time without accumulating dangerous technical debt.\n\nACTION: I prioritized ruthlessly:\n1. MUST: Core data export (the legal requirement) — no shortcuts on data correctness\n2. SHOULD: Error handling and retry for failed records — essential for reliability\n3. COULD: Admin UI for monitoring — deferred (used database queries initially)\n4. WON'T: Fancy progress bar, email notifications — cut entirely\n\nI communicated scope cuts to stakeholders EARLY (day 2, not day 15). I focused on the critical path and accepted simple solutions where they were safe (manual monitoring instead of automated dashboard).\n\nRESULT: Delivered the core integration on time. The government deadline was met. We added the monitoring UI in the next sprint when pressure was off.\n\nKEY PRINCIPLE: \"Under pressure, I cut scope — never quality. A working system with fewer features beats a broken system with everything.\"",
+    "followUp": "How do you decide what to cut vs what is essential?",
+    "tags": [
+      "deadline",
+      "prioritization",
+      "communication"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-06"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "How do you ensure knowledge sharing in a team? Have you mentored anyone?",
+    "context": "REWE team TRAB is distributed. Knowledge silos are dangerous.",
+    "modelAnswer": "SITUATION: In our team of 6, knowledge was concentrated — each person \"owned\" certain modules. When someone was on vacation, nobody could fix issues in their area.\n\nTASK: Reduce bus factor without formal pair programming (team resisted full-time pairing).\n\nACTION:\n1. Documented architectural decisions and gotchas in a shared wiki per module\n2. Introduced \"rotating reviewer\" — you review code in areas you DON'T own (forces learning)\n3. When fixing a bug, I'd walk a junior through my debugging process (teaching the method, not just the fix)\n4. Created \"investigation maps\" — before fixing, document the flow so the next person understands\n\nFor mentoring specifically: I worked with 2 junior developers, focusing on HOW to think about problems rather than giving solutions. \"What would you try first? What could go wrong?\"\n\nRESULT: Within 4 months, any team member could handle basic issues in any module. Vacation coverage stopped being a crisis.",
+    "followUp": "How would you onboard a new team member to an unfamiliar codebase?",
+    "tags": [
+      "mentoring",
+      "knowledge-sharing",
+      "teamwork"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-07"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Describe a situation where requirements were unclear or changed mid-project.",
+    "context": "Logistics requirements evolve as business discovers edge cases.",
+    "modelAnswer": "SITUATION: We were building a grade calculation module. Halfway through, the business analyst revealed that different course types used different formulas — information that wasn't in the original requirements.\n\nTASK: Adapt without restarting, keep the deadline realistic, and prevent this from happening again.\n\nACTION:\n1. STOP: Paused coding to map ALL formula variations (found 4 types, not just 2)\n2. DESIGN: Created a Strategy pattern — each formula type was an independent implementation. Adding new types wouldn't require modifying existing ones.\n3. COMMUNICATE: Sent the business analyst a clear summary: \"Here are the 4 cases I found. Confirm which are in scope for this delivery.\"\n4. DELIVER: Implemented 2 types for the deadline, 2 more in the next sprint\n\nRESULT: Delivered on time with the correct architecture. When the 3rd and 4th formula types were needed, each took 1 day instead of a week because the extension point was already in place.\n\nLESSON: \"When requirements are unclear, I invest time to discover the full picture before coding. It seems slower but prevents rework.\"",
+    "followUp": "How do you handle stakeholders who keep adding \"just one more thing\"?",
+    "tags": [
+      "ambiguity",
+      "adaptability",
+      "communication"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-08"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Tell me about a technical mistake you made and what you learned from it.",
+    "context": "REWE values honesty and growth mindset. Show vulnerability + learning.",
+    "modelAnswer": "SITUATION: Early in a project, I wrote a batch process that loaded ALL records into memory before processing them. It worked fine in dev (1000 records) but caused OutOfMemoryError in production (200,000 records).\n\nTASK: Fix the immediate production issue and ensure I didn't repeat the pattern.\n\nACTION:\n1. IMMEDIATE: Increased JVM heap as a temporary fix (bought time)\n2. ROOT FIX: Rewrote to use pagination — process 500 records at a time, flush, continue\n3. PREVENTION: Created a personal checklist: \"Before any batch/list operation, ask: what's the maximum volume in production?\"\n4. SHARED: Presented the incident to the team as a \"lessons learned\" — no blame, just the pattern to avoid\n\nRESULT: The batch process ran reliably with constant memory regardless of volume. The \"always ask about production volume\" mindset became part of my development practice.\n\nWHY I SHARE THIS: \"I believe in transparency about mistakes. The value isn't in never failing — it's in learning fast and preventing recurrence. I now always validate assumptions about data volume before writing any collection-based logic.\"",
+    "followUp": "How do you validate assumptions about production data volumes?",
+    "tags": [
+      "honesty",
+      "growth-mindset",
+      "learning-from-failure"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-09"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "How do you approach working in a distributed/remote team?",
+    "context": "REWE Digital Spain team TRAB works with colleagues across Spain and Germany.",
+    "modelAnswer": "SITUATION: My current team works hybrid — some in office, some remote, across different schedules. Communication gaps were causing duplicate work and misunderstandings.\n\nTASK: Be an effective contributor in an async-first environment.\n\nACTION: My practices:\n1. OVER-COMMUNICATE in writing — PR descriptions explain WHY, not just what\n2. Make work VISIBLE — update tickets daily, share blockers early (don't wait for standup)\n3. Document decisions — if we discuss something in a call, I write a summary in the ticket\n4. Respect time zones — async by default, sync calls only when discussion is needed\n5. Be responsive — acknowledge messages even if I can't answer immediately (\"looking into this, will reply by EOD\")\n\nFor REWE specifically: I'm comfortable communicating in English professionally. I write clear technical documentation. I proactively share context rather than waiting to be asked.\n\nRESULT: Colleagues consistently noted that my tickets and PRs required fewer clarification questions. Async communication improved overall team velocity.",
+    "followUp": "How do you handle a situation where you're blocked waiting for someone in another time zone?",
+    "tags": [
+      "remote-work",
+      "communication",
+      "async"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-10"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Why REWE Digital? Why this team specifically?",
+    "context": "Show genuine interest in the domain, not just \"I want a job in Europe.\"",
+    "modelAnswer": "I'm specifically interested in REWE Digital Spain for three reasons:\n\n1. THE DOMAIN — Transport logistics is a fascinating optimization problem. Real-time constraints (deliveries must happen NOW), complex state machines (planned → dispatched → delayed → completed), event-driven architecture (Kafka for tracking, notifications, analytics). This is the kind of system where good engineering directly impacts real-world outcomes.\n\n2. THE STACK — Spring Boot + Kafka + Kubernetes is the evolution of what I've been doing with Java EE + JMS + containers. My 5 years of enterprise Java give me strong foundations; REWE gives me the modern stack to apply them.\n\n3. THE TEAM — Team TRAB works on Transportabwicklung — the core logistics execution. Not a support tool, not a back-office system. The service that actually moves products. I want to work where engineering decisions matter at scale.\n\nI'm not looking for \"any job in Spain.\" I'm looking for a team where my enterprise Java experience is valued AND I can grow into the cloud-native ecosystem with Kafka and Kubernetes.",
+    "followUp": "What do you know about our tech stack and architecture?",
+    "tags": [
+      "motivation",
+      "culture-fit",
+      "company-research"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-11"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "How do you stay current with technology trends?",
+    "context": "Show continuous learning without being a hype-chaser.",
+    "modelAnswer": "My approach is DEPTH over breadth:\n\n1. DAILY (~30min): Technical blogs/newsletters (Baeldung for Java/Spring, Confluent blog for Kafka, InfoQ for architecture). I read to understand patterns, not to chase every new framework.\n\n2. WEEKLY: Hands-on practice. Currently building an interview prep app to sharpen my Java fundamentals and explore concepts I use less frequently. Code is how I truly learn.\n\n3. MONTHLY: Deep dive into one topic. Last month: Kafka internals (partitioning, consumer groups, exactly-once semantics). This month: Spring Boot testing strategies.\n\n4. SELECTIVELY: I don't learn everything. I evaluate: \"Will this help me solve real problems in the next 1-2 years?\" Kafka and Kubernetes — yes. The latest JavaScript framework — no.\n\nWHAT I AVOID: Tutorial hell (watching without building), hype-driven learning (learning tech just because it's trending), and breadth without depth (knowing 20 frameworks superficially).\n\nThe goal isn't knowing every new thing — it's having deep understanding of the tools I use professionally.",
+    "followUp": "What technology are you most excited about learning right now?",
+    "tags": [
+      "learning",
+      "growth-mindset",
+      "self-awareness"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-12"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Tell me about a time you had to work with a difficult stakeholder or colleague.",
+    "context": "REWE wants emotional intelligence and professionalism.",
+    "modelAnswer": "SITUATION: A business analyst consistently provided incomplete requirements, then blamed development when features didn't match expectations. The team was frustrated.\n\nTASK: Deliver correct features without damaging the working relationship.\n\nACTION: Instead of escalating or complaining, I changed my approach:\n1. BEFORE starting: I wrote my understanding of the requirement as acceptance criteria and sent it for confirmation. \"Just to confirm — here's what I'll build. Correct?\"\n2. DURING development: Quick check-ins at decision points. \"I found two possible interpretations. Which one is correct?\"\n3. AFTER delivery: Demo BEFORE marking as complete. \"Here's what I built based on our agreement.\"\n\nI also had a 1-on-1 conversation: \"I want to deliver what you need. The more context you give me upfront, the less rework for both of us. Can we try a template for requirements?\"\n\nRESULT: Misunderstandings dropped by ~80%. The analyst started providing better requirements because they saw the template worked. No conflict, no blame — just a better process.\n\nKEY PRINCIPLE: \"I assume positive intent. They're not trying to be difficult — they're busy and think the requirement is clear. My job is to surface ambiguity early.\"",
+    "followUp": "What if the person refuses to provide clearer requirements?",
+    "tags": [
+      "difficult-people",
+      "emotional-intelligence",
+      "professionalism"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-13"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "How do you balance code quality with delivery speed?",
+    "context": "REWE transport runs on deadlines. Perfect code that ships late is useless.",
+    "modelAnswer": "My rule: \"Never sacrifice correctness. Sacrifice sophistication.\"\n\nIn practice:\n• ALWAYS: Tests for critical paths, proper error handling, secure code, clear naming\n• SOMETIMES: Elegant abstractions, perfect performance optimization, comprehensive docs\n• NEVER: Shortcuts that create data integrity risks or security vulnerabilities\n\nEXAMPLE: Under deadline pressure for a delivery tracking feature:\n- Used a simple switch statement (3 cases) instead of a Strategy pattern — FINE for now\n- Skipped building a custom admin dashboard — used existing database queries — FINE\n- Did NOT skip input validation or error handling — NON-NEGOTIABLE\n- Did NOT skip the idempotency check on the event consumer — data integrity is sacred\n\nThe test: \"If this shortcut causes a production issue at 3am, would I be embarrassed?\" If yes, don't take it. If it's just \"not the most elegant solution\" — ship it and improve later.\n\nI also communicate: \"I'm delivering this with a known simplification. I'll create a ticket to revisit if the case count grows beyond 5.\"",
+    "followUp": "Give me an example of technical debt you intentionally took on and how you managed it.",
+    "tags": [
+      "pragmatism",
+      "quality",
+      "trade-offs"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-14"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Where do you see yourself in 2-3 years?",
+    "context": "Show ambition within the team, not ambition to leave.",
+    "modelAnswer": "In 2-3 years, I want to be a technical reference within the team — the person who:\n\n1. OWNS a critical part of the system end-to-end (design → implement → operate → improve)\n2. MENTORS newer team members on architecture and best practices\n3. CONTRIBUTES to technical decisions at the team/squad level\n4. Has DEEP knowledge of the logistics domain — understanding business context, not just code\n\nConcretely at REWE:\n- Year 1: Become productive, understand the existing services, deliver features autonomously\n- Year 2: Propose architectural improvements, lead design discussions, mentor juniors\n- Year 3: Be a go-to person for complex problems in the transport domain\n\nI'm NOT looking to become a manager. I want to grow as a senior engineer who makes the team better technically. The title matters less than the impact.\n\nI chose REWE specifically because it's a place where I can grow technically for years — the domain is complex enough, the scale is real, and the stack is modern.",
+    "followUp": "What would make you leave a job?",
+    "tags": [
+      "career-goals",
+      "ambition",
+      "retention"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-15"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Tell me about a feature you're particularly proud of building.",
+    "context": "Show ownership, end-to-end thinking, and impact.",
+    "modelAnswer": "SITUATION: Our education system needed real-time certificate generation for 50,000+ students across 300 units, each with different layouts, signatures, and regulations.\n\nTASK: Design and implement a certificate generation system that handled multiple templates, digital signatures, and high-volume batch processing.\n\nACTION: I designed the system with:\n1. Template engine (Jasper Reports) with per-unit customization\n2. Asynchronous batch processing via JMS (queue-based, fault-tolerant)\n3. Digital signature integration with an external provider (BRy)\n4. Idempotent generation (same request → same certificate, no duplicates)\n5. Progress tracking so administrators could monitor batch jobs\n\nI owned it end-to-end: database schema, business logic, integration with the signature provider, the background job infrastructure, and the admin UI.\n\nRESULT: System generated 50,000+ certificates per semester reliably. Batch processing handled failures gracefully (retry per certificate, not per batch). Zero duplicate certificates in 2 years of operation.\n\nWHY PROUD: It combined multiple hard problems (async processing, external integration, template rendering, data correctness) into a clean, reliable system.",
+    "followUp": "What would you change if you could redesign it today?",
+    "tags": [
+      "ownership",
+      "pride",
+      "end-to-end"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-16"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "How do you handle a situation where you realize you won't meet a deadline?",
+    "context": "REWE values transparency and early communication.",
+    "modelAnswer": "My rule: communicate EARLY, not at the deadline.\n\nSITUATION: Mid-sprint, I realized a Kafka consumer integration would take 5 days instead of the estimated 3, because the event schema was more complex than expected (nested objects, optional fields, backward compatibility needed).\n\nACTION:\n1. DAY 2 (when I realized): Immediately told my lead: \"I've discovered additional complexity. Here's what I found, here's the revised estimate, here's what I suggest.\"\n2. PROPOSED OPTIONS:\n   - Option A: Deliver full solution in 5 days (2 days over)\n   - Option B: Deliver core consumer in 3 days, add schema evolution handling next sprint\n   - Option C: Simplify by consuming only required fields now, full mapping later\n3. RECOMMENDED Option B with clear reasoning\n\nRESULT: Lead chose Option B. No surprise at sprint end. Stakeholders adjusted expectations on day 2, not day 10. Trust maintained.\n\nPRINCIPLE: \"Bad news early is a plan. Bad news late is a crisis. I never hide risk — I surface it with options.\"",
+    "followUp": "How do you estimate effort for tasks with unknowns?",
+    "tags": [
+      "transparency",
+      "communication",
+      "deadline-management"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-17"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Describe a time you had to say no to a request.",
+    "context": "Engineers who say yes to everything burn out and deliver poorly.",
+    "modelAnswer": "SITUATION: A project manager asked me to add a \"quick\" export feature to a report that was already in QA. \"Just add an Excel button, should be 2 hours.\"\n\nTASK: Evaluate whether this was truly quick, and communicate honestly.\n\nACTION: I investigated for 30 minutes:\n- The report had 15 columns, some with complex aggregations\n- Excel export needed different formatting than the screen display\n- The data volume could be 50,000+ rows (memory implications)\n- No pagination existed for the export path\n\nI replied: \"This isn't 2 hours. Here's why: [list]. It's approximately 2-3 days including testing. I can do it, but it means pushing back the next feature by 3 days. Which priority wins?\"\n\nRESULT: PM decided the export could wait for the next sprint. No scope creep, no weekend work, no quality compromise. The PM appreciated the honest assessment.\n\nKEY: I don't say \"no\" — I say \"yes, and here's what it really costs.\" Let the stakeholder make the trade-off with full information.",
+    "followUp": "What if the PM insists it must be done this sprint?",
+    "tags": [
+      "boundaries",
+      "honesty",
+      "negotiation"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-18"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "How do you approach debugging a complex issue with no obvious cause?",
+    "context": "Transport systems have complex failure modes. Show systematic thinking.",
+    "modelAnswer": "My debugging methodology:\n\n1. REPRODUCE — Can I make it happen consistently? What's the minimal reproduction case?\n2. ISOLATE — What changed? (recent deploy? data? load?) Narrow the surface area.\n3. HYPOTHESIZE — Based on evidence, what are the 2-3 most likely causes?\n4. INSTRUMENT — Add targeted logging/metrics to confirm or eliminate hypotheses.\n5. FIX — Address root cause, not symptoms. Verify with the reproduction case.\n6. PREVENT — Why wasn't this caught? Add test/monitor/alert.\n\nEXAMPLE: A delivery status update was intermittently failing (~5% of the time). No error in logs.\n\nInvestigation:\n- REPRODUCE: Happened only with concurrent updates to the same delivery\n- ISOLATE: Recent feature added parallel notification sending\n- HYPOTHESIZE: Optimistic locking conflict? Race condition on status field?\n- INSTRUMENT: Added version logging → confirmed stale read + overwrite\n- FIX: Added optimistic locking (@Version) + retry on conflict\n- PREVENT: Added integration test with concurrent requests\n\nTotal time: 4 hours. Without methodology, could have been days of random guessing.",
+    "followUp": "What tools do you use for debugging in production?",
+    "tags": [
+      "debugging",
+      "systematic-thinking",
+      "problem-solving"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-19"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Tell me about a time you received critical feedback. How did you handle it?",
+    "context": "Growth mindset. REWE wants people who improve, not people who are defensive.",
+    "modelAnswer": "SITUATION: During a code review, a senior colleague pointed out that my exception handling pattern was inconsistent — in some places I logged and rethrew, in others I swallowed exceptions silently, and my approach to checked vs unchecked was ad-hoc.\n\nTASK: Accept the feedback and actually improve, not just fix the PR.\n\nACTION:\n1. FIRST REACTION: My instinct was defensive (\"it works fine\"). I paused before responding.\n2. REFLECTED: I read through my recent code and realized they were right — I had no consistent strategy.\n3. ACTED: Asked the colleague for a 30-minute session to understand their preferred pattern. Took notes.\n4. SYSTEMATIZED: Created a personal checklist:\n   - Business validation → custom unchecked exception\n   - Infrastructure failure → wrap and propagate with context\n   - Never swallow exceptions silently (always log OR rethrow)\n5. APPLIED: Refactored the PR, then proactively fixed other places in my recent code.\n\nRESULT: Exception handling became a strength. The colleague later told others to look at my code as an example. Feedback transformed a weak point into a standard.\n\nKEY: \"Feedback is a gift. The worst thing is NOT receiving it — it means people stopped investing in your growth.\"",
+    "followUp": "How do you give feedback to a junior who is making the same mistake repeatedly?",
+    "tags": [
+      "feedback",
+      "growth-mindset",
+      "humility"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-20"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "How do you handle multiple tasks with competing priorities?",
+    "context": "In a logistics team, there are always urgent issues alongside planned work.",
+    "modelAnswer": "My framework: URGENT vs IMPORTANT matrix + time-boxing.\n\nDAILY PRACTICE:\n1. Start of day: review priorities. What's the ONE thing that must move forward today?\n2. Time-box interruptions: if someone asks for help, \"I can look at this in 30 minutes\" (finish current thought)\n3. Production issues: drop everything (but document where I stopped for easy resume)\n4. Planned work: deep focus blocks (2h minimum, notifications off)\n\nEXAMPLE: Tuesday morning — 3 competing demands:\n- Sprint feature (important, deadline Friday)\n- Production bug (urgent, affecting 50 users)\n- Colleague needs help with a complex query (important for them, not urgent)\n\nMy decision:\n1. Production bug → immediate (30 min fix, restore service)\n2. Message colleague: \"Fixed prod issue, free at 11:00 for your query\"\n3. Sprint feature → afternoon deep focus (3h block)\n\nPRINCIPLE: \"I protect focus time for planned work, but production issues always win. The key is RESUMING planned work quickly — which requires leaving clear breadcrumbs (TODO comments, branch with WIP commit).\"",
+    "followUp": "How do you prevent yourself from being the person everyone asks for help?",
+    "tags": [
+      "prioritization",
+      "time-management",
+      "focus"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-21"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "What's your approach to code reviews? Both giving and receiving.",
+    "context": "REWE teams do PRs. Show you value the process.",
+    "modelAnswer": "GIVING reviews — my philosophy:\n• Focus on LOGIC and CORRECTNESS first, style last\n• Ask questions instead of dictating: \"What happens if this list is empty?\" (lets author discover the issue)\n• Classify clearly: 🔴 Blocker (must fix), 🟡 Suggestion (consider), 💬 Question (curious)\n• Praise good patterns: \"Nice use of Optional here — clean\"\n• Review within 4 hours (unblock teammates fast)\n• Never approve something I don't understand\n\nRECEIVING reviews:\n• Don't take it personally — they're reviewing my CODE, not me\n• If I disagree: explain my reasoning ONCE clearly. If reviewer insists → I yield (unless it's a correctness issue)\n• \"I'll fix this\" is better than a 10-comment debate about style\n• Say \"good catch\" when they find a real issue — positive reinforcement\n\nANTI-PATTERNS I AVOID:\n• Nitpicking style when the logic is dangerous\n• \"LGTM\" without actually reading\n• Blocking a PR for 3 days because I'm busy\n• Requesting changes on things unrelated to the PR's scope",
+    "followUp": "How do you handle a reviewer who always blocks your PRs with minor style comments?",
+    "tags": [
+      "code-review",
+      "collaboration",
+      "communication"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-22"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Tell me about a time you had to make a technical decision with incomplete information.",
+    "context": "In logistics, you can't always wait for perfect data.",
+    "modelAnswer": "SITUATION: We needed to choose between synchronous REST calls and asynchronous messaging for an integration with an external delivery tracking provider. The provider's API documentation was incomplete, and their uptime SLA was unclear.\n\nTASK: Make an architectural decision that wouldn't require expensive rework if assumptions proved wrong.\n\nACTION: I applied the \"reversibility\" principle:\n1. LISTED unknowns: Provider latency? Uptime? Rate limits? Payload size?\n2. CHOSE the safer default: Async with outbox pattern (tolerates provider downtime)\n3. DESIGNED for change: Interface + adapter pattern. If we later learned the provider was always fast and reliable, switching to sync would be one class change.\n4. DOCUMENTED the decision + assumptions: \"Chose async because [unknowns]. Revisit after 1 month of production data.\"\n\nRESULT: Good decision — the provider had intermittent 30-second latencies that would have blocked our users in a sync approach. The async pattern handled it transparently.\n\nPRINCIPLE: \"When uncertain, choose the option that's easier to change from. Async → sync is easy. Sync → async (after building on that assumption) is expensive.\"",
+    "followUp": "How do you document architectural decisions for the team?",
+    "tags": [
+      "decision-making",
+      "architecture",
+      "uncertainty"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-23"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "How do you ensure the reliability of a system you own?",
+    "context": "REWE transport can't have downtime during delivery hours.",
+    "modelAnswer": "My reliability checklist for any service I own:\n\n1. OBSERVABILITY:\n   - Structured logging with correlation IDs\n   - Key metrics: latency p95, error rate, throughput\n   - Alerts on anomalies (not just thresholds — trend-based)\n\n2. FAILURE HANDLING:\n   - Timeouts on ALL external calls (never infinite wait)\n   - Circuit breaker or fallback for non-critical dependencies\n   - Graceful degradation: if notifications fail, deliveries still work\n\n3. DATA INTEGRITY:\n   - Idempotent operations (safe to retry)\n   - Transactional boundaries clearly defined\n   - No external I/O inside transactions (connection pool protection)\n\n4. DEPLOYMENT SAFETY:\n   - Feature flags for risky changes (enable gradually)\n   - Health checks (liveness + readiness)\n   - Easy rollback path\n\n5. DOCUMENTATION:\n   - Runbook: \"If X happens, do Y\"\n   - Architecture diagram: dependencies and failure modes\n   - On-call guide: how to diagnose common issues\n\nEXAMPLE: For a delivery event consumer, I ensure:\n- Consumer lag metric with alert (>1000 events behind → alert)\n- Dead-letter topic for poison messages (don't block the queue)\n- Idempotent processing (replay-safe)\n- Health check that verifies Kafka connectivity",
+    "followUp": "How do you approach on-call rotations?",
+    "tags": [
+      "reliability",
+      "ownership",
+      "production-readiness"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-24"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Describe your experience with agile/scrum. What works and what doesn't?",
+    "context": "REWE likely uses agile. Show maturity, not dogma.",
+    "modelAnswer": "My experience: 4+ years in Scrum teams (2-week sprints, daily standups, retros).\n\nWHAT WORKS:\n• Short iterations → frequent feedback → less wasted work\n• Sprint reviews → stakeholders see progress, correct course early\n• Retrospectives → team improves continuously (when taken seriously)\n• Definition of Done → shared quality standard\n\nWHAT I'VE SEEN FAIL:\n• Standups becoming status reports TO the manager (should be team sync)\n• Estimating to the hour (story points for relative sizing work better)\n• Skipping retros when \"there's nothing to discuss\" (there always is)\n• Treating velocity as a productivity metric (it's a planning tool)\n\nMY APPROACH: Use the ceremonies that add value. Skip the ones that don't. The goal is DELIVERING VALUE, not performing agile theater.\n\nConcretely: I prefer kanban-style for ops/maintenance work (continuous flow) and sprint-based for feature development (time-boxed commitments). Different work patterns benefit from different cadences.",
+    "followUp": "How do you handle sprint commitments when unplanned work appears?",
+    "tags": [
+      "agile",
+      "process",
+      "pragmatism"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-25"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "How do you approach testing? What's your testing philosophy?",
+    "context": "REWE needs reliable services. Show you care about quality.",
+    "modelAnswer": "Testing pyramid + pragmatism:\n\nUNIT TESTS (majority):\n• Fast, isolated, test business logic\n• Mock external dependencies\n• One behavior per test\n• Name describes the scenario: \"shouldRejectDeliveryWhenDriverNotAvailable\"\n\nINTEGRATION TESTS (targeted):\n• Real database (Testcontainers with PostgreSQL, not H2)\n• Real Kafka (embedded or Testcontainers)\n• Verify queries, serialization, configuration\n\nE2E TESTS (minimal):\n• Happy path through the full system\n• Critical user journeys only\n• Slow → keep the count small\n\nMY RULES:\n1. New feature → write test FIRST for the core logic (TDD for complex business rules)\n2. Bug fix → write failing test FIRST that reproduces the bug, THEN fix\n3. Refactoring → existing tests must pass without modification (if they break, it's not a refactor)\n4. Don't test private methods — test observable behavior\n5. Don't test the framework (Spring Data query methods work — test YOUR business logic)\n\nFROM JAVA EE: I tested with JUnit 5 + Mockito (same as Spring). The business logic testing is identical — only the integration test infrastructure differs (Arquillian → @SpringBootTest + Testcontainers).",
+    "followUp": "How do you decide what NOT to test?",
+    "tags": [
+      "testing",
+      "quality",
+      "tdd"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-26"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "What questions do you have for us? (the interviewers)",
+    "context": "ALWAYS have questions prepared. Shows genuine interest.",
+    "modelAnswer": "Questions I would ask REWE team TRAB:\n\nABOUT THE TEAM:\n• \"How is the team structured? How many developers, what seniority mix?\"\n• \"What does a typical sprint look like? How much is feature work vs maintenance vs tech debt?\"\n• \"How do you handle on-call? What's the incident response process?\"\n\nABOUT THE TECHNOLOGY:\n• \"What's the current architecture of the transport services? Monolith, microservices, or something in between?\"\n• \"How do you handle schema evolution in Kafka events? Avro with Schema Registry?\"\n• \"What's the deployment frequency? CI/CD pipeline maturity?\"\n\nABOUT GROWTH:\n• \"What does success look like for this role in the first 6 months?\"\n• \"How do you support engineers in growing technically? Conferences, learning time, internal tech talks?\"\n• \"What's the biggest technical challenge the team is facing right now?\"\n\nABOUT CULTURE:\n• \"How are architectural decisions made? Individual ownership or team RFC process?\"\n• \"How does the team handle disagreements on technical approaches?\"\n\nTIP: Don't ask ALL of these. Pick 3-4 that feel natural based on the conversation. Ask follow-up questions to their answers — show genuine curiosity.",
+    "followUp": "Is there anything specific about your background that you want to clarify or emphasize?",
+    "tags": [
+      "interview-prep",
+      "questions",
+      "engagement"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-27"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "How do you handle imposter syndrome when joining a team with a different tech stack?",
+    "context": "Honest self-awareness. REWE wants authentic people.",
+    "modelAnswer": "I acknowledge it openly and counter it with evidence:\n\nTHE FEELING: \"Everyone here knows Spring Boot/Kafka/K8s. I only know Java EE. I'm going to be the slowest person.\"\n\nTHE REALITY CHECK:\n• I have 5+ years building production systems. The PATTERNS are the same — DI, transactions, messaging, persistence.\n• I've learned new technologies before (JMS, Hibernate, JSF). My track record shows I ramp up within weeks.\n• Syntax is the smallest part of engineering. Design thinking, debugging methodology, domain understanding — these transfer 100%.\n• Even experts Google \"Spring Boot @Transactional propagation\" — nobody memorizes everything.\n\nMY STRATEGY:\n1. First 2 weeks: absorb. Read code, ask questions, take notes. Don't pretend to know.\n2. Week 3-4: contribute small PRs. Build confidence through delivery.\n3. Month 2: take on a real feature. Apply patterns with the new syntax.\n4. Month 3: share back — my Java EE perspective often reveals assumptions others miss.\n\nWHAT I TELL MYSELF: \"They hired me for my engineering mindset and 5 years of enterprise Java, not for knowing Spring annotations. The annotations I'll learn in a week.\"",
+    "followUp": "What specific areas are you most concerned about ramping up on?",
+    "tags": [
+      "self-awareness",
+      "honesty",
+      "confidence"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-28"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Describe your ideal working environment.",
+    "context": "Culture fit assessment. Align with what REWE Digital offers.",
+    "modelAnswer": "My ideal environment has:\n\n1. TRUST-BASED AUTONOMY: Give me the problem and the constraints, var me find the solution. I don't need someone reviewing every line — I need clear expectations and the freedom to meet them.\n\n2. TECHNICAL EXCELLENCE AS A VALUE: A team that cares about doing things well. Code reviews that teach, not just approve. Tech debt addressed, not just accumulated.\n\n3. PSYCHOLOGICAL SAFETY: I can say \"I don't know\" without judgment. I can challenge an approach without politics. Mistakes are learning opportunities, not blame targets.\n\n4. MEANINGFUL WORK: Software that impacts real operations. Transport logistics at REWE is exactly this — every optimization matters, every bug has real-world consequences.\n\n5. GROWTH OPPORTUNITIES: Both technical depth (become an expert in a domain) and breadth (exposure to new patterns, tools, architectures).\n\nWHAT I DON'T NEED:\n• Micromanagement or time-tracking to the minute\n• \"Move fast and break things\" culture (I prefer \"move deliberately and build reliability\")\n• Purely political environments where perception matters more than output\n\nFrom what I've researched, REWE Digital's engineering culture emphasizes autonomy, quality, and domain ownership — which aligns with what I'm looking for.",
+    "followUp": "What would be a red flag for you about a team or company?",
+    "tags": [
+      "culture-fit",
+      "values",
+      "self-awareness"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-29"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "question": "Tell me about yourself (the opening question).",
+    "context": "The most important 2 minutes. Set the frame for everything that follows.",
+    "modelAnswer": "STRUCTURE: Present → Past → Future (2 minutes max)\n\n\"I'm a Java backend developer with 5 years of experience building enterprise systems — specifically an education management platform serving 300+ units and 50,000+ students in Brazil.\n\nMy core stack is Java EE: CDI for dependency injection, JPA/Hibernate for persistence, JMS with ActiveMQ Artemis for async messaging, and JSF for the web layer. The system has 2,000+ database tables and 80+ message queues — so I'm comfortable with complexity and scale.\n\nWhat I bring beyond the tech stack: I design for reliability. My experience includes production incident response, performance optimization (diagnosing N+1 queries, connection pool issues, timeout tuning), and building resilient messaging patterns (idempotency, retry, dead-letter handling).\n\nI'm interviewing at REWE Digital because I want to apply these skills in a modern stack — Spring Boot, Kafka, Kubernetes — in a domain I find fascinating: transport logistics. The patterns I've mastered (DI, messaging, transactions, event-driven architecture) map directly to what team TRAB is building. I'm looking to grow technically while contributing immediately with my enterprise Java foundations.\"\n\nTOTAL: ~90 seconds. Covers: experience, domain, technical depth, transferable skills, motivation.",
+    "followUp": "Can you elaborate on the scale of the systems you've built?",
+    "tags": [
+      "introduction",
+      "pitch",
+      "first-impression"
+    ],
+    "topic": "behavioral",
+    "id": "behavioral-general-30"
+  }
+]

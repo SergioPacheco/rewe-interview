@@ -1,0 +1,44 @@
+[
+  {
+    "id": "theory-concurrency-",
+    "title": "Threads & Thread Pools",
+    "sections": [
+      {
+        "heading": "Why concurrency matters",
+        "content": "In logistics: a delivery-service handling 1000 req/s needs to execute many operations simultaneously. Without concurrency, each request waits for the previous one to finish.\n\n<strong>Java concurrency model:</strong>\n• Each request in a web server (Tomcat, WildFly) gets its own thread\n• Threads share the same heap memory (objects accessible across threads)\n• The JVM + OS schedules threads across CPU cores\n\n<strong>The danger:</strong> Shared mutable state + concurrent access = data corruption, race conditions, deadlocks."
+      },
+      {
+        "heading": "Thread pools — never create raw threads",
+        "content": "<pre><code>// ❌ Never in production — uncontrolled thread creation\nnew Thread(() -> processDelivery(id)).start();\n// 1000 requests = 1000 threads = OOM or context-switching hell\n\n// ✅ ExecutorService — bounded, reusable thread pool\nExecutorService executor = Executors.newFixedThreadPool(10);\nexecutor.submit(() -> processDelivery(id));\n// 1000 requests share 10 threads — controlled resource usage\n\n// ✅ Spring Boot — inject the managed executor\n@Async\npublic CompletableFuture&lt;Route&gt; calculateRouteAsync(Delivery d) {\n    return CompletableFuture.completedFuture(routeService.calculate(d));\n}\n\n// ✅ Java EE — ManagedExecutorService (container-managed)\n@Resource\nManagedExecutorService executor;\nexecutor.submit(() -> processDelivery(id));</code></pre>\n\n<strong>Thread pool sizing rule of thumb:</strong>\n• CPU-bound tasks: threads = number of CPU cores\n• I/O-bound tasks (REST calls, DB): threads = cores × (1 + wait_time/compute_time)\n• Example: 8 cores, tasks spend 80% waiting on I/O → 8 × (1 + 0.8/0.2) = 40 threads"
+      }
+    ]
+  },
+  {
+    "id": "theory-concurrency-",
+    "title": "CompletableFuture — Async Composition",
+    "sections": [
+      {
+        "heading": "CompletableFuture basics",
+        "content": "CompletableFuture = a promise of a future result that you can chain operations on.\n\n<pre><code>// Run async task\nCompletableFuture&lt;Route&gt; routeFuture = CompletableFuture\n    .supplyAsync(() -> routeService.optimize(delivery), executor);\n\n// Chain transformations\nCompletableFuture&lt;ETA&gt; etaFuture = routeFuture\n    .thenApply(route -> etaCalculator.calculate(route));\n\n// Handle errors\nCompletableFuture&lt;ETA&gt; safeFuture = etaFuture\n    .exceptionally(ex -> ETA.unknown());\n\n// Combine two independent futures\nCompletableFuture&lt;Route&gt; route = getRouteAsync(deliveryId);\nCompletableFuture&lt;Driver&gt; driver = getDriverAsync(driverId);\n\nCompletableFuture&lt;DispatchPlan&gt; plan = route.thenCombine(driver,\n    (r, d) -> new DispatchPlan(r, d));\n// Both execute in PARALLEL, combined when both complete</code></pre>"
+      },
+      {
+        "heading": "Parallel calls pattern (REWE transport)",
+        "content": "<pre><code>// Scenario: dispatch requires data from 3 services\n// Sequential: 100ms + 150ms + 200ms = 450ms\n// Parallel:   max(100, 150, 200) = 200ms!\n\npublic DispatchResponse dispatch(Long deliveryId) {\n    var driverFuture = CompletableFuture\n        .supplyAsync(() -> driverService.findAvailable(region), executor);\n    var routeFuture = CompletableFuture\n        .supplyAsync(() -> routeService.optimize(stops), executor);\n    var weatherFuture = CompletableFuture\n        .supplyAsync(() -> weatherService.getForecast(region), executor);\n\n    // Wait for all three (with timeout!)\n    CompletableFuture.allOf(driverFuture, routeFuture, weatherFuture)\n        .orTimeout(5, TimeUnit.SECONDS)\n        .join();\n\n    return new DispatchResponse(\n        driverFuture.join(),\n        routeFuture.join(),\n        weatherFuture.join()\n    );\n}</code></pre>\n\n<strong>Key rules:</strong>\n• ALWAYS pass an executor (never use default ForkJoinPool in a server)\n• ALWAYS set a timeout (orTimeout or completeOnTimeout)\n• Handle exceptions with exceptionally() or handle()\n• Don't block the calling thread unnecessarily (use thenApply/thenCompose for chaining)"
+      }
+    ]
+  },
+  {
+    "id": "theory-concurrency-",
+    "title": "Thread Safety — Protecting Shared State",
+    "sections": [
+      {
+        "heading": "Race conditions and how to prevent them",
+        "content": "<pre><code>// ❌ Race condition — two threads read-then-write simultaneously\nclass DeliveryCounter {\n    private int count = 0;\n    public void increment() { count++; } // NOT atomic! read → add → write\n}\n// Thread A reads 5, Thread B reads 5, both write 6 → lost update!\n\n// ✅ Fix 1: AtomicInteger (lock-free)\nprivate AtomicInteger count = new AtomicInteger(0);\npublic void increment() { count.incrementAndGet(); }\n\n// ✅ Fix 2: synchronized (simple but coarse)\npublic synchronized void increment() { count++; }\n\n// ✅ Fix 3: Immutable objects (no shared mutable state)\nrecord DeliveryEvent(String id, String status, Instant time) {}\n// Records are immutable — safe to share across threads without locks</code></pre>\n\n<strong>Best strategies (in order of preference):</strong>\n1. <strong>Avoid sharing:</strong> each thread works on its own data (request-scoped)\n2. <strong>Immutability:</strong> objects that can't change are always thread-safe\n3. <strong>Atomic operations:</strong> AtomicInteger, AtomicReference, ConcurrentHashMap\n4. <strong>Synchronized/Lock:</strong> last resort (risk of deadlocks, contention)"
+      },
+      {
+        "heading": "Common thread-safety patterns",
+        "content": "<pre><code>// ConcurrentHashMap — thread-safe map (BUT not for compound operations)\nConcurrentHashMap&lt;String, Integer&gt; cache = new ConcurrentHashMap&lt;&gt;();\n\n// ❌ NOT atomic (check-then-act race condition)\nif (!cache.containsKey(key)) {\n    cache.put(key, computeValue()); // another thread might insert between check and put\n}\n\n// ✅ Atomic compound operation\ncache.computeIfAbsent(key, k -> computeValue());\n\n// ✅ Spring: singleton beans are thread-safe IF they have no mutable fields\n@Service\npublic class DeliveryService {\n    private final DeliveryRepository repo; // final = safe\n    // NO mutable instance fields!\n}\n\n// ❌ Dangerous: mutable field in singleton\n@Service\npublic class BadService {\n    private List&lt;String&gt; buffer = new ArrayList&lt;&gt;(); // shared across ALL requests!\n}</code></pre>\n\n<strong>Interview answer:</strong> \"In Spring Boot, services are singletons shared across threads. I ensure thread safety by: (1) using only final immutable fields, (2) keeping mutable state in method-local variables, (3) using atomic operations for shared counters/caches.\""
+      }
+    ]
+  }
+]

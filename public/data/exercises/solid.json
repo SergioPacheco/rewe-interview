@@ -1,0 +1,850 @@
+[
+  {
+    "id": "oop-solid-01",
+    "topic": "solid",
+    "subtopic": "SOLID",
+    "difficulty": "intermediate",
+    "question": "Tell me one SOLID principle you use every day.",
+    "interviewerIntent": "Verify the candidate applies SOLID in practice, not just knows the acronym. Expects a specific example, not all five principles listed.",
+    "shortAnswer": "Single Responsibility. In enterprise systems, services naturally accumulate validation, persistence, notification and reporting. I continuously separate these concerns into focused components that change for one reason and are testable independently.",
+    "modelAnswer": "Context: The principle I apply most consciously is Single Responsibility. In large enterprise systems, business services tend to grow into classes that validate, persist, generate documents, send notifications and write audit logs — all in one place.\n\nProblem: One enrollment service had accumulated enrollment logic, PDF generation, email sending and audit logging. Any change in email templates required modifying the same class that handled enrollment business rules. The class was over 800 lines and difficult to test.\n\nDecision: I extracted each concern into its own component: EnrollmentValidator, EnrollmentRepository, DocumentGenerator, NotificationService and AuditWriter. The main service became an orchestrator that delegated to each component.\n\nResult: Each component was under 100 lines, had a single reason to change, and could be unit-tested independently. The team could modify email logic without risking enrollment rules.\n\nTrade-off: More files to navigate. The full flow requires following calls across classes. We mitigate this with clear naming conventions and consistent layering.",
+    "senaiExample": "In SGN3, the separation between Business (rules), Repository (persistence), Validação (validation) and JMS (notifications) follows SRP consistently across all modules.",
+    "reweExample": "In a logistics system: OrderValidator, RouteCalculator, InventoryReserver and DispatchNotifier each handle one responsibility within the order fulfillment flow.",
+    "keyPoints": [
+      "Pick ONE principle and go deep — do not list all five",
+      "Show a real before/after scenario",
+      "Explain what \"one reason to change\" means in practice",
+      "SRP does not mean one method per class",
+      "Mention the trade-off (more files, distributed flow)"
+    ],
+    "mistakesToAvoid": [
+      "Listing all five SOLID principles without depth",
+      "Giving a textbook definition without a real example",
+      "Saying SRP means one function per class",
+      "Not mentioning any trade-off or nuance"
+    ],
+    "followUps": [
+      {
+        "question": "How do you know when a class has too many responsibilities?",
+        "answerHint": "When it changes for multiple unrelated reasons. When the class description requires \"and\". When tests require mocking unrelated dependencies."
+      },
+      {
+        "question": "Can SOLID lead to overengineering?",
+        "answerHint": "Yes. Applying all principles maximally creates many tiny classes. I apply them when the cost of NOT applying them (rigidity, fragility) exceeds the cost of additional abstraction."
+      },
+      {
+        "question": "Which SOLID principle do you find hardest to apply?",
+        "answerHint": "Open/Closed is hardest — predicting where extension will be needed requires experience. I introduce extension points where variability already exists, not speculatively."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "reason to change",
+        "meaning": "motivo pelo qual o código precisaria ser modificado",
+        "example": "Each class should have only one reason to change — one business capability it owns."
+      },
+      {
+        "term": "orchestrator",
+        "meaning": "classe que coordena chamadas entre componentes",
+        "example": "The main service became an orchestrator delegating to focused components."
+      },
+      {
+        "term": "cohesion",
+        "meaning": "grau em que elementos de um módulo pertencem juntos",
+        "example": "High cohesion means all methods in a class serve the same purpose."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I chose one principle and explained it deeply",
+        "weight": 3
+      },
+      {
+        "criterion": "I gave a real before/after example",
+        "weight": 3
+      },
+      {
+        "criterion": "I explained what \"reason to change\" means",
+        "weight": 2
+      },
+      {
+        "criterion": "I mentioned a nuance or trade-off",
+        "weight": 2
+      }
+    ],
+    "type": "ORAL_ANSWER"
+  },
+  {
+    "id": "solid-srp-oral-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "SOLID — SRP",
+    "difficulty": "senior",
+    "question": "Which SOLID principle do you use most often?",
+    "interviewerIntent": "Verify the candidate applies SOLID in practice. Expects a specific example, not all five listed.",
+    "shortAnswer": "Single Responsibility. In enterprise systems, services naturally accumulate validation, persistence, notification and reporting. I continuously separate these into focused components that change for one reason and are testable independently.",
+    "modelAnswer": "Context: The principle I apply most consciously is Single Responsibility. In large systems, services tend to grow into classes that validate, persist, generate documents, send notifications and write audit logs — all in one place.\n\nProblem: A delivery processing service had accumulated routing logic, pricing calculation, Kafka event publishing, driver notification and analytics tracking. Any change in pricing required understanding the entire 400-line class. Tests needed 8 mocks.\n\nDecision: I extracted each concern into its own component: RouteValidator, DeliveryPricingCalculator, LogisticsEventPublisher, DriverNotifier, DeliveryAnalytics. The main service became an orchestrator delegating to each.\n\nResult: Each component was under 80 lines, had one reason to change, and could be unit-tested independently. The team could modify pricing without risking event publishing logic.\n\nTrade-off: More files to navigate. The full flow requires following calls across classes. We mitigate with clear naming and consistent layering.",
+    "senaiExample": "In SGN3, the separation between Business (rules), Repository (persistence), Validação (validation) and JMS (notifications) follows SRP consistently.",
+    "reweExample": "DeliveryPlanningService orchestrates RouteValidator, DeliveryRepository, LogisticsEventPublisher, DriverNotificationService — each changes for one reason only.",
+    "keyPoints": [
+      "Pick ONE principle and go deep",
+      "Show a real before/after scenario",
+      "SRP does not mean one method per class",
+      "Mention the trade-off"
+    ],
+    "mistakesToAvoid": [
+      "Listing all five SOLID principles",
+      "Giving textbook definition without example",
+      "Saying SRP means one function per class"
+    ],
+    "followUps": [
+      {
+        "question": "How do you know when a class has too many responsibilities?",
+        "answerHint": "When it changes for unrelated reasons. When its description requires \"and\". When tests need mocking unrelated dependencies."
+      },
+      {
+        "question": "Can SOLID lead to overengineering?",
+        "answerHint": "Yes. Maximum SOLID creates many tiny classes. Apply when the cost of NOT applying exceeds the cost of additional abstraction."
+      },
+      {
+        "question": "Would separating everything create too much complexity?",
+        "answerHint": "Balance needed. Group by cohesion — related operations stay together. Split when they change for different reasons or need independent testing."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "reason to change",
+        "meaning": "motivo pelo qual o código precisaria ser modificado",
+        "example": "Each class should have only one reason to change."
+      },
+      {
+        "term": "cohesion",
+        "meaning": "grau em que elementos de um módulo pertencem juntos",
+        "example": "High cohesion means all methods serve the same business capability."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I chose one principle and went deep",
+        "weight": 3
+      },
+      {
+        "criterion": "I gave a real before/after example",
+        "weight": 3
+      },
+      {
+        "criterion": "I explained \"reason to change\" in practice",
+        "weight": 2
+      },
+      {
+        "criterion": "I mentioned a nuance or trade-off",
+        "weight": 2
+      }
+    ],
+    "topic": "solid"
+  },
+  {
+    "id": "solid-srp-refactor-01",
+    "type": "CODE_REFACTOR",
+    "subtopic": "SOLID — SRP",
+    "difficulty": "intermediate",
+    "mission": "This <strong>DeliveryService</strong> does everything. Identify the responsibilities and extract them.",
+    "code": "@Service\npublic class DeliveryService {\n    public DeliveryResult processDelivery(DeliveryRequest req) {\n        // 1. Validate route\n        if (req.getStops().isEmpty()) throw new ValidationException(\"No stops\");\n        if (!routeExists(req.getRouteId())) throw new ValidationException(\"Invalid route\");\n\n        // 2. Calculate cost\n        BigDecimal cost = req.getWeight().multiply(RATE);\n        if (req.isExpress()) cost = cost.multiply(new BigDecimal(\"1.5\"));\n        if (req.getDistance() > 100) cost = cost.add(LONG_DISTANCE_FEE);\n\n        // 3. Persist\n        Delivery d = new Delivery(req, cost);\n        deliveryRepository.save(d);\n\n        // 4. Publish Kafka event\n        kafkaTemplate.send(\"delivery-created\", d.getId().toString(), toEvent(d));\n\n        // 5. Notify driver\n        pushService.send(req.getDriverId(), \"New delivery: \" + d.getId());\n\n        // 6. Track analytics\n        metricsService.increment(\"deliveries.created\");\n        analyticsClient.track(\"delivery\", Map.of(\"type\", req.getType().name()));\n\n        return new DeliveryResult(d.getId(), cost);\n    }\n}",
+    "problemsToIdentify": [
+      "Validation — changes when business rules change",
+      "Pricing — changes when cost model changes",
+      "Persistence — changes when data model changes",
+      "Event publishing — changes when event schema or topic changes",
+      "Notification — changes when channels change",
+      "Analytics — changes when tracking requirements change",
+      "Testing requires 6+ mocks for any scenario"
+    ],
+    "refactoredCode": "@Component class RouteValidator { void validate(DeliveryRequest req) {...} }\n@Component class DeliveryPricingCalculator { BigDecimal calculate(DeliveryRequest req) {...} }\n@Component class LogisticsEventPublisher { void publishCreated(Delivery d) {...} }\n@Component class DriverNotifier { void notifyNewDelivery(Delivery d) {...} }\n@Component class DeliveryMetrics { void trackCreated(Delivery d) {...} }\n\n@Service\npublic class DeliveryService {\n    private final RouteValidator validator;\n    private final DeliveryPricingCalculator pricing;\n    private final DeliveryRepository repository;\n    private final LogisticsEventPublisher events;\n    private final DriverNotifier notifier;\n    private final DeliveryMetrics metrics;\n\n    public DeliveryResult processDelivery(DeliveryRequest req) {\n        validator.validate(req);\n        BigDecimal cost = pricing.calculate(req);\n        Delivery d = repository.save(Delivery.create(req, cost));\n        events.publishCreated(d);\n        notifier.notifyNewDelivery(d);\n        metrics.trackCreated(d);\n        return new DeliveryResult(d.getId(), cost);\n    }\n}",
+    "explain": "The orchestrator delegates. Each component owns one responsibility and can be tested, modified or replaced independently. Pricing formula changes? Only DeliveryPricingCalculator changes.",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-srp-design-01",
+    "type": "DESIGN_DECISION",
+    "subtopic": "SOLID — SRP",
+    "difficulty": "senior",
+    "mission": "A colleague says \"your RouteValidator only has one method — is a separate class really needed?\"",
+    "options": [
+      {
+        "id": "a",
+        "label": "Inline validation back into the service",
+        "desc": "Put the 3 validation checks directly in processDelivery(). Fewer files."
+      },
+      {
+        "id": "b",
+        "label": "Keep as separate class",
+        "desc": "RouteValidator grows as rules grow. It is testable independently and changes for different reasons than pricing."
+      },
+      {
+        "id": "c",
+        "label": "Make it a private method in the service",
+        "desc": "private void validateRoute(req) in the same class. Grouped but not extracted."
+      }
+    ],
+    "bestChoice": "b",
+    "explanation": {
+      "a": {
+        "pros": [
+          "Fewer classes",
+          "Visible in one place"
+        ],
+        "cons": [
+          "Mixes concerns again",
+          "When rules grow, service grows",
+          "Testing validation requires full service setup"
+        ],
+        "verdict": "Acceptable only if validation is truly trivial AND will never grow."
+      },
+      "b": {
+        "pros": [
+          "Independent testability",
+          "Clear ownership",
+          "Grows independently",
+          "Reusable if other services need same validation"
+        ],
+        "cons": [
+          "One more file",
+          "Might seem overkill for 3 lines today"
+        ],
+        "verdict": "Correct long-term choice. Route validation rules WILL grow in logistics — distance limits, weight restrictions, time windows, forbidden zones."
+      },
+      "c": {
+        "pros": [
+          "Grouped logically",
+          "No extra file"
+        ],
+        "cons": [
+          "Still coupled to service lifecycle",
+          "Cannot reuse",
+          "Testing requires full service"
+        ],
+        "verdict": "Temporary compromise. Acceptable as a stepping stone but will need extraction as complexity grows."
+      }
+    },
+    "nuance": "In logistics, route validation rules multiply rapidly — time windows, capacity limits, hazmat restrictions, road closures. A separate validator today prevents a 200-line method tomorrow. The question is not \"is it small now?\" but \"will it grow?\"",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-srp-pick-01",
+    "type": "PICK_INVALID",
+    "subtopic": "SOLID — SRP",
+    "difficulty": "intermediate",
+    "mission": "Which class <strong>violates Single Responsibility</strong>?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "@Service\nclass DeliveryPricingCalculator {\n  BigDecimal calculate(DeliveryRequest req) {\n    // only pricing logic\n  }\n}",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "@Service\nclass TruckService {\n  void assignDriver(Truck t, Driver d) {...}\n  void calculateFuelCost(Truck t) {...}\n  void generateMaintenanceReport(Truck t) {...}\n  void sendGpsUpdate(Truck t) {...}\n  byte[] exportToPdf(Truck t) {...}\n}",
+        "valid": false
+      },
+      {
+        "id": "c",
+        "code": "@Component\nclass LogisticsEventPublisher {\n  void publishDeliveryCreated(Delivery d) {...}\n  void publishDeliveryCancelled(Delivery d) {...}\n}",
+        "valid": true
+      }
+    ],
+    "answer": "b",
+    "explain": "TruckService does 5 unrelated things: driver assignment, fuel calculation, maintenance reporting, GPS tracking, PDF export. Each changes for a different reason. Split into: DriverAssignmentService, FuelCalculator, MaintenanceReporter, GpsTracker, TruckExporter.",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-ocp-oral-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "SOLID — OCP",
+    "difficulty": "senior",
+    "question": "How do you make a system extensible without modifying existing code?",
+    "interviewerIntent": "Assess understanding of extension points and when to introduce them.",
+    "shortAnswer": "I use interfaces and polymorphism to create extension points where variability exists. New behavior is added by creating new implementations — not by modifying the stable orchestration code. But I only create extension points where variation is real, not speculative.",
+    "modelAnswer": "Context: In logistics, new notification channels, delivery types and integration partners appear regularly.\n\nProblem: Every new notification channel (email → SMS → push → Slack → webhook) required modifying a central dispatcher method. Each modification risked breaking existing channels.\n\nDecision: I introduced a NotificationHandler interface with supportedType() and send() methods. Each channel is an independent implementation. The dispatcher discovers all implementations via Spring and delegates. Adding a new channel means creating one class — zero changes to existing code.\n\nResult: The last three notification channels were added by junior developers who never touched the dispatcher. Each channel is independently testable. The dispatcher is stable since its creation.\n\nTrade-off: I apply OCP where variability is REAL — not speculatively. If something changed once in two years, a switch statement is fine. If it changes every sprint, an extension point pays off immediately.",
+    "senaiExample": "Document generators in SGN3: adding diploma generation required one new class implementing DocumentGenerator. The orchestration service was untouched.",
+    "reweExample": "NEO platform plugins: new communication modules can be added without modifying the platform core — classic plug-and-play OCP.",
+    "keyPoints": [
+      "Extension points where variation is real",
+      "New behavior = new class, not modifying existing",
+      "Polymorphism is the primary mechanism",
+      "Do not over-predict — add extension points when variation appears"
+    ],
+    "mistakesToAvoid": [
+      "Claiming every method should be extensible",
+      "Not giving a concrete example",
+      "Ignoring the cost of premature extension points"
+    ],
+    "followUps": [
+      {
+        "question": "How does the NEO platform apply OCP?",
+        "answerHint": "Plug-and-play modules implement a common CommunicationPlugin interface. The platform discovers and executes them without modification."
+      },
+      {
+        "question": "Is modifying existing code always a violation?",
+        "answerHint": "No. Bug fixes and clarifications are fine. OCP violation is when ADDING new behavior forces changes to existing stable code."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "extension point",
+        "meaning": "local do código projetado para aceitar novos comportamentos",
+        "example": "The NotificationHandler interface is an extension point — new channels plug in without modifying existing code."
+      },
+      {
+        "term": "plug-and-play",
+        "meaning": "componentes que podem ser adicionados sem configuração manual",
+        "example": "Spring discovers @Component implementations automatically — true plug-and-play extensibility."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I explained OCP with a concrete extension point example",
+        "weight": 3
+      },
+      {
+        "criterion": "I showed how new behavior is added without modifying existing code",
+        "weight": 3
+      },
+      {
+        "criterion": "I mentioned when NOT to create extension points",
+        "weight": 2
+      },
+      {
+        "criterion": "I connected to the NEO plug-and-play architecture",
+        "weight": 2
+      }
+    ],
+    "topic": "solid"
+  },
+  {
+    "id": "solid-ocp-refactor-01",
+    "type": "CODE_REFACTOR",
+    "subtopic": "SOLID — OCP",
+    "difficulty": "intermediate",
+    "mission": "This <strong>event processor</strong> must be modified every time a new logistics event type is added. Make it open for extension.",
+    "code": "@Service\npublic class LogisticsEventProcessor {\n    public void process(LogisticsEvent event) {\n        switch (event.getType()) {\n            case DELIVERY_PLANNED: handleDeliveryPlanned(event); break;\n            case TRUCK_DEPARTED: handleTruckDeparted(event); break;\n            case WAREHOUSE_ARRIVAL: handleWarehouseArrival(event); break;\n            case DELIVERY_COMPLETED: handleDeliveryCompleted(event); break;\n            // TODO: add ROUTE_CHANGED, DELIVERY_DELAYED...\n        }\n    }\n    private void handleDeliveryPlanned(LogisticsEvent e) { /* 40 lines */ }\n    private void handleTruckDeparted(LogisticsEvent e) { /* 35 lines */ }\n    // ... each handler is 30-50 lines\n}",
+    "problemsToIdentify": [
+      "Adding a new event type requires modifying this class",
+      "All handler logic mixed in one file (400+ lines)",
+      "Cannot test one handler without the others",
+      "Risk of breaking existing handlers when adding new ones"
+    ],
+    "refactoredCode": "public interface LogisticsEventHandler {\n    EventType supportedType();\n    void handle(LogisticsEvent event);\n}\n\n@Component\npublic class DeliveryPlannedHandler implements LogisticsEventHandler {\n    public EventType supportedType() { return EventType.DELIVERY_PLANNED; }\n    public void handle(LogisticsEvent event) { /* delivery planned logic */ }\n}\n\n@Component\npublic class TruckDepartedHandler implements LogisticsEventHandler {\n    public EventType supportedType() { return EventType.TRUCK_DEPARTED; }\n    public void handle(LogisticsEvent event) { /* truck departed logic */ }\n}\n\n@Service\npublic class LogisticsEventProcessor {\n    private final Map<EventType, LogisticsEventHandler> handlers;\n\n    public LogisticsEventProcessor(List<LogisticsEventHandler> handlers) {\n        this.handlers = handlers.stream()\n            .collect(Collectors.toMap(LogisticsEventHandler::supportedType, Function.identity()));\n    }\n\n    public void process(LogisticsEvent event) {\n        LogisticsEventHandler handler = handlers.get(event.getType());\n        if (handler == null) throw new UnsupportedOperationException(\"No handler for: \" + event.getType());\n        handler.handle(event);\n    }\n}",
+    "explain": "The processor is now CLOSED for modification (never changes) but OPEN for extension (new handler = new class). Adding ROUTE_CHANGED means creating RouteChangedHandler — zero changes to the processor. Spring discovers it automatically.",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-ocp-followup-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "SOLID — OCP",
+    "difficulty": "senior",
+    "scenario": "The interviewer challenges your OCP example.",
+    "questions": [
+      {
+        "q": "What if you have only 2 event types — is this overkill?",
+        "hint": "For 2 stable types, a switch is fine. OCP pays off at 4+ types, especially if they grow regularly (every sprint)."
+      },
+      {
+        "q": "How does Spring discover new handlers?",
+        "hint": "@Component on the new class + component scanning. Spring auto-collects all beans implementing the interface."
+      },
+      {
+        "q": "What about event ordering — does this affect handler design?",
+        "hint": "Each handler should be stateless and idempotent. Ordering is a Kafka partition concern, not a handler concern."
+      },
+      {
+        "q": "How would this relate to Kafka consumers?",
+        "hint": "The LogisticsEventProcessor could be called from a Kafka @KafkaListener. The listener deserializes, the processor dispatches to the right handler."
+      }
+    ],
+    "topic": "solid",
+    "question": "The interviewer challenges your OCP example.",
+    "answer": "**Q: What if you have only 2 event types — is this overkill?**\nFor 2 stable types, a switch is fine. OCP pays off at 4+ types, especially if they grow regularly (every sprint).\n\n**Q: How does Spring discover new handlers?**\n@Component on the new class + component scanning. Spring auto-collects all beans implementing the interface.\n\n**Q: What about event ordering — does this affect handler design?**\nEach handler should be stateless and idempotent. Ordering is a Kafka partition concern, not a handler concern.\n\n**Q: How would this relate to Kafka consumers?**\nThe LogisticsEventProcessor could be called from a Kafka @KafkaListener. The listener deserializes, the processor dispatches to the right handler."
+  },
+  {
+    "id": "solid-ocp-fill-01",
+    "type": "FILL_BLANK",
+    "subtopic": "SOLID — OCP",
+    "difficulty": "basic",
+    "mission": "Complete the code so new delivery types can be added <strong>without modifying</strong> the calculator.",
+    "code": "public interface DeliveryPricingStrategy {\n    DeliveryType _____();\n    BigDecimal calculate(Order order);\n}",
+    "blank": "_____",
+    "choices": [
+      "supportedType",
+      "getName",
+      "getClass",
+      "toString"
+    ],
+    "answer": "supportedType",
+    "explain": "supportedType() identifies which delivery type this strategy handles. The service builds a map from type → strategy. Adding \"drone delivery\" pricing means one new class implementing this interface — the service never changes. This is OCP in action.",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-lsp-oral-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "SOLID — LSP",
+    "difficulty": "intermediate",
+    "question": "What does Liskov Substitution mean in practical terms?",
+    "interviewerIntent": "Test whether the candidate can identify LSP violations in real code, not just state the academic definition.",
+    "shortAnswer": "A subtype must preserve the expectations of the parent type. If client code needs to check which subtype it received, or if an overridden method throws UnsupportedOperationException, the hierarchy is probably incorrect.",
+    "modelAnswer": "Context: LSP means any code expecting a parent type should work correctly with any subtype without special handling.\n\nProblem: I encountered a ReadOnlyRepository extending GenericRepository. It overrode save(), update() and delete() to throw UnsupportedOperationException. Any service with a GenericRepository dependency that called save() would unexpectedly fail if it received the read-only variant.\n\nDecision: I split the contract — ReadRepository (findById, findAll) and WriteRepository (save, delete). Services that only read depend on ReadRepository. Services that write depend on WriteRepository. No surprises.\n\nResult: No method throws UnsupportedOperationException. Every implementation fulfills its entire contract. Client code never needs to check \"which type did I get?\"\n\nTrade-off: More interfaces. But each interface is a promise that every implementation keeps. That is the essence of LSP — reliable contracts.",
+    "senaiExample": "In SGN3, we separated read-only DAOs from full repositories to avoid services accidentally calling write operations on read-only views.",
+    "reweExample": "A FullDeliveryRepository vs ReadOnlyDeliveryView — reporting services only need read access, operational services need write access. Neither breaks the other's contract.",
+    "keyPoints": [
+      "Subtype must honor parent contract completely",
+      "UnsupportedOperationException is a red flag",
+      "Interface segregation often fixes LSP violations",
+      "Client should not need to check subtype"
+    ],
+    "mistakesToAvoid": [
+      "Only giving the Square/Rectangle example",
+      "Not connecting to real code decisions",
+      "Confusing LSP with simple inheritance"
+    ],
+    "followUps": [
+      {
+        "question": "Is throwing UnsupportedOperationException always wrong?",
+        "answerHint": "In a method inherited from a contract the client expects to work — yes, it is an LSP violation. In an explicitly optional operation (like Collection.add on unmodifiable) — it is documented behavior."
+      },
+      {
+        "question": "How does this relate to interface segregation?",
+        "answerHint": "Often the fix for LSP violation IS segregating the interface. Split the fat interface into parts that each subtype can fully implement."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "contract",
+        "meaning": "promessa que a interface faz aos clientes",
+        "example": "If the contract promises save() works, every implementation must honor it."
+      },
+      {
+        "term": "substitutability",
+        "meaning": "capacidade de trocar implementação sem quebrar comportamento",
+        "example": "LSP guarantees substitutability — any Repository implementation works wherever Repository is expected."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I explained LSP as honoring the parent contract",
+        "weight": 3
+      },
+      {
+        "criterion": "I gave a real violation example",
+        "weight": 3
+      },
+      {
+        "criterion": "I showed how to fix it (interface segregation)",
+        "weight": 2
+      },
+      {
+        "criterion": "I mentioned UnsupportedOperationException as a red flag",
+        "weight": 2
+      }
+    ],
+    "topic": "solid"
+  },
+  {
+    "id": "solid-lsp-pick-01",
+    "type": "PICK_INVALID",
+    "subtopic": "SOLID — LSP",
+    "difficulty": "intermediate",
+    "mission": "Which implementation <strong>violates LSP</strong>?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "interface DeliveryTracker {\n  Location getCurrentLocation(String id);\n}\nclass GpsTracker implements DeliveryTracker {\n  Location getCurrentLocation(String id) {\n    return gpsService.locate(id);\n  }\n}",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "interface DeliveryTracker {\n  Location getCurrentLocation(String id);\n}\nclass WarehouseTracker implements DeliveryTracker {\n  Location getCurrentLocation(String id) {\n    throw new UnsupportedOperationException(\n      \"Warehouse items don't move\");\n  }\n}",
+        "valid": false
+      },
+      {
+        "id": "c",
+        "code": "interface DeliveryTracker {\n  Location getCurrentLocation(String id);\n}\nclass EstimatedTracker implements DeliveryTracker {\n  Location getCurrentLocation(String id) {\n    return estimateFromRoute(id);\n  }\n}",
+        "valid": true
+      }
+    ],
+    "answer": "b",
+    "explain": "WarehouseTracker violates LSP — the contract promises getCurrentLocation() works, but this implementation throws UnsupportedOperationException. Code expecting a DeliveryTracker will break. Fix: warehouse items should NOT implement DeliveryTracker, or use a separate StaticLocationProvider interface.",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-lsp-compare-01",
+    "type": "COMPARE_CONCEPTS",
+    "subtopic": "SOLID — LSP",
+    "difficulty": "intermediate",
+    "mission": "Compare: <strong>Liskov Substitution (LSP)</strong> vs <strong>Interface Segregation (ISP)</strong>",
+    "conceptA": {
+      "name": "LSP",
+      "definition": "Every subtype must fully satisfy the parent contract. If it cannot, the hierarchy is wrong."
+    },
+    "conceptB": {
+      "name": "ISP",
+      "definition": "Clients should not depend on methods they do not use. Split fat interfaces into focused ones."
+    },
+    "keyDifference": "LSP detects the PROBLEM (subtype cannot fulfill contract). ISP provides the SOLUTION (split the interface so each implementation can fulfill its portion completely).",
+    "javaExample": "LSP violation: ReadOnlyRepo extends FullRepo but throws on save(). ISP fix: split into ReadRepository and WriteRepository. Now ReadOnlyRepo implements only ReadRepository — no broken contract.",
+    "interviewAnswer": "LSP and ISP work together. LSP identifies when a subtype cannot fulfill a contract. ISP fixes it by splitting the interface into parts each implementor can fully satisfy. In practice, when I see UnsupportedOperationException in an override, I know I need interface segregation.",
+    "topic": "solid",
+    "answer": "**LSP:** Every subtype must fully satisfy the parent contract. If it cannot, the hierarchy is wrong.\n\n**ISP:** Clients should not depend on methods they do not use. Split fat interfaces into focused ones.\n\n\n**Key Difference:** LSP detects the PROBLEM (subtype cannot fulfill contract). ISP provides the SOLUTION (split the interface so each implementation can fulfill its portion completely)."
+  },
+  {
+    "id": "solid-lsp-predict-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "SOLID — LSP",
+    "difficulty": "basic",
+    "mission": "What happens when this code processes a <strong>WarehouseDelivery</strong>?",
+    "code": "interface DeliveryProcessor {\n    void process(Delivery d);\n}\nclass StandardProcessor implements DeliveryProcessor {\n    public void process(Delivery d) { System.out.println(\"Processed\"); }\n}\nclass WarehouseProcessor implements DeliveryProcessor {\n    public void process(Delivery d) {\n        throw new UnsupportedOperationException(\"Not supported\");\n    }\n}\n\nDeliveryProcessor p = new WarehouseProcessor();\np.process(delivery);",
+    "choices": [
+      "Processed",
+      "UnsupportedOperationException",
+      "Compile Error",
+      "null"
+    ],
+    "answer": "UnsupportedOperationException",
+    "explain": "This is an LSP violation in action. The client expects process() to work on ANY DeliveryProcessor. WarehouseProcessor breaks that expectation. In a real system, this would crash at runtime — exactly the kind of bug LSP prevents when followed correctly.",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-isp-oral-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "SOLID — ISP",
+    "difficulty": "intermediate",
+    "question": "What is a fat interface and why is it problematic?",
+    "interviewerIntent": "Test understanding of interface design and its impact on implementing classes.",
+    "shortAnswer": "A fat interface forces implementors to provide methods they do not need. Clients depend on operations they never call. This creates coupling, makes implementations harder to write, and leads to UnsupportedOperationException hacks.",
+    "modelAnswer": "Context: In logistics, different services need different capabilities from the transport platform.\n\nProblem: A single LogisticsPlatform interface had methods for planning, tracking, invoicing, reporting and driver management. A service that only tracked deliveries had to depend on the entire interface — including methods it never used. Implementations that only handled tracking had to stub out invoicing methods.\n\nDecision: I split into focused interfaces: DeliveryPlanner, DeliveryTracker, InvoiceGenerator, ReportService, DriverManager. Each service depends only on the interface matching its needs.\n\nResult: Implementations are smaller and complete. No UnsupportedOperationException. When the tracking API changes, only DeliveryTracker implementations are affected — not invoicing code.\n\nTrade-off: More interfaces. But each one is cohesive and every implementation is a complete, honest fulfillment of its contract.",
+    "senaiExample": "We had a GenericCrudRepository interface with 15 methods. Some entities only needed read. Splitting into ReadRepository and WriteRepository var read-only services avoid depending on methods they never call.",
+    "reweExample": "NEO platform: CommunicationPlugin should not force every plugin to implement scheduling, analytics and archiving. Split by capability: Sendable, Schedulable, Archivable.",
+    "keyPoints": [
+      "Fat interface = too many unrelated methods",
+      "Implementors forced to stub methods they cannot support",
+      "Clients coupled to operations they never use",
+      "Fix: split by business capability"
+    ],
+    "mistakesToAvoid": [
+      "Not giving a practical example",
+      "Confusing ISP with just having small interfaces",
+      "Not explaining the concrete harm of fat interfaces"
+    ],
+    "followUps": [
+      {
+        "question": "How granular should interfaces be?",
+        "answerHint": "Group by cohesion — related operations that change together. Not one method per interface (too granular) but not 15 unrelated methods (too fat)."
+      },
+      {
+        "question": "Can a class implement multiple small interfaces?",
+        "answerHint": "Yes — that is the point. A full-featured service can implement DeliveryPlanner AND DeliveryTracker if it does both. But a tracking-only service implements only DeliveryTracker."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "fat interface",
+        "meaning": "interface com muitos métodos não relacionados que força implementações a prover o que não suportam",
+        "example": "A LogisticsPlatform with 15 methods is a fat interface — no single implementation needs all of them."
+      },
+      {
+        "term": "role interface",
+        "meaning": "interface pequena que representa uma capacidade específica",
+        "example": "Trackable, Invoiceable, Plannable are role interfaces — each represents one capability."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I explained why fat interfaces cause problems",
+        "weight": 3
+      },
+      {
+        "criterion": "I gave a real example of splitting an interface",
+        "weight": 3
+      },
+      {
+        "criterion": "I mentioned the benefit for implementors",
+        "weight": 2
+      },
+      {
+        "criterion": "I gave guidance on granularity",
+        "weight": 2
+      }
+    ],
+    "topic": "solid"
+  },
+  {
+    "id": "solid-isp-refactor-01",
+    "type": "CODE_REFACTOR",
+    "subtopic": "SOLID — ISP",
+    "difficulty": "intermediate",
+    "mission": "Split this <strong>fat interface</strong> into cohesive role interfaces.",
+    "code": "public interface LogisticsPlatform {\n    void planDelivery(DeliveryRequest req);\n    void cancelDelivery(String deliveryId);\n    Location trackDelivery(String deliveryId);\n    List<Location> getRouteHistory(String deliveryId);\n    Invoice generateInvoice(String deliveryId);\n    byte[] exportReport(ReportCriteria criteria);\n    void assignDriver(String deliveryId, String driverId);\n    void notifyDriver(String driverId, String message);\n    void publishEvent(LogisticsEvent event);\n    Map<String, Object> getAnalytics(String period);\n}",
+    "problemsToIdentify": [
+      "Planning + tracking + invoicing + reporting + driver management + events + analytics in ONE interface",
+      "A tracking service must implement invoicing methods it does not support",
+      "Any change to any capability forces all implementations to update",
+      "Impossible to implement partially — all or nothing"
+    ],
+    "refactoredCode": "public interface DeliveryPlanner {\n    void planDelivery(DeliveryRequest req);\n    void cancelDelivery(String deliveryId);\n}\n\npublic interface DeliveryTracker {\n    Location trackDelivery(String deliveryId);\n    List<Location> getRouteHistory(String deliveryId);\n}\n\npublic interface InvoiceService {\n    Invoice generateInvoice(String deliveryId);\n}\n\npublic interface DriverCommunication {\n    void assignDriver(String deliveryId, String driverId);\n    void notifyDriver(String driverId, String message);\n}\n\npublic interface LogisticsEventPublisher {\n    void publishEvent(LogisticsEvent event);\n}\n\n// A full-featured service can implement multiple:\n@Service\npublic class FullLogisticsService implements DeliveryPlanner, DeliveryTracker, DriverCommunication {\n    // implements only what it genuinely supports\n}",
+    "explain": "Each interface groups related operations. A tracking microservice implements only DeliveryTracker. A reporting service only needs InvoiceService. Changes to tracking do not force changes in invoicing code. Classes implement only what they genuinely support.",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-isp-design-01",
+    "type": "DESIGN_DECISION",
+    "subtopic": "SOLID — ISP",
+    "difficulty": "senior",
+    "mission": "The NEO platform needs a <strong>CommunicationPlugin</strong> interface. How granular?",
+    "options": [
+      {
+        "id": "a",
+        "label": "One fat interface with all capabilities",
+        "desc": "CommunicationPlugin with send(), schedule(), archive(), getAnalytics(), retry()."
+      },
+      {
+        "id": "b",
+        "label": "One base + optional capability interfaces",
+        "desc": "CommunicationPlugin (send only) + Schedulable + Archivable + AnalyticsCapable as optional mix-ins."
+      },
+      {
+        "id": "c",
+        "label": "One method per interface",
+        "desc": "Sendable, Schedulable, Archivable, Analyzable, Retryable — each with one method."
+      }
+    ],
+    "bestChoice": "b",
+    "explanation": {
+      "a": {
+        "pros": [
+          "Simple to understand",
+          "One type to check"
+        ],
+        "cons": [
+          "Plugins must implement scheduling/archiving even if irrelevant",
+          "Forces UnsupportedOperationException stubs"
+        ],
+        "verdict": "Fat interface problem. Simple email plugins should not need archiving logic."
+      },
+      "b": {
+        "pros": [
+          "Core contract minimal (send)",
+          "Plugins opt-in to capabilities",
+          "Platform checks instanceof for optional features",
+          "New capabilities added without breaking existing plugins"
+        ],
+        "cons": [
+          "instanceof checks in platform code",
+          "Slightly more complex discovery"
+        ],
+        "verdict": "Best for plug-and-play architectures. Core is tiny, extensions are opt-in. This IS the plugin pattern."
+      },
+      "c": {
+        "pros": [
+          "Maximum granularity"
+        ],
+        "cons": [
+          "Too many interfaces",
+          "Hard to understand a plugin's full capability",
+          "Excessive fragmentation"
+        ],
+        "verdict": "Too granular. Group related operations (schedule + reschedule = Schedulable) rather than one per method."
+      }
+    },
+    "nuance": "For a plug-and-play platform like NEO, the base interface should be minimal (what ALL plugins must do). Additional capabilities are opt-in interfaces. The platform checks what a plugin supports and adapts its behavior accordingly.",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-isp-fill-01",
+    "type": "FILL_BLANK",
+    "subtopic": "SOLID — ISP",
+    "difficulty": "basic",
+    "mission": "A tracking-only service should depend on the <strong>smallest interface</strong> that covers its needs.",
+    "code": "public class TrackingDashboard {\n    private final _____ tracker;\n    // Only needs: trackDelivery() and getRouteHistory()\n}",
+    "blank": "_____",
+    "choices": [
+      "DeliveryTracker",
+      "LogisticsPlatform",
+      "Object",
+      "DeliveryPlanner"
+    ],
+    "answer": "DeliveryTracker",
+    "explain": "ISP: depend on the smallest interface that provides what you need. TrackingDashboard only needs tracking methods — depending on the full LogisticsPlatform would couple it to planning, invoicing and driver methods it never uses.",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-dip-oral-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "SOLID — DIP",
+    "difficulty": "senior",
+    "question": "What is the difference between Dependency Inversion and Dependency Injection?",
+    "interviewerIntent": "Test precise understanding of the principle vs the mechanism.",
+    "shortAnswer": "Dependency Inversion is a DESIGN PRINCIPLE: high-level modules depend on abstractions, not concrete implementations. Dependency Injection is a TECHNIQUE: providing those dependencies from outside rather than creating them internally. DI enables DIP but they are distinct concepts.",
+    "modelAnswer": "Context: These terms are often confused in interviews. They are related but operate at different levels.\n\nDependency Inversion Principle (DIP): High-level business rules should not depend on low-level infrastructure details. Both should depend on abstractions. Example: DeliveryService depends on LogisticsEventPublisher (abstraction), not on KafkaTemplate directly.\n\nDependency Injection (DI): A technique where dependencies are provided to a class from outside (constructor, setter, or container). Example: Spring injects KafkaLogisticsEventPublisher into DeliveryService at runtime.\n\nRelationship: DIP defines WHAT the dependency should look like (abstraction). DI handles HOW it is provided. You can have DI without DIP (injecting a concrete class directly). You can have DIP without DI (manual factory providing the abstraction).\n\nCDI in my current environment is a DI container. Spring is another. Both enable DIP by injecting implementations of interfaces at runtime.",
+    "senaiExample": "CDI @Inject provides Repository implementations to Business classes. The Business depends on the Repository interface (DIP). CDI provides the JPA implementation at runtime (DI).",
+    "reweExample": "Spring injects KafkaLogisticsEventPublisher when the service depends on LogisticsEventPublisher interface. Business code never imports Kafka classes.",
+    "keyPoints": [
+      "DIP = principle (depend on abstractions)",
+      "DI = technique (provide dependencies externally)",
+      "CDI and Spring are DI containers",
+      "You can have DI without DIP",
+      "DIP protects business rules from infrastructure changes"
+    ],
+    "mistakesToAvoid": [
+      "Saying they are the same thing",
+      "Confusing the principle with the framework",
+      "Not mentioning that DI enables DIP"
+    ],
+    "followUps": [
+      {
+        "question": "Can you have DI without DIP?",
+        "answerHint": "Yes. @Inject KafkaTemplate directly is DI without DIP — you still depend on concrete infrastructure."
+      },
+      {
+        "question": "Why should business rules not depend on Kafka?",
+        "answerHint": "If you swap Kafka for RabbitMQ, business code should not change. The abstraction (EventPublisher) isolates from the messaging technology."
+      },
+      {
+        "question": "How do you apply DIP in your current CDI environment?",
+        "answerHint": "Business classes @Inject interfaces. Implementations are @ApplicationScoped beans. CDI resolves at runtime. Same pattern as Spring."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "high-level module",
+        "meaning": "código de regras de negócio, orquestração",
+        "example": "DeliveryService is a high-level module — it expresses business workflows."
+      },
+      {
+        "term": "low-level module",
+        "meaning": "código de infraestrutura, acesso a dados, messaging",
+        "example": "KafkaLogisticsEventPublisher is low-level — it handles Kafka protocol details."
+      },
+      {
+        "term": "inversion",
+        "meaning": "inverter a direção da dependência — infra depende da abstração definida pelo negócio",
+        "example": "The interface is defined in the business layer. Infrastructure implements it. This INVERTS the traditional dependency direction."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I clearly distinguished DIP (principle) from DI (technique)",
+        "weight": 3
+      },
+      {
+        "criterion": "I explained that DI enables DIP but they differ",
+        "weight": 3
+      },
+      {
+        "criterion": "I connected CDI to Spring as equivalent DI containers",
+        "weight": 2
+      },
+      {
+        "criterion": "I showed why business should not depend on Kafka directly",
+        "weight": 2
+      }
+    ],
+    "topic": "solid"
+  },
+  {
+    "id": "solid-dip-refactor-01",
+    "type": "CODE_REFACTOR",
+    "subtopic": "SOLID — DIP",
+    "difficulty": "intermediate",
+    "mission": "This service <strong>depends directly on infrastructure</strong>. Apply Dependency Inversion.",
+    "code": "@Service\npublic class DeliveryService {\n    private final KafkaTemplate<String, LogisticsEvent> kafkaTemplate;\n    private final JdbcTemplate jdbcTemplate;\n    private final RestTemplate restTemplate;\n\n    public void planDelivery(DeliveryRequest req) {\n        // Business logic mixed with infrastructure\n        jdbcTemplate.update(\"INSERT INTO deliveries ...\", req.getRouteId());\n        kafkaTemplate.send(\"delivery-planned\", req.getId(), toEvent(req));\n        restTemplate.postForObject(\"http://driver-service/notify\", req, Void.class);\n    }\n}",
+    "problemsToIdentify": [
+      "Business code directly uses KafkaTemplate (infrastructure detail)",
+      "JdbcTemplate exposes SQL in business layer",
+      "RestTemplate couples to HTTP protocol",
+      "Changing messaging tech requires changing business code",
+      "Cannot test without Kafka, DB and HTTP running"
+    ],
+    "refactoredCode": "// Abstractions defined in business layer:\npublic interface DeliveryRepository { void save(Delivery d); }\npublic interface LogisticsEventPublisher { void publishDeliveryPlanned(Delivery d); }\npublic interface DriverNotificationGateway { void notifyNewDelivery(Delivery d); }\n\n// Business depends only on abstractions:\n@Service\npublic class DeliveryService {\n    private final DeliveryRepository repository;\n    private final LogisticsEventPublisher events;\n    private final DriverNotificationGateway driverGateway;\n\n    public void planDelivery(DeliveryRequest req) {\n        Delivery d = Delivery.from(req);\n        repository.save(d);\n        events.publishDeliveryPlanned(d);\n        driverGateway.notifyNewDelivery(d);\n    }\n}\n\n// Infrastructure implementations (separate package/module):\n@Component class JpaDeliveryRepository implements DeliveryRepository { ... }\n@Component class KafkaEventPublisher implements LogisticsEventPublisher { ... }\n@Component class HttpDriverGateway implements DriverNotificationGateway { ... }",
+    "explain": "Business code never imports Kafka, JDBC or HTTP classes. Abstractions live in the business layer. Infrastructure implements them. Swapping Kafka for RabbitMQ means changing ONE class (KafkaEventPublisher → RabbitEventPublisher). Business code: zero changes.",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-dip-design-01",
+    "type": "DESIGN_DECISION",
+    "subtopic": "SOLID — DIP",
+    "difficulty": "senior",
+    "mission": "LogisticsEventPublisher interface — which module should <strong>own</strong> it?",
+    "options": [
+      {
+        "id": "a",
+        "label": "Infrastructure module (next to Kafka implementation)",
+        "desc": "The interface lives with its implementation in the infrastructure/kafka package."
+      },
+      {
+        "id": "b",
+        "label": "Business/domain module",
+        "desc": "The interface lives in the business layer, defined by what the business needs. Infrastructure implements it."
+      },
+      {
+        "id": "c",
+        "label": "Shared/common module",
+        "desc": "A separate shared library containing all interfaces, used by both business and infrastructure."
+      }
+    ],
+    "bestChoice": "b",
+    "explanation": {
+      "a": {
+        "pros": [
+          "Implementation and interface together"
+        ],
+        "cons": [
+          "Business module must depend on infrastructure module to see the interface",
+          "Inverts the wrong way — business depends on infra package"
+        ],
+        "verdict": "Violates DIP. The dependency direction goes wrong: business → infrastructure."
+      },
+      "b": {
+        "pros": [
+          "Business defines what it needs",
+          "Infrastructure depends on business (correct direction)",
+          "Business never imports infrastructure packages",
+          "True inversion of control"
+        ],
+        "cons": [
+          "Must be careful about interface granularity in business layer"
+        ],
+        "verdict": "Correct DIP application. The business layer OWNS the abstraction. Infrastructure provides the implementation."
+      },
+      "c": {
+        "pros": [
+          "Decoupled from both layers"
+        ],
+        "cons": [
+          "Extra module to manage",
+          "Both depend on shared — creates circular dependency risk",
+          "Unclear ownership"
+        ],
+        "verdict": "Acceptable in very large systems with multiple services. For a single app, business layer ownership is cleaner."
+      }
+    },
+    "nuance": "DIP is about the DIRECTION of dependencies. The business layer defines what abstractions it needs. Infrastructure layers depend on the business layer to implement those abstractions. This is the \"inversion\" — infrastructure points toward business, not the other way.",
+    "topic": "solid"
+  },
+  {
+    "id": "solid-dip-compare-01",
+    "type": "COMPARE_CONCEPTS",
+    "subtopic": "SOLID — DIP",
+    "difficulty": "intermediate",
+    "mission": "Compare: <strong>Dependency Injection (DI)</strong> vs <strong>Dependency Inversion Principle (DIP)</strong>",
+    "conceptA": {
+      "name": "Dependency Injection (DI)",
+      "definition": "A technique where dependencies are provided from outside the class (via constructor, setter, or container). Spring and CDI are DI frameworks."
+    },
+    "conceptB": {
+      "name": "Dependency Inversion Principle (DIP)",
+      "definition": "A design principle: high-level modules should depend on abstractions, not on low-level details. Both layers depend on the abstraction."
+    },
+    "keyDifference": "DI = HOW dependencies are provided (mechanism). DIP = WHAT shape dependencies should have (principle). You can inject a concrete KafkaTemplate (DI without DIP) or inject a LogisticsEventPublisher interface (DI + DIP).",
+    "javaExample": "DI only: @Inject KafkaTemplate<> kafka — injected but still coupled to Kafka. DI + DIP: @Inject LogisticsEventPublisher publisher — injected AND abstracted. Business never knows about Kafka.",
+    "interviewAnswer": "DI is the mechanism — Spring or CDI providing dependencies externally. DIP is the principle — making those dependencies be abstractions owned by the business layer. I use both together: Spring injects implementations of interfaces that my business code defines. This means changing from Kafka to RabbitMQ affects only infrastructure code, never business logic.",
+    "topic": "solid",
+    "answer": "**Dependency Injection (DI):** A technique where dependencies are provided from outside the class (via constructor, setter, or container). Spring and CDI are DI frameworks.\n\n**Dependency Inversion Principle (DIP):** A design principle: high-level modules should depend on abstractions, not on low-level details. Both layers depend on the abstraction.\n\n\n**Key Difference:** DI = HOW dependencies are provided (mechanism). DIP = WHAT shape dependencies should have (principle). You can inject a concrete KafkaTemplate (DI without DIP) or inject a LogisticsEventPublisher interface (DI + DIP)."
+  }
+]

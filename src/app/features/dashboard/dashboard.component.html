@@ -1,0 +1,49 @@
+<div class="product-grid">
+  @for (topic of allTopics(); track topic.id) {
+    <a
+      class="product-card"
+      [routerLink]="['/topic', topic.id]"
+    >
+      <div class="product-card__image">
+        <img
+          class="product-card__img"
+          [src]="getImageUrl(topic.id)"
+          [alt]="topic.name"
+          loading="lazy"
+        />
+
+        @if (getMastery(topic.id) > 0) {
+          <span class="product-card__discount">
+            {{ getMastery(topic.id) }}%
+          </span>
+        }
+      </div>
+
+      <h3 class="product-card__name">
+        {{ topic.name }}
+      </h3>
+
+      <p class="product-card__desc">
+        {{ topic.desc }}
+      </p>
+
+      <div class="product-card__footer">
+        @if (getExerciseCount(topic.id) > 0) {
+          <span class="product-card__tag">Aktion</span>
+
+          <span class="product-card__price">
+            {{ getExerciseCount(topic.id) }}
+          </span>
+        } @else {
+          <span class="product-card__tag product-card__tag--gray">
+            Theory
+          </span>
+
+          <span class="product-card__price product-card__price--dark">
+            {{ getTheoryCount(topic.id) }}
+          </span>
+        }
+      </div>
+    </a>
+  }
+</div>

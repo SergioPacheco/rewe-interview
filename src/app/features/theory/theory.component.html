@@ -1,0 +1,196 @@
+<div class="topic-view">
+  <!-- Tabs: Learn / Practice -->
+  <div class="tabs">
+    @if (hasTheory()) {
+      <button class="tabs__btn" [class.tabs__btn--active]="activeTab() === 'learn'" (click)="switchTab('learn')">📖 Learn</button>
+    }
+    @if (hasExercises()) {
+      <button class="tabs__btn" [class.tabs__btn--active]="activeTab() === 'practice'" (click)="switchTab('practice')">🎯 Practice</button>
+    }
+  </div>
+
+  <!-- ==================== LEARN TAB ==================== -->
+  @if (activeTab() === 'learn' && hasTheory()) {
+    <div class="learn-content">
+      @if (visibleChapters().length > 0) {
+        @for (chapter of visibleChapters(); track chapter.id) {
+          <article class="chapter">
+            <h2 class="chapter__title">{{ chapter.title }}</h2>
+            @for (section of chapter.sections; track section.heading) {
+              <section class="chapter__section">
+                <h3 class="chapter__heading">{{ section.heading }}</h3>
+                <div class="chapter__body" [innerHTML]="section.content"></div>
+              </section>
+            }
+          </article>
+        }
+      } @else if (loading()) {
+        <div class="empty">Loading content...</div>
+      }
+    </div>
+  }
+
+  <!-- ==================== PRACTICE TAB ==================== -->
+  @if (activeTab() === 'practice' || (!hasTheory() && hasExercises())) {
+    <div class="practice-content">
+
+      <!-- Active session with current question -->
+      @if (engine.isActive() && !engine.isComplete()) {
+        <div class="practice-progress">
+          <span>{{ engine.questionNumber() }} / {{ engine.totalInSession() }}</span>
+          @if (engine.combo() > 1) { <span class="combo">🔥 {{ engine.combo() }}x</span> }
+        </div>
+
+        @if (currentQuestion(); as q) {
+        <div class="question-card">
+          <!-- Type + difficulty badge -->
+          <div class="question-card__meta">
+            <span class="badge badge--type">{{ q.type }}</span>
+            @if (q.difficulty) { <span class="badge badge--diff">{{ q.difficulty }}</span> }
+            @if (q.subtopic) { <span class="badge badge--sub">{{ q.subtopic }}</span> }
+          </div>
+
+          <!-- Question / Prompt -->
+          @if (getField(q, 'question')) {
+            <h2 class="question-card__question">"{{ getField(q, 'question') }}"</h2>
+          } @else {
+            <h2 class="question-card__question" [innerHTML]="getPrompt(q)"></h2>
+          }
+
+          <!-- Context -->
+          @if (getField(q, 'context')) {
+            <p class="question-card__intent"><em>Context:</em> {{ getField(q, 'context') }}</p>
+          }
+          @if (getField(q, 'interviewerIntent')) {
+            <p class="question-card__intent"><em>Interviewer wants:</em> {{ getField(q, 'interviewerIntent') }}</p>
+          }
+
+          <!-- Code block -->
+          @if (getField(q, 'code')) {
+            <pre class="question-card__code"><code [innerHTML]="getField(q, 'code') | syntaxHighlight"></code></pre>
+          }
+
+          <!-- Hint -->
+          <p class="question-card__hint">🎙️ Think about your answer, then reveal below.</p>
+
+          <!-- REVEAL BUTTON -->
+          @if (!showResult()) {
+            <button class="btn btn--primary" (click)="revealAnswer()">Show Answer</button>
+          } @else {
+            <!-- Answer -->
+            @if (getField(q, 'answer')) {
+              <details class="reveal-panel" open>
+                <summary>✅ Answer</summary>
+                <div class="reveal-panel__text" [innerHTML]="getField(q, 'answer') | markdown"></div>
+              </details>
+            }
+
+            <!-- Short answer -->
+            @if (getField(q, 'shortAnswer')) {
+              <details class="reveal-panel" open>
+                <summary>⚡ 30-Second Answer</summary>
+                <div class="reveal-panel__text" [innerHTML]="getField(q, 'shortAnswer') | markdown"></div>
+              </details>
+            }
+
+            <!-- Model answer -->
+            @if (getField(q, 'modelAnswer')) {
+              <details class="reveal-panel">
+                <summary>📝 Full Model Answer</summary>
+                <div class="reveal-panel__text" [innerHTML]="getField(q, 'modelAnswer') | markdown"></div>
+              </details>
+            }
+
+            <!-- Explanation -->
+            @if (getField(q, 'explain') || getField(q, 'explanation')) {
+              <details class="reveal-panel" open>
+                <summary>💡 Explanation</summary>
+                <div class="reveal-panel__text" [innerHTML]="(getField(q, 'explain') || getField(q, 'explanation')) | markdown"></div>
+              </details>
+            }
+
+            <!-- Nuance -->
+            @if (getField(q, 'nuance')) {
+              <details class="reveal-panel">
+                <summary>🧠 Nuance</summary>
+                <div class="reveal-panel__text" [innerHTML]="getField(q, 'nuance') | markdown"></div>
+              </details>
+            }
+
+            <!-- Choices as reference -->
+            @if (getChoices(q).length > 0) {
+              <details class="reveal-panel">
+                <summary>📋 All Options</summary>
+                <div class="reveal-panel__choices">
+                  @for (choice of getChoices(q); track $index) {
+                    <div class="choice-item" [class.choice-item--correct]="isCorrectChoice(q, choice)">
+                      {{ isCorrectChoice(q, choice) ? '✅' : '○' }} {{ choice }}
+                    </div>
+                  }
+                </div>
+              </details>
+            }
+
+            <!-- Key points -->
+            @if (getFieldArray(q, 'keyPoints').length > 0) {
+              <details class="reveal-panel">
+                <summary>🎯 Key Points</summary>
+                <ul class="reveal-panel__list">
+                  @for (p of getFieldArray(q, 'keyPoints'); track $index) { <li>{{ p }}</li> }
+                </ul>
+              </details>
+            }
+
+            <!-- Follow-ups -->
+            @if (getFieldArray(q, 'followUps').length > 0) {
+              <details class="reveal-panel">
+                <summary>💬 Follow-up Questions</summary>
+                <div class="reveal-panel__followups">
+                  @for (fu of getFieldArray(q, 'followUps'); track $index) {
+                    <div class="followup-item">
+                      <p class="followup-item__q">{{ $index + 1 }}. "{{ fu.question || fu }}"</p>
+                      @if (fu.answerHint) {
+                        <details><summary>Show hint</summary><p class="followup-item__hint">{{ fu.answerHint }}</p></details>
+                      }
+                    </div>
+                  }
+                </div>
+              </details>
+            }
+
+            <!-- Mistakes -->
+            @if (getFieldArray(q, 'mistakesToAvoid').length > 0) {
+              <details class="reveal-panel">
+                <summary>⚠️ Mistakes to Avoid</summary>
+                <ul class="reveal-panel__list reveal-panel__list--red">
+                  @for (m of getFieldArray(q, 'mistakesToAvoid'); track $index) { <li>❌ {{ m }}</li> }
+                </ul>
+              </details>
+            }
+
+            <button class="btn btn--primary" (click)="nextQuestion()">NEXT →</button>
+          }
+        </div>
+        }
+      }
+
+      <!-- Session complete -->
+      @if (engine.isComplete()) {
+        <div class="practice-complete">
+          <h3>🎉 Session Complete!</h3>
+          <p>{{ engine.sessionAccuracy() }}% accuracy · Best combo: {{ engine.maxCombo() }}x</p>
+          <button class="btn btn--primary" (click)="restartPractice()">Practice Again</button>
+        </div>
+      }
+
+      <!-- Empty state: engine not active and not complete -->
+      @if (!engine.isActive() && !engine.isComplete()) {
+        <div class="practice-complete">
+          <h3>🎯 Ready to Practice</h3>
+          <p>{{ exerciseCount() }} questions available</p>
+          <button class="btn btn--primary" (click)="startEngine()">Start Practice</button>
+        </div>
+      }
+    </div>
+  }
+</div>

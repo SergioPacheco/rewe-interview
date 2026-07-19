@@ -1,0 +1,268 @@
+[
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "TRAB Context",
+    "question": "What do you understand about the TRAB team?",
+    "context": "🏷️ CONFIRMED — The interviewer wants to see you researched the role.",
+    "modelAnswer": "30-SECOND ANSWER:\n\"TRAB is a product team within REWE Digital's Transport Logistics division. The name comes from Transportabwicklung — transport execution. The team of about 10 people develops software to manage distribution of goods to over 5,700 supermarkets in Germany, serving warehouse staff, drivers, and logistics planners.\"\n\n90-SECOND ANSWER:\n\"TRAB handles the operational execution of transport — not abstract route planning, but the actual management of deliveries: loading, dispatch, tracking, communication, delay handling, and delivery confirmation. The team builds backend services, APIs, integrations with internal and external systems, interfaces, and analytical tools. They use Java, Kotlin, Spring Boot, Kafka, Kubernetes, and Angular. They also participate in the NEO project — a unified communication platform with modular, plug-and-play architecture.\n\nWhat excites me is the combination: operationally critical systems (5,700 stores depend on this), modern tech stack, and the challenge of both maintaining existing systems and building new capabilities.\"\n\nCONNECTION TO EXPERIENCE:\n\"I've worked on a similarly critical system — an education management platform serving 300+ units. I understand what it means when your software can't go down because real operations depend on it every day.\"",
+    "followUp": "What specifically about transport logistics interests you as an engineer?",
+    "tags": [
+      "trab",
+      "context",
+      "research"
+    ],
+    "topic": "rewe",
+    "id": "rewe-trab-context-01"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "basic",
+    "subtopic": "Domain Knowledge",
+    "question": "What does Transportabwicklung mean?",
+    "context": "🏷️ CONFIRMED — Shows you researched the German term and understand the domain.",
+    "modelAnswer": "\"Transportabwicklung translates to transport execution or transport processing. It refers to the operational management of transport — the execution phase, not the planning phase.\n\nThe distinction matters:\n\nTRANSPORT PLANNING: route definition, capacity allocation, scheduling, vehicle selection\nTRANSPORT EXECUTION: loading, dispatch, real-time tracking, status updates, delay handling, communication, arrival confirmation, delivery completion\n\nTRAB sits in the execution space — making sure that once a transport is planned, it actually happens correctly, on time, and all stakeholders are informed throughout the process.\"",
+    "followUp": "Can you give an example of a technical challenge specific to transport execution vs planning?",
+    "tags": [
+      "domain",
+      "vocabulary",
+      "german"
+    ],
+    "topic": "rewe",
+    "id": "rewe-domain-knowledge-02"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Users",
+    "question": "Which users might depend on a transport execution system?",
+    "context": "🏷️ REASONABLE INFERENCE — based on vacancy + domain knowledge",
+    "modelAnswer": "\"Based on the vacancy, three user groups are confirmed: warehouse staff, drivers, and logistics planners. I'd also expect external carriers as a fourth group.\n\nEach has different needs:\n\nWAREHOUSE STAFF: view what needs to be loaded, confirm preparation, register departures, handle exceptions when loads aren't ready\n\nDRIVERS: receive instructions, know their route, report status (departed, delayed, arrived), confirm delivery, register problems\n\nLOGISTICS PLANNERS: the operational command center — monitor all active transports, see delays in real-time, prioritize exceptions, make decisions like rerouting or reassigning\n\nEXTERNAL CARRIERS: receive transport orders, provide status updates, confirm completion — all through system integration rather than manual communication\n\nThe technical challenge is that each group needs different information at different times, often in real-time, and the system must handle the reality that any of these actors might be offline or delayed in reporting.\"",
+    "followUp": "How would you design an API that serves all these different user types?",
+    "tags": [
+      "users",
+      "stakeholders",
+      "domain"
+    ],
+    "topic": "rewe",
+    "id": "rewe-users-03"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Business Problem",
+    "question": "What problems might the TRAB team be solving?",
+    "context": "🏷️ REASONABLE INFERENCE",
+    "modelAnswer": "\"The core problem I infer: TRAB needs to guarantee that transport information is distributed reliably, quickly, and traceably between warehouses, drivers, planners, stores, external carriers, and internal systems.\n\nThe difficulties are probably:\n• Different systems using different formats and protocols\n• Communication fragmented across many channels\n• Difficulty tracking a delivery end-to-end across all actors\n• Legacy integrations that are brittle or tightly coupled\n• Growing number of carriers and systems to integrate\n• Events that can be duplicated, delayed, or arrive out of order\n• External systems that become unavailable\n• Need for 24/7 operation (deliveries happen every day)\n• Need to modernize without disrupting current operations\n\nThis is why they need Kafka (reliable event distribution), Spring Boot (modern services), Kubernetes (availability), and NEO (unified communication). Each technology addresses a specific aspect of this problem.\"",
+    "followUp": "If you joined the team, how would you learn the domain quickly?",
+    "tags": [
+      "problem",
+      "domain",
+      "analysis"
+    ],
+    "topic": "rewe",
+    "id": "rewe-business-problem-04"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "senior",
+    "subtopic": "Modernization",
+    "question": "Do you expect the work to involve existing systems or new projects?",
+    "options": [
+      {
+        "label": "A) Mostly maintenance of existing systems",
+        "description": "Bug fixes, performance improvements, minor features on established code."
+      },
+      {
+        "label": "B) Mostly greenfield new projects",
+        "description": "Building from scratch with modern stack, no legacy constraints."
+      },
+      {
+        "label": "C) Hybrid: existing systems + modernization + new services",
+        "description": "Maintaining production, modernizing gradually, and building new capabilities."
+      }
+    ],
+    "bestOption": 2,
+    "explanation": "The vacancy clearly suggests a HYBRID context:\n\nEvidence for existing systems:\n• \"Development AND maintenance of applications\"\n• Transport system for 5,700 stores doesn't start from zero\n\nEvidence for new development:\n• NEO is described as a new platform\n• Modern stack (Spring Boot, Kafka, K8s) suggests evolution\n• Hiring suggests expanding capabilities\n\nThe mature answer:\n\"I expect a mix. The team probably maintains critical production systems while simultaneously modernizing them and building new capabilities like NEO. This is actually what I find most interesting — the challenge of evolving a running system is harder than building from scratch, and requires more engineering judgment.\"",
+    "tags": [
+      "legacy",
+      "greenfield",
+      "hybrid"
+    ],
+    "topic": "rewe",
+    "id": "rewe-modernization-05"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Modernization",
+    "question": "How would you modernize a critical transport platform?",
+    "context": "🏷️ Direct interview question about approach",
+    "modelAnswer": "\"I would avoid a big-bang replacement. A transport system serving 5,700 stores cannot be taken offline for migration.\n\nMy approach:\n1. UNDERSTAND first — map the existing system's boundaries, data flows, and integration points\n2. IDENTIFY stable business boundaries — areas that can be isolated without breaking the whole\n3. STRANGLE gradually — expose controlled APIs or events around legacy components\n4. BUILD alongside — new services consume from and produce to both old and new systems\n5. MIGRATE incrementally — move one domain/capability at a time\n6. OBSERVE continuously — metrics comparing old vs new behavior\n7. ROLLBACK readily — ability to fall back to legacy if new service has issues\n\nDuring transition, critical concerns:\n• Data consistency between old and new\n• Observability (can I see what's happening in both systems?)\n• Reconciliation (are old and new producing same results?)\n• Feature flags (gradually shift traffic)\n\nMy experience: I've worked on a 2000-table monolith that needed gradual modernization. I know the discipline of changing a running system without breaking it.\"",
+    "followUp": "What's the hardest part of a strangler pattern migration?",
+    "tags": [
+      "modernization",
+      "strangler",
+      "strategy"
+    ],
+    "topic": "rewe",
+    "id": "rewe-modernization-06"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "NEO",
+    "question": "What do you know about NEO?",
+    "context": "🏷️ CONFIRMED + UNKNOWN — Show what you know AND what you don't assume.",
+    "modelAnswer": "\"From the vacancy, I know that:\n✅ NEO is a unified communication platform\n✅ It integrates into the REWE Digital ecosystem\n✅ It uses modular, plug-and-play architecture\n✅ The TRAB team participates in it\n\nWhat I DON'T know (and would ask):\n❓ What NEO stands for\n❓ Whether it's in production or under development\n❓ Which users interact with it directly\n❓ Whether plugins are Java components, independent services, or event consumers\n❓ Whether it's specific to logistics or shared across REWE domains\n❓ Whether it uses Kafka internally\n\nMy interpretation: NEO seems designed to solve the fragmented communication problem in logistics — providing a standard way for systems to send, route, and deliver communications to different actors (drivers, warehouses, planners, external carriers) without each system building its own integration.\"",
+    "followUp": "What would you need to learn in the first week to contribute to NEO?",
+    "tags": [
+      "neo",
+      "honesty",
+      "research"
+    ],
+    "topic": "rewe",
+    "id": "rewe-neo-07"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "NEO",
+    "question": "What information about NEO is still unknown?",
+    "context": "🏷️ Shows intellectual honesty and senior thinking.",
+    "modelAnswer": "\"Several important things I cannot determine from the vacancy:\n\nARCHITECTURE:\n• Is it a single service or multiple services?\n• Does it use Kafka topics internally?\n• How do plugins discover and register themselves?\n• Is the modular boundary at code level (Maven modules) or deployment level (microservices)?\n\nSCOPE:\n• Does NEO handle only logistics communication or is it organization-wide?\n• Does it communicate directly with end users (drivers) or only with their applications?\n• Is it owned by TRAB alone or shared with other teams?\n\nSTATUS:\n• Is it in production, MVP, or design phase?\n• How mature is the plugin ecosystem?\n• What's the adoption level?\n\nThese unknowns are precisely why I'd ask targeted questions in the interview — it shows I've thought deeply about the role rather than just accepting surface-level descriptions.\"",
+    "followUp": "How do you typically handle technical uncertainty when starting a new project?",
+    "tags": [
+      "neo",
+      "unknown",
+      "intellectual-honesty"
+    ],
+    "topic": "rewe",
+    "id": "rewe-neo-08"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Architecture",
+    "question": "What does unified communication platform mean?",
+    "context": "🏷️ INTERVIEW HYPOTHESIS — your interpretation",
+    "modelAnswer": "\"A unified communication platform centralizes how different systems send information to different recipients through different channels — with consistent contracts, routing, security, retry logic, and monitoring.\n\nInstead of each system building its own integration to each recipient:\n❌ Delivery-service → custom SMS to driver\n❌ Warehouse-service → custom email to planner\n❌ Tracking-service → custom webhook to carrier\n\nYou have ONE platform:\n✅ Any system → Communication Request → NEO → routes to correct channel\n\nNEO would handle: routing (who gets what), transformation (adapt format per channel), delivery (actually send), retry (handle failures), audit (record everything), monitoring (track delivery rates).\n\nThe 'unified' part means: one API contract, one security model, one retry policy framework, one monitoring dashboard — regardless of whether the message goes to a driver's app, a warehouse screen, or an external carrier's API.\"",
+    "followUp": "What are the risks of centralizing all communication through one platform?",
+    "tags": [
+      "neo",
+      "architecture",
+      "unified"
+    ],
+    "topic": "rewe",
+    "id": "rewe-architecture-09"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Architecture",
+    "question": "What does modular architecture mean?",
+    "context": "🏷️ General architectural concept",
+    "modelAnswer": "\"Modular architecture divides a system into components with clear responsibilities, explicit contracts, and low coupling.\n\nFor a communication platform, possible modules:\n• Communication Core (receives requests, orchestrates)\n• Routing Module (decides which channel/recipient)\n• Template Module (formats messages per channel)\n• Driver Integration Module\n• Warehouse Module\n• External Carrier Module\n• Audit Module (records everything)\n• Retry Module (handles failures)\n• Monitoring Module\n\nEach module can be developed, tested, and evolved independently as long as contracts between modules remain stable.\n\nBenefits: maintainability, testability, independent evolution, clear ownership\nRisks: over-abstraction, hidden dependencies, unclear contracts, debugging across modules\n\nThe key question for NEO is: are these modules within ONE deployment unit (modular monolith) or are they independent services? The vacancy says 'modular' — which is different from 'microservices.' You can be modular inside a single application.\"",
+    "followUp": "When would you split a module into its own service?",
+    "tags": [
+      "modular",
+      "architecture",
+      "decisions"
+    ],
+    "topic": "rewe",
+    "id": "rewe-architecture-10"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Architecture",
+    "question": "What does plug-and-play architecture mean?",
+    "context": "🏷️ Core architectural concept for the TRAB role",
+    "modelAnswer": "\"Plug-and-play means new modules, integrations, or providers can be added with minimal changes to the core system. The core depends on stable contracts, not concrete implementations.\n\nSHORT: 'Adding a new carrier should not require modifying the communication engine.'\n\nLEVELS of implementation:\n\n1. IN-PROCESS (Spring beans):\n   Interface + implementations discovered by DI. New plugin = new @Component class.\n\n2. DISTRIBUTED (microservices):\n   Independent services that consume events or register via service discovery.\n\n3. CONFIGURATION-DRIVEN:\n   Feature flags, declarative routing rules, dynamic plugin enablement.\n\nWHY a Java interface isn't enough:\nA production platform also needs: plugin discovery, lifecycle management, configuration, security, version compatibility, failure isolation, monitoring, and deployment strategies.\n\nIMPORTANT: I wouldn't assume which model NEO uses without asking the team. 'Plug-and-play' could mean any of these levels — or a combination.\"",
+    "followUp": "How would you test a new plugin before enabling it in production?",
+    "tags": [
+      "plug-and-play",
+      "extensibility",
+      "design"
+    ],
+    "topic": "rewe",
+    "id": "rewe-architecture-11"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "senior",
+    "subtopic": "Architecture",
+    "question": "Would you implement plugins as Spring beans or independent services?",
+    "options": [
+      {
+        "label": "A) Always Spring beans (in-process)",
+        "description": "All plugins live in the same deployment. Simple, fast, transactional."
+      },
+      {
+        "label": "B) Always independent services",
+        "description": "Each plugin is its own microservice. Full isolation, independent scaling."
+      },
+      {
+        "label": "C) Depends on requirements — evaluate case by case",
+        "description": "Choose based on scale, ownership, failure isolation, deployment frequency, and latency."
+      }
+    ],
+    "bestOption": 2,
+    "explanation": "\"I would not decide before understanding scale, ownership, failure isolation, deployment frequency, and latency requirements.\"\n\nIN-PROCESS (Spring beans) when:\n• Plugin is simple and stable\n• Same team owns it\n• Low latency required\n• Shared transaction needed\n• Few changes after initial development\n\nINDEPENDENT SERVICE when:\n• Different team owns it\n• Needs independent scaling\n• Failure must NOT affect core\n• Different deployment cadence\n• Different technology needed\n\nEVENT CONSUMER (Kafka) when:\n• Asynchronous processing is acceptable\n• Multiple consumers need the same event\n• Replay/audit required\n• Consumer may be temporarily offline\n\nFor REWE NEO: likely a COMBINATION. Critical routing might be in-process for speed. External carrier integrations might be independent services for isolation. Audit might be a Kafka consumer for reliability.",
+    "tags": [
+      "plugins",
+      "microservices",
+      "trade-offs"
+    ],
+    "topic": "rewe",
+    "id": "rewe-architecture-12"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "System Design",
+    "question": "How would you design a logistics communication platform?",
+    "context": "🏷️ INTERVIEW HYPOTHESIS — system design exercise",
+    "modelAnswer": "ARCHITECTURE:\n\nCommunication API (REST) ← systems submit requests\n       │\n       ▼\nValidation Layer (schema, auth, dedup)\n       │\n       ▼\nRouting Engine (determines recipient + channel)\n       │\n       ├─── Direct Plugins (low-latency, in-process)\n       │         │── Driver App Plugin\n       │         └── Warehouse Dashboard Plugin\n       │\n       └─── Kafka Events (async, reliable)\n                 │── External Carrier Consumer\n                 │── Audit Consumer\n                 └── Analytics Consumer\n\nKEY DESIGN DECISIONS:\n• Idempotency: every request has unique ID, dedup before processing\n• Retry: DLT for failed deliveries, exponential backoff\n• Isolation: slow plugin can't block others (timeout + circuit breaker)\n• Audit: every communication recorded with full trace\n• Security: per-plugin authentication, encrypted payloads\n• Monitoring: delivery rate, failure rate, latency per channel\n• Scaling: Kafka partitioned by recipient type, consumers scale independently\n\nTRADE-OFFS:\n• Centralized routing = single point of failure (mitigate with replicas + Kafka buffering)\n• Plugin abstraction = some loss of flexibility (mitigate with escape hatches for edge cases)\n• Async delivery = eventual consistency (mitigate with status tracking + reconciliation)",
+    "followUp": "What would you monitor to know this platform is healthy?",
+    "tags": [
+      "system-design",
+      "neo",
+      "architecture"
+    ],
+    "topic": "rewe",
+    "id": "rewe-system-design-13"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Resilience",
+    "question": "How would you prevent NEO from becoming a single point of failure?",
+    "context": "🏷️ Critical thinking about platform risk",
+    "modelAnswer": "\"A unified communication platform is by definition a critical dependency. If it goes down, ALL communication stops. Here's how I'd mitigate:\n\n1. HIGH AVAILABILITY:\n   • Multiple replicas behind load balancer\n   • Health checks (liveness + readiness probes)\n   • Rolling deployments with zero downtime\n   • Multi-AZ deployment\n\n2. KAFKA AS BUFFER:\n   • If NEO core is temporarily down, events accumulate in Kafka\n   • When it recovers, it processes the backlog\n   • No messages lost during brief outages\n\n3. LOCAL FALLBACK:\n   • Critical communications (driver dispatch) could have a direct fallback path\n   • If NEO is unreachable for >X seconds, system sends directly\n\n4. GRACEFUL DEGRADATION:\n   • If one plugin fails (external carrier), others continue working\n   • Circuit breaker per plugin — don't var one slow integration affect all\n\n5. MONITORING & ALERTS:\n   • Consumer lag → NEO is falling behind\n   • Error rate per channel → specific integration problem\n   • End-to-end delivery time → overall health\n\n6. DISASTER RECOVERY:\n   • Kafka retention ensures no data loss\n   • Stateless services can be restarted on any node\n   • Database replication for any persistent state\"",
+    "followUp": "What's the difference between high availability and disaster recovery?",
+    "tags": [
+      "resilience",
+      "availability",
+      "spof"
+    ],
+    "topic": "rewe",
+    "id": "rewe-resilience-14"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Interview Strategy",
+    "question": "Which questions would you ask the TRAB team?",
+    "context": "🏷️ Shows genuine interest and senior thinking",
+    "modelAnswer": "\"I've prepared questions that help me understand what I'd actually be working on:\n\nABOUT THE DOMAIN:\n• Which part of the transport lifecycle does TRAB own?\n• What are the main applications the team maintains today?\n• Are current systems mainly modern, legacy, or hybrid?\n\nABOUT NEO:\n• Is NEO already in production or still being developed?\n• What does 'plug-and-play' mean technically — Spring beans, services, or event consumers?\n• Is Kafka part of the NEO architecture?\n• Which teams use NEO besides TRAB?\n\nABOUT THE WORK:\n• What would I work on in the first month?\n• What's the biggest technical challenge the team faces today?\n• How is work divided between Spain and Germany?\n• What does success look like after six months?\n\nABOUT OPERATIONS:\n• Which integrations are most critical?\n• Which failures have the greatest operational impact?\n• Does the team own production support?\n\nThese aren't just politeness questions — each one helps me validate my understanding of the role and demonstrates that I've thought seriously about the context.\"",
+    "followUp": "Based on what you learn, how would you adjust your onboarding plan?",
+    "tags": [
+      "questions",
+      "interview",
+      "preparation"
+    ],
+    "topic": "rewe",
+    "id": "rewe-interview-strategy-15"
+  }
+]

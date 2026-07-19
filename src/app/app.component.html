@@ -1,0 +1,176 @@
+<div class="rewe-app">
+  <header class="rewe-header">
+    <!-- Linha vermelha -->
+    <div class="topbar">
+      <div class="topbar__inner">
+        <div class="topbar__left">
+          <button
+            class="topbar__menu-btn"
+            type="button"
+            (click)="toggleSidebar()"
+            aria-label="Abrir menu"
+          >
+            ☰
+          </button>
+
+          <a routerLink="/" class="topbar__logo" aria-label="REWE Interview Prep">
+            <img src="/assets/rewe-logo.svg" alt="REWE" class="topbar__logo-img" />
+          </a>
+
+          <nav class="topbar__nav" aria-label="Navegação principal">
+            <a
+              routerLink="/"
+              class="topbar__link"
+              routerLinkActive="topbar__link--active"
+              [routerLinkActiveOptions]="{ exact: true }"
+            >
+              Interview Prep
+            </a>
+
+            <a
+              routerLink="/resume"
+              class="topbar__link"
+              routerLinkActive="topbar__link--active"
+            >
+              Resume
+            </a>
+
+            <a
+              routerLink="/topic/portfolio"
+              class="topbar__link"
+              routerLinkActive="topbar__link--active"
+            >
+              Portfolio
+            </a>
+          </nav>
+        </div>
+
+        <div class="topbar__right">
+          <span class="topbar__stat">⚡ {{ progressService.totalXp() }} XP</span>
+          <span class="topbar__stat">🔥 {{ progressService.streak() }}d streak</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Linha branca -->
+    <div class="catbar">
+      <div class="catbar__inner">
+        <div class="catbar__search">
+          <input
+            class="catbar__search-input"
+            type="text"
+            placeholder="Topics, exercises or concepts"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearch($event)"
+          />
+          @if (searchQuery()) {
+            <button class="catbar__search-clear" (click)="onSearch('')" aria-label="Clear search">✕</button>
+          }
+          <svg class="catbar__search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M11 18C12.6664 18 14.1968 17.4177 15.3989 16.4455C15.4205 16.4746 15.4446 16.5026 15.471 16.529L18.471 19.529C18.7632 19.8212 19.2368 19.8212 19.529 19.529C19.8212 19.2368 19.8212 18.7632 19.529 18.471L16.529 15.471C16.5026 15.4446 16.4746 15.4205 16.4455 15.3989C17.4177 14.1968 18 12.6664 18 11C18 7.13401 14.866 4 11 4C7.13401 4 4 7.13401 4 11C4 14.866 7.13401 18 11 18ZM16.5037 11C16.5037 14.0396 14.0396 16.5037 11 16.5037C7.96036 16.5037 5.49625 14.0396 5.49625 11C5.49625 7.96036 7.96036 5.49625 11 5.49625C14.0396 5.49625 16.5037 7.96036 16.5037 11Z" fill="#676767"></path>
+          </svg>
+        </div>
+
+        <nav class="catbar__icons" aria-label="Atalhos">
+          <a
+            routerLink="/topic/oop"
+            class="catbar__item"
+            routerLinkActive="catbar__item--active"
+          >
+            <span class="catbar__icon" aria-hidden="true">🏗️</span>
+            <span class="catbar__label">OOP</span>
+          </a>
+
+          <a
+            routerLink="/topic/collections"
+            class="catbar__item"
+            routerLinkActive="catbar__item--active"
+          >
+            <span class="catbar__icon" aria-hidden="true">☕</span>
+            <span class="catbar__label">Java Core</span>
+          </a>
+
+          <a
+            routerLink="/topic/spring"
+            class="catbar__item"
+            routerLinkActive="catbar__item--active"
+          >
+            <span class="catbar__icon" aria-hidden="true">🌱</span>
+            <span class="catbar__label">Spring</span>
+          </a>
+
+          <a
+            routerLink="/topic/kafka"
+            class="catbar__item"
+            routerLinkActive="catbar__item--active"
+          >
+            <span class="catbar__icon" aria-hidden="true">✉️</span>
+            <span class="catbar__label">Kafka</span>
+          </a>
+
+          <a
+            routerLink="/topic/system-design"
+            class="catbar__item"
+            routerLinkActive="catbar__item--active"
+          >
+            <span class="catbar__icon" aria-hidden="true">🏢</span>
+            <span class="catbar__label">System Design</span>
+          </a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+<!-- ===== BODY: Sidebar + Content ===== -->
+<div class="rewe-body">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.sidebar--open]="sidebarOpen()">
+    <nav class="sidebar__nav">
+      @for (group of priorityGroups; track group.priority) {
+        <div class="sidebar__group">
+          @if (group.label) {
+            <h3 class="sidebar__group-label" [attr.data-priority]="group.priority">
+              {{ group.label }}
+            </h3>
+          }
+          @for (topic of getTopicsByPriority(group.priority); track topic.id) {
+            <div class="sidebar__topic">
+              <button
+                class="sidebar__item"
+                [class.sidebar__item--expanded]="expandedTopic() === topic.id"
+                (click)="toggleTopic(topic.id)"
+              >
+                <span class="sidebar__icon">{{ topic.icon }}</span>
+                <span class="sidebar__name">{{ topic.name }}</span>
+                <span class="sidebar__chevron" [class.sidebar__chevron--open]="expandedTopic() === topic.id">›</span>
+              </button>
+
+              @if (expandedTopic() === topic.id) {
+                <div class="sidebar__subtopics">
+                  @for (sub of topic.subtopics; track sub.id) {
+                    <a
+                      class="sidebar__subitem"
+                      [routerLink]="['/topic', topic.id]"
+                      [fragment]="sub.id"
+                      (click)="closeSidebarOnMobile()"
+                    >
+                      {{ sub.label }}
+                    </a>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <router-outlet />
+  </main>
+</div>
+
+</div>

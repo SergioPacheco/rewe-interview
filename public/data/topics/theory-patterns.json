@@ -1,0 +1,42 @@
+[
+  {
+    "id": "theory-patterns-strategy",
+    "title": "Strategy Pattern — Swappable Algorithms",
+    "sections": [
+      {
+        "heading": "What it solves",
+        "content": "When you have multiple ways to do the same thing and want to select at runtime without if/else chains.\n\n<img src=\"assets/solid/o.webp\" alt=\"Open/Closed — extend without modifying\" style=\"width:100%; max-width:300px; border-radius:8px; margin: 12px 0; display:block;\">\n\n<strong>REWE example:</strong> Route optimization can use different algorithms depending on constraints (fastest, cheapest, eco-friendly). Instead of a giant switch, each algorithm implements a common interface.\n\n<pre><code>// Strategy interface\npublic interface RouteStrategy {\n    Route calculate(List&lt;Stop&gt; stops, Constraints constraints);\n}\n\n// Concrete strategies\n@Component(\"fastest\")\npublic class FastestRouteStrategy implements RouteStrategy {\n    public Route calculate(List&lt;Stop&gt; stops, Constraints c) {\n        // Dijkstra with time weights\n    }\n}\n\n@Component(\"cheapest\")\npublic class CheapestRouteStrategy implements RouteStrategy {\n    public Route calculate(List&lt;Stop&gt; stops, Constraints c) {\n        // Minimize fuel cost + tolls\n    }\n}\n\n@Component(\"eco\")\npublic class EcoRouteStrategy implements RouteStrategy {\n    public Route calculate(List&lt;Stop&gt; stops, Constraints c) {\n        // Minimize CO2 emissions\n    }\n}\n\n// Context — selects strategy at runtime\n@Service\npublic class RouteService {\n    private final Map&lt;String, RouteStrategy&gt; strategies;\n\n    public RouteService(Map&lt;String, RouteStrategy&gt; strategies) {\n        this.strategies = strategies; // Spring injects all implementations!\n    }\n\n    public Route optimize(List&lt;Stop&gt; stops, String mode) {\n        RouteStrategy strategy = strategies.get(mode);\n        return strategy.calculate(stops, Constraints.defaults());\n    }\n}</code></pre>\n\n<strong>Adding a new algorithm = one new class. Zero changes to RouteService.</strong>"
+      }
+    ]
+  },
+  {
+    "id": "theory-patterns-factory",
+    "title": "Factory Pattern — Object Creation Logic",
+    "sections": [
+      {
+        "heading": "What it solves",
+        "content": "When object creation is complex or depends on runtime conditions. Centralizes the \"which class to instantiate\" decision.\n\n<pre><code>// Problem: scattered creation logic\nif (type.equals(\"STANDARD\")) {\n    delivery = new StandardDelivery(driver, route);\n} else if (type.equals(\"EXPRESS\")) {\n    delivery = new ExpressDelivery(driver, route, priorityFee);\n} else if (type.equals(\"SAME_DAY\")) {\n    delivery = new SameDayDelivery(driver, route, deadline);\n}\n\n// Solution: Factory\n@Component\npublic class DeliveryFactory {\n\n    public Delivery create(DeliveryType type, Driver driver, Route route) {\n        return switch (type) {\n            case STANDARD -> new StandardDelivery(driver, route);\n            case EXPRESS -> new ExpressDelivery(driver, route, calculatePriorityFee(route));\n            case SAME_DAY -> new SameDayDelivery(driver, route, calculateDeadline());\n        };\n    }\n}\n\n// Usage — clean and centralized\nDelivery delivery = deliveryFactory.create(request.getType(), driver, route);</code></pre>\n\n<strong>When to use:</strong>\n• Object creation involves conditional logic\n• You want to hide implementation classes from the caller\n• Creation requires external dependencies or calculations\n\n<strong>When NOT to use:</strong>\n• Simple `new ClassName()` — don't over-engineer"
+      }
+    ]
+  },
+  {
+    "id": "theory-patterns-observer",
+    "title": "Observer Pattern — Event Notification",
+    "sections": [
+      {
+        "heading": "What it solves",
+        "content": "When one event needs to trigger multiple reactions without the source knowing about the listeners.\n\n<pre><code>// In Spring Boot — ApplicationEvent (built-in observer)\npublic class DeliveryCompletedEvent extends ApplicationEvent {\n    private final Delivery delivery;\n    public DeliveryCompletedEvent(Object source, Delivery delivery) {\n        super(source);\n        this.delivery = delivery;\n    }\n}\n\n// Publisher (doesn't know who listens)\n@Service\npublic class DeliveryService {\n    private final ApplicationEventPublisher events;\n\n    public void complete(Long id) {\n        Delivery d = repo.findById(id).orElseThrow();\n        d.complete();\n        repo.save(d);\n        events.publishEvent(new DeliveryCompletedEvent(this, d));\n    }\n}\n\n// Listener 1 — billing\n@Component\npublic class BillingListener {\n    @EventListener\n    public void onDeliveryCompleted(DeliveryCompletedEvent e) {\n        invoiceService.createInvoice(e.getDelivery());\n    }\n}\n\n// Listener 2 — notification\n@Component\npublic class NotificationListener {\n    @EventListener\n    public void onDeliveryCompleted(DeliveryCompletedEvent e) {\n        smsService.notifyCustomer(e.getDelivery());\n    }\n}\n// Adding a new listener = one new class. Publisher unchanged.</code></pre>\n\n<strong>Spring vs Kafka for observer:</strong>\n• Spring @EventListener: within same JVM, same transaction context\n• Kafka: across services, persistent, replayable, independent failure"
+      }
+    ]
+  },
+  {
+    "id": "theory-patterns-builder",
+    "title": "Builder Pattern — Complex Object Construction",
+    "sections": [
+      {
+        "heading": "What it solves",
+        "content": "When an object has many optional parameters and telescoping constructors become unreadable.\n\n<pre><code>// Problem: constructor with 8 parameters\nnew Delivery(driverId, routeId, scheduledAt, priority, maxStops, vehicleType, notes, customerId);\n// Which parameter is which? Easy to swap two strings by mistake.\n\n// Solution: Builder\nDelivery delivery = Delivery.builder()\n    .driverId(\"D-42\")\n    .routeId(\"R-7\")\n    .scheduledAt(LocalDateTime.now().plusHours(2))\n    .priority(Priority.HIGH)\n    .maxStops(15)\n    .vehicleType(VehicleType.VAN)\n    .notes(\"Fragile items\")\n    .build();\n\n// Implementation (or use Lombok @Builder)\npublic class Delivery {\n    private final String driverId;\n    private final String routeId;\n    // ... all fields final\n\n    private Delivery(Builder builder) {\n        this.driverId = builder.driverId;\n        this.routeId = builder.routeId;\n        // ...\n    }\n\n    public static Builder builder() { return new Builder(); }\n\n    public static class Builder {\n        private String driverId;\n        private String routeId;\n        // ...\n        public Builder driverId(String id) { this.driverId = id; return this; }\n        public Builder routeId(String id) { this.routeId = id; return this; }\n        public Delivery build() { return new Delivery(this); }\n    }\n}</code></pre>\n\n<strong>In practice:</strong> Use Lombok's `@Builder` or Java records (for simple cases). Hand-write only when you need validation in `build()`."
+      }
+    ]
+  }
+]

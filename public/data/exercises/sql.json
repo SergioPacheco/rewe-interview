@@ -1,0 +1,366 @@
+[
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "JOIN behavior",
+    "mission": "A delivery has no driver assigned (driver_id IS NULL). What does this query return for that delivery?",
+    "code": "SELECT d.id, d.status, dr.name AS driver_name\nFROM delivery d\nINNER JOIN driver dr ON d.driver_id = dr.id\nWHERE d.status = 'PLANNED';\n\n-- delivery table: (id=1, status='PLANNED', driver_id=NULL)\n-- delivery table: (id=2, status='PLANNED', driver_id=42)\n-- driver table:   (id=42, name='Carlos')",
+    "choices": [
+      "Row for id=1 with driver_name=NULL, Row for id=2 with driver_name=Carlos",
+      "Only row for id=2 with driver_name=Carlos",
+      "Both rows, id=1 has empty driver_name",
+      "Error: NULL in JOIN condition"
+    ],
+    "answer": "Only row for id=2 with driver_name=Carlos",
+    "explain": "INNER JOIN excludes rows where the join condition doesn't match. NULL never equals anything (not even NULL), so delivery id=1 (driver_id=NULL) has no match in driver table and is excluded. Use LEFT JOIN to include deliveries without drivers.",
+    "topic": "sql",
+    "id": "sql-join-behavior-01"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Index Strategy",
+    "question": "Your most frequent query is: SELECT * FROM delivery WHERE status = 'ACTIVE' AND driver_id = ? ORDER BY scheduled_at. Table has 5 million rows, 200K active. What index?",
+    "options": [
+      {
+        "label": "A) CREATE INDEX idx ON delivery(status)",
+        "description": "Single column index on status."
+      },
+      {
+        "label": "B) CREATE INDEX idx ON delivery(driver_id, status, scheduled_at)",
+        "description": "Composite index covering all filter + sort columns."
+      },
+      {
+        "label": "C) CREATE INDEX idx ON delivery(status, driver_id, scheduled_at)",
+        "description": "Composite index with status first (higher selectivity for the constant)."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Option B (driver_id, status, scheduled_at) is optimal:\n\n**Why this order matters (leftmost prefix rule):**\n- driver_id first: equality condition, high cardinality (many distinct values)\n- status second: equality condition, filters within the driver's deliveries\n- scheduled_at third: used for ORDER BY (index already sorted!)\n\nThis index satisfies the WHERE AND ORDER BY in a single index scan — no sort needed.\n\n**Why NOT C (status first):**\n- status='ACTIVE' matches 200K rows (4% selectivity)\n- driver_id=? then filters to ~50 rows\n- Starting with the MORE selective column is better when both are equality\n\n**Why NOT A (status only):**\n- Returns 200K rows, then must filter by driver_id (table scan on those 200K)\n- Then must sort by scheduled_at (expensive)\n\n**Rule:** For composite indexes, put equality conditions first (in order of selectivity), then range/sort columns last.",
+    "tags": [
+      "indexes",
+      "composite",
+      "performance"
+    ],
+    "topic": "sql",
+    "id": "sql-index-strategy-02"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "EXPLAIN ANALYZE",
+    "question": "You run EXPLAIN ANALYZE and see \"Seq Scan on delivery (cost=0.00..45000.00 rows=5000000)\". What does this tell you and what do you do?",
+    "modelAnswer": "**What it means:**\n- Seq Scan = reading the ENTIRE table sequentially (no index used)\n- cost=45000 = estimated I/O cost (high)\n- rows=5000000 = scanning all 5 million rows\n\n**Why it's happening (likely causes):**\n1. No index exists for the WHERE clause columns\n2. Index exists but PostgreSQL chose seq scan because it estimates reading >5-10% of the table\n3. Statistics are outdated (run ANALYZE)\n4. Query uses a function on the indexed column (prevents index use)\n\n**What to do:**\n```sql\n-- 1. Check what indexes exist\n\\d delivery\n\n-- 2. Create appropriate index\nCREATE INDEX idx_delivery_status_driver ON delivery(status, driver_id);\n\n-- 3. Re-run EXPLAIN ANALYZE — should now show:\n-- Index Scan using idx_delivery_status_driver (cost=0.43..8.50 rows=50)\n\n-- 4. If index exists but not used:\nANALYZE delivery;  -- update statistics\n-- Or check: is the WHERE filtering >10% of rows? (Seq scan may be correct then)\n```\n\n**What to look for in EXPLAIN:**\n- Seq Scan on large table → probably needs index\n- Nested Loop with inner Seq Scan → missing index on join column\n- Sort (external merge) → consider index for ORDER BY\n- Rows estimate very different from actual → run ANALYZE",
+    "tags": [
+      "explain",
+      "seq-scan",
+      "diagnosis"
+    ],
+    "topic": "sql",
+    "id": "sql-explain-analyze-03"
+  },
+  {
+    "type": "CODE_REFACTOR",
+    "difficulty": "senior",
+    "subtopic": "N+1 Problem",
+    "question": "This code causes 101 queries. Identify the N+1 and fix it.",
+    "code": "@Transactional(readOnly = true)\npublic List<DeliveryDTO> findActiveDeliveries() {\n    List<Delivery> deliveries = deliveryRepo.findByStatus(ACTIVE); // 1 query\n\n    return deliveries.stream().map(d -> {\n        Driver driver = driverRepo.findById(d.getDriverId()).orElse(null); // N queries!\n        List<Stop> stops = stopRepo.findByDeliveryId(d.getId());          // N queries!\n        return new DeliveryDTO(d.getId(), d.getStatus(),\n            driver != null ? driver.getName() : \"Unassigned\",\n            stops.size());\n    }).toList();\n}\n// 100 deliveries = 1 + 100 + 100 = 201 queries!",
+    "problems": [
+      "N+1 on driverRepo.findById — one query per delivery for driver",
+      "N+1 on stopRepo.findByDeliveryId — one query per delivery for stops",
+      "Total: 1 + N + N = 201 queries for 100 deliveries",
+      "Each query has network roundtrip + connection pool overhead"
+    ],
+    "refactored": "// Solution 1: Single JOIN FETCH query\n@Query(\"\"\"\n    SELECT d FROM Delivery d\n    LEFT JOIN FETCH d.driver\n    LEFT JOIN FETCH d.stops\n    WHERE d.status = :status\n    \"\"\")\nList<Delivery> findActiveWithDriverAndStops(@Param(\"status\") DeliveryStatus status);\n\n// Solution 2: Batch fetch (if JOIN FETCH causes cartesian product)\n@Query(\"SELECT d FROM Delivery d LEFT JOIN FETCH d.driver WHERE d.status = :status\")\nList<Delivery> findActiveWithDriver(@Param(\"status\") DeliveryStatus status);\n// + @BatchSize(size = 25) on stops collection\n\n// Solution 3: DTO projection (when you only need specific fields)\n@Query(\"\"\"\n    SELECT new DeliveryDTO(d.id, d.status, dr.name, SIZE(d.stops))\n    FROM Delivery d LEFT JOIN d.driver dr\n    WHERE d.status = :status\n    \"\"\")\nList<DeliveryDTO> findActiveDTOs(@Param(\"status\") DeliveryStatus status);\n// 1 query total!",
+    "tags": [
+      "n-plus-1",
+      "join-fetch",
+      "performance"
+    ],
+    "topic": "sql",
+    "id": "sql-n-1-problem-04",
+    "answer": "**Refactored:**\n```java\n// Solution 1: Single JOIN FETCH query\n@Query(\"\"\"\n    SELECT d FROM Delivery d\n    LEFT JOIN FETCH d.driver\n    LEFT JOIN FETCH d.stops\n    WHERE d.status = :status\n    \"\"\")\nList<Delivery> findActiveWithDriverAndStops(@Param(\"status\") DeliveryStatus status);\n\n// Solution 2: Batch fetch (if JOIN FETCH causes cartesian product)\n@Query(\"SELECT d FROM Delivery d LEFT JOIN FETCH d.driver WHERE d.status = :status\")\nList<Delivery> findActiveWithDriver(@Param(\"status\") DeliveryStatus status);\n// + @BatchSize(size = 25) on stops collection\n\n// Solution 3: DTO projection (when you only need specific fields)\n@Query(\"\"\"\n    SELECT new DeliveryDTO(d.id, d.status, dr.name, SIZE(d.stops))\n    FROM Delivery d LEFT JOIN d.driver dr\n    WHERE d.status = :status\n    \"\"\")\nList<DeliveryDTO> findActiveDTOs(@Param(\"status\") DeliveryStatus status);\n// 1 query total!\n```\n\n**Problems:** N+1 on driverRepo.findById — one query per delivery for driver; N+1 on stopRepo.findByDeliveryId — one query per delivery for stops; Total: 1 + N + N = 201 queries for 100 deliveries; Each query has network roundtrip + connection pool overhead"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "Transaction Isolation",
+    "mission": "PostgreSQL uses READ COMMITTED (default). TX1 reads a delivery status, then TX2 updates it and commits. TX1 reads again. What does TX1 see?",
+    "code": "-- TX1 starts\nBEGIN;\nSELECT status FROM delivery WHERE id = 1;  -- returns 'PLANNED'\n\n-- TX2 (separate session): UPDATE delivery SET status = 'DISPATCHED' WHERE id = 1; COMMIT;\n\n-- TX1 reads again (same transaction)\nSELECT status FROM delivery WHERE id = 1;  -- returns ???\nCOMMIT;",
+    "choices": [
+      "PLANNED (repeatable read within TX1)",
+      "DISPATCHED (sees committed data)",
+      "Error: serialization conflict",
+      "NULL (row locked by TX2)"
+    ],
+    "answer": "DISPATCHED (sees committed data)",
+    "explain": "READ COMMITTED means each statement sees the latest COMMITTED data at the moment the statement runs. TX2 committed before TX1's second read, so TX1 sees DISPATCHED. This is called a \"non-repeatable read\" — same query returns different results within one transaction. Use REPEATABLE READ isolation if you need consistent reads.",
+    "topic": "sql",
+    "id": "sql-transaction-isolation-05"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Query Optimization",
+    "question": "A report query takes 15 seconds. Walk me through your optimization process.",
+    "modelAnswer": "**Step-by-step process:**\n\n**1. EXPLAIN ANALYZE (understand the plan):**\n```sql\nEXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)\nSELECT ... FROM delivery d JOIN stop s ON ... WHERE ...;\n```\n\n**2. Identify the expensive nodes:**\n- Seq Scan on large table? → needs index\n- Sort with external disk? → add index for ORDER BY\n- Nested Loop with many iterations? → missing index on inner table\n- Hash Join building huge hash table? → filter earlier\n\n**3. Check row estimates vs actual:**\n- If estimated=100 but actual=500,000 → stale statistics\n- Run `ANALYZE table_name;`\n\n**4. Common fixes:**\n```sql\n-- Missing index\nCREATE INDEX idx_delivery_status_date ON delivery(status, scheduled_at);\n\n-- Function prevents index use\n-- ❌ WHERE EXTRACT(YEAR FROM scheduled_at) = 2026\n-- ✅ WHERE scheduled_at >= '2026-01-01' AND scheduled_at < '2027-01-01'\n\n-- SELECT * loads unnecessary columns (BLOBs, text)\n-- ✅ SELECT only needed columns\n\n-- Subquery executes per row\n-- ❌ WHERE id IN (SELECT delivery_id FROM stop WHERE ...)\n-- ✅ WHERE EXISTS (SELECT 1 FROM stop s WHERE s.delivery_id = d.id AND ...)\n\n-- Pagination without ORDER BY or OFFSET on huge result\n-- ✅ Use keyset pagination: WHERE id > :lastId ORDER BY id LIMIT 50\n```\n\n**5. Verify:**\n- Run EXPLAIN ANALYZE again → confirm improvement\n- Test with production-like data volume (not dev with 100 rows)",
+    "tags": [
+      "optimization",
+      "explain",
+      "process"
+    ],
+    "topic": "sql",
+    "id": "sql-query-optimization-06"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Pagination",
+    "question": "You need to paginate 2 million deliveries. The UI shows 50 rows per page. Users can jump to page 5000. Which approach?",
+    "options": [
+      {
+        "label": "A) OFFSET/LIMIT: SELECT * FROM delivery ORDER BY id LIMIT 50 OFFSET 249950",
+        "description": "Standard offset pagination. Simple but scans and skips 249,950 rows."
+      },
+      {
+        "label": "B) Keyset/Cursor: SELECT * FROM delivery WHERE id > :lastId ORDER BY id LIMIT 50",
+        "description": "Use the last seen ID as cursor. Always fast but no random page access."
+      },
+      {
+        "label": "C) Offset with covering index + deferred join",
+        "description": "First get IDs with offset (fast if only reading index), then join for full rows."
+      }
+    ],
+    "bestOption": 2,
+    "explanation": "Option C (deferred join) balances performance with random access:\n\n```sql\n-- Step 1: Get IDs fast (index-only scan on PK)\nSELECT id FROM delivery ORDER BY id LIMIT 50 OFFSET 249950;\n-- Fast because it only reads the index, not the full rows\n\n-- Step 2: Fetch full rows for those 50 IDs\nSELECT * FROM delivery WHERE id IN (:ids);\n-- Only reads 50 rows from heap\n\n-- Combined:\nSELECT d.* FROM delivery d\nJOIN (SELECT id FROM delivery ORDER BY id LIMIT 50 OFFSET 249950) sub\nON d.id = sub.id;\n```\n\n**When each approach is best:**\n- Keyset (B): best performance, use for infinite scroll / \"load more\"\n- Deferred join (C): good performance + random page access\n- Simple OFFSET (A): only acceptable for small datasets (<100K rows) or first few pages\n\n**Never use OFFSET 1000000 on a large table** — PostgreSQL must scan and discard 1M rows before returning 50.",
+    "tags": [
+      "pagination",
+      "offset",
+      "keyset"
+    ],
+    "topic": "sql",
+    "id": "sql-pagination-07"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "CTEs",
+    "question": "What are CTEs (Common Table Expressions)? When do you use them vs subqueries?",
+    "modelAnswer": "**CTE (WITH clause) — named temporary result set:**\n```sql\nWITH active_deliveries AS (\n    SELECT d.*, dr.name AS driver_name\n    FROM delivery d\n    JOIN driver dr ON d.driver_id = dr.id\n    WHERE d.status = 'ACTIVE'\n),\nstops_count AS (\n    SELECT delivery_id, COUNT(*) AS num_stops\n    FROM stop\n    GROUP BY delivery_id\n)\nSELECT ad.id, ad.driver_name, sc.num_stops\nFROM active_deliveries ad\nLEFT JOIN stops_count sc ON sc.delivery_id = ad.id\nORDER BY ad.scheduled_at;\n```\n\n**CTEs vs Subqueries:**\n| Aspect | CTE | Subquery |\n|--------|-----|----------|\n| Readability | ✅ Named, top-down | ❌ Nested, hard to read |\n| Reuse | ✅ Reference multiple times | ❌ Must repeat |\n| Performance (PG12+) | Same (inlined by optimizer) | Same |\n| Recursive | ✅ WITH RECURSIVE | ❌ Not possible |\n\n**When to use CTEs:**\n- Complex queries with multiple logical steps (readability!)\n- Need to reference the same derived table twice\n- Recursive queries (tree traversal, hierarchies)\n- Breaking down 100-line queries into understandable chunks\n\n**PostgreSQL 12+ note:** CTEs are inlined (optimized like subqueries) unless you use `MATERIALIZED`. Before PG12, CTEs were always materialized (optimization fence).",
+    "tags": [
+      "cte",
+      "readability",
+      "recursive"
+    ],
+    "topic": "sql",
+    "id": "sql-ctes-08"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "NULL behavior",
+    "mission": "What does this query return?",
+    "code": "SELECT COUNT(*), COUNT(driver_id), COUNT(DISTINCT driver_id)\nFROM delivery\nWHERE status = 'ACTIVE';\n\n-- Active deliveries:\n-- (id=1, driver_id=42)\n-- (id=2, driver_id=42)\n-- (id=3, driver_id=NULL)\n-- (id=4, driver_id=99)\n-- (id=5, driver_id=NULL)",
+    "choices": [
+      "5, 5, 2",
+      "5, 3, 2",
+      "5, 3, 3",
+      "3, 3, 2"
+    ],
+    "answer": "5, 3, 2",
+    "explain": "COUNT(*) counts all rows (5). COUNT(driver_id) counts non-NULL values (3 — excludes 2 NULLs). COUNT(DISTINCT driver_id) counts distinct non-NULL values (2 — 42 and 99). NULL is never counted by COUNT(column) and never considered distinct.",
+    "topic": "sql",
+    "id": "sql-null-behavior-09"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Partitioning",
+    "question": "The delivery table has 50 million rows (3 years of history). Most queries only access recent data (last 30 days). How would you use table partitioning?",
+    "modelAnswer": "**Range partitioning by date:**\n```sql\nCREATE TABLE delivery (\n    id BIGSERIAL,\n    status VARCHAR(20),\n    scheduled_at TIMESTAMP NOT NULL,\n    driver_id BIGINT,\n    ...\n) PARTITION BY RANGE (scheduled_at);\n\n-- Create monthly partitions\nCREATE TABLE delivery_2026_01 PARTITION OF delivery\n    FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');\nCREATE TABLE delivery_2026_02 PARTITION OF delivery\n    FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');\n-- ... etc\n```\n\n**Benefits:**\n- Queries with `WHERE scheduled_at >= '2026-07-01'` only scan July partition (not 50M rows)\n- DROP old partitions instantly (vs DELETE millions of rows — no bloat, no vacuum)\n- Each partition has its own indexes (smaller, faster)\n- VACUUM runs per-partition (faster maintenance)\n\n**When to partition:**\n- Table >10M rows AND queries mostly access a subset\n- Need to efficiently drop/archive old data\n- Index maintenance becomes too slow\n\n**When NOT to partition:**\n- Table <1M rows (indexes are sufficient)\n- Queries regularly span ALL partitions (no benefit)\n- Primary access pattern is by ID, not by date",
+    "tags": [
+      "partitioning",
+      "large-tables",
+      "performance"
+    ],
+    "topic": "sql",
+    "id": "sql-partitioning-10"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Batch Operations",
+    "question": "You need to update status to EXPIRED for 500,000 deliveries where scheduled_at < 30 days ago. How?",
+    "options": [
+      {
+        "label": "A) Single UPDATE: UPDATE delivery SET status = 'EXPIRED' WHERE scheduled_at < NOW() - INTERVAL '30 days' AND status = 'PLANNED'",
+        "description": "One statement, updates all 500K rows at once."
+      },
+      {
+        "label": "B) Batch UPDATE in loop: UPDATE ... LIMIT 1000 in a CTE loop",
+        "description": "Process 1000 rows at a time with small transactions."
+      },
+      {
+        "label": "C) JPA: findAll + forEach + save",
+        "description": "Load all entities, update in Java, flush."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Option B (batch UPDATE) is safest for production:\n\n```sql\n-- PostgreSQL batch delete/update pattern\nWITH batch AS (\n    SELECT id FROM delivery\n    WHERE scheduled_at < NOW() - INTERVAL '30 days'\n      AND status = 'PLANNED'\n    ORDER BY id\n    LIMIT 1000\n)\nUPDATE delivery SET status = 'EXPIRED'\nWHERE id IN (SELECT id FROM batch);\n```\n\nRepeat in Java loop until affected rows = 0.\n\n**Why NOT A (single statement):**\n- Locks 500K rows simultaneously → blocks all other queries on those rows\n- Transaction log grows huge → risk of running out of disk\n- If it fails at row 400K → all 500K rolled back → start over\n\n**Why NOT C (JPA):**\n- Loads 500K entities into memory → OutOfMemoryError\n- 500K individual UPDATE statements → N+1 writes\n- Slowest possible approach\n\n**Option B advantages:**\n- Small lock window (1000 rows at a time)\n- If one batch fails → only 1000 rows lost, continue from next batch\n- Constant memory usage\n- Can add `pg_sleep(0.1)` between batches to reduce load",
+    "tags": [
+      "batch",
+      "bulk-update",
+      "production-safe"
+    ],
+    "topic": "sql",
+    "id": "sql-batch-operations-11"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Optimistic Locking",
+    "question": "Two dispatchers try to assign the same delivery to different drivers simultaneously. How do you prevent the conflict?",
+    "modelAnswer": "**Optimistic Locking with @Version:**\n\n```java\n@Entity\npublic class Delivery {\n    @Id private Long id;\n    @Version private Integer version; // auto-incremented on each UPDATE\n    private Long driverId;\n    private DeliveryStatus status;\n}\n```\n\n**What happens:**\n```\nTX1: reads delivery (version=1)\nTX2: reads delivery (version=1)\nTX1: assigns driver, saves → UPDATE delivery SET driver_id=42, version=2 WHERE id=1 AND version=1 ✅\nTX2: assigns driver, saves → UPDATE delivery SET driver_id=99, version=2 WHERE id=1 AND version=1 ❌\n     → 0 rows affected → OptimisticLockException thrown → TX2 must retry\n```\n\n**Handling in code:**\n```java\n@Transactional\npublic void assignDriver(Long deliveryId, Long driverId) {\n    try {\n        Delivery d = repo.findById(deliveryId).orElseThrow();\n        d.assignDriver(driverId);\n        repo.save(d);\n    } catch (OptimisticLockException e) {\n        throw new ConflictException(\"Delivery was modified. Please retry.\");\n    }\n}\n```\n\n**Optimistic vs Pessimistic:**\n- Optimistic (above): assumes conflicts are rare. No locks held. Retry on conflict.\n- Pessimistic: SELECT FOR UPDATE — locks the row immediately. Use when conflicts are frequent.\n\nFor REWE: optimistic locking is correct. Two dispatchers assigning same delivery is rare edge case.",
+    "tags": [
+      "optimistic-locking",
+      "concurrency",
+      "version"
+    ],
+    "topic": "sql",
+    "id": "sql-optimistic-locking-12"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "GROUP BY",
+    "mission": "What does this query return?",
+    "code": "SELECT status, COUNT(*) AS total, AVG(distance_km) AS avg_distance\nFROM delivery\nWHERE scheduled_at >= '2026-07-01'\nGROUP BY status\nHAVING COUNT(*) > 2;\n\n-- July deliveries:\n-- (PLANNED, 15km), (PLANNED, 25km), (PLANNED, 20km)\n-- (ACTIVE, 30km), (ACTIVE, 10km), (ACTIVE, 50km)\n-- (COMPLETED, 40km), (COMPLETED, 60km)",
+    "choices": [
+      "PLANNED: 3, 20.0 | ACTIVE: 3, 30.0 | COMPLETED: 2, 50.0",
+      "PLANNED: 3, 20.0 | ACTIVE: 3, 30.0",
+      "PLANNED: 3, 60 | ACTIVE: 3, 90",
+      "All three rows (HAVING ignored)"
+    ],
+    "answer": "PLANNED: 3, 20.0 | ACTIVE: 3, 30.0",
+    "explain": "GROUP BY groups rows by status. COUNT(*) counts per group. AVG computes average distance. HAVING COUNT(*) > 2 filters OUT groups with 2 or fewer rows — COMPLETED (only 2 rows) is excluded. PLANNED avg: (15+25+20)/3=20. ACTIVE avg: (30+10+50)/3=30.",
+    "topic": "sql",
+    "id": "sql-group-by-13"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Connection Pool",
+    "question": "Users report the application freezing intermittently. Monitoring shows JDBC connection pool at 100% utilization. What is likely happening and how do you fix it?",
+    "modelAnswer": "**Diagnosis:**\nConnection pool exhausted = all connections in use, new requests wait (and eventually timeout).\n\n**Most likely causes:**\n1. **Long-running transaction holds connection** (common in Spring @Transactional)\n2. **External call inside transaction** (REST/LDAP blocks while holding JDBC connection)\n3. **N+1 queries** (100 queries × 100ms = 10s holding connection)\n4. **Missing timeout on external service** (thread blocks forever with connection)\n5. **Connection leak** (connection borrowed but never returned — missing try-with-resources)\n\n**Immediate fix:**\n- Identify queries holding connections: check pg_stat_activity for long-running queries\n- Kill stuck transactions if safe\n\n**Permanent fixes:**\n```yaml\n# 1. Configure pool with timeout\nspring.datasource.hikari:\n  maximum-pool-size: 20\n  connection-timeout: 5000  # fail fast if pool empty (5s)\n  leak-detection-threshold: 30000  # log warning if connection held >30s\n```\n\n```java\n// 2. Never do external I/O inside @Transactional\n@Transactional\npublic void bad() {\n    repo.save(delivery);\n    externalService.notify(delivery); // ← blocks with connection held!\n}\n\n// Fix: separate transaction from I/O\npublic void good() {\n    deliveryTxService.save(delivery);  // short TX\n    externalService.notify(delivery);  // outside TX, no connection held\n}\n```\n\n// 3. Reduce transaction duration — readOnly for reads\n```java\n@Transactional(readOnly = true, timeout = 5)\npublic List<DeliveryDTO> search(Filter f) { ... }\n```",
+    "tags": [
+      "connection-pool",
+      "hikari",
+      "production-issue"
+    ],
+    "topic": "sql",
+    "id": "sql-connection-pool-14"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "EXISTS vs IN",
+    "question": "Find deliveries that have at least one failed stop. Table has 5M deliveries and 50M stops. Which approach?",
+    "options": [
+      {
+        "label": "A) JOIN: SELECT d.* FROM delivery d JOIN stop s ON s.delivery_id = d.id WHERE s.status = 'FAILED'",
+        "description": "Inner join with stop table, may return duplicate delivery rows."
+      },
+      {
+        "label": "B) IN: SELECT * FROM delivery WHERE id IN (SELECT delivery_id FROM stop WHERE status = 'FAILED')",
+        "description": "Subquery materializes all delivery IDs with failed stops."
+      },
+      {
+        "label": "C) EXISTS: SELECT * FROM delivery d WHERE EXISTS (SELECT 1 FROM stop s WHERE s.delivery_id = d.id AND s.status = 'FAILED')",
+        "description": "Correlated subquery, stops at first match."
+      }
+    ],
+    "bestOption": 2,
+    "explanation": "EXISTS is best for \"has at least one\" queries:\n\n**Why EXISTS wins:**\n- Stops searching as soon as it finds ONE matching stop (short-circuits)\n- Never produces duplicate delivery rows\n- PostgreSQL optimizes EXISTS into a semi-join (very efficient with index)\n- With index on stop(delivery_id, status) → nearly instant per delivery\n\n**Why NOT JOIN (A):**\n- If a delivery has 3 failed stops → returns 3 duplicate rows\n- Must add DISTINCT (extra cost) or GROUP BY\n\n**Why NOT IN (B):**\n- Materializes the entire subquery result (all delivery_ids with failed stops)\n- For 50M stops with 10% failed → builds a set of ~500K IDs in memory\n- Then checks each delivery against this set\n\n**Required index:**\n```sql\nCREATE INDEX idx_stop_delivery_status ON stop(delivery_id, status);\n-- EXISTS checks: for this delivery_id, does any stop with status='FAILED' exist?\n-- Index scan: immediate answer\n```",
+    "tags": [
+      "exists",
+      "semi-join",
+      "performance"
+    ],
+    "topic": "sql",
+    "id": "sql-exists-vs-in-15"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Index Types",
+    "question": "When would you use a partial index or a covering index in PostgreSQL?",
+    "modelAnswer": "**Partial index — index only a subset of rows:**\n```sql\n-- Only index ACTIVE deliveries (5% of table)\nCREATE INDEX idx_active_deliveries ON delivery(driver_id, scheduled_at)\nWHERE status = 'ACTIVE';\n\n-- 5M rows total, but index only covers ~250K active ones → tiny, fast\n-- Queries MUST include \"AND status = 'ACTIVE'\" to use this index\n```\n**When:** most queries filter on a specific value, and that subset is small relative to the table.\n\n**Covering index (INCLUDE) — avoid table heap access:**\n```sql\n-- Index contains all columns needed by the query\nCREATE INDEX idx_delivery_cover ON delivery(status, driver_id)\nINCLUDE (scheduled_at, route_id);\n\n-- Query: SELECT scheduled_at, route_id FROM delivery WHERE status = 'ACTIVE' AND driver_id = 42\n-- → Index-Only Scan (never reads the table row! Answers entirely from index)\n```\n**When:** frequent queries need only a few columns. Avoids expensive heap access.\n\n**Other useful types:**\n- `CREATE INDEX ... ON delivery(lower(email))` — functional index for case-insensitive search\n- `CREATE INDEX ... USING GIN (metadata)` — for JSONB column queries\n- `CREATE UNIQUE INDEX ... ON delivery(tracking_code) WHERE tracking_code IS NOT NULL` — unique partial",
+    "tags": [
+      "partial-index",
+      "covering-index",
+      "postgresql"
+    ],
+    "topic": "sql",
+    "id": "sql-index-types-16"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Database Anti-patterns",
+    "question": "What are the most common database performance anti-patterns you've seen in Java applications?",
+    "modelAnswer": "**Top 5 anti-patterns:**\n\n**1. N+1 Queries (most common):**\nLoop that calls DB per item. Fix: JOIN FETCH, @BatchSize, or IN clause.\n\n**2. SELECT * everywhere:**\nLoads all columns including BLOBs and huge text fields. Fix: DTO projections, select only needed columns.\n\n**3. Missing indexes on FK columns:**\nJPA creates FK constraints but NOT indexes automatically. Every JOIN/WHERE on FK → sequential scan. Fix: always index FK columns.\n\n**4. Transaction too long (I/O inside TX):**\nREST call or LDAP inside @Transactional holds JDBC connection. Fix: separate TX from external calls.\n\n**5. No LIMIT on user-facing queries:**\nUI search without limit can return 1M rows. Fix: always paginate with hard max (e.g., 100).\n\n**Bonus anti-patterns:**\n- Using OFFSET for deep pagination (slow on page 10000)\n- COUNT(*) on every page load (expensive on large tables)\n- Storing computed values instead of indexing properly\n- Using ORM for everything (complex reports belong in native SQL)\n- Not using connection pool timeouts (one stuck query exhausts pool)",
+    "tags": [
+      "anti-patterns",
+      "performance",
+      "experience"
+    ],
+    "topic": "sql",
+    "id": "sql-database-anti-patterns-17"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "Window Functions",
+    "mission": "What does this return for delivery id=2?",
+    "code": "SELECT id, driver_id, scheduled_at,\n       ROW_NUMBER() OVER (PARTITION BY driver_id ORDER BY scheduled_at) AS delivery_seq\nFROM delivery\nWHERE status = 'ACTIVE'\nORDER BY driver_id, delivery_seq;\n\n-- Active deliveries:\n-- (id=1, driver_id=42, scheduled_at='2026-07-19 08:00')\n-- (id=2, driver_id=42, scheduled_at='2026-07-19 10:00')\n-- (id=3, driver_id=42, scheduled_at='2026-07-19 14:00')\n-- (id=4, driver_id=99, scheduled_at='2026-07-19 09:00')",
+    "choices": [
+      "delivery_seq = 1",
+      "delivery_seq = 2",
+      "delivery_seq = 3",
+      "delivery_seq = 4"
+    ],
+    "answer": "delivery_seq = 2",
+    "explain": "ROW_NUMBER() OVER (PARTITION BY driver_id ORDER BY scheduled_at) numbers rows within each driver group, ordered by time. Driver 42 has 3 deliveries: id=1 gets seq=1 (08:00), id=2 gets seq=2 (10:00), id=3 gets seq=3 (14:00). Driver 99: id=4 gets seq=1.",
+    "topic": "sql",
+    "id": "sql-window-functions-18"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Deadlocks",
+    "question": "Two transactions deadlock. PostgreSQL kills one. How do you prevent this from recurring?",
+    "modelAnswer": "**What happened:**\n```\nTX1: UPDATE delivery SET status='X' WHERE id=1;  -- locks row 1\nTX2: UPDATE delivery SET status='Y' WHERE id=2;  -- locks row 2\nTX1: UPDATE delivery SET status='X' WHERE id=2;  -- waits for TX2 (row 2 locked)\nTX2: UPDATE delivery SET status='Y' WHERE id=1;  -- waits for TX1 (row 1 locked)\n-- DEADLOCK! PostgreSQL detects and kills one TX\n```\n\n**Prevention strategies:**\n\n**1. Consistent lock ordering:**\nAlways update rows in the same order (e.g., by ID ascending):\n```java\nList<Long> ids = List.of(id1, id2);\nCollections.sort(ids);  // Always lock in ascending order\nfor (Long id : ids) { repo.updateStatus(id, newStatus); }\n```\n\n**2. Reduce transaction duration:**\nShorter transactions = smaller lock window = less chance of overlap.\n\n**3. Use SELECT FOR UPDATE with SKIP LOCKED:**\n```sql\nSELECT * FROM delivery WHERE status = 'PLANNED'\nORDER BY id\nLIMIT 1\nFOR UPDATE SKIP LOCKED;\n-- If row is locked by another TX, skip it and take the next one\n```\n\n**4. Use optimistic locking (@Version):**\nNo locks held — detect conflict at commit time, retry.\n\n**5. Reduce scope:** update fewer rows per transaction.",
+    "tags": [
+      "deadlock",
+      "locking",
+      "prevention"
+    ],
+    "topic": "sql",
+    "id": "sql-deadlocks-19"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Query Patterns for JPA",
+    "question": "When do you use JPQL vs native SQL vs Criteria API? Give examples for each.",
+    "modelAnswer": "**JPQL — default choice (90% of queries):**\n```java\n@Query(\"SELECT d FROM Delivery d WHERE d.status = :status AND d.scheduledAt > :after\")\nList<Delivery> findPlanned(@Param(\"status\") Status s, @Param(\"after\") LocalDateTime t);\n```\nUse when: standard filters, joins between entities, portable across DBs.\n\n**Native SQL — PostgreSQL-specific features:**\n```java\n@Query(value = \"\"\"\n    WITH ranked AS (\n        SELECT *, ROW_NUMBER() OVER (PARTITION BY driver_id ORDER BY scheduled_at) AS rn\n        FROM delivery WHERE status = 'ACTIVE'\n    )\n    SELECT * FROM ranked WHERE rn = 1\n    \"\"\", nativeQuery = true)\nList<Delivery> findNextDeliveryPerDriver();\n```\nUse when: window functions, CTEs, JSONB, DISTINCT ON, array operations, lateral joins.\n\n**Criteria API — dynamic filters (search forms):**\n```java\npublic List<Delivery> search(DeliveryFilter filter) {\n    CriteriaBuilder cb = em.getCriteriaBuilder();\n    var q = cb.createQuery(Delivery.class);\n    var root = q.from(Delivery.class);\n    var predicates = new ArrayList<Predicate>();\n\n    if (filter.getStatus() != null)\n        predicates.add(cb.equal(root.get(\"status\"), filter.getStatus()));\n    if (filter.getDriverId() != null)\n        predicates.add(cb.equal(root.get(\"driverId\"), filter.getDriverId()));\n    if (filter.getAfter() != null)\n        predicates.add(cb.greaterThan(root.get(\"scheduledAt\"), filter.getAfter()));\n\n    q.where(predicates.toArray(new Predicate[0]));\n    return em.createQuery(q).getResultList();\n}\n```\nUse when: optional filters that combine in many ways (search screens with 8 optional fields).",
+    "tags": [
+      "jpql",
+      "native",
+      "criteria",
+      "when-to-use"
+    ],
+    "topic": "sql",
+    "id": "sql-query-patterns-for-jpa-20"
+  }
+]

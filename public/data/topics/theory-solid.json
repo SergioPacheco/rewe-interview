@@ -1,0 +1,92 @@
+[
+  {
+    "id": "theory-solid-srp",
+    "title": "S — Single Responsibility Principle",
+    "sections": [
+      {
+        "heading": "The principle",
+        "content": "<strong>\"A class should have a single responsibility.\"</strong>\n\n<img src=\"/assets/solid/s.webp\" alt=\"Single Responsibility Principle illustration by Ugonna Thelma\" style=\"width:100%; max-width:500px; border-radius:8px; margin: 16px 0; display:block;\">\n\nIf a Class has many responsibilities, it increases the possibility of bugs because making changes to one of its responsibilities could affect the other ones without you knowing."
+      },
+      {
+        "heading": "The visual metaphor",
+        "content": "<div style=\"background: var(--surface2); padding: 16px 20px; border-radius: 8px; margin: 12px 0;\">\n<div style=\"font-size: 1.5rem; margin-bottom: 8px;\">❌ Too many jobs:</div>\n<pre><code>class DeliveryManager {\n    void planRoute() { ... }        // 🗺️ routing\n    void assignDriver() { ... }     // 🚗 driver management\n    void calculatePrice() { ... }   // 💰 pricing\n    void sendNotification() { ... } // 📧 notifications\n    void generateReport() { ... }   // 📊 reporting\n}\n// One person doing 5 jobs → fragile, hard to test, hard to change</code></pre>\n</div>\n\n<div style=\"background: var(--green-bg); padding: 16px 20px; border-radius: 8px; margin: 12px 0;\">\n<div style=\"font-size: 1.5rem; margin-bottom: 8px;\">✅ One responsibility each:</div>\n<pre><code>class RoutePlanner { void planRoute() { ... } }        // 🗺️\nclass DriverAssigner { void assign() { ... } }          // 🚗\nclass PriceCalculator { BigDecimal calculate() { ... }} // 💰\nclass DeliveryNotifier { void notify() { ... } }        // 📧\nclass DeliveryReporter { void generate() { ... } }      // 📊\n// Each \"person\" has ONE job → easy to change independently</code></pre>\n</div>"
+      },
+      {
+        "heading": "The goal",
+        "content": "<strong>Goal:</strong> Separate behaviours so that if bugs arise from a change, it won't affect other unrelated behaviours.\n\n<strong>How to identify violations:</strong>\n• \"This class changed for 3 different reasons this month\"\n• \"I can't test pricing without setting up notifications\"\n• \"Changing the report format broke the route calculation\"\n\n<strong>SRP does NOT mean:</strong>\n• One method per class (too granular)\n• Tiny classes for everything\n• Never having a class grow\n\n<strong>SRP MEANS:</strong> group things that change for the <strong>same reason</strong>. Pricing rules change because business changes pricing. Notification templates change because marketing changes messaging. Different reasons → different classes."
+      }
+    ]
+  },
+  {
+    "id": "theory-solid-ocp",
+    "title": "O — Open/Closed Principle",
+    "sections": [
+      {
+        "heading": "The principle",
+        "content": "<strong>\"Classes should be open for extension, but closed for modification.\"</strong>\n\n<img src=\"/assets/solid/o.webp\" alt=\"Open/Closed Principle illustration by Ugonna Thelma\" style=\"width:100%; max-width:500px; border-radius:8px; margin: 16px 0; display:block;\">\n\nChanging the current behaviour of a Class will affect all the systems using that Class. If you want the Class to perform more functions, the ideal approach is to <strong>add</strong> to the functions that already exist — NOT change them."
+      },
+      {
+        "heading": "The visual metaphor",
+        "content": "<div style=\"background: var(--surface2); padding: 16px 20px; border-radius: 8px; margin: 12px 0;\">\n<div style=\"font-size: 1.5rem; margin-bottom: 8px;\">❌ Must modify existing code to add new channel:</div>\n<pre><code>class NotificationSender {\n    void send(String channel, DeliveryEvent event) {\n        if (channel.equals(\"EMAIL\")) {\n            // send email...\n        } else if (channel.equals(\"SMS\")) {\n            // send sms...\n        } else if (channel.equals(\"PUSH\")) {\n            // ← MUST modify this class for every new channel!\n        }\n    }\n}</code></pre>\n</div>\n\n<div style=\"background: var(--green-bg); padding: 16px 20px; border-radius: 8px; margin: 12px 0;\">\n<div style=\"font-size: 1.5rem; margin-bottom: 8px;\">✅ Open for extension — add new class, change nothing:</div>\n<pre><code>interface NotificationChannel {\n    void send(DeliveryEvent event);\n}\n\nclass EmailChannel implements NotificationChannel {\n    void send(DeliveryEvent event) { /* email logic */ }\n}\n\nclass SmsChannel implements NotificationChannel {\n    void send(DeliveryEvent event) { /* sms logic */ }\n}\n\n// NEW! No existing code modified:\nclass SlackChannel implements NotificationChannel {\n    void send(DeliveryEvent event) { /* slack logic */ }\n}</code></pre>\n</div>"
+      },
+      {
+        "heading": "The goal",
+        "content": "<strong>Goal:</strong> Extend a class's behaviour without changing its existing behaviour. This avoids bugs wherever the class is already being used.\n\n<strong>REWE Transport example:</strong>\nThe delivery tracking system needs to support new notification channels as business grows (email → SMS → push → Slack → webhook). Each new channel = one new class. The dispatcher that routes notifications is NEVER modified.\n\n<strong>When to apply:</strong> When you see a growing if/else or switch that adds a new case every sprint.\n<strong>When NOT to force:</strong> If the switch has 2-3 stable cases that haven't changed in years."
+      }
+    ]
+  },
+  {
+    "id": "theory-solid-lsp",
+    "title": "L — Liskov Substitution Principle",
+    "sections": [
+      {
+        "heading": "The principle",
+        "content": "<strong>\"If S is a subtype of T, then objects of type T may be replaced with objects of type S without breaking the program.\"</strong>\n\n<img src=\"/assets/solid/l.webp\" alt=\"Liskov Substitution Principle illustration by Ugonna Thelma\" style=\"width:100%; max-width:500px; border-radius:8px; margin: 16px 0; display:block;\">\n\nWhen a <strong>child</strong> Class cannot perform the same actions as its <strong>parent</strong> Class, this can cause bugs. The child Class should be able to process the same requests and deliver the same result as the parent Class (or a more specific type of that result)."
+      },
+      {
+        "heading": "The visual metaphor",
+        "content": "<div style=\"background: var(--surface2); padding: 16px 20px; border-radius: 8px; margin: 12px 0;\">\n<div style=\"font-size: 1.5rem; margin-bottom: 8px;\">❌ Child breaks parent's contract:</div>\n<pre><code>interface DeliveryVehicle {\n    void deliver(Package pkg);\n    int maxWeight();\n}\n\nclass Truck implements DeliveryVehicle {\n    void deliver(Package pkg) { /* drives to address */ }\n    int maxWeight() { return 10000; } // ✓ fulfils contract\n}\n\nclass Bicycle implements DeliveryVehicle {\n    void deliver(Package pkg) {\n        if (pkg.weight() > 20)\n            throw new UnsupportedOperationException(\"Too heavy!\");\n            // ❌ BREAKS the contract! Parent says \"I can deliver\".\n    }\n    int maxWeight() { return 20; }\n}</code></pre>\n</div>\n\n<div style=\"background: var(--green-bg); padding: 16px 20px; border-radius: 8px; margin: 12px 0;\">\n<div style=\"font-size: 1.5rem; margin-bottom: 8px;\">✅ Segregate by capability:</div>\n<pre><code>interface HeavyDeliveryVehicle {\n    void deliver(Package pkg); // contract: can handle any weight\n}\n\ninterface LightDeliveryVehicle {\n    void deliver(Package pkg); // contract: lightweight packages only\n    int maxWeight();\n}\n\nclass Truck implements HeavyDeliveryVehicle { ... }\nclass Bicycle implements LightDeliveryVehicle { ... }\n// Each type HONESTLY represents what it can do</code></pre>\n</div>"
+      },
+      {
+        "heading": "The goal",
+        "content": "<strong>Goal:</strong> Enforce consistency so that the parent Class or its child Class can be used in the same way without errors.\n\n<strong>The test:</strong> If you override a method and throw <code>UnsupportedOperationException</code>, you probably have an LSP violation.\n\n<strong>Real-world sign:</strong>\n<pre><code>// If you see this pattern → LSP violation:\nif (vehicle instanceof Bicycle) {\n    // special handling because Bicycle can't do what Vehicle promises\n}</code></pre>\n\nThe fix is usually <strong>Interface Segregation</strong> (next principle) — split the interface into what each type can honestly promise."
+      }
+    ]
+  },
+  {
+    "id": "theory-solid-isp",
+    "title": "I — Interface Segregation Principle",
+    "sections": [
+      {
+        "heading": "The principle",
+        "content": "<strong>\"Clients should not be forced to depend on methods they do not use.\"</strong>\n\n<img src=\"/assets/solid/i.webp\" alt=\"Interface Segregation Principle illustration by Ugonna Thelma\" style=\"width:100%; max-width:500px; border-radius:8px; margin: 16px 0; display:block;\">\n\nWhen a Class is required to perform actions that are not useful, it is wasteful and may produce unexpected bugs if the Class does not have the ability to perform those actions. A Class should perform ONLY actions needed to fulfil its role."
+      },
+      {
+        "heading": "The visual metaphor",
+        "content": "<div style=\"background: var(--surface2); padding: 16px 20px; border-radius: 8px; margin: 12px 0;\">\n<div style=\"font-size: 1.5rem; margin-bottom: 8px;\">❌ Fat interface forces useless implementations:</div>\n<pre><code>interface LogisticsWorker {\n    void drive();\n    void loadPackages();\n    void planRoute();\n    void handleCustomerComplaint();\n    void repairVehicle();\n}\n\nclass Driver implements LogisticsWorker {\n    void drive() { /* ✓ */ }\n    void loadPackages() { /* ✓ */ }\n    void planRoute() { /* ✓ */ }\n    void handleCustomerComplaint() { /* ✗ not my job! */ }\n    void repairVehicle() { /* ✗ not my job! */ }\n}</code></pre>\n</div>\n\n<div style=\"background: var(--green-bg); padding: 16px 20px; border-radius: 8px; margin: 12px 0;\">\n<div style=\"font-size: 1.5rem; margin-bottom: 8px;\">✅ Segregated — each role has only relevant methods:</div>\n<pre><code>interface Driveable { void drive(); }\ninterface Loadable { void loadPackages(); }\ninterface Routable { void planRoute(); }\ninterface CustomerFacing { void handleComplaint(); }\ninterface Repairable { void repair(); }\n\nclass Driver implements Driveable, Loadable, Routable {\n    // Only implements what a Driver actually does ✓\n}\n\nclass CustomerService implements CustomerFacing {\n    // Only handles complaints ✓\n}\n\nclass Mechanic implements Repairable {\n    // Only repairs ✓\n}</code></pre>\n</div>"
+      },
+      {
+        "heading": "The goal",
+        "content": "<strong>Goal:</strong> Split a set of actions into smaller sets so that a class executes ONLY the actions it requires.\n\n<strong>Signs of violation:</strong>\n• Classes with methods that throw <code>UnsupportedOperationException</code>\n• Methods that are empty or return null/dummy values\n• \"I implemented this interface but 3 of 7 methods don't apply to me\"\n\n<strong>REWE example:</strong> A CommunicationPlugin only needs <code>send()</code>. Don't force it to implement <code>schedule()</code>, <code>archive()</code>, <code>template()</code> if it's a simple webhook."
+      }
+    ]
+  },
+  {
+    "id": "theory-solid-dip",
+    "title": "D — Dependency Inversion Principle",
+    "sections": [
+      {
+        "heading": "The principle",
+        "content": "<strong>\"High-level modules should not depend on low-level modules. Both should depend on abstractions.\"</strong>\n\n<img src=\"/assets/solid/d.webp\" alt=\"Dependency Inversion Principle illustration by Ugonna Thelma\" style=\"width:100%; max-width:500px; border-radius:8px; margin: 16px 0; display:block;\">\n\n<strong>High-level Module</strong>: Class that executes an action with a tool.\n<strong>Low-level Module</strong>: The tool that is needed to execute the action.\n<strong>Abstraction</strong>: An interface that connects the two — the \"plug.\"\n\nThis principle says a Class should not be fused with the tool it uses. Rather, it should be fused to the interface that allows the tool to connect to the Class."
+      },
+      {
+        "heading": "The visual metaphor",
+        "content": "<div style=\"background: var(--surface2); padding: 16px 20px; border-radius: 8px; margin: 12px 0;\">\n<div style=\"font-size: 1.5rem; margin-bottom: 8px;\">❌ High-level depends directly on low-level:</div>\n<pre><code>class DeliveryService {\n    private KafkaTemplate kafka;     // knows about Kafka!\n    private PostgresRepository db;   // knows about Postgres!\n\n    void complete(Long id) {\n        db.updateStatus(id, \"COMPLETED\");       // coupled to Postgres\n        kafka.send(\"deliveries\", event);        // coupled to Kafka\n    }\n}\n// If we switch to RabbitMQ → must rewrite DeliveryService\n// If we switch to MongoDB → must rewrite DeliveryService</code></pre>\n</div>\n\n<div style=\"background: var(--green-bg); padding: 16px 20px; border-radius: 8px; margin: 12px 0;\">\n<div style=\"font-size: 1.5rem; margin-bottom: 8px;\">✅ Both depend on abstraction:</div>\n<pre><code>// The \"plug\" (interface) — defined by business needs:\ninterface DeliveryRepository { void updateStatus(Long id, String s); }\ninterface EventPublisher { void publish(DeliveryEvent e); }\n\n// High-level depends on abstraction:\nclass DeliveryService {\n    private DeliveryRepository repo;   // doesn't know it's Postgres\n    private EventPublisher events;     // doesn't know it's Kafka\n\n    void complete(Long id) {\n        repo.updateStatus(id, \"COMPLETED\");\n        events.publish(new DeliveryCompleted(id));\n    }\n}\n\n// Low-level IMPLEMENTS the abstraction:\nclass PostgresDeliveryRepo implements DeliveryRepository { ... }\nclass KafkaEventPublisher implements EventPublisher { ... }\n// Switch to MongoDB? Only change the implementation. Business untouched.</code></pre>\n</div>"
+      },
+      {
+        "heading": "The goal",
+        "content": "<strong>Goal:</strong> Reduce coupling between high-level business logic and low-level infrastructure details by introducing an interface between them.\n\n<strong>Key insight:</strong> The interface is defined BY the business layer (what it needs), NOT by the infrastructure (what it offers). This INVERTS the dependency — infrastructure depends on business abstractions.\n\n<strong>Connection to DI (Dependency Injection):</strong>\n• DIP = the PRINCIPLE (depend on abstractions)\n• DI = the TECHNIQUE (provide implementations externally)\n• Spring/CDI = the CONTAINER that wires them together\n\n<pre><code>// In Spring Boot, DIP + DI work together:\n@Service\nclass DeliveryService {\n    private final DeliveryRepository repo;  // DIP: depends on interface\n\n    DeliveryService(DeliveryRepository repo) {  // DI: Spring injects impl\n        this.repo = repo;\n    }\n}</code></pre>\n\n<strong>Credit:</strong> Visual metaphors inspired by <a href=\"https://medium.com/backticks-tildes/the-s-o-l-i-d-principles-in-pictures-b34ce2f1e898\" target=\"_blank\" style=\"color: var(--blue);\">Ugonna Thelma's \"SOLID Principles in Pictures\"</a>"
+      }
+    ]
+  }
+]

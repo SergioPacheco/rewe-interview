@@ -1,0 +1,257 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+/*
+ * Área azul-clara que envolve todos os cards.
+ */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+
+  width: 100%;
+  padding: 26px 22px 20px;
+
+  background: #eaf7f8;
+  border-radius: 0 0 36px 36px;
+  box-sizing: border-box;
+}
+
+/*
+ * Card individual
+ */
+.product-card {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  min-width: 0;
+  min-height: 385px;
+
+  padding: 0;
+
+  color: #111111;
+  text-decoration: none;
+
+  background: #ffffff;
+  border: 1px solid #9b9b9b;
+  border-radius: 22px;
+
+  overflow: hidden;
+  box-shadow: none;
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+
+  &:hover {
+    color: #111111;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  /*
+   * Área reservada para a imagem.
+   * Não use aspect-ratio: 1, pois ele deixa os cards achatados.
+   */
+  &__image {
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    height: 190px;
+    padding: 20px 20px 4px;
+
+    background: #ffffff;
+    box-sizing: border-box;
+  }
+
+  &__img {
+    display: block;
+
+    width: auto;
+    height: auto;
+
+    max-width: 86%;
+    max-height: 165px;
+
+    object-fit: contain;
+  }
+
+  /*
+   * Badge superior
+   */
+  &__discount {
+    position: absolute;
+    top: 7px;
+    left: 7px;
+    z-index: 2;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-width: 75px;
+    height: 30px;
+    padding: 0 12px;
+
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+
+    background: #178479;
+    border-radius: 999px;
+
+    box-sizing: border-box;
+  }
+
+  /*
+   * Nome do produto
+   */
+  &__name {
+    margin: 16px 14px 0;
+    padding: 0;
+
+    color: #111111;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+
+    overflow-wrap: anywhere;
+    hyphens: auto;
+  }
+
+  /*
+   * Descrição
+   */
+  &__desc {
+    flex: 1;
+
+    margin: 9px 14px 0;
+    padding: 0;
+
+    color: #60646b;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.55;
+
+    /*
+     * Na imagem de referência algumas descrições ocupam
+     * mais de duas linhas, portanto removemos line-clamp.
+     */
+    overflow: visible;
+  }
+
+  /*
+   * Rodapé alinhado à direita e sempre no final do card
+   */
+  &__footer {
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+
+    gap: 0;
+    margin-top: auto;
+    padding: 20px 14px 14px;
+  }
+
+  /*
+   * Parte amarela "Aktion"
+   */
+  &__tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 29px;
+    padding: 4px 10px;
+
+    color: #db071f;
+    background: #ffdd45;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+
+    border-radius: 8px 0 0 8px;
+    box-sizing: border-box;
+
+    &--gray {
+      color: #555555;
+      background: #dddddd;
+    }
+  }
+
+  /*
+   * Parte vermelha com o preço/quantidade
+   */
+  &__price {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 29px;
+    padding: 4px 11px;
+
+    color: #ffffff;
+    background: #d30725;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1;
+
+    border-radius: 0 8px 8px 0;
+    box-sizing: border-box;
+
+    &--dark {
+      color: #ffffff;
+      background: #666666;
+    }
+  }
+
+  /*
+   * Não existe esse texto na referência visual.
+   */
+  &__unit {
+    display: none;
+  }
+}
+
+/*
+ * Responsividade
+ */
+@media (max-width: 1100px) {
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding: 18px;
+  }
+
+  .product-card {
+    min-height: 375px;
+  }
+}
+
+@media (max-width: 520px) {
+  .product-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 14px;
+    border-radius: 0 0 24px 24px;
+  }
+}

@@ -36,7 +36,7 @@
   position: sticky;
   top: 0;
   z-index: 200;
-  isolation: isolate;
+  overflow: visible;
 }
 
 /* =========================================================
@@ -44,6 +44,8 @@
    ========================================================= */
 
 .topbar {
+  position: relative;
+  z-index: 1;
   width: 100%;
   height: var(--topbar-height);
   background: var(--rewe-red);
@@ -185,12 +187,15 @@
    ========================================================= */
 
 .catbar {
+  position: relative;
+  z-index: 2;
   width: 100%;
   margin-top: -1px;
   background: #ffffff;
-  border-radius: 22px 22px 0 0;
+  border-radius: 24px 24px 0 0;
   border-bottom: 1px solid var(--border-subtle);
   box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
+  overflow: hidden;
 
   &__inner {
     display: flex;

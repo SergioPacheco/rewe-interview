@@ -109,6 +109,7 @@ export class TopicService {
       'data/exercises/jpa.json',
       'data/exercises/behavioral.json',
       'data/exercises/system-design.json',
+      'data/exercises/system-design-v2-pilots.json',
       'data/exercises/rewe.json',
       'data/exercises/security.json',
       'data/exercises/testing.json',

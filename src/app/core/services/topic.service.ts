@@ -118,7 +118,8 @@ export class TopicService {
       'data/exercises/kotlin.json',
       'data/exercises/angular.json',
       'data/exercises/stories.json',
-      'data/exercises/mindset.json'
+      'data/exercises/mindset.json',
+      'data/exercises/senior-questions.json'
     ];
 
     const results = await Promise.allSettled(

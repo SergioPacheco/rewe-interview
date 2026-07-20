@@ -138,7 +138,10 @@ export class TopicService {
       '/data/topics/theory-angular.json',
       '/data/topics/theory-collections.json',
       '/data/topics/theory-oop.json',
-      '/data/topics/theory-k8s.json'
+      '/data/topics/theory-k8s.json',
+      '/data/topics/theory-security.json',
+      '/data/topics/theory-system-design.json',
+      '/data/topics/theory-behavioral.json'
     ];
 
     const results = await Promise.allSettled(

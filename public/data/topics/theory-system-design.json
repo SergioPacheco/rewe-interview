@@ -1,0 +1,56 @@
+[
+  {
+    "id": "theory-system-design-fundamentals",
+    "title": "System Design Fundamentals",
+    "sections": [
+      {
+        "heading": "How to approach a design interview",
+        "content": "<ol><li><strong>Clarify requirements</strong> — users, traffic, latency, consistency</li><li><strong>High-level architecture</strong> — main components and data flow</li><li><strong>Deep dive</strong> — critical path, data model, scaling</li><li><strong>Trade-offs</strong> — CAP, cost, complexity</li><li><strong>Operational concerns</strong> — monitoring, deployment, failure</li></ol>"
+      },
+      {
+        "heading": "Scalability Patterns",
+        "content": "<ul><li><strong>Stateless services</strong> — any instance handles any request</li><li><strong>Horizontal scaling</strong> — add instances behind load balancer</li><li><strong>Read replicas</strong> — distribute read load</li><li><strong>Caching</strong> — Redis for hot data</li><li><strong>Event-driven</strong> — decouple with Kafka</li><li><strong>Partitioning</strong> — shard data by key</li></ul>"
+      },
+      {
+        "heading": "CAP Theorem",
+        "content": "<p>In a distributed system, during a network partition you must choose between:</p><ul><li><strong>Consistency</strong> — all nodes see the same data</li><li><strong>Availability</strong> — every request receives a response</li></ul><p>Most real systems choose <strong>eventual consistency</strong> with strong consistency only where business requires it (e.g., payment, inventory).</p>"
+      }
+    ]
+  },
+  {
+    "id": "theory-system-design-patterns",
+    "title": "Distributed System Patterns",
+    "sections": [
+      {
+        "heading": "Saga Pattern",
+        "content": "<p>Coordinates multi-service transactions without distributed locks:</p><pre><code>Order Created → Payment Reserved → Stock Reserved → Delivery Scheduled\n     ↑                                                    |\n     └──── Compensate (refund, release stock) ←──── Failure</code></pre><p><strong>Orchestration</strong> = central coordinator. <strong>Choreography</strong> = services react to events.</p>"
+      },
+      {
+        "heading": "Transactional Outbox",
+        "content": "<pre><code>// Same DB transaction:\nBEGIN;\n  INSERT INTO orders (id, status) VALUES (...);\n  INSERT INTO outbox (event_type, payload) VALUES ('OrderCreated', ...);\nCOMMIT;\n\n// Separate process publishes outbox → Kafka</code></pre><p>Guarantees the event is published if and only if the business change is committed.</p>"
+      },
+      {
+        "heading": "Circuit Breaker",
+        "content": "<pre><code>CLOSED → (failures exceed threshold) → OPEN\n  ↑                                        |\n  └── HALF-OPEN ← (timeout expires) ←─────┘\n        ↓\n  (test call succeeds → CLOSED)\n  (test call fails → OPEN)</code></pre><p>Protects against cascading failures when a dependency is unavailable.</p>"
+      }
+    ]
+  },
+  {
+    "id": "theory-system-design-observability",
+    "title": "Observability & SRE",
+    "sections": [
+      {
+        "heading": "Three Pillars",
+        "content": "<ul><li><strong>Logs</strong> — discrete events with context (structured JSON)</li><li><strong>Metrics</strong> — numeric measurements over time (counters, histograms)</li><li><strong>Traces</strong> — request flow across services (correlation IDs)</li></ul>"
+      },
+      {
+        "heading": "SLI / SLO / SLA",
+        "content": "<ul><li><strong>SLI</strong> (indicator) — the metric: e.g., % of requests < 200ms</li><li><strong>SLO</strong> (objective) — the target: e.g., 99.9% of requests < 200ms</li><li><strong>SLA</strong> (agreement) — the contract with consequences</li></ul><p><strong>Error budget</strong> = allowed unreliability (100% - SLO target)</p>"
+      },
+      {
+        "heading": "What to Monitor in Logistics",
+        "content": "<ul><li>Deliveries stuck in a state > N minutes</li><li>Routes not assigned before departure time</li><li>Consumer lag on critical topics</li><li>Duplicate assignment attempts</li><li>Delay between physical event and system update</li><li>Reconciliation queue depth</li></ul><p>A technically healthy service can still represent a broken business process.</p>"
+      }
+    ]
+  }
+]

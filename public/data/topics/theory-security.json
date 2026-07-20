@@ -1,0 +1,56 @@
+[
+  {
+    "id": "theory-security-fundamentals",
+    "title": "Security Fundamentals",
+    "sections": [
+      {
+        "heading": "Authentication vs Authorization",
+        "content": "<p><strong>Authentication</strong> = Who are you? (identity verification)</p><p><strong>Authorization</strong> = What can you do? (permission checks)</p><p>In Spring Security, authentication happens first (via filters), then authorization is enforced on resources.</p>"
+      },
+      {
+        "heading": "Defense in Depth",
+        "content": "<p>Never rely on a single security layer:</p><ul><li>Network security (TLS, firewalls)</li><li>Authentication (OAuth2, JWT)</li><li>Authorization (roles, resource-level)</li><li>Input validation</li><li>Output encoding</li><li>Audit logging</li></ul>"
+      },
+      {
+        "heading": "Zero Trust",
+        "content": "<p>Assume the network is compromised. Every service-to-service call should be authenticated and authorized, not just external requests.</p><p>Use mTLS, short-lived tokens, and least-privilege service accounts.</p>"
+      }
+    ]
+  },
+  {
+    "id": "theory-security-spring",
+    "title": "Spring Security",
+    "sections": [
+      {
+        "heading": "Filter Chain",
+        "content": "<p>Spring Security works through a chain of servlet filters:</p><pre><code>Request → SecurityFilterChain\n  → CorsFilter\n  → CsrfFilter\n  → AuthenticationFilter\n  → AuthorizationFilter\n  → Your Controller</code></pre><p>Each filter has a specific responsibility. Order matters.</p>"
+      },
+      {
+        "heading": "OAuth2 & JWT",
+        "content": "<p><strong>OAuth2</strong> delegates authorization to an authorization server. The app never sees user credentials.</p><p><strong>JWT</strong> (JSON Web Token) carries claims signed by the issuer. Validation checks signature, expiration, audience and issuer.</p><pre><code>Header.Payload.Signature\n\n// Payload example:\n{\n  \"sub\": \"driver-123\",\n  \"roles\": [\"DRIVER\"],\n  \"exp\": 1700000000\n}</code></pre>"
+      },
+      {
+        "heading": "Method Security",
+        "content": "<pre><code>@PreAuthorize(\"hasRole('PLANNER')\")\npublic void assignDriver(Long deliveryId, Long driverId) {\n    // Only planners can assign\n}\n\n@PostAuthorize(\"returnObject.driverId == principal.id\")\npublic Delivery getDelivery(Long id) {\n    // Driver can only see own deliveries\n}</code></pre>"
+      }
+    ]
+  },
+  {
+    "id": "theory-security-owasp",
+    "title": "OWASP Top 10 & Common Vulnerabilities",
+    "sections": [
+      {
+        "heading": "Top Risks for Microservices",
+        "content": "<ul><li><strong>Broken Access Control</strong> — check resource ownership, not just roles</li><li><strong>Injection</strong> — use parameterized queries always</li><li><strong>Security Misconfiguration</strong> — review defaults in containers/cloud</li><li><strong>Vulnerable Dependencies</strong> — scan with Dependabot/Snyk</li><li><strong>SSRF</strong> — validate URLs in service-to-service calls</li></ul>"
+      },
+      {
+        "heading": "SQL Injection Prevention",
+        "content": "<pre><code>// ❌ NEVER\nString sql = \"SELECT * FROM users WHERE id = \" + userId;\n\n// ✅ ALWAYS parameterized\n@Query(\"SELECT u FROM User u WHERE u.id = :id\")\nUser findById(@Param(\"id\") Long id);</code></pre>"
+      },
+      {
+        "heading": "XSS in Angular",
+        "content": "<p>Angular sanitizes by default in templates. But <code>[innerHTML]</code> requires care:</p><pre><code>// Angular sanitizes this automatically\n{{ userInput }}\n\n// This is sanitized but allows safe HTML\n[innerHTML]=\"userContent\"\n\n// ❌ DANGEROUS — bypasses sanitizer\n[innerHTML]=\"bypassSecurityTrustHtml(userInput)\"</code></pre>"
+      }
+    ]
+  }
+]

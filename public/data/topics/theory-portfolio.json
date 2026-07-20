@@ -11,7 +11,8 @@
         "heading": "Project architecture",
         "content": "<pre><code>┌─────────────────────────────────────────────────────────┐\n│              Frontend (Angular 19 + PrimeNG 19)          │\n│  Signals · Standalone · ECharts · i18n (pt/en/es)       │\n└──────────────────────────┬──────────────────────────────┘\n                           │ REST + WebSocket (STOMP)\n┌──────────────────────────▼──────────────────────────────┐\n│            API (Spring Boot 4 + Java 25)                 │\n│                                                          │\n│  ┌────────┐ ┌───────────┐ ┌────────┐ ┌──────────┐      │\n│  │ Budget │ │Measurement│ │Schedule│ │Procurement│ ...   │\n│  └───┬────┘ └─────┬─────┘ └───┬────┘ └─────┬────┘      │\n│      │            │           │             │            │\n│  ┌───▼────────────▼───────────▼─────────────▼─────────┐ │\n│  │  Shared (Events · Observability · Security · Audit) │ │\n│  └────────────────────────────────────────────────────┘ │\n└────┬───────────┬───────────┬──────────────┬─────────────┘\n     │           │           │              │\n┌────▼────┐ ┌───▼────┐ ┌────▼─────┐ ┌─────▼──────┐\n│PostgreSQL│ │Elastic │ │ Keycloak │ │ Prometheus │\n│    17    │ │Search 8│ │   26.x   │ │ + Grafana  │\n└──────────┘ └────────┘ └──────────┘ └────────────┘</code></pre>"
       }
-    ]
+    ],
+    "topic": "rewe"
   },
   {
     "id": "theory-portfolio-",
@@ -29,7 +30,8 @@
         "heading": "Vertical Slice Architecture (30+ modules)",
         "content": "Each module follows the same internal pattern:\n\n<pre><code>budget/\n├── api/                    ← REST Controllers + Request/Response DTOs\n│   ├── BudgetController.java\n│   ├── BudgetDetailController.java\n│   ├── BudgetOperationsController.java\n│   ├── BudgetFilter.java\n│   ├── CreateBudgetRequest.java\n│   └── BudgetResponse.java\n├── application/            ← Services (business logic + orchestration)\n│   ├── BudgetService.java\n│   ├── BudgetCalculationService.java\n│   ├── AbcCurveService.java\n│   └── BulkEntryService.java\n└── domain/                 ← Entities + Repositories (persistence)\n    ├── Budget.java\n    ├── BudgetItem.java\n    ├── BudgetStatus.java\n    ├── BudgetRepository.java\n    └── BdiConfig.java</code></pre>\n\n<strong>30 business modules:</strong> budget, measurement, schedule, procurement, contract, finance, invoice, jobcosting, equipment, safety, dailylog, document, rfi, punchlist, submittal, timetracking, notification, commercial, aftersales, delivery, analytics, sinapi, weather, supplier, project, tenant, security, inventory, registry, team, forecast, report\n\n<strong>This is exactly what TRAB needs:</strong> each transport domain (delivery, routing, driver, warehouse) as a vertical slice with clear boundaries."
       }
-    ]
+    ],
+    "topic": "rewe"
   },
   {
     "id": "theory-portfolio-",
@@ -51,7 +53,8 @@
         "heading": "Docker Compose (local development)",
         "content": "<pre><code># compose.dev.yaml — full local stack:\nservices:\n  - API (Spring Boot)\n  - PostgreSQL 17\n  - Angular frontend (nginx)\n  - Keycloak 26 (authentication)\n  - Elasticsearch 8 (search)\n  - Prometheus + Grafana (observability)\n  - SonarQube (code quality)\n  - MailHog (email testing)\n\n# One command: docker compose -f compose.dev.yaml up\n# Everything running locally in minutes</code></pre>"
       }
-    ]
+    ],
+    "topic": "rewe"
   },
   {
     "id": "theory-portfolio-",
@@ -69,7 +72,8 @@
         "heading": "Resilience & Error handling",
         "content": "<strong>Circuit Breaker (Resilience4j):</strong>\nExternal integrations (weather API, S3) protected — system degrades gracefully when dependencies fail.\n\n<strong>Rate Limiting:</strong>\n<pre><code>// RateLimitFilter.java\nMAX_REQUESTS_PER_MINUTE = 120\nConcurrentHashMap<String, TokenBucket> per client\nSkip: /actuator endpoints\nResponse: 429 Too Many Requests</code></pre>\n\n<strong>Error handling (RFC 9457 ProblemDetail):</strong>\n<pre><code>// shared/error/\nApiExceptionHandler.java       ← Global @RestControllerAdvice\nDomainException.java           ← Base business exception\nDomainNotFoundException.java   ← 404\nDomainConflictException.java   ← 409\nDomainValidationException.java ← 400</code></pre>\n\n<strong>Domain Events:</strong>\n<pre><code>// shared/events/\nDomainEvent.java               ← Base event\nOperationEvent.java            ← Operation tracking\nOperationEventPublisher.java   ← Publishes to ApplicationEventPublisher\nOperationEventType.java        ← CREATED, UPDATED, DELETED, STATUS_CHANGED</code></pre>\n\nSame patterns TRAB uses: event-driven, resilient external integrations, consistent error format."
       }
-    ]
+    ],
+    "topic": "rewe"
   },
   {
     "id": "theory-portfolio-",
@@ -79,7 +83,8 @@
         "heading": "Angular architecture",
         "content": "<pre><code>web/src/app/\n├── core/                  ← Singleton services, guards, interceptors\n│   ├── guards/            ← Route protection (auth, roles)\n│   ├── interceptors/      ← JWT token injection, error handling\n│   └── services/          ← API clients, state management\n├── layout/                ← App shell (sidebar, topbar, footer)\n├── pages/                 ← Feature pages (30+)\n│   ├── dashboard/\n│   ├── budget-worksheet/\n│   ├── measurement/\n│   ├── procurement/\n│   ├── finance/\n│   ├── analytics/\n│   └── ... (30+ pages)\n├── shared/                ← Reusable components, pipes, directives\n└── assets/i18n/           ← pt-BR, en, es translations</code></pre>\n\n<strong>Key features:</strong>\n• <strong>Standalone Components</strong> (no NgModules — modern Angular)\n• <strong>Angular Signals</strong> for reactive state management\n• <strong>PrimeNG 19</strong> — DataTables, Charts, Forms, Dialogs\n• <strong>PrimeFlex 4</strong> — responsive grid\n• <strong>ECharts 6</strong> — interactive charts (S-Curve, ABC Curve, cash flow)\n• <strong>i18n</strong> — 3 languages (ngx-translate)\n• <strong>Dark mode</strong> — CSS variables + theme toggle\n• <strong>Cypress E2E</strong> with <strong>cypress-axe</strong> (WCAG accessibility testing)\n\n<strong>For the TRAB interview:</strong> \"I built the frontend with Angular 19 using signals, standalone components, and PrimeNG. I'm not an expert, but I can build functional interfaces and understand the Angular mental model — components, services, routing, interceptors, reactive patterns.\""
       }
-    ]
+    ],
+    "topic": "rewe"
   },
   {
     "id": "theory-portfolio-",
@@ -109,7 +114,8 @@
         "heading": "The killer argument",
         "content": "<div style=\"background:var(--green-bg); padding:16px 20px; border-radius:8px; border-left:3px solid var(--green);\">\n<strong>Key message for the interviewer:</strong>\n\n\"I didn't just STUDY the stack — I BUILT a complete system with it. SinapiPRO is not a tutorial project. It has 30+ business modules, multi-tenant isolation, JWT security, Kubernetes deployment, CI/CD, observability, and a full test suite. The domain is different (construction vs logistics), but the engineering challenges are identical:\n\n• Multi-stakeholder operations (warehouse ↔ drivers ↔ planners = engineers ↔ managers ↔ clients)\n• State machines (delivery lifecycle = measurement lifecycle)\n• Real-time notifications (WebSocket for both)\n• External integrations with resilience (carriers = weather API, S3)\n• Analytics dashboards (delivery metrics = cost metrics)\n• Production-grade quality (monitoring, alerting, graceful degradation)\n\nThis is the kind of system TRAB builds. I've built one.\"\n</div>"
       }
-    ]
+    ],
+    "topic": "rewe"
   },
   {
     "id": "theory-portfolio-",
@@ -123,6 +129,7 @@
         "heading": "Technical patterns that transfer directly",
         "content": "<strong>Patterns I implemented in SinapiPRO that TRAB needs:</strong>\n\n<strong>1. Event-driven notifications:</strong>\n<pre><code>// SinapiPRO: measurement approved → notify stakeholders\nOperationEventPublisher.publish(MEASUREMENT_APPROVED, measurement);\n\n// TRAB equivalent: delivery dispatched → notify driver\neventPublisher.publish(DELIVERY_DISPATCHED, delivery);</code></pre>\n\n<strong>2. Multi-tenant data isolation:</strong>\n<pre><code>// SinapiPRO: TenantAwareEntity + filter by tenant_id\n// TRAB equivalent: filter by warehouse_id or region_id</code></pre>\n\n<strong>3. Fine-grained RBAC:</strong>\n<pre><code>// SinapiPRO: @PreAuthorize(\"hasPermission(#projectId, 'BUDGET_APPROVE')\")\n// TRAB equivalent: @PreAuthorize(\"hasPermission(#deliveryId, 'DISPATCH')\")</code></pre>\n\n<strong>4. Circuit breaker on external services:</strong>\n<pre><code>// SinapiPRO: weather API protected with Resilience4j\n// TRAB equivalent: carrier API protected with same pattern</code></pre>\n\n<strong>5. Business metrics (not just technical):</strong>\n<pre><code>// SinapiPRO: sinapipro.measurement.status.total{status=APPROVED}\n// TRAB equivalent: trab.delivery.status.total{status=DELIVERED}</code></pre>"
       }
-    ]
+    ],
+    "topic": "rewe"
   }
 ]

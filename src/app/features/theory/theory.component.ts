@@ -68,28 +68,17 @@ export class TheoryComponent implements OnInit {
     const sub = this.selectedSubtopic();
     if (!sub || all.length === 0) return all;
 
+    // Deterministic: use explicit subtopic field first
+    const byField = all.filter(ch => ch.subtopic === sub);
+    if (byField.length > 0) return byField;
+
+    // Fallback: ID-based matching for chapters without explicit subtopic field
     const subNorm = sub.toLowerCase();
-    let match = all.filter(ch => ch.id.toLowerCase().includes(subNorm));
+    const byId = all.filter(ch => ch.id.toLowerCase().includes(subNorm));
+    if (byId.length > 0) return byId;
 
-    if (match.length === 0) {
-      const meaningful = subNorm.replace(/^[a-z]+-/, '');
-      if (meaningful) {
-        match = all.filter(ch =>
-          ch.id.toLowerCase().includes(meaningful) ||
-          ch.title.toLowerCase().includes(meaningful)
-        );
-      }
-    }
-
-    if (match.length === 0) {
-      const topic = this.topic();
-      if (topic?.subtopics) {
-        const idx = topic.subtopics.findIndex(s => s.id === sub);
-        if (idx >= 0 && idx < all.length) match = [all[idx]];
-      }
-    }
-
-    return match.length > 0 ? match : all;
+    // Last resort: show all chapters for this topic
+    return all;
   });
 
   // ===== Lifecycle =====

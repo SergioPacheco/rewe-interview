@@ -11,7 +11,9 @@
         "heading": "When to use Kafka vs JMS",
         "content": "<strong>Keep JMS when:</strong>\n• Request/reply pattern needed\n• Complex routing rules (selectors, filters)\n• Small volume, transactional commands\n• Tight integration within same app server\n• Message deletion after processing is desired\n\n<strong>Use Kafka when:</strong>\n• High throughput event streaming (millions/day)\n• Multiple independent consumers need the same events\n• Event replay/audit trail required\n• Decoupled microservices (producers don't know consumers)\n• Real-time analytics + batch processing on same data\n• Ordering matters per entity (partition by key)\n\n<strong>REWE Transport Logistics:</strong>\n• <code>delivery-planned</code> → consumed by routing, notification, analytics\n• <code>delivery-completed</code> → consumed by billing, performance, customer notification\n• <code>driver-location-updated</code> → high-frequency, consumed by tracking dashboard + ETA calculator\n• Each consumer processes independently at its own pace — classic Kafka use case"
       }
-    ]
+    ],
+    "topic": "kafka",
+    "subtopic": "kafka-overview"
   },
   {
     "id": "theory-kafka-architecture",
@@ -25,7 +27,9 @@
         "heading": "Offsets — how consumers track position",
         "content": "Each message in a partition has a sequential <strong>offset</strong> (0, 1, 2, 3…). Consumers track which offset they've processed.\n\n<pre><code>Partition 0:  [0] [1] [2] [3] [4] [5] [6] [7] [8] [9]\n                                    ↑ committed offset (processed up to here)\n                                       ↑ current position (processing this)\n                                          ↑ ↑ ↑ ↑ not yet consumed</code></pre>\n\n<strong>Offset commit strategies:</strong>\n<table>\n<tr><th>Strategy</th><th>Behavior</th><th>Risk</th></tr>\n<tr><td>Auto-commit (default)</td><td>Kafka commits periodically</td><td>May lose messages if crash between commit and processing</td></tr>\n<tr><td>Manual commit after processing</td><td>You commit only after successful processing</td><td>May reprocess on crash (at-least-once) — handle with idempotency</td></tr>\n<tr><td>Commit per batch</td><td>Process N messages, then commit</td><td>Reprocess entire batch on failure</td></tr>\n</table>\n\n<strong>JMS comparison:</strong>\n• JMS: broker tracks acknowledgements per consumer. <code>message.acknowledge()</code> or transaction commit.\n• Kafka: consumer commits its offset. <code>consumer.commitSync()</code> or auto-commit.\n\n<strong>Replay:</strong> Reset offset to 0 → re-read all messages. Impossible in JMS (messages are gone). Essential for Kafka use cases like rebuilding materialized views."
       }
-    ]
+    ],
+    "topic": "kafka",
+    "subtopic": "kafka-architecture"
   },
   {
     "id": "theory-kafka-consumers",
@@ -39,7 +43,9 @@
         "heading": "Spring Kafka — consumer implementation",
         "content": "<pre><code>// JMS equivalent:\n@MessageDriven(activationConfig = {\n    @ActivationConfigProperty(propertyName = \"destinationType\", propertyValue = \"Queue\"),\n    @ActivationConfigProperty(propertyName = \"destination\", propertyValue = \"DeliveryQueue\")\n})\npublic class DeliveryMDB implements MessageListener {\n    public void onMessage(Message message) { ... }\n}\n\n// Spring Kafka equivalent:\n@Component\npublic class DeliveryEventConsumer {\n\n    @KafkaListener(\n        topics = \"delivery-events\",\n        groupId = \"trab-routing-service\",\n        containerFactory = \"kafkaListenerContainerFactory\"\n    )\n    public void handleDeliveryEvent(\n            @Payload DeliveryEvent event,\n            @Header(KafkaHeaders.RECEIVED_KEY) String key,\n            @Header(KafkaHeaders.OFFSET) long offset) {\n\n        log.info(\"Processing delivery event: key={}, offset={}\", key, offset);\n\n        // Idempotency check (same pattern as JMS!)\n        if (eventStore.alreadyProcessed(event.getEventId())) {\n            log.info(\"Duplicate event, skipping: {}\", event.getEventId());\n            return;\n        }\n\n        routingService.updateRoute(event);\n        eventStore.markProcessed(event.getEventId());\n    }\n}</code></pre>\n\n<strong>Same patterns transfer from JMS:</strong>\n• Idempotency (check before processing)\n• Error handling (throw exception → Kafka retries from last committed offset)\n• Logging with business context\n• Deserialization of payload"
       }
-    ]
+    ],
+    "topic": "kafka",
+    "subtopic": "kafka-consumers"
   },
   {
     "id": "theory-kafka-delivery",
@@ -53,7 +59,9 @@
         "heading": "Error handling patterns",
         "content": "<strong>1. Retry + Dead Letter Topic (DLT)</strong>\n<pre><code>// Spring Kafka retry configuration\n@Bean\npublic DefaultErrorHandler errorHandler(KafkaTemplate&lt;String, Object&gt; template) {\n    // Retry 3 times with backoff\n    var backoff = new FixedBackOff(1000L, 3);\n\n    // After exhausting retries → send to DLT\n    var recoverer = new DeadLetterPublishingRecoverer(template,\n        (record, ex) -> new TopicPartition(record.topic() + \".DLT\", -1));\n\n    return new DefaultErrorHandler(recoverer, backoff);\n}</code></pre>\n\n<strong>2. Non-blocking retry (separate topics)</strong>\n<pre><code>// Main topic: delivery-events\n// Retry topic: delivery-events.retry-1 (1s delay)\n// Retry topic: delivery-events.retry-2 (30s delay)\n// DLT: delivery-events.DLT (manual intervention)</code></pre>\n\n<strong>3. Skip and log (non-critical events)</strong>\n<pre><code>@KafkaListener(topics = \"driver-location\")\npublic void handleLocation(DriverLocationEvent event) {\n    try {\n        trackingService.updateLocation(event);\n    } catch (Exception e) {\n        // Location events: losing one is acceptable\n        log.warn(\"Failed to process location event, skipping: {}\", event, e);\n        // Do NOT rethrow — message is committed, not retried\n    }\n}</code></pre>\n\n<strong>JMS equivalent:</strong>\n• Artemis: <code>max-delivery-attempts=5</code>, <code>redelivery-delay=60s</code>, automatic DLQ\n• Kafka: You configure retry + DLT explicitly (more control, more responsibility)"
       }
-    ]
+    ],
+    "topic": "kafka",
+    "subtopic": "kafka-delivery"
   },
   {
     "id": "theory-kafka-producer",
@@ -67,7 +75,9 @@
         "heading": "Spring Kafka producer",
         "content": "<pre><code>@Service\npublic class LogisticsEventPublisher {\n\n    private final KafkaTemplate&lt;String, LogisticsEvent&gt; kafka;\n    private final ObjectMapper mapper;\n\n    public void publishDeliveryCompleted(Delivery delivery) {\n        var event = LogisticsEvent.builder()\n            .eventId(UUID.randomUUID().toString())\n            .eventType(\"DELIVERY_COMPLETED\")\n            .timestamp(Instant.now())\n            .aggregateId(\"delivery-\" + delivery.getId())\n            .payload(toPayload(delivery))\n            .build();\n\n        // Key = aggregateId → same delivery always goes to same partition\n        kafka.send(\"delivery-events\", event.getAggregateId(), event)\n            .whenComplete((result, ex) -> {\n                if (ex != null) {\n                    log.error(\"Failed to publish event: {}\", event.getEventId(), ex);\n                    // Fallback: persist to outbox table for retry\n                    outboxRepository.save(new OutboxEvent(event));\n                } else {\n                    log.debug(\"Event published: topic={}, partition={}, offset={}\",\n                        result.getRecordMetadata().topic(),\n                        result.getRecordMetadata().partition(),\n                        result.getRecordMetadata().offset());\n                }\n            });\n    }\n}</code></pre>\n\n<strong>Outbox pattern (for guaranteed delivery):</strong>\n1. Save business data + event to outbox table in SAME transaction\n2. Separate process reads outbox and publishes to Kafka\n3. Mark as published after successful send\n4. If Kafka is down → outbox accumulates, nothing lost\n\nSame pattern used in JMS with the \"persist first, send after commit\" approach."
       }
-    ]
+    ],
+    "topic": "kafka",
+    "subtopic": "kafka-producer"
   },
   {
     "id": "theory-kafka-interview",
@@ -77,7 +87,8 @@
         "heading": "How to position your JMS experience",
         "content": "<strong>\"Tell me about your messaging experience\"</strong>\n\n\"I have 5 years working with JMS — ActiveMQ Artemis as the broker, with Message-Driven Beans consuming from queues. Our system had 80+ queues handling async operations like notifications, external integrations, and background processing.\n\nThe patterns are the same as Kafka: idempotent consumers, dead-letter handling, retry with backoff, and monitoring queue depth for back-pressure.\n\nWhat changes in Kafka is the architecture — the log-based model means consumers are responsible for tracking their position, messages persist for replay, and scaling is partition-based rather than adding competing consumers on a queue. I find the consumer group model more elegant for multiple independent consumers reading the same stream.\"\n\n<strong>Key talking points:</strong>\n• Emphasize patterns (idempotency, error handling) — they transfer 100%\n• Show understanding of Kafka's DIFFERENT model (log, offsets, partitions)\n• Mention specific REWE use case: \"For transport logistics, partition by delivery ID gives ordering per shipment while scaling across partitions.\"\n• Be honest: \"I haven't operated Kafka in production, but I've studied the operational aspects — consumer lag monitoring, partition rebalancing, schema evolution with Avro/Schema Registry.\""
       }
-    ]
+    ],
+    "topic": "kafka"
   },
   {
     "id": "theory-kafka-comparison",
@@ -103,7 +114,8 @@
         "heading": "Complexity & Maintenance",
         "content": "<strong>ActiveMQ:</strong>\n• Simpler to configure and maintain for small-medium projects\n• Less operational complexity (single broker or simple cluster)\n• Familiar JMS API — most Java developers know it\n• Built-in web console for management\n\n<strong>Kafka:</strong>\n• Requires more configuration (brokers, ZooKeeper/KRaft, topics, partitions)\n• Higher operational complexity in large clusters\n• Partition rebalancing, ISR management, log compaction\n• BUT: compensated by performance and scalability at scale\n• Modern Kafka (KRaft mode) eliminates ZooKeeper dependency"
       }
-    ]
+    ],
+    "topic": "kafka"
   },
   {
     "id": "theory-kafka-exclusive",
@@ -127,7 +139,7 @@
       },
       {
         "heading": "Delivery guarantees (configurable)",
-        "content": "Kafka offers THREE levels, configurable per producer/consumer:\n\n<table>\n<tr><th>Guarantee</th><th>How</th><th>Trade-off</th><th>Use case</th></tr>\n<tr><td><strong>At-most-once</strong></td><td>Commit offset before processing</td><td>May lose messages</td><td>Metrics, non-critical logs</td></tr>\n<tr><td><strong>At-least-once</strong></td><td>Commit after processing + idempotent consumer</td><td>May duplicate (you handle)</td><td>95% of business events</td></tr>\n<tr><td><strong>Exactly-once</strong></td><td>Kafka transactions + idempotent producer</td><td>Higher latency, Kafka-to-Kafka only</td><td>Financial, cross-topic transforms</td></tr>\n</table>\n\n<strong>Important:</strong> \"Exactly-once\" only works within Kafka (consume → process → produce to another topic). When writing to an external database, you MUST use at-least-once + idempotent writes.\n\n<pre><code>// Producer: idempotent (no duplicates on retry)\nenable.idempotence=true\nacks=all\n\n// Consumer: manual commit after processing\nenable.auto.commit=false\n// Process → write to DB (with idempotency key) → commitSync()</code></pre>"
+        "content": "Kafka offers THREE levels, configurable per producer/consumer:\n\n<table>\n<tr><th>Guarantee</th><th>How</th><th>Trade-off</th><th>Use case</th></tr>\n<tr><td><strong>At-most-once</strong></td><td>Commit offset before processing</td><td>May lose messages</td><td>Metrics, non-critical logs</td></tr>\n<tr><td><strong>At-least-once</strong></td><td>Commit after processing + idempotent consumer</td><td>May duplicate (you handle)</td><td>most business events</td></tr>\n<tr><td><strong>Exactly-once</strong></td><td>Kafka transactions + idempotent producer</td><td>Higher latency, Kafka-to-Kafka only</td><td>Financial, cross-topic transforms</td></tr>\n</table>\n\n<strong>Important:</strong> \"Exactly-once\" only works within Kafka (consume → process → produce to another topic). When writing to an external database, you MUST use at-least-once + idempotent writes.\n\n<pre><code>// Producer: idempotent (no duplicates on retry)\nenable.idempotence=true\nacks=all\n\n// Consumer: manual commit after processing\nenable.auto.commit=false\n// Process → write to DB (with idempotency key) → commitSync()</code></pre>"
       },
       {
         "heading": "Kafka Connect & Ecosystem",
@@ -137,6 +149,7 @@
         "heading": "Solving problems with Kafka",
         "content": "<strong>Problem: \"Was this message processed?\"</strong>\nKafka: check consumer group offset vs message offset. If committed offset ≥ message offset → processed.\n\n<strong>Problem: \"Message processed but result is wrong\"</strong>\nKafka: reset offset to before the problematic message → reprocess with fixed logic. Impossible in ActiveMQ (message already deleted).\n\n<strong>Problem: \"Consumer is slow, messages accumulating\"</strong>\nKafka: add partitions + add consumer instances (horizontal scaling). Monitor consumer lag metric.\n\n<strong>Problem: \"Need to process events in order\"</strong>\nKafka: use partition key = entity ID. All events for same entity go to same partition → guaranteed order within partition.\n\n<strong>Problem: \"One bad message blocks the entire queue\"</strong>\nKafka: send to Dead Letter Topic (DLT) after N retries. Consumer continues with next message. Ops investigates DLT.\n\n<strong>Problem: \"New service needs historical data\"</strong>\nKafka: set consumer offset to 0 (or specific timestamp) → replay all retained events. Build state from scratch.\n\n<strong>Conclusion:</strong> Kafka gives fine-grained control over message processing with guarantees of exactly-once processing (when configured), ordering per partition, and the ability to replay and monitor. While ActiveMQ is adequate for traditional messaging, Kafka excels where high performance, scalability, and advanced real-time data processing are required."
       }
-    ]
+    ],
+    "topic": "kafka"
   }
 ]

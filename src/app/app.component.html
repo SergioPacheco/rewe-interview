@@ -127,42 +127,42 @@
   <!-- Sidebar -->
   <aside class="sidebar" [class.sidebar--open]="sidebarOpen()">
     <nav class="sidebar__nav">
-      @for (group of priorityGroups; track group.priority) {
-        <div class="sidebar__group">
-          @if (group.label) {
-            <h3 class="sidebar__group-label" [attr.data-priority]="group.priority">
+      @for (group of domainGroups; track group.group) {
+        @if (getTopicsByGroup(group.group).length > 0) {
+          <div class="sidebar__group">
+            <h3 class="sidebar__group-label" [attr.data-group]="group.group">
               {{ group.label }}
             </h3>
-          }
-          @for (topic of getTopicsByPriority(group.priority); track topic.id) {
-            <div class="sidebar__topic">
-              <button
-                class="sidebar__item"
-                [class.sidebar__item--expanded]="expandedTopic() === topic.id"
-                (click)="toggleTopic(topic.id)"
-              >
-                <span class="sidebar__icon">{{ topic.icon }}</span>
-                <span class="sidebar__name">{{ topic.name }}</span>
-                <span class="sidebar__chevron" [class.sidebar__chevron--open]="expandedTopic() === topic.id">›</span>
-              </button>
+            @for (topic of getTopicsByGroup(group.group); track topic.id) {
+              <div class="sidebar__topic">
+                <button
+                  class="sidebar__item"
+                  [class.sidebar__item--expanded]="expandedTopic() === topic.id"
+                  (click)="toggleTopic(topic.id)"
+                >
+                  <span class="sidebar__icon">{{ topic.icon }}</span>
+                  <span class="sidebar__name">{{ topic.name }}</span>
+                  <span class="sidebar__chevron" [class.sidebar__chevron--open]="expandedTopic() === topic.id">›</span>
+                </button>
 
-              @if (expandedTopic() === topic.id) {
-                <div class="sidebar__subtopics">
-                  @for (sub of topic.subtopics; track sub.id) {
-                    <a
-                      class="sidebar__subitem"
-                      [routerLink]="['/topic', topic.id]"
-                      [fragment]="sub.id"
-                      (click)="closeSidebarOnMobile()"
-                    >
-                      {{ sub.label }}
-                    </a>
-                  }
-                </div>
-              }
-            </div>
-          }
-        </div>
+                @if (expandedTopic() === topic.id) {
+                  <div class="sidebar__subtopics">
+                    @for (sub of topic.subtopics; track sub.id) {
+                      <a
+                        class="sidebar__subitem"
+                        [routerLink]="['/topic', topic.id]"
+                        [fragment]="sub.id"
+                        (click)="closeSidebarOnMobile()"
+                      >
+                        {{ sub.label }}
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        }
       }
     </nav>
   </aside>

@@ -1,5 +1,5 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { Topic, Question, TheoryChapter, TopicPriority } from '../../models';
+import { Topic, Question, TheoryChapter, TopicPriority, TopicGroup } from '../../models';
 
 /**
  * Central data service — loads topics, questions, and theory.
@@ -60,7 +60,9 @@ export class TopicService {
 
   /** Get theory chapters for a specific topic */
   getTheory(topicId: string): TheoryChapter[] {
-    return this.theory().filter(t => t.id.startsWith(`theory-${topicId}`));
+    return this.theory().filter(t =>
+      t.topic === topicId || t.id.startsWith(`theory-${topicId}`)
+    );
   }
 
   /** Get a single topic by ID */
@@ -76,6 +78,11 @@ export class TopicService {
       2: this.importantTopics(),
       3: this.niceToHaveTopics()
     };
+  }
+
+  /** Get topics grouped by domain */
+  getByGroup(group: TopicGroup): Topic[] {
+    return this.topics().filter(t => t.group === group);
   }
 
   // === Private helpers ===
@@ -106,7 +113,8 @@ export class TopicService {
       '/data/exercises/docker.json',
       '/data/exercises/k8s.json',
       '/data/exercises/kotlin.json',
-      '/data/exercises/angular.json'
+      '/data/exercises/angular.json',
+      '/data/exercises/stories.json'
     ];
 
     const results = await Promise.allSettled(
@@ -132,16 +140,17 @@ export class TopicService {
       '/data/topics/theory-concurrency.json',
       '/data/topics/theory-patterns.json',
       '/data/topics/theory-jpa.json',
-      '/data/topics/theory-docker-k8s.json',
+      '/data/topics/theory-docker.json',
+      '/data/topics/theory-kubernetes.json',
       '/data/topics/theory-testing.json',
       '/data/topics/theory-kotlin.json',
       '/data/topics/theory-angular.json',
       '/data/topics/theory-collections.json',
       '/data/topics/theory-oop.json',
-      '/data/topics/theory-k8s.json',
       '/data/topics/theory-security.json',
       '/data/topics/theory-system-design.json',
-      '/data/topics/theory-behavioral.json'
+      '/data/topics/theory-behavioral.json',
+      '/data/topics/theory-stories.json'
     ];
 
     const results = await Promise.allSettled(

@@ -11,7 +11,9 @@
         "heading": "Records — validation and custom constructors",
         "content": "<pre><code>public record CreateDeliveryRequest(\n    @NotBlank String driverId,\n    @NotNull @Future LocalDateTime scheduledAt,\n    @Size(min = 1, max = 50) List&lt;StopRequest&gt; stops\n) {\n    // Compact constructor — validation\n    public CreateDeliveryRequest {\n        if (stops == null) stops = List.of();\n        stops = List.copyOf(stops);  // defensive copy (truly immutable)\n    }\n\n    // Custom factory method\n    public static CreateDeliveryRequest urgent(String driverId, List&lt;StopRequest&gt; stops) {\n        return new CreateDeliveryRequest(driverId, LocalDateTime.now().plusHours(1), stops);\n    }\n}\n\n// Usage:\nvar req = new CreateDeliveryRequest(\"D-42\", tomorrow, stops);\nString driver = req.driverId();  // no \"get\" prefix!\n</code></pre>\n\n<strong>When to use Records:</strong>\n• DTOs (request/response)\n• Value objects (Money, Coordinate, DateRange)\n• Kafka event payloads\n• Multi-value return types\n• Map keys (auto equals/hashCode)\n\n<strong>When NOT to use:</strong>\n• JPA entities (need mutable state + no-arg constructor)\n• Objects with complex lifecycle/behavior\n• When you need inheritance (records are final)"
       }
-    ]
+    ],
+    "topic": "java-modern",
+    "subtopic": "modern-records"
   },
   {
     "id": "theory-collections-17-sealed",
@@ -25,7 +27,9 @@
         "heading": "Pattern matching with sealed types",
         "content": "<pre><code>// Java 21: exhaustive switch with pattern matching\npublic String describe(DeliveryEvent event) {\n    return switch (event) {\n        case DeliveryPlanned p -> \"Planned for driver \" + p.driverId();\n        case DeliveryDispatched d -> \"Dispatched on route \" + d.route();\n        case DeliveryCompleted c -> c.stopsDelivered() + \" stops delivered\";\n        case DeliveryFailed f -> \"Failed: \" + f.reason();\n        // No default needed! Compiler knows all cases are covered.\n    };\n}\n\n// If you add a new event type → compiler ERROR in every switch\n// Forces you to handle the new case everywhere (safe evolution)</code></pre>\n\n<strong>REWE transport example:</strong>\nDelivery states are a CLOSED set. Using sealed + records ensures that every handler explicitly covers every possible state. Adding a new state becomes a compiler-assisted refactoring (not a runtime surprise)."
       }
-    ]
+    ],
+    "topic": "java-modern",
+    "subtopic": "modern-records"
   },
   {
     "id": "theory-collections-17-pattern",
@@ -43,6 +47,8 @@
         "heading": "Switch expressions (Java 14+)",
         "content": "<pre><code>// Old switch (statement — can forget break):\nString label;\nswitch (status) {\n    case PLANNED: label = \"Waiting\"; break;\n    case DISPATCHED: label = \"On the way\"; break;\n    default: label = \"Unknown\"; break;\n}\n\n// New switch (expression — returns value, no break, no fall-through):\nString label = switch (status) {\n    case PLANNED -> \"Waiting\";\n    case DISPATCHED -> \"On the way\";\n    case IN_TRANSIT -> \"Moving\";\n    case DELIVERED -> \"Done\";\n    default -> \"Unknown\";\n};\n\n// Multi-line blocks:\nint priority = switch (delivery.getType()) {\n    case EXPRESS -> {\n        log.info(\"Express delivery detected\");\n        yield 1;  // 'yield' returns value from block\n    }\n    case SAME_DAY -> { yield 2; }\n    default -> { yield 3; }\n};</code></pre>"
       }
-    ]
+    ],
+    "topic": "java-modern",
+    "subtopic": "modern-patterns"
   }
 ]

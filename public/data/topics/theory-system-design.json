@@ -15,7 +15,8 @@
         "heading": "CAP Theorem",
         "content": "<p>In a distributed system, during a network partition you must choose between:</p><ul><li><strong>Consistency</strong> — all nodes see the same data</li><li><strong>Availability</strong> — every request receives a response</li></ul><p>Most real systems choose <strong>eventual consistency</strong> with strong consistency only where business requires it (e.g., payment, inventory).</p>"
       }
-    ]
+    ],
+    "topic": "system-design"
   },
   {
     "id": "theory-system-design-patterns",
@@ -33,7 +34,8 @@
         "heading": "Circuit Breaker",
         "content": "<pre><code>CLOSED → (failures exceed threshold) → OPEN\n  ↑                                        |\n  └── HALF-OPEN ← (timeout expires) ←─────┘\n        ↓\n  (test call succeeds → CLOSED)\n  (test call fails → OPEN)</code></pre><p>Protects against cascading failures when a dependency is unavailable.</p>"
       }
-    ]
+    ],
+    "topic": "system-design"
   },
   {
     "id": "theory-system-design-observability",
@@ -51,6 +53,8 @@
         "heading": "What to Monitor in Logistics",
         "content": "<ul><li>Deliveries stuck in a state > N minutes</li><li>Routes not assigned before departure time</li><li>Consumer lag on critical topics</li><li>Duplicate assignment attempts</li><li>Delay between physical event and system update</li><li>Reconciliation queue depth</li></ul><p>A technically healthy service can still represent a broken business process.</p>"
       }
-    ]
+    ],
+    "topic": "system-design",
+    "subtopic": "sd-ops"
   }
 ]

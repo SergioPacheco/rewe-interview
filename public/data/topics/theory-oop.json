@@ -11,7 +11,8 @@
         "heading": "What interviewers REALLY want to hear",
         "content": "Don't say: \"Encapsulation is making fields private.\"\n<strong>Say:</strong> \"Encapsulation protects business invariants — a Delivery entity controls its own state transitions through domain methods like dispatch() and complete(), preventing invalid states.\"\n\nDon't say: \"Polymorphism is calling the same method on different objects.\"\n<strong>Say:</strong> \"We had a notification flow where each channel implemented a common interface. Adding a new channel meant one new class, zero changes to existing code.\"\n\nDon't say: \"Inheritance is code reuse.\"\n<strong>Say:</strong> \"I use inheritance for stable is-a relationships. For code reuse, I prefer composition — injecting collaborators rather than inheriting a base class.\"\n\n<strong>The pattern:</strong> Concept → Real example → Benefit → Trade-off"
       }
-    ]
+    ],
+    "topic": "oop"
   },
   {
     "id": "theory-oop-encapsulation",
@@ -25,7 +26,9 @@
         "heading": "30-second interview answer",
         "content": "<strong>\"What is encapsulation?\"</strong>\n\n\"For me, encapsulation is not only about making fields private. It is about protecting the valid state of an object. Instead of exposing setters, I expose domain operations like <code>dispatch()</code> and <code>complete()</code>. These methods validate whether the transition is allowed and prevent invalid objects from existing.\n\nIn our logistics system, a delivery entity controlled its own status transitions — preventing impossible states like completing a delivery that was never dispatched.\""
       }
-    ]
+    ],
+    "topic": "oop",
+    "subtopic": "oop-encapsulation"
   },
   {
     "id": "theory-oop-abstraction",
@@ -39,7 +42,9 @@
         "heading": "When NOT to abstract",
         "content": "Not every class needs an interface. Create abstractions at <strong>meaningful boundaries</strong>:\n\n<strong>✅ Abstract when:</strong>\n• Infrastructure boundary (DB, messaging, external APIs)\n• Multiple implementations exist or are realistic\n• Test isolation requires it (mock the interface)\n• Different teams own different sides\n\n<strong>❌ Don't abstract when:</strong>\n• Only one implementation will ever exist\n• Internal helper classes\n• It adds a file without adding a design decision\n• YAGNI — You Aren't Gonna Need It\n\n<strong>Interview answer:</strong> \"I don't create interfaces for every class. I introduce abstractions where they represent a real boundary — between business logic and infrastructure, where I need test isolation, or where multiple implementations are realistic.\""
       }
-    ]
+    ],
+    "topic": "oop",
+    "subtopic": "oop-abstraction"
   },
   {
     "id": "theory-oop-inheritance",
@@ -57,7 +62,9 @@
         "heading": "30-second interview answer",
         "content": "<strong>\"When is inheritance appropriate?\"</strong>\n\n\"I use inheritance when there is a genuine and stable is-a relationship — the subtype can safely replace the parent everywhere. Exception hierarchies and JPA mapped superclasses for shared audit fields are good examples.\n\nI avoid using inheritance just to reuse code. A base service with 5 protected dependencies creates tight coupling. I prefer composition — inject only what you need. The key question is: will this hierarchy be stable for years, or will it become a maintenance burden?\""
       }
-    ]
+    ],
+    "topic": "oop",
+    "subtopic": "oop-inheritance"
   },
   {
     "id": "theory-oop-polymorphism",
@@ -75,7 +82,9 @@
         "heading": "30-second interview answer",
         "content": "<strong>\"Where did you use polymorphism?\"</strong>\n\n\"In our system, we had a notification flow where different channels — email, SMS, push, webhook — each implemented a common NotificationHandler interface. The dispatcher selected the correct handler at runtime based on the channel type.\n\nAdding a new channel meant creating one class implementing the interface. No modification to the dispatcher or existing handlers. Each handler was independently testable.\n\nThe trade-off is more classes and indirection. For only 2-3 simple cases, a switch would be simpler. In our case with 6+ channels that evolved independently, polymorphism was clearly justified.\""
       }
-    ]
+    ],
+    "topic": "oop",
+    "subtopic": "oop-polymorphism"
   },
   {
     "id": "theory-oop-composition",
@@ -93,7 +102,9 @@
         "heading": "30-second interview answer",
         "content": "<strong>\"Why composition over inheritance?\"</strong>\n\n\"I prefer composition because dependencies are explicit — visible in the constructor. Each component is independently replaceable and testable. The service declares ONLY what it needs.\n\nIn our systems, we moved away from a BaseService pattern that inherited 5 dependencies into every service. Now each service composes exactly what it needs via constructor injection. Testing went from 'mock everything' to 'mock only the 2 things this service actually uses.'\n\nThe trade-off is more classes. But explicitness and testability outweigh the file count.\""
       }
-    ]
+    ],
+    "topic": "oop",
+    "subtopic": "oop-composition"
   },
   {
     "id": "theory-oop-solid",
@@ -119,6 +130,7 @@
         "heading": "D — Dependency Inversion Principle",
         "content": "High-level business logic depends on <strong>abstractions</strong>, not on low-level infrastructure details.\n\n<pre><code>// ❌ Business depends on infrastructure:\n@Service\nclass DeliveryService {\n    private final KafkaTemplate kafka;   // knows about Kafka!\n    private final JdbcTemplate jdbc;     // knows about JDBC!\n}\n\n// ✅ Business depends on abstractions:\n@Service\nclass DeliveryService {\n    private final DeliveryRepository repo;            // interface\n    private final LogisticsEventPublisher events;     // interface\n}\n\n// Infrastructure IMPLEMENTS the abstractions:\n@Component class JpaDeliveryRepository implements DeliveryRepository { ... }\n@Component class KafkaEventPublisher implements LogisticsEventPublisher { ... }</code></pre>\n\n<strong>Key insight:</strong> The interface is defined BY the business layer (what it needs). Infrastructure implements it (how it's done). This INVERTS the dependency direction — infrastructure depends on business abstractions, not the reverse.\n\n<strong>DIP ≠ DI:</strong>\n• DIP = principle (depend on abstractions)\n• DI = technique (provide dependencies externally)\n• CDI/Spring = containers that implement DI"
       }
-    ]
+    ],
+    "topic": "oop"
   }
 ]

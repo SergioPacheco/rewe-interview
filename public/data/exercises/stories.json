@@ -1,0 +1,98 @@
+[
+  {
+    "id": "stories-perf-1",
+    "type": "ORAL_ANSWER",
+    "topic": "stories",
+    "subtopic": "story-performance",
+    "difficulty": "senior",
+    "question": "Tell me about a time you significantly improved system performance.",
+    "keyPoints": [
+      "Start with the measurable problem (16 min report)",
+      "Explain the diagnosis method (EXPLAIN ANALYZE)",
+      "Describe the root cause (correlated subquery, missing indexes)",
+      "Detail the fix (JOIN rewrite, composite indexes, pagination)",
+      "Give the measurable result (16 min → 2 sec)"
+    ],
+    "modelAnswer": "A critical report was taking 16 minutes. I used EXPLAIN ANALYZE and found a correlated subquery executing per row against a 2M-row table without proper indexes. I restructured the query as a pre-aggregated JOIN, created composite indexes matching the filter pattern, and added keyset pagination. The result dropped to 2 seconds — a 480× improvement.",
+    "followUps": [
+      {"question": "How did you decide which indexes to create?", "answerHint": "Analyzed the WHERE and JOIN columns, used the leftmost prefix rule for composite indexes"},
+      {"question": "How did you validate the fix wouldn't break anything?", "answerHint": "Compared result sets before/after, ran in staging under load, monitored after deploy"}
+    ]
+  },
+  {
+    "id": "stories-n1-1",
+    "type": "ORAL_ANSWER",
+    "topic": "stories",
+    "subtopic": "story-n1",
+    "difficulty": "senior",
+    "question": "Describe a time you identified and fixed an N+1 query problem.",
+    "keyPoints": [
+      "Explain what N+1 is (1 + N individual queries for related data)",
+      "How you detected it (monitoring, slow page, query count)",
+      "The fix (JOIN FETCH or DTO projection)",
+      "Measurable improvement"
+    ],
+    "modelAnswer": "A class listing page was making 41 queries (1 + 40 students). I identified a lazy-loaded relationship triggering individual queries per student. I used JOIN FETCH for the detail view and a DTO projection for the list view. Queries went from 41 to 1, page load from 3.2s to 180ms."
+  },
+  {
+    "id": "stories-incident-1",
+    "type": "ORAL_ANSWER",
+    "topic": "stories",
+    "subtopic": "story-incident",
+    "difficulty": "senior",
+    "question": "Tell me about a production incident you resolved.",
+    "keyPoints": [
+      "Timeline: how you became aware",
+      "Diagnosis: what tools and reasoning",
+      "Root cause: connection pool + external call in transaction",
+      "Fix: separated transaction boundaries",
+      "Prevention: what you changed to prevent recurrence"
+    ],
+    "modelAnswer": "We had connection pool exhaustion causing 502s. I traced it to an LDAP call inside a database transaction — when LDAP was slow, connections were held for 30+ seconds. I separated the boundaries: short DB transaction, external call outside, then another short transaction. I also added timeouts on all external calls and pool utilization monitoring."
+  },
+  {
+    "id": "stories-template-1",
+    "type": "ORAL_ANSWER",
+    "topic": "stories",
+    "subtopic": "story-template",
+    "difficulty": "senior",
+    "question": "Describe a design pattern you applied in a real project and why.",
+    "keyPoints": [
+      "Name the pattern (Template Method)",
+      "Explain the problem it solved (document generation with shared workflow)",
+      "Show you understand the pattern's purpose (varying steps with fixed skeleton)",
+      "Concrete benefit (new document types = 1 new class)"
+    ],
+    "modelAnswer": "I used Template Method for document generation. We had certificates, contracts, and confirmations — all following the same workflow (validate permissions, load data, validate rules, render PDF) but with different specifics. The abstract class defines the skeleton; each document type implements only what varies. Adding a new document type now requires one class instead of modifying five."
+  },
+  {
+    "id": "stories-disagree-1",
+    "type": "ORAL_ANSWER",
+    "topic": "stories",
+    "subtopic": "story-disagreement",
+    "difficulty": "senior",
+    "question": "Tell me about a time you disagreed with a colleague on a technical decision.",
+    "keyPoints": [
+      "Acknowledge the other person's concern was valid",
+      "Focus on the problem, not the person",
+      "Use evidence (load test, prototype) rather than authority",
+      "Show collaborative resolution"
+    ],
+    "modelAnswer": "A colleague proposed synchronous validation between services for data consistency. I was concerned about coupling and latency. I acknowledged the consistency need was real, then built a quick prototype comparing both approaches under load. The latency difference was clear, and the team chose the event-based alternative with a reconciliation safety net."
+  },
+  {
+    "id": "stories-learning-1",
+    "type": "ORAL_ANSWER",
+    "topic": "stories",
+    "subtopic": "story-learning",
+    "difficulty": "senior",
+    "question": "How do you approach learning a new technology stack?",
+    "keyPoints": [
+      "Bridge from what you know (Jakarta EE → Spring)",
+      "Concept-first, not syntax-first",
+      "Practical application (building projects)",
+      "Honest about depth (production JMS vs studied Kafka)"
+    ],
+    "modelAnswer": "I bridge from what I know. After 8 years with Jakarta EE, I mapped DI, transactions, and messaging concepts to Spring equivalents. The mental models transfer — only the API changes. For Kafka, I started from JMS knowledge and studied what Kafka does differently. I'm transparent about my depth: production experience with JMS, studied and practiced with Kafka."
+  }
+]

@@ -27,7 +27,9 @@
         "heading": "🎯 Key signals for interview preparation",
         "content": "<strong>What the vacancy tells us about the role:</strong>\n\n<table>\n<tr><th>Signal</th><th>What it means for you</th></tr>\n<tr><td>\"Development AND maintenance\"</td><td>Hybrid context — not pure greenfield</td></tr>\n<tr><td>\"Kotlin/Java\" (Kotlin first!)</td><td>Team likely prefers Kotlin for new code</td></tr>\n<tr><td>\"Angular is important but not expert\"</td><td>You'll touch frontend, but backend is primary</td></tr>\n<tr><td>\"5,700 supermarkets\"</td><td>Massive scale, operationally critical</td></tr>\n<tr><td>\"Team first mindset\"</td><td>Collaboration > individual heroics</td></tr>\n<tr><td>\"Data-driven decisions\"</td><td>Expect metrics, monitoring, evidence-based choices</td></tr>\n<tr><td>\"International environment\"</td><td>English daily, colleagues in Germany</td></tr>\n<tr><td>\"NEO — modular, plug-and-play\"</td><td>Architecture questions WILL come up</td></tr>\n<tr><td>\"Business-critical solutions\"</td><td>Reliability, availability, production readiness matter</td></tr>\n<tr><td>\"Work independently\"</td><td>Autonomy expected — not hand-holding</td></tr>\n</table>"
       }
-    ]
+    ],
+    "topic": "rewe",
+    "subtopic": "rewe-job"
   },
   {
     "id": "theory-rewe-trab",
@@ -49,7 +51,9 @@
         "heading": "Probable delivery lifecycle states",
         "content": "<pre><code>Store demand\n    │\n    ▼\nDistribution planning\n    │\n    ▼\nWarehouse preparation ──────── READY_FOR_LOADING\n    │\n    ▼\nTransport order ────────────── PLANNED\n    │\n    ▼\nVehicle + driver assignment\n    │\n    ▼\nLoading ────────────────────── LOADING → LOADED\n    │\n    ▼\nDispatch ───────────────────── DISPATCHED\n    │\n    ▼\nTransport execution ────────── IN_TRANSIT (→ DELAYED if issues)\n    │\n    ▼\nArrival at store ───────────── ARRIVED\n    │\n    ▼\nDelivery confirmation ──────── DELIVERED\n    │\n    ▼\nOperational analytics ──────── COMPLETED</code></pre>\n\n<div style=\"background:var(--surface2); padding:10px 14px; border-radius:6px; margin-top:12px; font-size:0.8rem; color:var(--dim);\">\n⚠️ These states are training examples, not confirmed TRAB system states.\n</div>"
       }
-    ]
+    ],
+    "topic": "rewe",
+    "subtopic": "rewe-trab"
   },
   {
     "id": "theory-rewe-problem",
@@ -67,7 +71,9 @@
         "heading": "Legacy, Modernization, and Greenfield",
         "content": "<strong>Existing systems:</strong> consolidated rules, high operational impact, legacy integrations, domain dependencies, need for stability\n\n<strong>Modernization strategies:</strong>\n• Strangler pattern (wrap legacy, gradually replace)\n• APIs around existing systems\n• Domain-by-domain migration\n• Event publication from legacy\n• Coexistence between old and new\n\n<strong>New services:</strong> new Kafka consumers, new APIs, new dashboards, new NEO plugins, new Spring Boot services\n\n<strong>Interview question:</strong>\n> \"How would you modernize a transport system that cannot be taken offline?\"\n\n<strong>Strong answer:</strong>\n\"I would avoid a big-bang replacement. I would identify stable business boundaries, expose controlled APIs or events around the existing system, and gradually move capabilities to new services. During the transition, observability, data consistency, reconciliation, and rollback strategies would be essential.\""
       }
-    ]
+    ],
+    "topic": "rewe",
+    "subtopic": "rewe-problem"
   },
   {
     "id": "theory-rewe-neo",
@@ -89,7 +95,9 @@
         "heading": "What \"plug-and-play architecture\" means",
         "content": "> Plug-and-play architecture means that new modules, integrations, or providers can be added with minimal changes to the core system.\n\nThe core depends on <strong>stable contracts</strong>, not concrete implementations.\n\n<pre><code>public interface CommunicationPlugin {\n    String pluginId();\n    boolean supports(CommunicationRequest request);\n    CommunicationResult execute(CommunicationRequest request);\n}\n\n@Component\npublic class DriverAppPlugin implements CommunicationPlugin { ... }\n\n@Component\npublic class WarehouseDashboardPlugin implements CommunicationPlugin { ... }\n\n@Component\npublic class ExternalCarrierPlugin implements CommunicationPlugin { ... }\n\n// Core router — selects plugin at runtime\n@Service\npublic class CommunicationRouter {\n    private final List&lt;CommunicationPlugin&gt; plugins;\n\n    public CommunicationResult route(CommunicationRequest request) {\n        return plugins.stream()\n            .filter(p -> p.supports(request))\n            .findFirst()\n            .orElseThrow(UnsupportedCommunicationException::new)\n            .execute(request);\n    }\n}</code></pre>\n\n<strong>Plug-and-play can be implemented at different levels:</strong>\n• <strong>In-process:</strong> interfaces, DI, Strategy, Spring beans, Java SPI\n• <strong>Distributed:</strong> independent services, Kafka consumers, connectors, service discovery\n• <strong>Configuration:</strong> feature flags, environment-based plugins, declarative rules"
       }
-    ]
+    ],
+    "topic": "rewe",
+    "subtopic": "rewe-neo"
   },
   {
     "id": "theory-rewe-connection",
@@ -115,7 +123,9 @@
         "heading": "PostgreSQL + Performance",
         "content": "<strong>Direct match (Strong):</strong> indexes, EXPLAIN ANALYZE, query optimization, CTEs, partitioning, N+1 diagnosis, connection pool management\n\n\"This is one of my strongest areas. I've optimized systems with 2000+ tables, diagnosed production issues with connection pools, and built efficient queries for high-volume operations.\""
       }
-    ]
+    ],
+    "topic": "rewe",
+    "subtopic": "rewe-connection"
   },
   {
     "id": "theory-rewe-portfolio",
@@ -141,7 +151,8 @@
         "heading": "Parallels between SinapiPRO and TRAB",
         "content": "<table>\n<tr><th>SinapiPRO (Construction)</th><th>TRAB (Transport Logistics)</th></tr>\n<tr><td>Construction projects with multiple stakeholders</td><td>Deliveries with warehouses, drivers, planners</td></tr>\n<tr><td>Measurement lifecycle (draft → submitted → approved)</td><td>Delivery lifecycle (planned → dispatched → delivered)</td></tr>\n<tr><td>Multi-tenant (construction companies)</td><td>Multi-warehouse / multi-region</td></tr>\n<tr><td>Real-time notifications (WebSocket)</td><td>Real-time tracking (driver positions, status)</td></tr>\n<tr><td>External integrations (weather API, S3)</td><td>External integrations (carriers, driver apps)</td></tr>\n<tr><td>Analytics dashboards (costs, progress)</td><td>Analytics dashboards (delivery metrics, delays)</td></tr>\n<tr><td>RBAC per module (who can approve what)</td><td>Permissions per role (planner vs driver vs admin)</td></tr>\n<tr><td>PDF/Excel report generation</td><td>Logistics reports and analytics exports</td></tr>\n<tr><td>Vertical slices (budget, measurement, schedule)</td><td>Modular services (delivery, routing, communication)</td></tr>\n<tr><td>Circuit breaker on external APIs</td><td>Resilience for carrier integrations</td></tr>\n</table>\n\n<div style=\"background:var(--green-bg); padding:14px 18px; border-radius:8px; margin-top:16px;\">\n<strong>Key message:</strong> \"I built the EXACT type of system TRAB develops — operationally critical, multi-stakeholder, event-driven, with real-time updates, external integrations, and production-grade observability. The domain is different (construction vs logistics), but the engineering challenges are identical.\"\n</div>"
       }
-    ]
+    ],
+    "topic": "rewe"
   },
   {
     "id": "theory-rewe-questions",
@@ -151,6 +162,8 @@
         "heading": "Validating our assumptions",
         "content": "These questions demonstrate research, genuine interest, and senior thinking:\n\n<strong>About the domain:</strong>\n1. Which part of the transport lifecycle is owned by TRAB?\n2. What are the main applications maintained by the team?\n3. Are the current systems mainly modern, legacy, or hybrid?\n4. Is the team currently focused more on new development or modernization?\n\n<strong>About NEO:</strong>\n5. What is the relationship between TRAB and NEO?\n6. Is NEO already in production?\n7. Which teams and users consume NEO?\n8. What does \"unified communication\" mean in this context?\n9. What does \"plug-and-play\" mean technically in NEO?\n10. Are the plugins Spring modules, connectors, or independent services?\n\n<strong>About operations:</strong>\n11. Which integrations are the most critical?\n12. How are external carriers integrated?\n13. Which failures have the greatest operational impact?\n14. Does the team own production support?\n\n<strong>About the team:</strong>\n15. How is work divided between Málaga and Germany?\n16. What are the biggest technical challenges today?\n17. What would the new developer work on first?\n18. What would success look like after six months?"
       }
-    ]
+    ],
+    "topic": "rewe",
+    "subtopic": "rewe-questions"
   }
 ]

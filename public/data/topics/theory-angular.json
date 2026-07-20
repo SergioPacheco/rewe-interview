@@ -10,8 +10,14 @@
       {
         "heading": "Components — the building blocks",
         "content": "A component = a reusable UI piece with template (HTML) + logic (TypeScript) + styles (CSS).\n\n<pre><code>// delivery-list.component.ts (Standalone — no NgModule!)\n@Component({\n  selector: 'app-delivery-list',\n  standalone: true,\n  imports: [CommonModule, TableModule, ButtonModule],\n  template: `\n    &lt;p-table [value]=\"deliveries()\" [paginator]=\"true\" [rows]=\"20\"&gt;\n      &lt;ng-template pTemplate=\"header\"&gt;\n        &lt;tr&gt;\n          &lt;th&gt;ID&lt;/th&gt;\n          &lt;th&gt;Status&lt;/th&gt;\n          &lt;th&gt;Driver&lt;/th&gt;\n          &lt;th&gt;Scheduled&lt;/th&gt;\n        &lt;/tr&gt;\n      &lt;/ng-template&gt;\n      &lt;ng-template pTemplate=\"body\" let-delivery&gt;\n        &lt;tr&gt;\n          &lt;td&gt;{{ delivery.id }}&lt;/td&gt;\n          &lt;td&gt;&lt;p-tag [severity]=\"statusSeverity(delivery.status)\"&gt;{{ delivery.status }}&lt;/p-tag&gt;&lt;/td&gt;\n          &lt;td&gt;{{ delivery.driverName }}&lt;/td&gt;\n          &lt;td&gt;{{ delivery.scheduledAt | date:'short' }}&lt;/td&gt;\n        &lt;/tr&gt;\n      &lt;/ng-template&gt;\n    &lt;/p-table&gt;\n  `\n})\nexport class DeliveryListComponent {\n  private deliveryService = inject(DeliveryService);\n  deliveries = signal&lt;Delivery[]&gt;([]);\n\n  ngOnInit() {\n    this.deliveryService.findAll().subscribe(data =&gt; this.deliveries.set(data));\n  }\n}</code></pre>\n\n<strong>Key concepts:</strong>\n• <code>standalone: true</code> — modern Angular (no NgModules needed)\n• <code>signal&lt;T&gt;</code> — reactive state (Angular 16+, replaces BehaviorSubject)\n• <code>inject()</code> — dependency injection (like Spring @Autowired)\n• Template uses PrimeNG components (like PrimeFaces for Angular)"
+      },
+      {
+        "heading": "Version context",
+        "content": "<strong>This content references Angular 19.</strong>\n\nAngular evolves rapidly. Key concepts (components, signals, standalone, DI) remain stable across versions. For interviews, understanding the architectural patterns matters more than specific version numbers.\n\n<strong>Post-Angular 19 evolution:</strong>\n• Angular 20+: further signal integration, improved SSR\n• The standalone-first approach and signal-based reactivity continue as the primary direction"
       }
-    ]
+    ],
+    "topic": "angular",
+    "subtopic": "ng-basics"
   },
   {
     "id": "theory-angular-services",
@@ -29,7 +35,9 @@
         "heading": "HTTP Interceptors — like Servlet Filters",
         "content": "<pre><code>// auth.interceptor.ts — injects JWT token into every request\nexport var authInterceptor: HttpInterceptorFn = (req, next) =&gt; {\n  var token = inject(AuthService).getToken();\n\n  if (token) {\n    req = req.clone({\n      setHeaders: { Authorization: `Bearer ${token}` }\n    });\n  }\n\n  return next(req);\n};\n\n// error.interceptor.ts — handles 401/403 globally\nexport var errorInterceptor: HttpInterceptorFn = (req, next) =&gt; {\n  return next(req).pipe(\n    catchError(error =&gt; {\n      if (error.status === 401) {\n        inject(Router).navigate(['/login']);\n      }\n      return throwError(() =&gt; error);\n    })\n  );\n};\n\n// Register in app config:\nprovideHttpClient(withInterceptors([authInterceptor, errorInterceptor]))</code></pre>\n\nSame pattern as Spring Security filters — intercept request, add auth header, handle errors globally."
       }
-    ]
+    ],
+    "topic": "angular",
+    "subtopic": "ng-services"
   },
   {
     "id": "theory-angular-routing",
@@ -43,6 +51,8 @@
         "heading": "PrimeNG — like PrimeFaces for Angular",
         "content": "<strong>If you know PrimeFaces (JSF), you know PrimeNG:</strong>\n\n<table>\n<tr><th>PrimeFaces (Java EE)</th><th>PrimeNG (Angular)</th></tr>\n<tr><td>&lt;p:dataTable&gt;</td><td>&lt;p-table&gt;</td></tr>\n<tr><td>&lt;p:dialog&gt;</td><td>&lt;p-dialog&gt;</td></tr>\n<tr><td>&lt;p:autoComplete&gt;</td><td>&lt;p-autoComplete&gt;</td></tr>\n<tr><td>&lt;p:chart&gt;</td><td>&lt;p-chart&gt; (or ECharts)</td></tr>\n<tr><td>&lt;p:calendar&gt;</td><td>&lt;p-datePicker&gt;</td></tr>\n<tr><td>&lt;p:commandButton&gt;</td><td>&lt;p-button&gt;</td></tr>\n<tr><td>LazyDataModel</td><td>[lazy]=\"true\" + (onLazyLoad)</td></tr>\n<tr><td>rendered=\"#{}\"</td><td>*ngIf / @if</td></tr>\n<tr><td>value=\"#{bean.list}\"</td><td>[value]=\"deliveries()\"</td></tr>\n</table>\n\n<strong>Interview answer:</strong> \"I've used PrimeFaces extensively — PrimeNG is the same component library for Angular. The concepts transfer: data tables with lazy loading, dialogs, forms with validation, charts. The API is different but the mental model is identical.\""
       }
-    ]
+    ],
+    "topic": "angular",
+    "subtopic": "ng-routing"
   }
 ]

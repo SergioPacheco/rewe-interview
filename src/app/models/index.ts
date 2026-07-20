@@ -7,6 +7,7 @@
 
 export type TopicPriority = 0 | 1 | 2 | 3;
 export type TopicMode = 'interview' | 'practice' | 'theory';
+export type TopicGroup = 'interview' | 'backend' | 'distributed' | 'frontend' | 'quality' | 'more';
 
 export interface Subtopic {
   id: string;
@@ -18,6 +19,7 @@ export interface Topic {
   name: string;
   icon: string;
   priority: TopicPriority;
+  group?: TopicGroup;
   desc: string;
   mode: TopicMode;
   subtopics: Subtopic[];
@@ -103,6 +105,8 @@ export interface TheorySection {
 
 export interface TheoryChapter {
   id: string;
+  topic?: string;
+  subtopic?: string;
   title: string;
   sections: TheorySection[];
 }

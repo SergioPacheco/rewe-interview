@@ -1,0 +1,46 @@
+[
+  {
+    "id": "theory-docker-basics",
+    "topic": "docker",
+    "subtopic": "docker-basics",
+    "title": "Docker — Containers & Images",
+    "sections": [
+      {
+        "heading": "Why containers?",
+        "content": "<strong>Problem:</strong> \"It works on my machine\" — different environments have different dependencies, OS versions, configurations.\n\n<strong>Solution:</strong> Package your application with its dependencies into a container that runs identically everywhere.\n\n<pre><code>Traditional:  App → depends on OS, JDK version, libraries, config → \"works on dev, breaks on prod\"\nContainers:   App + runtime + dependencies → single image → runs same everywhere</code></pre>\n\n<strong>Key distinction:</strong>\n• <strong>Image</strong> = immutable artifact containing application + runtime + immutable dependencies\n• <strong>Runtime environment</strong> = environment-specific configuration and secrets (injected at deploy time)\n\n<strong>Docker concepts:</strong>\n• <strong>Image:</strong> read-only template (like a class) — built from Dockerfile\n• <strong>Container:</strong> running instance of an image (like an object)\n• <strong>Registry:</strong> stores images (Docker Hub, company registry)\n• <strong>Dockerfile:</strong> recipe to build an image"
+      },
+      {
+        "heading": "Dockerfile for Spring Boot",
+        "content": "<pre><code># Multi-stage build — smaller final image\nFROM eclipse-temurin:21-jdk AS builder\nWORKDIR /app\n\nCOPY .mvn/ .mvn/\nCOPY mvnw pom.xml ./\nRUN ./mvnw dependency:go-offline\n\nCOPY src/ src/\nRUN ./mvnw package -DskipTests\n\nFROM eclipse-temurin:21-jre\nWORKDIR /app\n\nRUN useradd --system --uid 10001 appuser\nCOPY --from=builder /app/target/delivery-service-*.jar app.jar\n\nUSER appuser\nEXPOSE 8080\nENTRYPOINT [\"java\", \"-jar\", \"app.jar\"]</code></pre>\n\n<strong>Best practices:</strong>\n• <strong>Multi-stage:</strong> build with JDK, run with JRE only (smaller image)\n• <strong>Layer caching:</strong> copy pom.xml + wrapper first (dependencies cached), then src (changes frequently)\n• <strong>Non-root user:</strong> run as non-root for security\n• <strong>.dockerignore:</strong> exclude target/, .git/, IDE files\n\n<strong>Note on HEALTHCHECK:</strong> Docker's HEALTHCHECK directive is an option for standalone containers. In Kubernetes, probes are declared in the Pod spec instead — avoid duplicating both."
+      },
+      {
+        "heading": "Docker Compose for local development",
+        "content": "<pre><code># docker-compose.yml — full local environment\nservices:\n  delivery-service:\n    build: .\n    ports: [\"8080:8080\"]\n    environment:\n      SPRING_PROFILES_ACTIVE: dev\n      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/delivery\n    depends_on: [db, kafka]\n\n  db:\n    image: postgres:15\n    environment:\n      POSTGRES_DB: delivery\n      POSTGRES_PASSWORD: dev123\n    ports: [\"5432:5432\"]\n\n  kafka:\n    image: confluentinc/cp-kafka:7.5.0\n    ports: [\"9092:9092\"]\n    environment:\n      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092</code></pre>\n\n<code>docker compose up</code> → full stack running locally in seconds.\n\n<strong>Java EE comparison:</strong> Instead of installing WildFly + PostgreSQL + ActiveMQ manually, you define everything in one file and spin it up/down instantly."
+      },
+      {
+        "heading": "Layers & Build Cache",
+        "content": "Docker images are composed of <strong>layers</strong>. Each Dockerfile instruction creates a new layer.\n\n<pre><code>Layer 1: FROM eclipse-temurin:21-jre     (base OS + JRE)\nLayer 2: RUN useradd ...                  (create user)\nLayer 3: COPY app.jar ...                 (your application)\n</code></pre>\n\n<strong>Caching rules:</strong>\n• If a layer hasn't changed, Docker reuses the cached version\n• Once a layer changes, all subsequent layers are rebuilt\n• Order instructions from least-changing to most-changing\n\n<strong>Practical impact:</strong>\n• Dependencies change rarely → cache the dependency download step\n• Source code changes often → copy it last\n• This is why we copy <code>pom.xml</code> and run <code>dependency:go-offline</code> before copying <code>src/</code>"
+      }
+    ]
+  },
+  {
+    "id": "theory-docker-compose",
+    "topic": "docker",
+    "subtopic": "docker-compose",
+    "title": "Docker Compose & Networking",
+    "sections": [
+      {
+        "heading": "Service networking",
+        "content": "Docker Compose creates a default network where services can reach each other by name:\n\n<pre><code>services:\n  app:\n    environment:\n      DB_HOST: db          # ← service name = DNS hostname\n  db:\n    image: postgres:15\n</code></pre>\n\n<strong>Key points:</strong>\n• Services communicate via service name (not IP)\n• Each service gets its own isolated network namespace\n• <code>ports:</code> exposes to the host; services on the same network don't need exposed ports to talk to each other"
+      },
+      {
+        "heading": "Volumes & persistence",
+        "content": "<pre><code>services:\n  db:\n    image: postgres:15\n    volumes:\n      - pgdata:/var/lib/postgresql/data\n\nvolumes:\n  pgdata:   # named volume — persists across container restarts</code></pre>\n\n<strong>Types:</strong>\n• <strong>Named volumes:</strong> managed by Docker, persist data (databases, uploads)\n• <strong>Bind mounts:</strong> map host directory into container (development hot-reload)\n\n<pre><code># Bind mount for live code reload\nservices:\n  frontend:\n    volumes:\n      - ./src:/app/src    # host ./src → container /app/src</code></pre>"
+      },
+      {
+        "heading": "Production considerations",
+        "content": "Docker Compose is primarily for <strong>local development and CI</strong>.\n\nFor production orchestration, use Kubernetes (or similar). Key differences:\n\n• Compose: single host, no auto-healing, manual scaling\n• Kubernetes: multi-node, self-healing, auto-scaling, rolling updates\n\nCompose is still valuable for:\n• Local development environments\n• Integration test setups (e.g., Testcontainers)\n• CI pipelines that need a full stack"
+      }
+    ]
+  }
+]

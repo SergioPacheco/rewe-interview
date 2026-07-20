@@ -15,7 +15,8 @@
         "heading": "HTTP Status Codes",
         "content": "<pre><code>2xx — SUCCESS\n  200 OK              — general success (GET, PUT, PATCH)\n  201 Created         — resource created (POST) + Location header\n  204 No Content      — success with no body (DELETE)\n\n3xx — REDIRECTION\n  301 Moved Permanently\n  304 Not Modified    — cache still valid (ETag)\n\n4xx — CLIENT ERROR (your fault)\n  400 Bad Request     — validation failed, malformed payload\n  401 Unauthorized    — not authenticated (missing/bad token)\n  403 Forbidden       — authenticated but not authorized\n  404 Not Found       — resource doesn't exist\n  409 Conflict        — state conflict (duplicate, version mismatch)\n  422 Unprocessable   — semantically invalid (valid JSON but bad data)\n  429 Too Many Reqs   — rate limited\n\n5xx — SERVER ERROR (our fault)\n  500 Internal Error  — unexpected failure (bug, timeout)\n  502 Bad Gateway     — upstream service failed\n  503 Unavailable     — overloaded or maintenance\n  504 Gateway Timeout — upstream timed out</code></pre>\n\n<strong>Interview tip:</strong> \"400 vs 422?\" — 400 = can't even parse the request. 422 = parsed it, but the content violates business rules."
       }
-    ]
+    ],
+    "topic": "rest"
   },
   {
     "id": "theory-rest-design",
@@ -37,7 +38,9 @@
         "heading": "Idempotency for safe retries",
         "content": "When a client doesn't receive a response (timeout, network error), it may retry. Without idempotency, retry = duplicate.\n\n<pre><code>// Problem: POST is not idempotent\nPOST /deliveries (timeout... did it create or not?)\nPOST /deliveries (retry... now you have 2 deliveries!)\n\n// Solution: Idempotency Key\nPOST /deliveries\nHeaders: Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000\n\n// Server stores: key → response\n// Same key again → returns stored response (no duplicate)</code></pre>\n\n<strong>Implementation:</strong>\n1. Client sends unique key per logical operation\n2. Server checks: \"did I already process this key?\"\n3. If yes → return the original response\n4. If no → process, store result, return response\n\n<strong>Natural idempotency:</strong>\n• PUT is naturally idempotent (same data → same state)\n• DELETE is naturally idempotent (deleting non-existent = 404 or 204)\n• Only POST needs explicit idempotency keys for critical operations"
       }
-    ]
+    ],
+    "topic": "rest",
+    "subtopic": "rest-design"
   },
   {
     "id": "theory-rest-interview",
@@ -47,6 +50,7 @@
         "heading": "Top interview questions and answers",
         "content": "<strong>\"PUT vs POST?\"</strong>\nPOST creates a new resource (server assigns ID). PUT replaces a resource at a known URL.\nPOST /deliveries → 201 + Location header.\nPUT /deliveries/4567 → 200 (replaced) or 201 (created at that URL).\n\n<strong>\"How do you handle versioning?\"</strong>\nURL path versioning (/v1/, /v2/) for clarity. Both versions delegate to the same business logic. Version adapters handle request/response transformation. Never duplicate business code.\n\n<strong>\"How do you secure a REST API?\"</strong>\n• Authentication: JWT/OAuth2 tokens in Authorization header\n• Authorization: role/permission checks in the business layer\n• Input validation: Bean Validation + max sizes + parameterized queries\n• Rate limiting: per-client quotas (API gateway)\n• HTTPS: always (never plain HTTP in production)\n\n<strong>\"REST vs GraphQL?\"</strong>\nREST: simpler, cacheable, well-understood. Better for CRUD and standard APIs.\nGraphQL: flexible queries, reduces over/under-fetching. Better for complex UIs with varied data needs.\nFor REWE transport logistics: REST is the standard choice (well-defined resources, predictable patterns).\n\n<strong>\"What makes an API 'RESTful'?\"</strong>\nStateless, resource-oriented, proper HTTP verbs, proper status codes, HATEOAS (links in responses — often skipped in practice). The pragmatic answer: \"We follow REST conventions for verbs and status codes, resource-oriented URLs, and stateless communication. We don't implement full HATEOAS because the ROI is low for internal APIs.\""
       }
-    ]
+    ],
+    "topic": "rest"
   }
 ]

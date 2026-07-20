@@ -1,0 +1,38 @@
+[
+  {
+    "id": "theory-k8s-pods",
+    "topic": "k8s",
+    "subtopic": "k8s-pods",
+    "title": "Kubernetes — Pods & Deployments",
+    "sections": [
+      {
+        "heading": "What is Kubernetes?",
+        "content": "Kubernetes (K8s) = orchestrator that manages containers in production: scheduling, scaling, healing, networking, load balancing.\n\n<pre><code>Your container (Docker image)\n       │\n       ▼\nPod (smallest deployable unit — 1+ containers)\n       │\n       ▼\nDeployment (manages N pod replicas — rolling updates)\n       │\n       ▼\nService (stable network endpoint — load balances across pods)\n       │\n       ▼\nIngress (external traffic → Service)</code></pre>\n\n<strong>Key concepts:</strong>\n• <strong>Pod:</strong> one or more containers that share network/storage (usually 1 container per pod)\n• <strong>Deployment:</strong> declares desired state (\"I want 3 replicas of delivery-service v2.1\")\n• <strong>Service:</strong> stable DNS name + load balancing (pods come and go, service stays)\n• <strong>ConfigMap/Secret:</strong> externalized configuration"
+      },
+      {
+        "heading": "Deployment manifest",
+        "content": "<pre><code>apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: delivery-service\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: delivery-service\n  strategy:\n    type: RollingUpdate\n    rollingUpdate:\n      maxUnavailable: 0     # never go below 3\n      maxSurge: 1           # add 1 new before removing old\n  template:\n    spec:\n      containers:\n      - name: delivery-service\n        image: registry.rewe.io/delivery-service:2.1.0\n        ports:\n        - containerPort: 8080\n        resources:\n          requests:\n            memory: \"512Mi\"\n            cpu: \"250m\"\n          limits:\n            memory: \"1Gi\"\n            cpu: \"1000m\"\n        env:\n        - name: SPRING_PROFILES_ACTIVE\n          value: \"prod\"\n        - name: DB_PASSWORD\n          valueFrom:\n            secretKeyRef:\n              name: db-credentials\n              key: password</code></pre>\n\n<strong>What this means:</strong>\n• 3 replicas running simultaneously (high availability)\n• Rolling update: new version deployed without downtime\n• Resource limits prevent one service from consuming all cluster resources\n• Secrets for sensitive config (not in image!)"
+      }
+    ]
+  },
+  {
+    "id": "theory-k8s-services",
+    "topic": "k8s",
+    "subtopic": "k8s-services",
+    "title": "Kubernetes — Services, Probes & Scaling",
+    "sections": [
+      {
+        "heading": "Health probes",
+        "content": "Kubernetes uses probes to know if your pod is alive and ready:\n\n<pre><code>livenessProbe:            # \"Is the app alive?\"\n  httpGet:                # → if fails → K8s RESTARTS the pod\n    path: /actuator/health/liveness\n    port: 8080\n  initialDelaySeconds: 30\n  periodSeconds: 10\n\nreadinessProbe:           # \"Can the app accept traffic?\"\n  httpGet:                # → if fails → K8s REMOVES from load balancer\n    path: /actuator/health/readiness\n    port: 8080\n  initialDelaySeconds: 10\n  periodSeconds: 5\n\nstartupProbe:             # \"Is the app still starting?\"\n  httpGet:                # → gives slow apps time to start\n    path: /actuator/health/liveness\n    port: 8080\n  failureThreshold: 30   # 30 × 10s = 5 minutes to start\n  periodSeconds: 10</code></pre>\n\n<strong>Rules:</strong>\n• <strong>Liveness:</strong> should indicate an irrecoverable internal state. NEVER include external dependencies (DB down ≠ restart the pod!)\n• <strong>Readiness:</strong> should represent whether this instance can serve useful traffic. Include external dependencies only when the application truly cannot serve any request without them, and avoid designs that make all replicas simultaneously unready during a shared dependency outage.\n• Don't make probes expensive (no heavy queries)\n• Spring Boot Actuator provides these endpoints out of the box"
+      },
+      {
+        "heading": "Scaling & Auto-scaling",
+        "content": "<pre><code># Manual scaling\nkubectl scale deployment delivery-service --replicas=5\n\n# Auto-scaling based on CPU\napiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: delivery-service-hpa\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: delivery-service\n  minReplicas: 2\n  maxReplicas: 10\n  metrics:\n  - type: Resource\n    resource:\n      name: cpu\n      target:\n        type: Utilization\n        averageUtilization: 70  # scale up when CPU > 70%</code></pre>\n\n<strong>For REWE transport:</strong>\n• Morning peak (route planning): auto-scale to 8 pods\n• Night (low traffic): scale down to 2 pods\n• Cost-efficient: only pay for resources you use\n\n<strong>What your app needs for horizontal scaling:</strong>\n• Stateless (no local state — use DB/Redis)\n• Graceful shutdown (finish in-flight requests on SIGTERM)\n• Health probes (K8s needs to know when ready)\n• Externalized config (env vars, ConfigMaps)"
+      },
+      {
+        "heading": "Graceful shutdown",
+        "content": "When Kubernetes terminates a pod (deploy, scale-down), your app must shut down cleanly:\n\n<pre><code># Spring Boot application.yml\nserver:\n  shutdown: graceful\nspring:\n  lifecycle:\n    timeout-per-shutdown-phase: 30s</code></pre>\n\n<strong>Shutdown sequence (note: some steps may overlap):</strong>\n1. K8s sends SIGTERM to the pod\n2. Pod begins removal from Service endpoints (propagation takes time)\n3. preStop hook executes (if configured — commonly a short sleep to allow endpoint propagation)\n4. App stops accepting new requests\n5. App finishes in-flight requests (up to 30s)\n6. App closes DB connections, flushes buffers, commits Kafka offsets\n7. App exits\n8. If still running after <code>terminationGracePeriodSeconds</code> → SIGKILL (forced)\n\n<strong>Important:</strong> Steps 1 and 2 happen concurrently. Requests may still arrive briefly after SIGTERM because endpoint removal propagates asynchronously through the cluster. A <code>preStop</code> sleep (e.g., 5s) gives the endpoint removal time to propagate.\n\n<strong>What goes wrong without graceful shutdown:</strong>\n• In-flight requests get 502 errors\n• Kafka offsets not committed → messages reprocessed\n• DB transactions not committed → data loss\n• File handles not closed → corruption"
+      }
+    ]
+  }
+]

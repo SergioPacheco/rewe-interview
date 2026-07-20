@@ -11,7 +11,9 @@
         "heading": "Test Driven Development (TDD)",
         "content": "<strong>Red → Green → Refactor cycle:</strong>\n\n<pre><code>// 1. RED — write a failing test first\n@Test\nvoid shouldRejectDispatchWhenDeliveryAlreadyCompleted() {\n    Delivery d = DeliveryFixture.completed();\n    assertThrows(IllegalStateException.class, () -> d.dispatch());\n}\n// Compile → FAIL (dispatch doesn't check status yet)\n\n// 2. GREEN — write minimum code to pass\npublic void dispatch() {\n    if (status == COMPLETED) throw new IllegalStateException(\"Already completed\");\n    this.status = DISPATCHED;\n}\n// Test → PASS ✅\n\n// 3. REFACTOR — improve without changing behavior\npublic void dispatch() {\n    if (!status.canTransitionTo(DISPATCHED))\n        throw new InvalidTransitionException(status, DISPATCHED);\n    this.status = DISPATCHED;\n}\n// Test → still PASS ✅ (behavior unchanged)</code></pre>\n\n<strong>When TDD helps most:</strong>\n• Complex business rules (many edge cases)\n• Bug fixes (write test that reproduces → fix → test passes)\n• Domain logic that must be correct (financial, state machines)\n\n<strong>When TDD is overkill:</strong>\n• Simple CRUD with no logic\n• UI layout testing\n• Exploration/prototyping (test after)"
       }
-    ]
+    ],
+    "topic": "testing",
+    "subtopic": "test-pyramid"
   },
   {
     "id": "theory-testing-junit",
@@ -25,7 +27,9 @@
         "heading": "Mockito essentials",
         "content": "<pre><code>// Stubbing (define return values)\nwhen(repo.findById(1L)).thenReturn(Optional.of(delivery));\nwhen(repo.findById(99L)).thenReturn(Optional.empty());\nwhen(repo.save(any(Delivery.class))).thenAnswer(inv -> inv.getArgument(0));\n\n// Verification (check interactions)\nverify(events).publish(any(DeliveryDispatched.class));\nverify(events, never()).publish(any(DeliveryFailed.class));\nverify(repo, times(1)).save(any());\n\n// Argument capture (inspect what was passed)\n@Captor ArgumentCaptor&lt;DeliveryEvent&gt; eventCaptor;\n\nverify(events).publish(eventCaptor.capture());\nDeliveryEvent published = eventCaptor.getValue();\nassertEquals(\"D-42\", published.driverId());\n\n// Exception stubbing\nwhen(repo.findById(1L)).thenThrow(new DatabaseException(\"Connection refused\"));</code></pre>\n\n<strong>Rules:</strong>\n• Mock interfaces/abstractions, not concrete classes\n• Don't mock entities — use builders/fixtures\n• verify() for side effects (events, saves), assertEquals() for return values\n• If you need >3 mocks → class probably has too many dependencies (SRP signal)"
       }
-    ]
+    ],
+    "topic": "testing",
+    "subtopic": "test-junit"
   },
   {
     "id": "theory-testing-integration",
@@ -39,6 +43,8 @@
         "heading": "Testing Kafka with EmbeddedKafka",
         "content": "<pre><code>@SpringBootTest\n@EmbeddedKafka(topics = \"delivery-events\")\nclass DeliveryEventIntegrationTest {\n\n    @Autowired private KafkaTemplate&lt;String, DeliveryEvent&gt; producer;\n    @Autowired private DeliveryEventConsumer consumer;\n\n    @Test\n    void shouldProcessDeliveryCompletedEvent() {\n        var event = new DeliveryCompletedEvent(\"4567\", Instant.now(), 12);\n\n        producer.send(\"delivery-events\", \"4567\", event);\n\n        // Wait for async processing\n        await().atMost(5, SECONDS).untilAsserted(() ->\n            assertTrue(invoiceRepo.existsByDeliveryId(\"4567\"))\n        );\n    }\n}</code></pre>\n\n<strong>Test levels for Kafka:</strong>\n• Unit: mock KafkaTemplate, verify send() called with correct args\n• Integration: EmbeddedKafka or Testcontainers Kafka\n• Don't test: Kafka itself (it works — test YOUR logic)"
       }
-    ]
+    ],
+    "topic": "testing",
+    "subtopic": "test-integration"
   }
 ]

@@ -15,7 +15,9 @@
         "heading": "Zero Trust",
         "content": "<p>Assume the network is compromised. Every service-to-service call should be authenticated and authorized, not just external requests.</p><p>Use mTLS, short-lived tokens, and least-privilege service accounts.</p>"
       }
-    ]
+    ],
+    "topic": "security",
+    "subtopic": "security-auth"
   },
   {
     "id": "theory-security-spring",
@@ -33,7 +35,9 @@
         "heading": "Method Security",
         "content": "<pre><code>@PreAuthorize(\"hasRole('PLANNER')\")\npublic void assignDriver(Long deliveryId, Long driverId) {\n    // Only planners can assign\n}\n\n@PostAuthorize(\"returnObject.driverId == principal.id\")\npublic Delivery getDelivery(Long id) {\n    // Driver can only see own deliveries\n}</code></pre>"
       }
-    ]
+    ],
+    "topic": "security",
+    "subtopic": "security-spring"
   },
   {
     "id": "theory-security-owasp",
@@ -51,6 +55,8 @@
         "heading": "XSS in Angular",
         "content": "<p>Angular sanitizes by default in templates. But <code>[innerHTML]</code> requires care:</p><pre><code>// Angular sanitizes this automatically\n{{ userInput }}\n\n// This is sanitized but allows safe HTML\n[innerHTML]=\"userContent\"\n\n// ❌ DANGEROUS — bypasses sanitizer\n[innerHTML]=\"bypassSecurityTrustHtml(userInput)\"</code></pre>"
       }
-    ]
+    ],
+    "topic": "security",
+    "subtopic": "security-web"
   }
 ]

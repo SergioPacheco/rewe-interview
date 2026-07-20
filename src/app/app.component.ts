@@ -1,14 +1,19 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { filter } from 'rxjs';
 import { TopicService } from './core/services/topic.service';
 import { ProgressService } from './core/services/progress.service';
-import { Topic } from './models';
+import { Topic, TopicGroup } from './models';
 
 interface Breadcrumb {
   label: string;
   url: string | null;
+}
+
+interface SidebarGroup {
+  group: TopicGroup;
+  label: string;
 }
 
 @Component({
@@ -28,11 +33,13 @@ export class AppComponent implements OnInit {
   searchQuery = signal('');
   breadcrumbs = signal<Breadcrumb[]>([]);
 
-  readonly priorityGroups = [
-    { priority: 0 as const, label: '' },
-    { priority: 1 as const, label: '⚡ Critical' },
-    { priority: 2 as const, label: '📘 Important' },
-    { priority: 3 as const, label: '📎 Nice to Have' }
+  readonly domainGroups: SidebarGroup[] = [
+    { group: 'interview', label: 'INTERVIEW' },
+    { group: 'backend', label: 'BACKEND' },
+    { group: 'distributed', label: 'DISTRIBUTED SYSTEMS' },
+    { group: 'frontend', label: 'FRONTEND' },
+    { group: 'quality', label: 'QUALITY & OPS' },
+    { group: 'more', label: 'MORE' }
   ];
 
   async ngOnInit(): Promise<void> {
@@ -70,9 +77,9 @@ export class AppComponent implements OnInit {
     this.breadcrumbs.set(crumbs);
   }
 
-  getTopicsByPriority(priority: 0 | 1 | 2 | 3): Topic[] {
+  getTopicsByGroup(group: TopicGroup): Topic[] {
     const query = this.searchQuery().toLowerCase();
-    const topics = this.topicService.getGrouped()[priority] || [];
+    const topics = this.topicService.getByGroup(group);
     if (!query) return topics;
     return topics.filter(t =>
       t.name.toLowerCase().includes(query) ||

@@ -11,7 +11,9 @@
         "heading": "Kotlin vs Java — side by side",
         "content": "<pre><code>// Variables\nval name: String = \"REWE\"           // immutable (like final)\nvar count: Int = 0                   // mutable\nval inferred = \"type inferred\"       // no explicit type needed\n\n// Null safety\nval driver: String = \"Carlos\"        // CANNOT be null\nval driver: String? = null           // CAN be null (nullable type)\n\ndriver?.length                       // safe call (returns null if driver is null)\ndriver ?: \"Unknown\"                  // elvis operator (default if null)\ndriver!!.length                      // force unwrap (throws NPE if null — avoid!)\n\n// Functions\nfun calculatePrice(distance: Int, express: Boolean = false): BigDecimal {\n    return if (express) BigDecimal(distance * 1.5) else BigDecimal(distance)\n}\n// Default parameters! No need for overloaded methods.\n\n// String templates\nval msg = \"Delivery $id dispatched to undefined\"\n\n// When expression (powerful switch)\nval label = when (status) {\n    PLANNED -> \"Waiting\"\n    DISPATCHED -> \"On the way\"\n    DELIVERED -> \"Done\"\n    else -> \"Unknown\"\n}\n\n// When with conditions\nval priority = when {\n    delivery.isLate() && delivery.isExpress() -> CRITICAL\n    delivery.isLate() -> HIGH\n    else -> NORMAL\n}</code></pre>"
       }
-    ]
+    ],
+    "topic": "kotlin",
+    "subtopic": "kotlin-basics"
   },
   {
     "id": "theory-kotlin-null",
@@ -21,7 +23,9 @@
         "heading": "The billion-dollar problem solved",
         "content": "In Java, ANY reference can be null. In Kotlin, nullability is part of the TYPE SYSTEM:\n\n<pre><code>// Kotlin — compiler PREVENTS null errors\nfun findDriver(id: Long): Driver {          // NEVER null (guaranteed)\n    return driverRepo.findById(id)\n        ?: throw NotFoundException(\"Driver $id not found\")\n}\n\nfun findDriverMaybe(id: Long): Driver? {    // MIGHT be null (explicit)\n    return driverRepo.findByIdOrNull(id)\n}\n\n// Compiler enforces:\nval driver: Driver? = findDriverMaybe(42)\ndriver.name        // ❌ COMPILE ERROR! driver might be null\ndriver?.name       // ✅ returns null if driver is null\ndriver!!.name      // ⚠️ compiles but throws NPE if null (avoid!)\n\n// Smart cast — compiler tracks null checks\nif (driver != null) {\n    driver.name    // ✅ compiler knows it's not null here\n}\n\n// Elvis operator — provide default\nval name = driver?.name ?: \"Unassigned\"</code></pre>\n\n<strong>Java equivalent (verbose):</strong>\n<pre><code>// Java — you must remember to check\nOptional&lt;Driver&gt; driver = repo.findById(id);\nString name = driver.map(Driver::getName).orElse(\"Unassigned\");\n// But Optional doesn't prevent NPE on other references!</code></pre>\n\n<strong>Key insight:</strong> Kotlin makes the NULL/NOT-NULL decision explicit in EVERY variable declaration. The compiler catches 90% of NPEs at compile time."
       }
-    ]
+    ],
+    "topic": "kotlin",
+    "subtopic": "kotlin-null"
   },
   {
     "id": "theory-kotlin-classes",
@@ -39,6 +43,8 @@
         "heading": "Kotlin + Spring Boot",
         "content": "<pre><code>@RestController\n@RequestMapping(\"/api/v1/deliveries\")\nclass DeliveryController(\n    private val service: DeliveryService  // constructor injection (no @Autowired)\n) {\n\n    @GetMapping(\"/{id}\")\n    fun findById(@PathVariable id: Long): ResponseEntity&lt;DeliveryDTO&gt; =\n        ResponseEntity.ok(service.findById(id))\n\n    @PostMapping\n    fun create(@Valid @RequestBody request: CreateDeliveryRequest): ResponseEntity&lt;DeliveryDTO&gt; {\n        val delivery = service.create(request)\n        val location = ServletUriComponentsBuilder.fromCurrentRequest()\n            .path(\"/{id}\").buildAndExpand(delivery.id).toUri()\n        return ResponseEntity.created(location).body(delivery)\n    }\n}\n\n@Service\nclass DeliveryService(\n    private val repo: DeliveryRepository,\n    private val events: EventPublisher\n) {\n    @Transactional\n    fun dispatch(id: Long, driverId: String) {\n        val delivery = repo.findById(id)\n            ?: throw DeliveryNotFoundException(id)\n        delivery.dispatch(driverId)\n        repo.save(delivery)\n        events.publish(DeliveryDispatched(id, driverId))\n    }\n}</code></pre>\n\n<strong>Key differences from Java + Spring Boot:</strong>\n• Constructor injection by default (parameters in class declaration)\n• No semicolons, no `new` keyword\n• `val` = immutable, `var` = mutable\n• Elvis operator (`?:`) instead of .orElseThrow()\n• Expression body functions (`= ResponseEntity.ok(...)`)\n• String templates (`\"Delivery $id\"`) instead of concatenation"
       }
-    ]
+    ],
+    "topic": "kotlin",
+    "subtopic": "kotlin-classes"
   }
 ]

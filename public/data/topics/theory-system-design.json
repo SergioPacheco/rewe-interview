@@ -1,74 +1,98 @@
 [
   {
-    "id": "theory-system-design-fundamentals",
-    "title": "System Design Fundamentals",
+    "id": "theory-sd-events",
+    "topic": "system-design",
+    "subtopic": "sd-events",
+    "title": "Event-Driven Architecture",
     "sections": [
       {
-        "heading": "How to approach a design interview",
-        "content": "<ol><li><strong>Clarify requirements</strong> — users, traffic, latency, consistency</li><li><strong>High-level architecture</strong> — main components and data flow</li><li><strong>Deep dive</strong> — critical path, data model, scaling</li><li><strong>Trade-offs</strong> — CAP, cost, complexity</li><li><strong>Operational concerns</strong> — monitoring, deployment, failure</li></ol>"
+        "heading": "When events help",
+        "content": "Events decouple producers from consumers and allow independent processing. A delivery-status change can feed notifications, analytics, ETA calculation and billing without the delivery service calling every consumer directly."
       },
       {
-        "heading": "Scalability Patterns",
-        "content": "<ul><li><strong>Stateless services</strong> — any instance handles any request</li><li><strong>Horizontal scaling</strong> — add instances behind load balancer</li><li><strong>Read replicas</strong> — distribute read load</li><li><strong>Caching</strong> — Redis for hot data</li><li><strong>Event-driven</strong> — decouple with Kafka</li><li><strong>Partitioning</strong> — shard data by key</li></ul>"
+        "heading": "Event design",
+        "content": "Publish facts in past tense, such as DeliveryDispatched or StopCompleted. Include event id, aggregate id, event type, version, occurredAt and correlation id."
       },
       {
-        "heading": "CAP Theorem",
-        "content": "<p>In a distributed system, during a network partition you must choose between:</p><ul><li><strong>Consistency</strong> — all nodes see the same data</li><li><strong>Availability</strong> — every request receives a response</li></ul><p>Most real systems choose <strong>eventual consistency</strong> with strong consistency only where business requires it (e.g., payment, inventory).</p>"
+        "heading": "Reliability",
+        "content": "Use the transactional outbox pattern to persist the business change and event atomically. Consumers must be idempotent because at-least-once delivery can produce duplicates."
+      },
+      {
+        "heading": "Trade-offs",
+        "content": "Event-driven systems improve scalability and decoupling but add eventual consistency, operational complexity and harder debugging. Use synchronous calls where an immediate response is truly required."
       }
-    ],
-    "topic": "system-design",
-    "subtopic": "sd-events"
+    ]
   },
   {
-    "id": "theory-system-design-patterns",
-    "title": "Distributed System Patterns",
+    "id": "theory-sd-data",
+    "topic": "system-design",
+    "subtopic": "sd-data",
+    "title": "Data & Consistency",
     "sections": [
       {
-        "heading": "Saga Pattern",
-        "content": "<p>Coordinates multi-service transactions without distributed locks:</p><pre><code>Order Created → Payment Reserved → Stock Reserved → Delivery Scheduled\n     ↑                                                    |\n     └──── Compensate (refund, release stock) ←──── Failure</code></pre><p><strong>Orchestration</strong> = central coordinator. <strong>Choreography</strong> = services react to events.</p>"
+        "heading": "Source of truth",
+        "content": "Each business capability should own its authoritative data. Other services consume APIs or events instead of reading another service's tables directly."
       },
       {
-        "heading": "Transactional Outbox",
-        "content": "<pre><code>// Same DB transaction:\nBEGIN;\n  INSERT INTO orders (id, status) VALUES (...);\n  INSERT INTO outbox (event_type, payload) VALUES ('OrderCreated', ...);\nCOMMIT;\n\n// Separate process publishes outbox → Kafka</code></pre><p>Guarantees the event is published if and only if the business change is committed.</p>"
+        "heading": "Consistency choices",
+        "content": "Strong consistency is appropriate inside a local transaction. Across services, prefer eventual consistency with compensation, reconciliation and observable processing state."
       },
       {
-        "heading": "Circuit Breaker",
-        "content": "<pre><code>CLOSED → (failures exceed threshold) → OPEN\n  ↑                                        |\n  └── HALF-OPEN ← (timeout expires) ←─────┘\n        ↓\n  (test call succeeds → CLOSED)\n  (test call fails → OPEN)</code></pre><p>Protects against cascading failures when a dependency is unavailable.</p>"
+        "heading": "Concurrency",
+        "content": "Use optimistic locking for competing updates to routes or deliveries. Add idempotency keys for retried commands and unique constraints as the final protection against duplicates."
+      },
+      {
+        "heading": "Read models",
+        "content": "For dashboards and search, build read-optimized projections. A materialized view or event-fed read model avoids complex cross-domain joins on the transactional database."
       }
-    ],
-    "topic": "system-design",
-    "subtopic": "sd-data"
+    ]
   },
   {
-    "id": "theory-system-design-observability",
-    "title": "Observability & SRE",
+    "id": "theory-sd-scaling",
+    "topic": "system-design",
+    "subtopic": "sd-scaling",
+    "title": "Scaling & Performance",
     "sections": [
       {
-        "heading": "Three Pillars",
-        "content": "<ul><li><strong>Logs</strong> — discrete events with context (structured JSON)</li><li><strong>Metrics</strong> — numeric measurements over time (counters, histograms)</li><li><strong>Traces</strong> — request flow across services (correlation IDs)</li></ul>"
+        "heading": "Start with measurements",
+        "content": "Define expected traffic, data volume, latency targets and peak patterns. Logistics workloads often have strong morning and dispatch-time peaks."
       },
       {
-        "heading": "SLI / SLO / SLA",
-        "content": "<ul><li><strong>SLI</strong> (indicator) — the metric: e.g., % of requests < 200ms</li><li><strong>SLO</strong> (objective) — the target: e.g., 99.9% of requests < 200ms</li><li><strong>SLA</strong> (agreement) — the contract with consequences</li></ul><p><strong>Error budget</strong> = allowed unreliability (100% - SLO target)</p>"
+        "heading": "Horizontal scaling",
+        "content": "Keep application instances stateless so they can scale horizontally. Store shared state in databases, caches or brokers and use a load balancer or Kubernetes Service."
       },
       {
-        "heading": "What to Monitor in Logistics",
-        "content": "<ul><li>Deliveries stuck in a state > N minutes</li><li>Routes not assigned before departure time</li><li>Consumer lag on critical topics</li><li>Duplicate assignment attempts</li><li>Delay between physical event and system update</li><li>Reconciliation queue depth</li></ul><p>A technically healthy service can still represent a broken business process.</p>"
+        "heading": "Database scaling",
+        "content": "Use proper indexes, bounded pagination, connection-pool sizing, batching and read replicas where appropriate. Partition very large event or tracking tables by time or business key."
       },
       {
-        "heading": "Senior Perspective",
-        "content": "Senior engineers design systems for failure, not just for success.\n\nKey distinctions:\n• Start with requirements and constraints, not with technology choices\n• Distinguish between functional requirements (what it does) and non-functional (how well)\n• Every box in a diagram is an operational burden — fewer boxes is often better\n• Consistency, availability and partition tolerance are real trade-offs, not theoretical concepts\n• The best architecture is the simplest one that meets current requirements with room to evolve"
-      },
-      {
-        "heading": "REWE Perspective",
-        "content": "TRAB transport logistics system design scenarios:\n\n• Delivery Tracking: real-time location updates from 500 drivers, visible to warehouses and customers\n• Route Optimization: batch computation every morning + real-time adjustments for delays\n• Warehouse Communication: reliable event delivery for inventory updates across 10K stores\n• External Carrier Integration: third-party APIs with varying reliability and response times\n• Offline Driver App: drivers in areas without connectivity, sync when reconnected"
-      },
-      {
-        "heading": "When NOT to use",
-        "content": "When NOT to use common patterns:\n\n• Microservices: when team is <8 people, when domain boundaries are unclear, when you can't afford operational complexity\n• Event sourcing: when simple CRUD works, when you don't need audit history, when eventual consistency is unacceptable\n• CQRS: when read and write models are nearly identical, when the complexity isn't justified by scale\n• API Gateway: when you have <3 services, when adding a single point of failure\n• Distributed cache: when database is fast enough, when cache invalidation complexity exceeds the latency saved"
+        "heading": "Caching",
+        "content": "Cache data that is expensive to calculate and safe to be slightly stale. Define TTL, invalidation and fallback behavior. Never use caching to hide an unbounded query."
       }
-    ],
+    ]
+  },
+  {
+    "id": "theory-sd-ops",
     "topic": "system-design",
-    "subtopic": "sd-ops"
+    "subtopic": "sd-ops",
+    "title": "Deployment & Observability",
+    "sections": [
+      {
+        "heading": "Deployment",
+        "content": "Use immutable images, automated pipelines, rolling or canary deployment, health probes and a tested rollback strategy."
+      },
+      {
+        "heading": "Observability",
+        "content": "Collect structured logs, metrics and distributed traces. Propagate correlation ids across HTTP and Kafka so one delivery flow can be followed end to end."
+      },
+      {
+        "heading": "Critical metrics",
+        "content": "Monitor latency percentiles, error rate, throughput, queue lag, consumer failures, database pool usage, JVM memory, GC pauses and pod restarts."
+      },
+      {
+        "heading": "Operational readiness",
+        "content": "Define SLOs, alerts, runbooks and ownership. A system is not production-ready merely because it passes functional tests."
+      }
+    ]
   }
 ]

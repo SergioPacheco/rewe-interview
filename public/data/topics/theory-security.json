@@ -1,74 +1,122 @@
 [
   {
-    "id": "theory-security-fundamentals",
-    "title": "Security Fundamentals",
+    "id": "theory-security-auth",
+    "topic": "security",
+    "subtopic": "security-auth",
+    "title": "Authentication & Authorization",
     "sections": [
       {
-        "heading": "Authentication vs Authorization",
-        "content": "<p><strong>Authentication</strong> = Who are you? (identity verification)</p><p><strong>Authorization</strong> = What can you do? (permission checks)</p><p>In Spring Security, authentication happens first (via filters), then authorization is enforced on resources.</p>"
+        "heading": "Core distinction",
+        "content": "Authentication answers who the user is; authorization answers what that authenticated user may do. In a logistics platform, a driver, warehouse operator, planner and administrator may all authenticate through the same identity provider but receive different permissions."
       },
       {
-        "heading": "Defense in Depth",
-        "content": "<p>Never rely on a single security layer:</p><ul><li>Network security (TLS, firewalls)</li><li>Authentication (OAuth2, JWT)</li><li>Authorization (roles, resource-level)</li><li>Input validation</li><li>Output encoding</li><li>Audit logging</li></ul>"
+        "heading": "OAuth2 and OpenID Connect",
+        "content": "OAuth2 is an authorization framework. OpenID Connect adds identity on top of OAuth2. A browser or mobile client normally uses Authorization Code with PKCE. The application receives an access token for APIs and optionally an ID token containing identity claims."
       },
       {
-        "heading": "Zero Trust",
-        "content": "<p>Assume the network is compromised. Every service-to-service call should be authenticated and authorized, not just external requests.</p><p>Use mTLS, short-lived tokens, and least-privilege service accounts.</p>"
+        "heading": "Roles and permissions",
+        "content": "Prefer permission-based checks such as DELIVERY_READ or ROUTE_ASSIGN over broad role checks. Roles can group permissions, but business code should depend on the smallest capability required. Apply authorization at both API boundaries and sensitive service methods."
+      },
+      {
+        "heading": "Interview answer",
+        "content": "I separate authentication from authorization, use short-lived access tokens, validate issuer, audience, signature and expiry, and enforce least privilege. For high-risk operations I also require audit logging and sometimes step-up authentication."
       }
-    ],
-    "topic": "security",
-    "subtopic": "security-auth"
+    ]
   },
   {
     "id": "theory-security-spring",
+    "topic": "security",
+    "subtopic": "security-spring",
     "title": "Spring Security",
     "sections": [
       {
-        "heading": "Filter Chain",
-        "content": "<p>Spring Security works through a chain of servlet filters:</p><pre><code>Request → SecurityFilterChain\n  → CorsFilter\n  → CsrfFilter\n  → AuthenticationFilter\n  → AuthorizationFilter\n  → Your Controller</code></pre><p>Each filter has a specific responsibility. Order matters.</p>"
+        "heading": "Security filter chain",
+        "content": "Spring Security processes requests through a SecurityFilterChain. Configure public endpoints explicitly, require authentication by default, and place the most specific matchers before broader ones."
       },
       {
-        "heading": "OAuth2 & JWT",
-        "content": "<p><strong>OAuth2</strong> delegates authorization to an authorization server. The app never sees user credentials.</p><p><strong>JWT</strong> (JSON Web Token) carries claims signed by the issuer. Validation checks signature, expiration, audience and issuer.</p><pre><code>Header.Payload.Signature\n\n// Payload example:\n{\n  \"sub\": \"driver-123\",\n  \"roles\": [\"DRIVER\"],\n  \"exp\": 1700000000\n}</code></pre>"
+        "heading": "JWT resource server",
+        "content": "A Spring Boot API can act as an OAuth2 Resource Server. It validates JWT signatures using the identity provider's JWK set and converts claims or scopes into GrantedAuthority values."
       },
       {
-        "heading": "Method Security",
-        "content": "<pre><code>@PreAuthorize(\"hasRole('PLANNER')\")\npublic void assignDriver(Long deliveryId, Long driverId) {\n    // Only planners can assign\n}\n\n@PostAuthorize(\"returnObject.driverId == principal.id\")\npublic Delivery getDelivery(Long id) {\n    // Driver can only see own deliveries\n}</code></pre>"
+        "heading": "Method security",
+        "content": "Use @PreAuthorize for sensitive business actions, for example @PreAuthorize(\"hasAuthority('ROUTE_ASSIGN')\"). Method security protects the use case even when it is called from another controller or integration path."
+      },
+      {
+        "heading": "Production guidance",
+        "content": "Do not disable security globally for convenience. Keep actuator endpoints restricted, avoid logging tokens, use secure cookies for browser sessions, and test both allowed and denied scenarios."
       }
-    ],
-    "topic": "security",
-    "subtopic": "security-spring"
+    ]
   },
   {
-    "id": "theory-security-owasp",
-    "title": "OWASP Top 10 & Common Vulnerabilities",
+    "id": "theory-security-web",
+    "topic": "security",
+    "subtopic": "security-web",
+    "title": "Web Security: XSS, CSRF and CORS",
     "sections": [
       {
-        "heading": "Top Risks for Microservices",
-        "content": "<ul><li><strong>Broken Access Control</strong> — check resource ownership, not just roles</li><li><strong>Injection</strong> — use parameterized queries always</li><li><strong>Security Misconfiguration</strong> — review defaults in containers/cloud</li><li><strong>Vulnerable Dependencies</strong> — scan with Dependabot/Snyk</li><li><strong>SSRF</strong> — validate URLs in service-to-service calls</li></ul>"
+        "heading": "XSS",
+        "content": "Cross-site scripting happens when untrusted content is rendered as executable HTML or JavaScript. Escape output, sanitize rich text, avoid unsafe innerHTML, and use a strict Content Security Policy."
       },
       {
-        "heading": "SQL Injection Prevention",
-        "content": "<pre><code>// ❌ NEVER\nString sql = \"SELECT * FROM users WHERE id = \" + userId;\n\n// ✅ ALWAYS parameterized\n@Query(\"SELECT u FROM User u WHERE u.id = :id\")\nUser findById(@Param(\"id\") Long id);</code></pre>"
+        "heading": "CSRF",
+        "content": "CSRF abuses a browser's automatic credential submission. It matters mainly for cookie-based sessions. Use Spring Security CSRF protection and SameSite cookies. Pure bearer-token APIs that do not use cookies are generally not vulnerable in the same way."
       },
       {
-        "heading": "XSS in Angular",
-        "content": "<p>Angular sanitizes by default in templates. But <code>[innerHTML]</code> requires care:</p><pre><code>// Angular sanitizes this automatically\n{{ userInput }}\n\n// This is sanitized but allows safe HTML\n[innerHTML]=\"userContent\"\n\n// ❌ DANGEROUS — bypasses sanitizer\n[innerHTML]=\"bypassSecurityTrustHtml(userInput)\"</code></pre>"
+        "heading": "CORS",
+        "content": "CORS is a browser access-control mechanism, not authentication. Allow only known origins, methods and headers. Never combine wildcard origins with credentials."
       },
       {
-        "heading": "Senior Perspective",
-        "content": "Senior engineers think of security as layers, not as a single gate.\n\nKey distinctions:\n• Authentication (who are you?) and authorization (what can you do?) are separate concerns with separate failure modes\n• OAuth2 is a delegation protocol, not an authentication protocol — OpenID Connect adds identity\n• JWTs are not session tokens — they cannot be revoked individually without a revocation list\n• Input validation at the API boundary prevents injection regardless of framework-level protections\n• Security misconfigurations in containers, clouds and CI/CD are now more common than application-level vulnerabilities"
-      },
-      {
-        "heading": "REWE Perspective",
-        "content": "In TRAB's security model:\n\n• Drivers authenticate via mobile app (OAuth2 + refresh tokens with short-lived access tokens)\n• Service-to-service: mTLS between internal services, API keys for external carriers\n• Authorization: drivers can only see their own deliveries, warehouse managers see their warehouse only\n• GDPR: driver location data retained for 90 days only, customer data anonymized after delivery completion\n• External carrier API: rate-limited, IP-whitelisted, with request signing for integrity verification"
-      },
-      {
-        "heading": "When NOT to use",
-        "content": "When NOT to add security complexity:\n\n• Internal-only services behind a service mesh that already handles mTLS\n• Development environments where security friction slows iteration (but never disable in staging)\n• When adding a WAF that blocks legitimate traffic — security that prevents usage is not security\n• Over-engineering session management for a service with no user state"
+        "heading": "Interview answer",
+        "content": "I treat XSS, CSRF and CORS as different problems: output encoding for XSS, anti-forgery controls for cookie sessions, and a narrow origin policy for CORS."
       }
-    ],
+    ]
+  },
+  {
+    "id": "theory-security-api",
     "topic": "security",
-    "subtopic": "security-web"
+    "subtopic": "security-api",
+    "title": "API & Service Security",
+    "sections": [
+      {
+        "heading": "Service-to-service authentication",
+        "content": "Internal services should authenticate each other using workload identity, mTLS or OAuth2 client credentials. Network location alone is not proof of identity."
+      },
+      {
+        "heading": "Resilience and abuse controls",
+        "content": "Apply rate limits, request-size limits, timeouts and circuit breakers. Validate payloads at the boundary and reject unknown or dangerous fields."
+      },
+      {
+        "heading": "Secrets",
+        "content": "Store secrets in a secret manager or Kubernetes Secret integrated with encryption and access control. Never commit credentials, private keys or production tokens to source control."
+      },
+      {
+        "heading": "Auditability",
+        "content": "Log security-relevant business events such as route reassignment, permission changes and manual delivery overrides. Logs should identify actor, action, target, time and outcome without exposing sensitive data."
+      }
+    ]
+  },
+  {
+    "id": "theory-security-data",
+    "topic": "security",
+    "subtopic": "security-data",
+    "title": "Data Protection & GDPR",
+    "sections": [
+      {
+        "heading": "Data minimization",
+        "content": "Collect and retain only the personal data required for the operational purpose. Driver location data, customer addresses and phone numbers require clear purpose and restricted access."
+      },
+      {
+        "heading": "Protection",
+        "content": "Encrypt data in transit with TLS and at rest using platform-managed encryption. Mask sensitive fields in logs and non-production databases."
+      },
+      {
+        "heading": "GDPR principles",
+        "content": "Key principles include lawfulness, purpose limitation, data minimization, accuracy, storage limitation, integrity, confidentiality and accountability."
+      },
+      {
+        "heading": "Operational design",
+        "content": "Define retention periods, deletion workflows, access auditing and incident response before production. Privacy requirements must be part of architecture, not an afterthought."
+      }
+    ]
   }
 ]

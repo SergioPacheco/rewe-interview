@@ -549,5 +549,114 @@
       "interview-prep",
       "senior-level"
     ]
+  },
+  {
+    "id": "ng-forms-1",
+    "type": "ORAL_ANSWER",
+    "topic": "angular",
+    "subtopic": "ng-forms",
+    "difficulty": "intermediate",
+    "question": "What is the difference between Template-Driven Forms and Reactive Forms in Angular? When do you choose each?",
+    "interviewerIntent": "Forms are used in virtually every Angular app. Tests practical knowledge and judgment about the right abstraction for the context.",
+    "answer": "Template-Driven Forms are configured in the HTML template using directives like ngModel. Reactive Forms are configured in TypeScript using FormControl, FormGroup, and FormArray — the template is just a binding. Key differences: Reactive Forms are synchronous (you can access the form value at any time in code), testable without a DOM, and give you full control over validation logic. Template-Driven Forms are simpler for basic forms but harder to test and difficult to implement dynamic fields or complex cross-field validation. For anything beyond a simple login form or search filter, Reactive Forms are the right choice. With Angular 14+, typed forms add compile-time type safety: FormGroup<{ email: FormControl<string>; age: FormControl<number> }> — form.value.email is string, not any.",
+    "shortAnswer": "Template-Driven: simple, ngModel in HTML, implicit model. Reactive: TypeScript-first, explicit FormGroup/FormControl, synchronous, testable. Choose Reactive for anything beyond trivial forms.",
+    "keyPoints": [
+      "FormControl = single field. FormGroup = related fields. FormArray = dynamic list of fields.",
+      "form.valueChanges returns an Observable — pipe with debounceTime for live validation",
+      "Validators.required, Validators.email, custom validators as plain functions",
+      "Cross-field validation: add a validator to the FormGroup, not individual controls",
+      "Typed Forms (Angular 14+): FormControl<string> prevents accessing .value as any"
+    ],
+    "followUps": [
+      {
+        "question": "How do you implement a custom validator in Reactive Forms?",
+        "answerHint": "A validator is a function (control: AbstractControl): ValidationErrors | null. Return null if valid, { myError: true } if invalid. Add as second argument to new FormControl('', [myValidator]) or to FormGroup for cross-field."
+      },
+      {
+        "question": "How do you handle a form with a dynamic number of fields (e.g., add/remove phone numbers)?",
+        "answerHint": "FormArray — an array of FormControls or FormGroups. this.phones = new FormArray([]). addPhone() pushes a new FormControl. Template: @for (ctrl of phones.controls; track $index) { <input [formControl]=\"ctrl\"> }."
+      },
+      {
+        "question": "How do you reset a form after submission?",
+        "answerHint": "form.reset() clears all values and resets touched/dirty state. form.reset({ email: '' }) resets with specific values. This also clears validation error display."
+      }
+    ],
+    "mistakesToAvoid": [
+      "Using Template-Driven Forms for complex validation or dynamic fields — quickly becomes unmanageable",
+      "Accessing form.value without checking form.valid — processes invalid data",
+      "Not using typed Forms (Angular 14+) — loses compile-time type safety for form values"
+    ]
+  },
+  {
+    "id": "ng-forms-2",
+    "type": "PICK_INVALID",
+    "topic": "angular",
+    "subtopic": "ng-forms",
+    "difficulty": "intermediate",
+    "question": "Which of the following is INVALID or incorrect when using Angular Reactive Forms?",
+    "options": [
+      {
+        "id": "A",
+        "text": "const form = new FormGroup({ name: new FormControl('', Validators.required) });"
+      },
+      {
+        "id": "B",
+        "text": "form.valueChanges.pipe(debounceTime(300)).subscribe(val => this.search(val));"
+      },
+      {
+        "id": "C",
+        "text": "new FormControl<string>('') gives you compile-time type checking on form.value."
+      },
+      {
+        "id": "D",
+        "text": "You must call form.detectChanges() after calling form.setValue() to update the template."
+      }
+    ],
+    "answer": "D",
+    "explanation": "D is invalid. Reactive Forms are synchronous and automatically update the template binding when you call form.setValue() or form.patchValue(). There is no form.detectChanges() — that method belongs to ChangeDetectorRef and is unrelated to form updates. The form template bindings react immediately to value changes without any manual trigger.",
+    "keyPoints": [
+      "form.setValue() requires ALL fields. form.patchValue() updates only the provided fields.",
+      "Template updates automatically when form value changes — no manual detection needed",
+      "form.valueChanges is an Observable — subscribe to react to changes programmatically",
+      "Typed FormControl<string> ensures form.value.name is string, not string|null unless explicitly typed as FormControl<string|null>"
+    ]
+  },
+  {
+    "id": "ng-testing-1",
+    "type": "ORAL_ANSWER",
+    "topic": "angular",
+    "subtopic": "ng-testing",
+    "difficulty": "intermediate",
+    "question": "What is your testing strategy for Angular applications? How do you decide between unit tests, component tests, and integration tests?",
+    "interviewerIntent": "Testing is a real daily practice. Assess whether the candidate has a coherent strategy or just writes tests to pass coverage thresholds.",
+    "answer": "I follow the testing pyramid — most tests are unit tests (fast, isolated, no DOM), a smaller set are component integration tests (template + logic, TestBed), and a minimal set are E2E (critical user journeys only).\n\nFor SERVICES: I test without TestBed whenever possible. A service with injected dependencies: create it directly with mocked dependencies (new MyService(mockDep)) or use TestBed only when the service has complex DI needs. Testing the business logic in isolation is fast and reliable.\n\nFor COMPONENTS: I use TestBed. I provide mock services, call fixture.detectChanges() to trigger rendering, and assert template output and user interactions. I use componentFixture.debugElement.query(By.css('.submit-btn')).nativeElement.click() to simulate interactions. For signal-based components, testing is simpler — set signal values and assert computed values or template output.\n\nFor PIPES and DIRECTIVES: always unit test without TestBed — these are pure transformations.\n\nFor FORMS: test FormGroup creation, validators, and valueChanges in isolation. No DOM needed for the logic.\n\nWhat I don't test: Angular itself (RouterModule, HttpClient) — I mock those. Component wiring that's already tested by the framework.\n\nMy rule: if a test is slow, it's testing too much. Services should test in milliseconds. Component tests in <100ms. If a test needs a full application bootstrap, it's probably an E2E.",
+    "shortAnswer": "Services: unit test without TestBed. Components: TestBed with mocked services. Pipes/Directives: pure unit. Forms: test logic without DOM. E2E: critical paths only. Slow test = tests too much.",
+    "keyPoints": [
+      "TestBed.configureTestingModule({ imports: [MyComponent], providers: [{ provide: Svc, useValue: mock }] })",
+      "fixture.detectChanges() — triggers ngOnInit and initial rendering",
+      "By.css() selector for querying the template",
+      "HttpClientTestingModule + HttpTestingController for HTTP in component tests",
+      "Signal-based components: set signal in test, assert computed output"
+    ],
+    "followUps": [
+      {
+        "question": "How do you test a component that uses signals?",
+        "answerHint": "Inject the service, set its signals via service methods (or mock the service to return specific signal values), then call fixture.detectChanges() and assert the template output. Signals are synchronous — no async needed."
+      },
+      {
+        "question": "What is NO_ERRORS_SCHEMA and when is it appropriate?",
+        "answerHint": "NO_ERRORS_SCHEMA suppresses errors for unknown elements and attributes in the template (child components, external components). Use for shallow rendering — you want to test THIS component, not its children. Downside: you won't catch template errors from bad bindings."
+      },
+      {
+        "question": "How do you test a debounced search (debounceTime) in a component?",
+        "answerHint": "Use fakeAsync() + tick(300) to advance the virtual clock. fakeAsync wraps the test, tick(ms) simulates time passage, then run detectChanges and assert the result."
+      }
+    ],
+    "mistakesToAvoid": [
+      "Not calling fixture.detectChanges() — component not initialized, template not rendered",
+      "Testing Angular framework behavior (routing, HttpClient) instead of your logic",
+      "Writing tests that pass regardless of implementation (testing mocks, not real behavior)",
+      "Skipping tests for components because 'it's just a template' — template bugs are real bugs"
+    ]
   }
 ]

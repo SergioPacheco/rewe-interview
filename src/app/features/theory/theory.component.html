@@ -58,6 +58,259 @@
             @if (q.subtopic) { <span class="badge badge--sub">{{ q.subtopic }}</span> }
           </div>
 
+          <!-- ==================== SCHEMA V2 RENDERING ==================== -->
+          @if (isSchemaV2()) {
+
+            <!-- Question -->
+            <h2 class="question-card__question">"{{ getField(q, 'question') }}"</h2>
+
+            <!-- Context -->
+            @if (getField(q, 'context')) {
+              <p class="question-card__intent"><em>Context:</em> {{ getField(q, 'context') }}</p>
+            }
+
+            <!-- ① Opening Guidance — visible BEFORE answer -->
+            @if (getV2Field('openingGuidance'); as og) {
+              <div class="v2-guidance">
+                <p class="v2-guidance__objective">🎯 <strong>Objective:</strong> {{ og.objective }}</p>
+                @if (og.requiredElements?.length > 0) {
+                  <ul class="v2-guidance__checklist">
+                    @for (el of og.requiredElements; track $index) {
+                      <li>✅ {{ el }}</li>
+                    }
+                  </ul>
+                }
+                @if (og.avoid?.length > 0) {
+                  <ul class="v2-guidance__avoid">
+                    @for (a of og.avoid; track $index) {
+                      <li>❌ {{ a }}</li>
+                    }
+                  </ul>
+                }
+              </div>
+            }
+
+            <!-- ② Clarifying Questions — expandable list, visible BEFORE answer -->
+            @if (getV2Field('clarifyingQuestions')?.length > 0) {
+              <details class="reveal-panel v2-clarifying">
+                <summary>❓ Clarifying Questions to Ask First ({{ getV2Field('clarifyingQuestions').length }})</summary>
+                <div class="reveal-panel__followups">
+                  @for (cq of getV2Field('clarifyingQuestions'); track $index) {
+                    <div class="followup-item">
+                      <span class="v2-category-badge">{{ cq.category }}</span>
+                      <p class="followup-item__q">{{ $index + 1 }}. "{{ cq.question }}"</p>
+                      <details>
+                        <summary>Why this matters</summary>
+                        <p class="followup-item__hint">{{ cq.whyItMatters }}</p>
+                      </details>
+                    </div>
+                  }
+                </div>
+              </details>
+            }
+
+            <!-- Hint -->
+            <p class="question-card__hint">🎙️ Clarify requirements, then design your solution. Reveal when ready.</p>
+
+            <!-- ③ REVEAL BUTTON -->
+            @if (!showResult()) {
+              <button class="btn btn--primary" (click)="revealAnswer()">Show Answer</button>
+            } @else {
+
+              <!-- ④ AFTER REVEAL: Tradeoffs -->
+              @if (getV2Field('tradeoffs')?.length > 0) {
+                <details class="reveal-panel" open>
+                  <summary>⚖️ Tradeoffs</summary>
+                  <div class="v2-tradeoffs">
+                    @for (t of getV2Field('tradeoffs'); track $index) {
+                      <div class="v2-tradeoff-item">
+                        <div class="v2-tradeoff-item__vs">
+                          <span class="v2-tradeoff-item__dim">{{ t.dimensionA }}</span>
+                          <span class="v2-tradeoff-item__sep">vs</span>
+                          <span class="v2-tradeoff-item__dim">{{ t.dimensionB }}</span>
+                        </div>
+                        <p class="v2-tradeoff-item__context">{{ t.domainContext }}</p>
+                        <p class="v2-tradeoff-item__consequence">⚠️ {{ t.consequence }}</p>
+                      </div>
+                    }
+                  </div>
+                </details>
+              }
+
+              <!-- ④ Decision Branches -->
+              @if (getV2Field('decisionBranches')?.length > 0) {
+                <details class="reveal-panel" open>
+                  <summary>🔀 Decision Branches</summary>
+                  <div class="v2-branches">
+                    @for (b of getV2Field('decisionBranches'); track $index) {
+                      <div class="v2-branch-card">
+                        <p class="v2-branch-card__condition">🔍 When: <em>{{ b.condition }}</em></p>
+                        <p class="v2-branch-card__recommendation">→ <strong>{{ b.recommendation }}</strong></p>
+                        <p class="v2-branch-card__rationale">{{ b.rationale }}</p>
+                        @if (b.costs?.length > 0) {
+                          <ul class="v2-branch-card__list v2-branch-card__list--costs">
+                            @for (c of b.costs; track $index) { <li>💸 {{ c }}</li> }
+                          </ul>
+                        }
+                        @if (b.risks?.length > 0) {
+                          <ul class="v2-branch-card__list v2-branch-card__list--risks">
+                            @for (r of b.risks; track $index) { <li>⚠️ {{ r }}</li> }
+                          </ul>
+                        }
+                      </div>
+                    }
+                  </div>
+                </details>
+              }
+
+              <!-- ④ Validation Plan -->
+              @if (getV2Field('validationPlan')?.length > 0) {
+                <details class="reveal-panel">
+                  <summary>🧪 Validation Plan</summary>
+                  <div class="v2-validation">
+                    @for (v of getV2Field('validationPlan'); track $index) {
+                      <div class="v2-validation-item">
+                        <p class="v2-validation-item__hyp">📋 <strong>Hypothesis:</strong> {{ v.hypothesis }}</p>
+                        <p class="v2-validation-item__method"><em>Method:</em> {{ v.method }}</p>
+                        @if (v.successCriteria?.length > 0) {
+                          <ul class="v2-validation-item__list">
+                            @for (sc of v.successCriteria; track $index) { <li>✅ {{ sc }}</li> }
+                          </ul>
+                        }
+                        @if (v.failureSignals?.length > 0) {
+                          <ul class="v2-validation-item__list v2-validation-item__list--red">
+                            @for (fs of v.failureSignals; track $index) { <li>🚨 {{ fs }}</li> }
+                          </ul>
+                        }
+                      </div>
+                    }
+                  </div>
+                </details>
+              }
+
+              <!-- ④ Follow-ups with hints hidden in details -->
+              @if (getV2Field('followUps')?.length > 0) {
+                <details class="reveal-panel">
+                  <summary>💬 Follow-up Questions ({{ getV2Field('followUps').length }})</summary>
+                  <div class="reveal-panel__followups">
+                    @for (fu of getV2Field('followUps'); track $index) {
+                      <div class="followup-item">
+                        <span class="v2-category-badge">{{ fu.type }}</span>
+                        <p class="followup-item__q">{{ $index + 1 }}. "{{ fu.question }}"</p>
+                        @if (fu.hint) {
+                          <details>
+                            <summary>Show hint</summary>
+                            <p class="followup-item__hint">{{ fu.hint }}</p>
+                          </details>
+                        }
+                      </div>
+                    }
+                  </div>
+                </details>
+              }
+
+              <!-- ④ Experience Evidence -->
+              @if (getV2Field('experienceEvidence')?.length > 0) {
+                <details class="reveal-panel">
+                  <summary>🏷️ Experience Evidence</summary>
+                  <div class="v2-experience">
+                    @for (e of getV2Field('experienceEvidence'); track $index) {
+                      <div class="v2-experience-item">
+                        <div class="v2-experience-item__header">
+                          <span class="v2-exp-badge v2-exp-badge--{{ expLevelClass(e.level) }}">{{ expLevelLabel(e.level) }}</span>
+                          <strong>{{ e.area }}</strong>
+                        </div>
+                        <p class="v2-experience-item__wording">💬 "{{ e.safeWording }}"</p>
+                        @if (e.evidence) {
+                          <p class="v2-experience-item__evidence">📌 {{ e.evidence }}</p>
+                        }
+                      </div>
+                    }
+                  </div>
+                </details>
+              }
+
+              <!-- ④ Scoring Rubric as table -->
+              @if (getV2Field('scoringRubric')?.length > 0) {
+                <details class="reveal-panel">
+                  <summary>📊 Scoring Rubric</summary>
+                  <div class="reveal-panel__text">
+                    <table class="v2-rubric-table">
+                      <thead>
+                        <tr>
+                          <th>Criterion</th>
+                          <th>Weight</th>
+                          <th>Strong Signals</th>
+                          <th>Weak Signals</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (r of getV2Field('scoringRubric'); track $index) {
+                          <tr>
+                            <td><strong>{{ r.criterion }}</strong></td>
+                            <td class="v2-rubric-weight">{{ r.weight }}%</td>
+                            <td>
+                              <ul class="v2-rubric-list">
+                                @for (s of r.strongSignals; track $index) { <li>✅ {{ s }}</li> }
+                              </ul>
+                            </td>
+                            <td>
+                              <ul class="v2-rubric-list v2-rubric-list--weak">
+                                @for (w of r.weakSignals; track $index) { <li>❌ {{ w }}</li> }
+                              </ul>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              }
+
+              <!-- ④ Coach Debrief -->
+              @if (getV2Field('coachDebrief'); as cd) {
+                <details class="reveal-panel">
+                  <summary>🧑‍🏫 Coach Debrief</summary>
+                  <div class="v2-debrief">
+                    @if (cd.strongAnswerElements?.length > 0) {
+                      <p class="v2-debrief__label">Strong answer would include:</p>
+                      <ul class="v2-debrief__list">
+                        @for (s of cd.strongAnswerElements; track $index) { <li>✅ {{ s }}</li> }
+                      </ul>
+                    }
+                    @if (cd.possibleDirections?.length > 0) {
+                      <p class="v2-debrief__label">Possible directions:</p>
+                      <ul class="v2-debrief__list v2-debrief__list--neutral">
+                        @for (d of cd.possibleDirections; track $index) { <li>→ {{ d }}</li> }
+                      </ul>
+                    }
+                    @if (cd.commonlyMissedPoints?.length > 0) {
+                      <p class="v2-debrief__label">Commonly missed:</p>
+                      <ul class="v2-debrief__list v2-debrief__list--warn">
+                        @for (m of cd.commonlyMissedPoints; track $index) { <li>⚠️ {{ m }}</li> }
+                      </ul>
+                    }
+                  </div>
+                </details>
+              }
+
+              <!-- ④ Red Flags -->
+              @if (getV2Field('redFlags')?.length > 0) {
+                <details class="reveal-panel">
+                  <summary>🚩 Red Flags</summary>
+                  <ul class="reveal-panel__list reveal-panel__list--red">
+                    @for (rf of getV2Field('redFlags'); track $index) { <li>🚩 {{ rf }}</li> }
+                  </ul>
+                </details>
+              }
+
+              <button class="btn btn--primary" (click)="nextQuestion()">NEXT →</button>
+            }
+
+          } @else {
+
+          <!-- ==================== NON-V2 RENDERING (unchanged) ==================== -->
+
           <!-- Question / Prompt -->
           @if (getField(q, 'question')) {
             <h2 class="question-card__question">"{{ getField(q, 'question') }}"</h2>
@@ -178,6 +431,8 @@
 
             <button class="btn btn--primary" (click)="nextQuestion()">NEXT →</button>
           }
+
+          } <!-- end @else (non-v2) -->
         </div>
         }
       }

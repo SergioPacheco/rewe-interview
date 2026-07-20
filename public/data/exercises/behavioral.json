@@ -488,5 +488,39 @@
       "interview-prep",
       "senior-level"
     ]
+  },
+  {
+    "id": "beh-conflict-1",
+    "type": "ORAL_ANSWER",
+    "topic": "behavioral",
+    "subtopic": "beh-conflict",
+    "difficulty": "senior",
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "question": "Tell me about a time you had a strong technical disagreement with a colleague and how you resolved it.",
+    "interviewerIntent": "Assess ability to hold a technical position while staying collaborative. Interviewers look for: respectful challenge, evidence over authority, and willingness to be wrong.",
+    "answer": "SITUATION: A senior colleague proposed centralizing all external service calls (LDAP, Moodle, REST) into a single shared EJB to avoid code duplication. I believed this introduced a dangerous coupling — one service degrading would affect all others through the shared bean.\n\nTASK: Challenge the proposal constructively without dismissing the valid goal (reducing duplication).\n\nACTION: I didn't say 'that's wrong.' I said: 'I see the duplication problem clearly — var me propose an alternative and we can compare.' I prepared a concrete analysis showing two specific scenarios where the shared EJB caused cascading failures — a Moodle timeout during enrollment that would also block LDAP lookups, which were on a completely different flow. I presented it in a team session: the shared bean's duplication savings versus the blast radius of coupling unrelated integrations. I also proposed a middle ground: shared utilities (connection config, timeout defaults, error wrapping) without shared state or lifecycle.\n\nRESULT: The team adopted the middle ground. My colleague agreed the coupling risk was real — they had focused on the duplication problem and hadn't mapped the failure scenarios. The shared utilities approach achieved ~70% of the duplication reduction with zero coupling risk.\n\nKEY PRINCIPLE: 'I challenge ideas with evidence, not status. And I always come with an alternative — just saying no without a better option is not helpful.'",
+    "keyPoints": [
+      "Named the valid concern in the colleague's proposal (duplication is real)",
+      "Prepared evidence (failure scenario analysis) before the challenge",
+      "Proposed a concrete alternative, not just rejection",
+      "Framed as comparison, not confrontation",
+      "Showed willingness to find a middle ground"
+    ],
+    "followUps": [
+      {
+        "question": "What if your colleague still disagreed after seeing your analysis?",
+        "answerHint": "State your position clearly one more time. If the team decides differently, commit fully to the decision. Disagreeing and committing is a senior skill — you can revisit when production behavior provides new evidence."
+      },
+      {
+        "question": "How do you tell the difference between a strong opinion and a hill worth dying on?",
+        "answerHint": "Hills worth dying on: data integrity, security, or irreversible architectural decisions. Strong opinions: naming conventions, code style, library choices. For the latter, state your preference once, then defer to the team or senior."
+      }
+    ],
+    "tags": [
+      "conflict",
+      "collaboration",
+      "communication",
+      "technical-leadership"
+    ]
   }
 ]

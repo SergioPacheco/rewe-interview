@@ -59,6 +59,9 @@ export class TheoryComponent {
   readonly hasExercises = computed(() => this.exerciseCount() > 0);
   readonly currentQuestion = computed(() => this.engine.currentQuestion());
 
+  /** True when the current question uses Schema V2 (rich system-design format) */
+  readonly isSchemaV2 = computed(() => (this.currentQuestion() as any)?.schemaVersion === 2);
+
   /** Subtopic label for breadcrumb */
   readonly subtopicLabel = computed(() => {
     const topic = this.topic();
@@ -182,5 +185,21 @@ export class TheoryComponent {
   getFieldArray(q: any, field: string): any[] {
     const val = q?.[field];
     return Array.isArray(val) ? val : [];
+  }
+
+  /** Safely reads a top-level field from the current Schema V2 question */
+  getV2Field(field: string): any {
+    return (this.currentQuestion() as any)?.[field] ?? null;
+  }
+
+  /** Returns a CSS-safe class name for an experience level string */
+  expLevelClass(level: string): string {
+    return (level ?? '').toLowerCase().replace(/_/g, '-');
+  }
+
+  /** Returns a human-readable label for an experience level string */
+  expLevelLabel(level: string): string {
+    return (level ?? '').replace(/_/g, ' ').toLowerCase()
+      .replace(/\b\w/g, c => c.toUpperCase());
   }
 }

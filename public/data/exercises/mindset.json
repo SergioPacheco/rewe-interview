@@ -105,5 +105,58 @@
       "Never saying 'I don't know' or 'I haven't encountered that'"
     ],
     "modelAnswer": "The biggest mistake is answering without context. When someone says 'always use microservices' or 'Kafka is the best,' they reveal inexperience. Seniors know every choice has costs. Second: reciting docs instead of sharing real experience. Third: not asking questions before system design — jumping to solutions before understanding constraints. Fourth: talking for 10 minutes without structure — 2-3 minutes with What-Why-Tradeoffs is more effective. Fifth: never admitting boundaries. Saying 'I haven't deployed Kafka at scale but I understand its architecture' builds more trust than pretending expertise you don't have."
+  },
+  {
+    "id": "ms-whiteboard-1",
+    "type": "ORAL_ANSWER",
+    "topic": "mindset",
+    "subtopic": "ms-whiteboard",
+    "difficulty": "senior",
+    "question": "You're given a whiteboard problem: design a rate limiter for an API. Walk me through how you approach this, step by step.",
+    "keyPoints": [
+      "Clarify before drawing anything (what kind of rate limit? per user? per IP? globally?)",
+      "State your assumptions aloud before coding or diagramming",
+      "Start with the simplest correct solution, then evolve",
+      "Talk while you think — silence is a red flag",
+      "Acknowledge trade-offs as you design, not just at the end",
+      "Ask if the interviewer wants a specific focus (latency, accuracy, distributed?)"
+    ],
+    "modelAnswer": "Before drawing anything: I'd ask — per user or global? What's the limit (requests per second? per minute?)? Is this a distributed system across multiple nodes? Then I'd state assumptions: 'I'll assume per-user, 100 req/min, single node first, then extend to distributed.' I'd start with a token bucket in memory — simple, correct, explainable. Token bucket: each user gets a bucket of 100 tokens per minute; each request consumes one token; tokens refill at a fixed rate. I'd draw the data structure (map of userId → {tokens, lastRefillTime}), explain the refill logic, then discuss race conditions. Then I'd layer on distributed: Redis with atomic INCR + TTL, or a dedicated rate-limiting service. I keep narrating: 'This is simple and correct for single-node. For distributed, the token state needs to be shared — Redis is the natural choice, but introduces network latency per request. A sliding window counter in Redis is an alternative with better precision.' The point isn't arriving at the perfect answer — it's demonstrating that you think systematically, know the trade-offs, and can evolve a design.",
+    "followUps": [
+      {
+        "question": "What if you get stuck in the middle of the problem?",
+        "answerHint": "Say so aloud: 'I'm thinking about the distributed case — give me a moment.' Then think step by step. Never go silent. Asking a clarifying question when stuck shows metacognition, not weakness."
+      },
+      {
+        "question": "How do you signal you're done vs still thinking?",
+        "answerHint": "Explicitly state transitions: 'The simple version is done. Now let me think about edge cases.' and 'Here's my complete solution — I'm happy to extend any part.' Interviewers can't read your mind."
+      }
+    ]
+  },
+  {
+    "id": "ms-whiteboard-2",
+    "type": "ORAL_ANSWER",
+    "topic": "mindset",
+    "subtopic": "ms-whiteboard",
+    "difficulty": "staff",
+    "question": "How do you handle a whiteboard problem where you don't know the optimal algorithm?",
+    "keyPoints": [
+      "Don't panic or go silent — vocalize your thought process",
+      "Propose the brute force solution first and state its complexity",
+      "Reason from the constraints (input size, time limit) towards the right complexity class",
+      "Interviewers evaluate thinking process more than the final answer",
+      "Ask clarifying questions to narrow the problem space"
+    ],
+    "modelAnswer": "First, I resist the urge to panic and go silent. I say: 'I don't know the optimal algorithm off the top of my head, but let me reason through it.' I start with a brute force solution — even O(n²) or O(n³) — and implement it correctly. Then I analyze: 'This is O(n²). Given n up to 10^5, we need at most O(n log n). The bottleneck is this nested loop. What if I precompute this? What data structure gives me O(1) lookup here?' I reason from complexity constraints to data structure choices — not the other way around. I'm also transparent about knowledge boundaries: 'I know the result requires a segment tree or a Fenwick tree, but I don't have it memorized. Let me implement what I can and talk through the approach.' Interviewers at REWE are evaluating problem decomposition and reasoning, not whether you have every algorithm memorized. A candidate who gets a correct O(n²) solution and clearly explains why O(n log n) is needed — and what approach would achieve it — demonstrates more than someone who writes a memorized solution without explanation.",
+    "followUps": [
+      {
+        "question": "What if you implement a solution and realize mid-way it's wrong?",
+        "answerHint": "Say so: 'I see a problem with this approach — [explain why]. Let me backtrack to [point].' Catching your own mistake and correcting it is a positive signal. Continuing down a wrong path hoping the interviewer won't notice is worse."
+      },
+      {
+        "question": "How do you handle time pressure when the problem has multiple steps?",
+        "answerHint": "State what you'll implement vs describe: 'I'll implement the core algorithm. For the edge cases around empty input and overflow, I'll describe the approach and add tests for them.' Prioritize correctness of the core over completeness of everything."
+      }
+    ]
   }
 ]

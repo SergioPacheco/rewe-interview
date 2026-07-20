@@ -140,5 +140,79 @@
       "Honest about depth (production JMS vs studied Kafka)"
     ],
     "modelAnswer": "I bridge from what I know. After 8 years with Jakarta EE, I mapped DI, transactions, and messaging concepts to Spring equivalents. The mental models transfer \u2014 only the API changes. For Kafka, I started from JMS knowledge and studied what Kafka does differently. I'm transparent about my depth: production experience with JMS, studied and practiced with Kafka."
+  },
+  {
+    "id": "story-legacy-1",
+    "topic": "stories",
+    "subtopic": "story-legacy",
+    "type": "ORAL_ANSWER",
+    "difficulty": "hard",
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "question": "Tell me about a time you had to work with or modernize a large legacy codebase.",
+    "interviewerIntent": "Assess ability to deliver in complex inherited codebases without causing regressions. REWE has existing services — every new hire inherits code.",
+    "answer": "I work daily in SGN3 — a 2,000-table monolithic Java EE system with 6+ years of accumulated code from multiple teams. No single person understands every module.\n\nMy approach when entering an unfamiliar module:\n1. READ before writing — trace the full request from entry point to database before making any change.\n2. Build a mental map — entry points, business layer, repository, tables involved, callers from other modules.\n3. Respect existing patterns — even when I'd design differently, consistency with the surrounding code reduces cognitive load for everyone.\n4. Small, focused changes — one concern per commit, easy to review and easy to revert.\n5. Add characterization tests before changing behavior — document what the code DOES before changing it.\n\nConcrete example: I was asked to optimize a listing that was taking 16 minutes. Before touching anything, I traced the full execution path using Glowroot APM. I found two separate problems: a Cartesian product from incorrect joins and an N+1 pattern triggered by JSF rendering. I fixed both incrementally, verified each step, and reduced the time to 2 seconds without changing any surrounding business logic.\n\nThe key discipline: I never 'clean up' code that isn't related to the task. Legacy systems have hidden dependencies — a rename or refactor that seems safe can break behavior that only manifests under specific conditions.",
+    "keyPoints": [
+      "Read and map before writing anything",
+      "Respect existing patterns — consistency > personal preference",
+      "Characterization tests before changing behavior",
+      "Focused changes — one concern, easy to revert",
+      "Never opportunistically refactor unrelated code"
+    ],
+    "followUps": [
+      {
+        "question": "How do you handle legacy code with no tests?",
+        "answerHint": "Write characterization tests first — tests that describe what the code currently does (even if wrong). These protect you from regressions. Then fix the behavior and update the tests to the correct expectation."
+      },
+      {
+        "question": "What if the legacy pattern is clearly wrong (e.g., SQL injection risk)?",
+        "answerHint": "Security issues are non-negotiable — fix them. But fix ONLY the security issue. Don't bundle a security fix with a refactoring. The security fix must be reviewable in isolation."
+      },
+      {
+        "question": "How do you balance modernization with delivery pressure?",
+        "answerHint": "Boy Scout Rule: leave the code slightly better than you found it. Not a rewrite — just the immediate area you touched. Opportunistic improvements within the scope of your task, never beyond it."
+      }
+    ],
+    "mistakesToAvoid": [
+      "Starting a refactoring that's larger than the task",
+      "Assuming you understand the code without tracing it end-to-end first",
+      "Changing behavior you don't understand to 'clean it up'"
+    ]
+  },
+  {
+    "id": "story-ai-1",
+    "topic": "stories",
+    "subtopic": "story-ai",
+    "type": "ORAL_ANSWER",
+    "difficulty": "medium",
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "question": "How do you use AI tools in your development workflow? Give a concrete example.",
+    "interviewerIntent": "Assess pragmatic AI adoption without naivety. Interviewers want to know if you use AI effectively without blindly trusting it — especially for production code.",
+    "answer": "I use AI coding assistants (Kiro/Claude) as a thinking partner and accelerator, not as an autonomous code generator.\n\nConcrete example: building the interview preparation app you're looking at right now. I used AI assistance to generate the exercise content structure, TypeScript interfaces, and Angular components. The workflow:\n\n1. I designed the architecture and data schemas first — AI cannot make good architectural decisions without human context.\n2. I used AI to generate boilerplate (Angular components, TypeScript interfaces) that I reviewed and adjusted before using.\n3. For complex logic (quiz state machine, progress tracking), I wrote the core myself and used AI for suggestions I evaluated critically.\n4. I never accepted generated code without understanding it — if I can't explain every line, it doesn't ship.\n\nWhere AI genuinely helps me:\n- Generating test cases I might miss (edge cases, boundary conditions)\n- Writing documentation and commit messages faster\n- Exploring unfamiliar APIs ('show me examples of Angular resource()') faster than documentation alone\n- Rubber-ducking architectural decisions\n\nWhere I stay hands-on:\n- Security-sensitive code — AI misses context-specific vulnerabilities\n- Database queries — AI doesn't know my data distribution, indexes, or query plans\n- Business logic with subtle rules — AI doesn't know our domain requirements\n\nThe frame I use: AI is a very fast junior developer. It can produce a lot of code quickly. My job is still to be the senior who reviews everything, understands the tradeoffs, and owns the result.",
+    "keyPoints": [
+      "Architect first, AI generates after design is defined",
+      "Review every line before it ships — no blind acceptance",
+      "AI for boilerplate and exploration, human judgment for business logic and security",
+      "'AI as fast junior dev' — useful framing for the review responsibility",
+      "Honest about where AI helps and where it falls short"
+    ],
+    "followUps": [
+      {
+        "question": "Have you ever shipped AI-generated code that caused a production issue?",
+        "answerHint": "Honest answer matters more than a perfect record. If yes: describe what happened, why the review missed it, and what you changed in your process. If no: describe a case where AI generated something subtly wrong that you caught in review."
+      },
+      {
+        "question": "How do you maintain your own skills when AI can generate code for you?",
+        "answerHint": "Understanding the code you review requires the same depth as writing it. You have to be able to evaluate whether the generated solution is correct, efficient, and secure — which requires real skills. AI that you can't review is risk, not help."
+      },
+      {
+        "question": "What would you NOT use AI for in a production codebase?",
+        "answerHint": "Anything I can't verify independently: security code (auth, crypto, input sanitization), financial calculations, data migration scripts with irreversible effects. The AI might be right, but I need to be certain, not trust."
+      }
+    ],
+    "mistakesToAvoid": [
+      "Accepting AI output without understanding it — 'it compiles' is not a review",
+      "Using AI to bypass learning — you lose the ability to evaluate what it generates",
+      "Overclaiming AI experience in areas where you only observed, not built"
+    ]
   }
 ]

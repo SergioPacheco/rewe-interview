@@ -1,15 +1,15 @@
 [
   {
     "id": "theory-collections-17-records",
-    "title": "Java Records — Immutable Data Carriers",
+    "title": "Java Records \u2014 Immutable Data Carriers",
     "sections": [
       {
         "heading": "What are Records? (Java 16+)",
-        "content": "Records are immutable data classes with auto-generated equals, hashCode, toString, and accessors.\n\n<pre><code>// Before Records — verbose DTO:\npublic class DeliveryDTO {\n    private final Long id;\n    private final String driverId;\n    private final DeliveryStatus status;\n\n    public DeliveryDTO(Long id, String driverId, DeliveryStatus status) {\n        this.id = id;\n        this.driverId = driverId;\n        this.status = status;\n    }\n\n    public Long getId() { return id; }\n    public String getDriverId() { return driverId; }\n    public DeliveryStatus getStatus() { return status; }\n\n    @Override public boolean equals(Object o) { /* 15 lines */ }\n    @Override public int hashCode() { /* ... */ }\n    @Override public String toString() { /* ... */ }\n}\n\n// With Records — ONE LINE:\npublic record DeliveryDTO(Long id, String driverId, DeliveryStatus status) {}</code></pre>\n\n<strong>What you get for free:</strong>\n• Constructor with all fields\n• Accessor methods: `id()`, `driverId()`, `status()` (no `get` prefix!)\n• `equals()` comparing all fields\n• `hashCode()` using all fields\n• `toString()` showing all fields\n• Immutability (fields are final)"
+        "content": "Records are immutable data classes with auto-generated equals, hashCode, toString, and accessors.\n\n<pre><code>// Before Records \u2014 verbose DTO:\npublic class DeliveryDTO {\n    private final Long id;\n    private final String driverId;\n    private final DeliveryStatus status;\n\n    public DeliveryDTO(Long id, String driverId, DeliveryStatus status) {\n        this.id = id;\n        this.driverId = driverId;\n        this.status = status;\n    }\n\n    public Long getId() { return id; }\n    public String getDriverId() { return driverId; }\n    public DeliveryStatus getStatus() { return status; }\n\n    @Override public boolean equals(Object o) { /* 15 lines */ }\n    @Override public int hashCode() { /* ... */ }\n    @Override public String toString() { /* ... */ }\n}\n\n// With Records \u2014 ONE LINE:\npublic record DeliveryDTO(Long id, String driverId, DeliveryStatus status) {}</code></pre>\n\n<strong>What you get for free:</strong>\n\u2022 Constructor with all fields\n\u2022 Accessor methods: `id()`, `driverId()`, `status()` (no `get` prefix!)\n\u2022 `equals()` comparing all fields\n\u2022 `hashCode()` using all fields\n\u2022 `toString()` showing all fields\n\u2022 Immutability (fields are final)"
       },
       {
-        "heading": "Records — validation and custom constructors",
-        "content": "<pre><code>public record CreateDeliveryRequest(\n    @NotBlank String driverId,\n    @NotNull @Future LocalDateTime scheduledAt,\n    @Size(min = 1, max = 50) List&lt;StopRequest&gt; stops\n) {\n    // Compact constructor — validation\n    public CreateDeliveryRequest {\n        if (stops == null) stops = List.of();\n        stops = List.copyOf(stops);  // defensive copy (truly immutable)\n    }\n\n    // Custom factory method\n    public static CreateDeliveryRequest urgent(String driverId, List&lt;StopRequest&gt; stops) {\n        return new CreateDeliveryRequest(driverId, LocalDateTime.now().plusHours(1), stops);\n    }\n}\n\n// Usage:\nvar req = new CreateDeliveryRequest(\"D-42\", tomorrow, stops);\nString driver = req.driverId();  // no \"get\" prefix!\n</code></pre>\n\n<strong>When to use Records:</strong>\n• DTOs (request/response)\n• Value objects (Money, Coordinate, DateRange)\n• Kafka event payloads\n• Multi-value return types\n• Map keys (auto equals/hashCode)\n\n<strong>When NOT to use:</strong>\n• JPA entities (need mutable state + no-arg constructor)\n• Objects with complex lifecycle/behavior\n• When you need inheritance (records are final)"
+        "heading": "Records \u2014 validation and custom constructors",
+        "content": "<pre><code>public record CreateDeliveryRequest(\n    @NotBlank String driverId,\n    @NotNull @Future LocalDateTime scheduledAt,\n    @Size(min = 1, max = 50) List&lt;StopRequest&gt; stops\n) {\n    // Compact constructor \u2014 validation\n    public CreateDeliveryRequest {\n        if (stops == null) stops = List.of();\n        stops = List.copyOf(stops);  // defensive copy (truly immutable)\n    }\n\n    // Custom factory method\n    public static CreateDeliveryRequest urgent(String driverId, List&lt;StopRequest&gt; stops) {\n        return new CreateDeliveryRequest(driverId, LocalDateTime.now().plusHours(1), stops);\n    }\n}\n\n// Usage:\nvar req = new CreateDeliveryRequest(\"D-42\", tomorrow, stops);\nString driver = req.driverId();  // no \"get\" prefix!\n</code></pre>\n\n<strong>When to use Records:</strong>\n\u2022 DTOs (request/response)\n\u2022 Value objects (Money, Coordinate, DateRange)\n\u2022 Kafka event payloads\n\u2022 Multi-value return types\n\u2022 Map keys (auto equals/hashCode)\n\n<strong>When NOT to use:</strong>\n\u2022 JPA entities (need mutable state + no-arg constructor)\n\u2022 Objects with complex lifecycle/behavior\n\u2022 When you need inheritance (records are final)"
       }
     ],
     "topic": "java-modern",
@@ -17,15 +17,15 @@
   },
   {
     "id": "theory-collections-17-sealed",
-    "title": "Sealed Classes — Controlled Hierarchies",
+    "title": "Sealed Classes \u2014 Controlled Hierarchies",
     "sections": [
       {
         "heading": "Sealed classes (Java 17)",
-        "content": "Sealed classes restrict which classes can extend them — the compiler knows ALL subtypes.\n\n<pre><code>// Only these 4 types of delivery events exist:\npublic sealed interface DeliveryEvent\n    permits DeliveryPlanned, DeliveryDispatched, DeliveryCompleted, DeliveryFailed {\n\n    String deliveryId();\n    Instant timestamp();\n}\n\npublic record DeliveryPlanned(String deliveryId, Instant timestamp, String driverId)\n    implements DeliveryEvent {}\n\npublic record DeliveryDispatched(String deliveryId, Instant timestamp, String route)\n    implements DeliveryEvent {}\n\npublic record DeliveryCompleted(String deliveryId, Instant timestamp, int stopsDelivered)\n    implements DeliveryEvent {}\n\npublic record DeliveryFailed(String deliveryId, Instant timestamp, String reason)\n    implements DeliveryEvent {}\n</code></pre>\n\n<strong>Why sealed?</strong>\n• Compiler knows ALL cases → exhaustive switch (no default needed)\n• Documents the domain clearly (\"these are the ONLY event types\")\n• Prevents unexpected subtypes\n• Enables pattern matching with guaranteed completeness"
+        "content": "Sealed classes restrict which classes can extend them \u2014 the compiler knows ALL subtypes.\n\n<pre><code>// Only these 4 types of delivery events exist:\npublic sealed interface DeliveryEvent\n    permits DeliveryPlanned, DeliveryDispatched, DeliveryCompleted, DeliveryFailed {\n\n    String deliveryId();\n    Instant timestamp();\n}\n\npublic record DeliveryPlanned(String deliveryId, Instant timestamp, String driverId)\n    implements DeliveryEvent {}\n\npublic record DeliveryDispatched(String deliveryId, Instant timestamp, String route)\n    implements DeliveryEvent {}\n\npublic record DeliveryCompleted(String deliveryId, Instant timestamp, int stopsDelivered)\n    implements DeliveryEvent {}\n\npublic record DeliveryFailed(String deliveryId, Instant timestamp, String reason)\n    implements DeliveryEvent {}\n</code></pre>\n\n<strong>Why sealed?</strong>\n\u2022 Compiler knows ALL cases \u2192 exhaustive switch (no default needed)\n\u2022 Documents the domain clearly (\"these are the ONLY event types\")\n\u2022 Prevents unexpected subtypes\n\u2022 Enables pattern matching with guaranteed completeness"
       },
       {
         "heading": "Pattern matching with sealed types",
-        "content": "<pre><code>// Java 21: exhaustive switch with pattern matching\npublic String describe(DeliveryEvent event) {\n    return switch (event) {\n        case DeliveryPlanned p -> \"Planned for driver \" + p.driverId();\n        case DeliveryDispatched d -> \"Dispatched on route \" + d.route();\n        case DeliveryCompleted c -> c.stopsDelivered() + \" stops delivered\";\n        case DeliveryFailed f -> \"Failed: \" + f.reason();\n        // No default needed! Compiler knows all cases are covered.\n    };\n}\n\n// If you add a new event type → compiler ERROR in every switch\n// Forces you to handle the new case everywhere (safe evolution)</code></pre>\n\n<strong>REWE transport example:</strong>\nDelivery states are a CLOSED set. Using sealed + records ensures that every handler explicitly covers every possible state. Adding a new state becomes a compiler-assisted refactoring (not a runtime surprise)."
+        "content": "<pre><code>// Java 21: exhaustive switch with pattern matching\npublic String describe(DeliveryEvent event) {\n    return switch (event) {\n        case DeliveryPlanned p -> \"Planned for driver \" + p.driverId();\n        case DeliveryDispatched d -> \"Dispatched on route \" + d.route();\n        case DeliveryCompleted c -> c.stopsDelivered() + \" stops delivered\";\n        case DeliveryFailed f -> \"Failed: \" + f.reason();\n        // No default needed! Compiler knows all cases are covered.\n    };\n}\n\n// If you add a new event type \u2192 compiler ERROR in every switch\n// Forces you to handle the new case everywhere (safe evolution)</code></pre>\n\n<strong>REWE transport example:</strong>\nDelivery states are a CLOSED set. Using sealed + records ensures that every handler explicitly covers every possible state. Adding a new state becomes a compiler-assisted refactoring (not a runtime surprise)."
       }
     ],
     "topic": "java-modern",
@@ -37,18 +37,94 @@
     "sections": [
       {
         "heading": "Pattern matching for instanceof (Java 16+)",
-        "content": "<pre><code>// Before — cast after check (redundant):\nif (event instanceof DeliveryCompleted) {\n    DeliveryCompleted completed = (DeliveryCompleted) event;\n    log.info(\"Delivered {} stops\", completed.stopsDelivered());\n}\n\n// After — bind variable in the check:\nif (event instanceof DeliveryCompleted completed) {\n    log.info(\"Delivered {} stops\", completed.stopsDelivered());\n}\n\n// Combined with switch (Java 21):\nString message = switch (notification) {\n    case SmsNotification sms -> \"SMS to \" + sms.phoneNumber();\n    case EmailNotification email -> \"Email to \" + email.address();\n    case PushNotification push -> \"Push to device \" + push.deviceId();\n    default -> \"Unknown channel\";\n};</code></pre>\n\n<strong>Guards in patterns (Java 21):</strong>\n<pre><code>switch (delivery) {\n    case Delivery d when d.status() == DELAYED && d.priority() == HIGH\n        -> escalateToManager(d);\n    case Delivery d when d.status() == DELAYED\n        -> notifyPlanner(d);\n    case Delivery d\n        -> processNormally(d);\n}</code></pre>"
+        "content": "<pre><code>// Before \u2014 cast after check (redundant):\nif (event instanceof DeliveryCompleted) {\n    DeliveryCompleted completed = (DeliveryCompleted) event;\n    log.info(\"Delivered {} stops\", completed.stopsDelivered());\n}\n\n// After \u2014 bind variable in the check:\nif (event instanceof DeliveryCompleted completed) {\n    log.info(\"Delivered {} stops\", completed.stopsDelivered());\n}\n\n// Combined with switch (Java 21):\nString message = switch (notification) {\n    case SmsNotification sms -> \"SMS to \" + sms.phoneNumber();\n    case EmailNotification email -> \"Email to \" + email.address();\n    case PushNotification push -> \"Push to device \" + push.deviceId();\n    default -> \"Unknown channel\";\n};</code></pre>\n\n<strong>Guards in patterns (Java 21):</strong>\n<pre><code>switch (delivery) {\n    case Delivery d when d.status() == DELAYED && d.priority() == HIGH\n        -> escalateToManager(d);\n    case Delivery d when d.status() == DELAYED\n        -> notifyPlanner(d);\n    case Delivery d\n        -> processNormally(d);\n}</code></pre>"
       },
       {
         "heading": "Text blocks (Java 15+)",
-        "content": "<pre><code>// Before — string concatenation hell:\nString query = \"SELECT d.id, d.status, dr.name \" +\n    \"FROM delivery d \" +\n    \"JOIN driver dr ON d.driver_id = dr.id \" +\n    \"WHERE d.status = :status \" +\n    \"ORDER BY d.scheduled_at\";\n\n// After — text blocks (preserves formatting):\nString query = \"\"\"\n    SELECT d.id, d.status, dr.name\n    FROM delivery d\n    JOIN driver dr ON d.driver_id = dr.id\n    WHERE d.status = :status\n    ORDER BY d.scheduled_at\n    \"\"\";\n\n// JSON templates:\nString json = \"\"\"\n    {\n        \"deliveryId\": \"%s\",\n        \"status\": \"%s\",\n        \"timestamp\": \"%s\"\n    }\n    \"\"\".formatted(id, status, Instant.now());</code></pre>\n\n<strong>Use for:</strong> SQL queries, JSON templates, HTML fragments, multi-line log messages, test data"
+        "content": "<pre><code>// Before \u2014 string concatenation hell:\nString query = \"SELECT d.id, d.status, dr.name \" +\n    \"FROM delivery d \" +\n    \"JOIN driver dr ON d.driver_id = dr.id \" +\n    \"WHERE d.status = :status \" +\n    \"ORDER BY d.scheduled_at\";\n\n// After \u2014 text blocks (preserves formatting):\nString query = \"\"\"\n    SELECT d.id, d.status, dr.name\n    FROM delivery d\n    JOIN driver dr ON d.driver_id = dr.id\n    WHERE d.status = :status\n    ORDER BY d.scheduled_at\n    \"\"\";\n\n// JSON templates:\nString json = \"\"\"\n    {\n        \"deliveryId\": \"%s\",\n        \"status\": \"%s\",\n        \"timestamp\": \"%s\"\n    }\n    \"\"\".formatted(id, status, Instant.now());</code></pre>\n\n<strong>Use for:</strong> SQL queries, JSON templates, HTML fragments, multi-line log messages, test data"
       },
       {
         "heading": "Switch expressions (Java 14+)",
-        "content": "<pre><code>// Old switch (statement — can forget break):\nString label;\nswitch (status) {\n    case PLANNED: label = \"Waiting\"; break;\n    case DISPATCHED: label = \"On the way\"; break;\n    default: label = \"Unknown\"; break;\n}\n\n// New switch (expression — returns value, no break, no fall-through):\nString label = switch (status) {\n    case PLANNED -> \"Waiting\";\n    case DISPATCHED -> \"On the way\";\n    case IN_TRANSIT -> \"Moving\";\n    case DELIVERED -> \"Done\";\n    default -> \"Unknown\";\n};\n\n// Multi-line blocks:\nint priority = switch (delivery.getType()) {\n    case EXPRESS -> {\n        log.info(\"Express delivery detected\");\n        yield 1;  // 'yield' returns value from block\n    }\n    case SAME_DAY -> { yield 2; }\n    default -> { yield 3; }\n};</code></pre>"
+        "content": "<pre><code>// Old switch (statement \u2014 can forget break):\nString label;\nswitch (status) {\n    case PLANNED: label = \"Waiting\"; break;\n    case DISPATCHED: label = \"On the way\"; break;\n    default: label = \"Unknown\"; break;\n}\n\n// New switch (expression \u2014 returns value, no break, no fall-through):\nString label = switch (status) {\n    case PLANNED -> \"Waiting\";\n    case DISPATCHED -> \"On the way\";\n    case IN_TRANSIT -> \"Moving\";\n    case DELIVERED -> \"Done\";\n    default -> \"Unknown\";\n};\n\n// Multi-line blocks:\nint priority = switch (delivery.getType()) {\n    case EXPRESS -> {\n        log.info(\"Express delivery detected\");\n        yield 1;  // 'yield' returns value from block\n    }\n    case SAME_DAY -> { yield 2; }\n    default -> { yield 3; }\n};</code></pre>"
       }
     ],
     "topic": "java-modern",
     "subtopic": "modern-patterns"
+  },
+  {
+    "id": "theory-modern-streams",
+    "topic": "java-modern",
+    "subtopic": "modern-streams",
+    "title": "Streams & Optional \u2014 Declarative Data Pipelines",
+    "sections": [
+      {
+        "heading": "Stream API \u2014 functional pipelines",
+        "content": "Streams let you express data transformations declaratively: filter, map, flatMap, reduce, collect. They are lazy \u2014 intermediate operations build a pipeline; terminal operations trigger execution.\n\n<pre><code>// Find active deliveries with overdue ETA\nList<Delivery> overdue = deliveries.stream()\n    .filter(d -> d.getStatus() == ACTIVE)\n    .filter(d -> d.getEta().isBefore(Instant.now()))\n    .sorted(Comparator.comparing(Delivery::getEta))\n    .toList(); // Java 16+ \u2014 immutable list</code></pre>"
+      },
+      {
+        "heading": "Collectors and grouping",
+        "content": "Collectors transform stream results into maps, lists, statistics or custom containers.\n\n<pre><code>// Group deliveries by driver, counting each\nMap<String, Long> countByDriver = deliveries.stream()\n    .collect(Collectors.groupingBy(\n        Delivery::getDriverId,\n        Collectors.counting()\n    ));\n\n// Partition into on-time vs late\nMap<Boolean, List<Delivery>> partitioned = deliveries.stream()\n    .collect(Collectors.partitioningBy(d -> d.isOnTime()));</code></pre>"
+      },
+      {
+        "heading": "Optional \u2014 explicit absence",
+        "content": "Optional forces the caller to handle the missing case. Never use Optional for fields or parameters \u2014 only for return types.\n\n<pre><code>// Good: method that might not find a result\npublic Optional<Driver> findAvailableDriver(String zone) {\n    return drivers.stream()\n        .filter(d -> d.getZone().equals(zone) && d.isAvailable())\n        .findFirst();\n}\n\n// Consumer handles absence explicitly\nDriver driver = findAvailableDriver(\"Berlin-Mitte\")\n    .orElseThrow(() -> new NoDriverAvailableException(zone));</code></pre>"
+      },
+      {
+        "heading": "Performance traps",
+        "content": "Streams are not always faster than loops. Avoid: parallel streams on small collections, streams that trigger N+1 database calls, unnecessary boxing with mapToInt/mapToLong, and collecting into a list only to iterate again. Use streams for readability when the pipeline is clear; use loops when mutation or early exit is simpler."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-threads",
+    "topic": "java-modern",
+    "subtopic": "modern-threads",
+    "title": "Virtual Threads \u2014 Lightweight Concurrency (Java 21)",
+    "sections": [
+      {
+        "heading": "The problem with platform threads",
+        "content": "Each platform thread maps 1:1 to an OS thread (~1MB stack). A service handling 10,000 concurrent requests needs 10,000 OS threads \u2014 memory-prohibitive. The workaround was reactive/async code (CompletableFuture, WebFlux) which sacrifices readability."
+      },
+      {
+        "heading": "Virtual threads \u2014 the solution",
+        "content": "Virtual threads (Project Loom) are lightweight threads managed by the JVM, not the OS. Millions can exist simultaneously. Blocking I/O unmounts the virtual thread from its carrier \u2014 no thread wasted waiting.\n\n<pre><code>// Create virtual threads \u2014 trivially cheap\ntry (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n    for (DeliveryTask task : tasks) {\n        executor.submit(() -> processDelivery(task));\n    }\n} // auto-shutdown, waits for completion</code></pre>"
+      },
+      {
+        "heading": "What changes for Spring Boot",
+        "content": "Spring Boot 3.2+ supports virtual threads with one property:\n\n<pre><code>spring.threads.virtual.enabled=true</code></pre>\n\nEvery request handler runs on a virtual thread. Write simple blocking code \u2014 the JVM handles the scheduling. No need for WebFlux or reactive unless you need streaming/backpressure."
+      },
+      {
+        "heading": "Pitfalls and when NOT to use",
+        "content": "Virtual threads do not help CPU-bound work \u2014 they shine for I/O-bound blocking. Avoid synchronized blocks (pins the carrier thread); use ReentrantLock instead. Thread-local variables work but can accumulate memory across millions of virtual threads \u2014 prefer scoped values (Java 21 preview). Connection pools (HikariCP) still limit concurrency to pool size \u2014 virtual threads queue at the pool, not at the OS."
+      },
+      {
+        "heading": "REWE perspective",
+        "content": "A delivery tracking service handling thousands of concurrent GPS updates benefits immediately: simple blocking code, massive concurrency, no reactive complexity. The NEO platform can adopt virtual threads incrementally \u2014 enable the flag, monitor, and adjust pool sizes."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-evolution",
+    "topic": "java-modern",
+    "subtopic": "modern-evolution",
+    "title": "Java 17 \u2192 21 Evolution \u2014 What Matters for REWE",
+    "sections": [
+      {
+        "heading": "Java 17 LTS highlights",
+        "content": "Sealed classes (restrict inheritance), pattern matching for instanceof, text blocks, helpful NullPointerExceptions (show which variable was null), strong encapsulation of JDK internals (no more --illegal-access). Java 17 is the baseline for Spring Boot 3.x and Jakarta EE 10."
+      },
+      {
+        "heading": "Java 21 LTS highlights",
+        "content": "Virtual threads (GA), sequenced collections (SequencedMap, SequencedSet), record patterns in switch, string templates (preview), scoped values (preview). Java 21 is production-ready and the target for new greenfield services."
+      },
+      {
+        "heading": "Migration strategy",
+        "content": "For existing services: stay on Java 17 LTS until dependencies support 21 (Spring Boot 3.2+, Hibernate 6.4+). For new services: start on Java 21. Key migration tasks: replace javax.* with jakarta.*, remove deprecated APIs (SecurityManager, Applet), fix reflection access to JDK internals, update build plugins."
+      },
+      {
+        "heading": "Interview answer",
+        "content": "I track Java evolution pragmatically. Records and sealed classes improve domain modeling today. Virtual threads eliminate the reactive vs imperative debate for I/O-bound services. I adopt features that reduce complexity without creating migration risk for the team."
+      }
+    ]
   }
 ]

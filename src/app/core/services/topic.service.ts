@@ -97,6 +97,7 @@ export class TopicService {
   private async loadAllQuestions(): Promise<Question[]> {
     const files = [
       'data/exercises/java-core.json',
+      'data/exercises/java-modern.json',
       'data/exercises/oop.json',
       'data/exercises/solid.json',
       'data/exercises/spring-boot.json',

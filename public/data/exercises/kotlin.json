@@ -15,8 +15,14 @@
     ],
     "modelAnswer": "Kotlin reduces production defects through compile-time null safety and encourages immutable designs through val-by-default and data classes. For a new service, the 30-50% boilerplate reduction improves maintainability. Coroutines provide efficient concurrency without reactive complexity. The main trade-offs are slower compilation, a learning curve for the team, and some framework friction with annotation processing. I would choose Kotlin for a new service but would not rewrite existing Java services without business justification.",
     "followUps": [
-      {"question": "How would you handle a team where half the developers don't know Kotlin?", "answerHint": "Gradual adoption, pair programming, Java-first modules that Kotlin consumes"},
-      {"question": "What problems have you seen when mixing Kotlin and Java in the same project?", "answerHint": "Platform types, null annotations needed on Java side, build complexity"}
+      {
+        "question": "How would you handle a team where half the developers don't know Kotlin?",
+        "answerHint": "Gradual adoption, pair programming, Java-first modules that Kotlin consumes"
+      },
+      {
+        "question": "What problems have you seen when mixing Kotlin and Java in the same project?",
+        "answerHint": "Platform types, null annotations needed on Java side, build complexity"
+      }
     ]
   },
   {
@@ -103,7 +109,10 @@
     ],
     "modelAnswer": "A nullable return type communicates only two states: present or absent. A sealed class can represent multiple outcomes with context — Found, NotFound, Error, Unauthorized, etc. The compiler enforces that callers handle all cases. I use nullable for simple lookups where absence is obvious, and sealed classes when the caller needs to distinguish between different reasons for absence or failure.",
     "followUps": [
-      {"question": "How does this compare to Java's Optional?", "answerHint": "Optional is heap-allocated, limited to present/absent. Sealed class is richer and zero-allocation (value classes)."}
+      {
+        "question": "How does this compare to Java's Optional?",
+        "answerHint": "Optional is heap-allocated, limited to present/absent. Sealed class is richer and zero-allocation (value classes)."
+      }
     ]
   },
   {
@@ -164,5 +173,56 @@
       "Trade-off: increases bytecode size"
     ],
     "modelAnswer": "Inline functions have their body copied at the call site by the compiler. This eliminates the overhead of creating Function objects for lambdas. The standard library extensively uses inline for scope functions (let, apply, run) and collection operations (filter, map). This means using lambdas in Kotlin has zero allocation cost — unlike Java where every lambda creates a synthetic class. The trade-off is increased bytecode size, so only small utility functions should be inline."
+  },
+  {
+    "id": "kt-why-scenario-1",
+    "type": "SCENARIO",
+    "topic": "kotlin",
+    "subtopic": "kt-why",
+    "difficulty": "staff",
+    "question": "Your company has 200 Java microservices. A team of 6 wants to write their next service in Kotlin. As the architecture lead, what's your response?",
+    "context": "Existing services: Java 17, Spring Boot 3, Gradle. CI/CD is mature. No existing Kotlin expertise in the company.",
+    "keyPoints": [
+      "Not a simple yes/no — evaluate organizational impact",
+      "Single team experiment vs company-wide adoption are different decisions",
+      "Consider: hiring, knowledge sharing, library compatibility, debugging",
+      "Pilot project approach — contained blast radius",
+      "Define success criteria before starting"
+    ],
+    "modelAnswer": "I'd allow it as a contained pilot with conditions. The team writes one non-critical service, documents friction points, and presents findings after 3 months. Success criteria: build time delta, defect rate comparison, onboarding time for new joiners. I would NOT approve company-wide adoption based on one team's enthusiasm. The risks: if that team leaves, who maintains it? What about hiring — are Kotlin backend devs available in our market? What about shared libraries? This is a reversible decision only if the service stays small. Define the exit criteria upfront."
+  },
+  {
+    "id": "kt-null-scenario-1",
+    "type": "SCENARIO",
+    "topic": "kotlin",
+    "subtopic": "kt-null",
+    "difficulty": "senior",
+    "question": "Your Kotlin service consumes a REST API written in Java. You're getting intermittent NullPointerExceptions in production. The Java API does not use @Nullable annotations. How do you fix this?",
+    "context": "The Java API returns JSON that Jackson deserializes into Kotlin data classes. Some fields are occasionally null but the Kotlin types are declared non-nullable.",
+    "keyPoints": [
+      "Root cause: platform types from Java/JSON bypassing Kotlin null safety",
+      "Immediate fix: declare suspicious fields as nullable (String?)",
+      "Systematic fix: add validation at the boundary (deserializer or DTO layer)",
+      "Long-term: add @Nullable annotations to the Java API or use an API schema",
+      "Don't sprinkle !! everywhere"
+    ],
+    "modelAnswer": "The root cause is Kotlin's null safety being bypassed at the deserialization boundary. Jackson creates objects via reflection, skipping Kotlin's compile-time checks. Immediate fix: make the DTO fields nullable where the source can produce null, and handle with Elvis operator or validation. Systematic fix: create a dedicated DTO for the external API with all-nullable fields, then map to our domain model with explicit validation and meaningful error messages. Long-term: request @Nullable annotations from the Java team or establish a shared API schema (OpenAPI) that documents nullability. Never use !! to paper over this — it just moves the NPE to our code."
+  },
+  {
+    "id": "kt-coroutines-scenario-1",
+    "type": "SCENARIO",
+    "topic": "kotlin",
+    "subtopic": "kt-coroutines",
+    "difficulty": "staff",
+    "question": "Your warehouse service currently processes 20,000 deliveries/hour using Java ExecutorService with 50 threads. The team wants to migrate to Kotlin Coroutines. Would you approve?",
+    "context": "The service makes JDBC calls (blocking), REST calls to 3 external services, and publishes to Kafka. Average processing time: 200ms per delivery.",
+    "keyPoints": [
+      "JDBC is blocking — coroutines won't help without non-blocking driver",
+      "Coroutines shine for I/O-bound work with non-blocking APIs",
+      "50 threads handling 20K/hour = ~5.5 req/sec — well within capacity",
+      "Migration risk vs actual benefit at this scale",
+      "Virtual Threads (Java 21) may solve the same problem with less migration effort"
+    ],
+    "modelAnswer": "I would NOT approve this migration. The primary bottleneck (JDBC) is blocking — coroutines would still block the dispatchers.IO pool during database calls, providing no throughput benefit. At 20K/hour (5.5/sec), 50 threads are barely utilized. The team would invest weeks migrating for zero measurable improvement. If we genuinely need more concurrency later, Java 21 Virtual Threads solve the same problem without rewriting the entire service. Coroutines would only help here if we also migrated to R2DBC or another non-blocking database driver — which is a much larger and riskier change."
   }
 ]

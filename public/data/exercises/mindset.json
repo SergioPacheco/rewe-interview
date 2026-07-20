@@ -1,0 +1,109 @@
+[
+  {
+    "id": "ms-thinking-1",
+    "type": "SCENARIO",
+    "topic": "mindset",
+    "subtopic": "ms-thinking",
+    "difficulty": "senior",
+    "question": "Your team (5 developers) needs to build a new service for real-time delivery tracking. The tech lead proposes microservices with Kafka. A senior dev suggests starting with a monolith. How do you evaluate this decision?",
+    "context": "Greenfield project, 6 month deadline, team has no Kafka experience, expected load: 5,000 events/hour initially",
+    "keyPoints": [
+      "Identify this as a one-way door decision (hard to reverse architecture)",
+      "Evaluate team expertise vs operational burden",
+      "Consider the timeline constraint (6 months)",
+      "Assess actual scale requirements vs perceived needs",
+      "Propose modular monolith as middle ground"
+    ],
+    "modelAnswer": "This is a one-way door decision, so I'd invest time evaluating properly. Given a team of 5 with no Kafka experience, a 6-month deadline, and 5,000 events/hour — I'd argue for a modular monolith with clear domain boundaries. At 5K/hour, we don't need Kafka's scale. The team would spend 2+ months just learning Kafka operations. I'd design the module boundaries so we CAN extract microservices later when scale demands it. The key question: what's the cost of being wrong in each direction?",
+    "followUps": [
+      {"question": "At what point would you revisit this decision?", "answerHint": "When load exceeds what a single node handles, or when team grows enough to own independent services"},
+      {"question": "How would you design the monolith to allow future extraction?", "answerHint": "Clear module boundaries, async events internally, separate data per module, API contracts between modules"}
+    ]
+  },
+  {
+    "id": "ms-thinking-2",
+    "type": "SCENARIO",
+    "topic": "mindset",
+    "subtopic": "ms-thinking",
+    "difficulty": "staff",
+    "question": "A product manager asks: 'Can we add real-time notifications when a delivery is delayed?' How would a senior engineer respond differently from a junior developer?",
+    "keyPoints": [
+      "Junior: jumps to WebSocket implementation",
+      "Senior: asks clarifying questions first",
+      "What 'real-time' means (seconds? minutes?)",
+      "Who receives notifications (driver? warehouse? customer?)",
+      "What's the definition of 'delayed'?",
+      "What's the notification channel (push, email, in-app)?"
+    ],
+    "modelAnswer": "Before discussing implementation, I'd ask: What does 'real-time' mean here — seconds or minutes? Who needs to be notified — the driver, the warehouse, or the customer? What's the threshold for 'delayed' — 5 minutes? 30 minutes? Is this best-effort or must every notification be delivered? These answers determine whether I need WebSockets, server-sent events, push notifications, or simply a polling endpoint. The implementation is the easy part — defining the problem correctly is the hard part."
+  },
+  {
+    "id": "ms-answering-1",
+    "type": "ORAL_ANSWER",
+    "topic": "mindset",
+    "subtopic": "ms-answering",
+    "difficulty": "senior",
+    "question": "An interviewer asks: 'What is dependency injection?' Structure your answer at Senior level using the What-Why-How-Tradeoffs-When-Example framework.",
+    "keyPoints": [
+      "WHAT: Object receives dependencies from outside instead of creating them",
+      "WHY: Decoupling, testability, configurability",
+      "HOW: Constructor injection (preferred), framework manages lifecycle",
+      "TRADE-OFFS: Indirection, harder to trace flow, framework dependency",
+      "WHEN NOT: Simple scripts, prototypes where testability isn't needed",
+      "EXAMPLE: Production scenario with real benefit"
+    ],
+    "modelAnswer": "Dependency injection means a component receives its collaborators from outside rather than creating them internally. It exists to decouple components — making them testable independently and configurable per environment. In Spring, the container manages bean creation and injects via constructor. The trade-off is indirection: code flow is harder to trace since wiring happens outside the class. I'd use DI in any system that needs testing and configurability — which is almost every production system. I wouldn't use a DI framework for a simple CLI script where a manual new() is clearer."
+  },
+  {
+    "id": "ms-tradeoffs-1",
+    "type": "SCENARIO",
+    "topic": "mindset",
+    "subtopic": "ms-tradeoffs",
+    "difficulty": "senior",
+    "question": "Your warehouse service currently uses PostgreSQL for event storage. Volume is growing from 10K to 500K events/day. A team member proposes migrating to Kafka. Evaluate this proposal.",
+    "context": "Current system works but queries are getting slower. Team has 3 backend developers. No one has Kafka production experience.",
+    "keyPoints": [
+      "Quantify the actual problem (slow queries ≠ need Kafka)",
+      "Consider simpler solutions first (indexes, partitioning, archival)",
+      "Evaluate operational cost of introducing Kafka",
+      "Assess team readiness",
+      "Identify the real bottleneck before choosing a solution"
+    ],
+    "modelAnswer": "Before adopting Kafka, I'd first diagnose: which queries are slow and why? 500K events/day is ~6/second — PostgreSQL handles this easily with proper indexing and partitioning. The problem is likely missing indexes or unbounded queries, not the database itself. Introducing Kafka adds: broker management, consumer group coordination, monitoring, retry handling, and a new deployment dependency — for a team of 3 with no experience. I'd first optimize PostgreSQL (indexes, table partitioning, archival of old events), and only consider Kafka when we genuinely need event streaming, replay capability, or multi-consumer fanout that PostgreSQL cannot provide."
+  },
+  {
+    "id": "ms-production-1",
+    "type": "SCENARIO",
+    "topic": "mindset",
+    "subtopic": "ms-production",
+    "difficulty": "senior",
+    "question": "It's 3 PM. Your monitoring dashboard shows HTTP 502 errors spiking to 15% in the delivery service. What's your diagnostic process?",
+    "context": "No recent deployments. CPU and memory look normal. The spike started 10 minutes ago.",
+    "keyPoints": [
+      "Check what changed (even without deployments — config, traffic spike, upstream)",
+      "Look at connection pools and thread pools",
+      "Check downstream dependencies (database, external services)",
+      "Look at specific error patterns (all endpoints or one?)",
+      "Check if it's correlated with traffic volume",
+      "Decision: mitigate first or diagnose first?"
+    ],
+    "modelAnswer": "First 60 seconds: Is it all endpoints or one? Check if a downstream dependency is slow — database connection pool, external service timeout. 502 usually means the app isn't responding in time. With normal CPU/memory, suspect thread exhaustion or connection starvation. I'd check: active DB connections vs pool max, active threads vs thread pool size, and response times of external calls. If one specific endpoint is hanging, it's likely a slow dependency on that path. If all endpoints, it's a shared resource (connection pool, thread pool). No recent deploy doesn't mean no change — check if traffic spiked, if a batch job is running, or if an upstream service changed behavior."
+  },
+  {
+    "id": "ms-mistakes-1",
+    "type": "ORAL_ANSWER",
+    "topic": "mindset",
+    "subtopic": "ms-mistakes",
+    "difficulty": "senior",
+    "question": "What are the most common mistakes you see in senior interview answers?",
+    "keyPoints": [
+      "Answering without constraints ('always use X')",
+      "Reciting documentation instead of demonstrating understanding",
+      "Not asking clarifying questions before answering design questions",
+      "Talking too long without structure",
+      "Not acknowledging trade-offs or limitations",
+      "Never saying 'I don't know' or 'I haven't encountered that'"
+    ],
+    "modelAnswer": "The biggest mistake is answering without context. When someone says 'always use microservices' or 'Kafka is the best,' they reveal inexperience. Seniors know every choice has costs. Second: reciting docs instead of sharing real experience. Third: not asking questions before system design — jumping to solutions before understanding constraints. Fourth: talking for 10 minutes without structure — 2-3 minutes with What-Why-Tradeoffs is more effective. Fifth: never admitting boundaries. Saying 'I haven't deployed Kafka at scale but I understand its architecture' builds more trust than pretending expertise you don't have."
+  }
+]

@@ -1,0 +1,106 @@
+[
+  {
+    "id": "theory-mindset-thinking",
+    "topic": "mindset",
+    "subtopic": "ms-thinking",
+    "title": "How Senior Engineers Think",
+    "sections": [
+      {
+        "heading": "The difference is not knowledge",
+        "content": "A junior developer and a senior engineer may both know what a microservice is.\n\nThe difference is in how they evaluate whether to use one.\n\n<strong>Junior thinking:</strong> \"What is the best technology for this?\"\n<strong>Senior thinking:</strong> \"What are the constraints, trade-offs and consequences of each option given our team, timeline and operational maturity?\"\n\nSenior engineers think in systems, consequences and reversibility — not in features and syntax."
+      },
+      {
+        "heading": "Context over correctness",
+        "content": "There is rarely one correct answer in software architecture.\n\nThere are answers that are appropriate given:\n\n• the team's size and experience\n• the operational burden the choice creates\n• the timeline and risk tolerance\n• the existing system's constraints\n• the cost of being wrong\n\n<strong>Example:</strong> \"Should we use Kafka?\"\n\nA junior answers: \"Yes, it's scalable.\"\n\nA senior answers: \"It depends. What's the throughput requirement? Do we have operational expertise? Is the ordering guarantee important? What's the cost of introducing a new infrastructure dependency for a team of 4?\""
+      },
+      {
+        "heading": "Reversibility as a decision framework",
+        "content": "Jeff Bezos calls this \"one-way door\" vs \"two-way door\" decisions.\n\n<strong>Two-way door</strong> (easily reversible): Choose a library, pick a naming convention, use a local cache.\n→ Decide fast. Change later if wrong. Low cost.\n\n<strong>One-way door</strong> (hard to reverse): Choose a database, define the public API contract, split a monolith.\n→ Invest time upfront. Prototype. Get feedback. High cost of failure.\n\nSenior engineers identify which kind of decision they're facing before investing analysis time."
+      },
+      {
+        "heading": "The three questions",
+        "content": "Before recommending any technology or architecture:\n\n<strong>1. What problem does this solve?</strong>\n→ If you cannot articulate the problem clearly, you don't need the solution.\n\n<strong>2. What does this cost?</strong>\n→ Complexity cost. Operational cost. Learning cost. Debugging cost.\n\n<strong>3. What happens when this fails?</strong>\n→ Every distributed component adds a failure mode. What's the recovery path?\n\nInterviewers notice when you ask these questions before answering."
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "The TRAB team manages transport logistics for thousands of supermarkets.\n\nA senior engineer on this team doesn't think: \"Let's use Kafka because it's modern.\"\n\nThey think: \"We process 20,000 delivery events per hour. We need ordered processing per route, at-least-once delivery, and the ability to replay events when a consumer has a bug. Kafka's log-based architecture fits these requirements. The trade-off is operational complexity — do we have the team to manage it?\"\n\nThat's the depth interviewers expect."
+      }
+    ]
+  },
+  {
+    "id": "theory-mindset-answering",
+    "topic": "mindset",
+    "subtopic": "ms-answering",
+    "title": "How to Answer Interview Questions",
+    "sections": [
+      {
+        "heading": "Structure your answers",
+        "content": "An unstructured answer wanders. A structured answer demonstrates clear thinking.\n\n<strong>For technical questions, use:</strong>\n\n1. <strong>What</strong> — Define the concept in one sentence\n2. <strong>Why</strong> — Why does it exist? What problem does it solve?\n3. <strong>How</strong> — How does it work at a high level?\n4. <strong>Trade-offs</strong> — What are the advantages and disadvantages?\n5. <strong>When</strong> — When would you use it? When would you NOT use it?\n6. <strong>Example</strong> — Concrete production scenario\n\nThis structure takes 2–3 minutes and covers exactly what interviewers evaluate."
+      },
+      {
+        "heading": "The anti-patterns",
+        "content": "<strong>❌ Reciting documentation:</strong>\n\"Kafka is a distributed streaming platform that uses topics and partitions...\"\n→ This shows memorization, not understanding.\n\n<strong>❌ Jumping to implementation:</strong>\n\"I would create a KafkaConsumer with group.id and poll()...\"\n→ This shows coding ability, not engineering judgment.\n\n<strong>❌ Answering without constraints:</strong>\n\"Always use microservices.\"\n→ This shows inexperience. Seniors never say \"always.\"\n\n<strong>✅ What interviewers want to hear:</strong>\n\"In our context, Kafka made sense because we needed ordered, replayable event processing at 20K events/hour. The main trade-off was operational complexity — we mitigated that by...\""
+      },
+      {
+        "heading": "Admitting boundaries honestly",
+        "content": "Saying \"I don't know\" is not a failure.\n\nSaying \"I think it works like X but I'm not certain about Y\" demonstrates intellectual honesty.\n\nSenior engineers are expected to have boundaries. Nobody knows everything.\n\n<strong>Good patterns:</strong>\n• \"I have production experience with JMS. I've studied Kafka's architecture and differences but haven't deployed it at scale yet.\"\n• \"I believe the default is X, but I would verify before making that assumption in production.\"\n• \"That's not an area I've needed to solve yet, but my approach would be...\"\n\nThis builds trust. Pretending to know everything destroys it."
+      },
+      {
+        "heading": "Using your experience as evidence",
+        "content": "Every answer is stronger with a real example.\n\n<strong>Weak:</strong> \"N+1 queries are bad for performance.\"\n\n<strong>Strong:</strong> \"I identified an N+1 problem in a class listing page — 41 queries for 40 students. I fixed it with a JOIN FETCH, reducing load time from 3.2 seconds to 180ms. The key was detecting it through query count monitoring, not just response time.\"\n\nYour stories are your proof. Prepare 5–7 concrete examples that demonstrate:\n• diagnosis skills\n• architectural decisions\n• trade-off evaluation\n• impact measurement\n• collaboration"
+      },
+      {
+        "heading": "Time management",
+        "content": "Most interview answers should be 2–3 minutes.\n\n• Under 1 minute: too shallow, interviewer must dig\n• 2–3 minutes: demonstrates depth with structure\n• Over 5 minutes: you're lecturing, not conversing\n\nIf the interviewer wants more depth, they will ask follow-ups. That's a good sign — it means you gave them something to explore."
+      }
+    ]
+  },
+  {
+    "id": "theory-mindset-tradeoffs",
+    "topic": "mindset",
+    "subtopic": "ms-tradeoffs",
+    "title": "Trade-off Analysis",
+    "sections": [
+      {
+        "heading": "Everything is a trade-off",
+        "content": "There are no free lunches in software engineering.\n\nEvery architectural decision trades one property for another:\n\n• Consistency ↔ Availability (CAP)\n• Performance ↔ Simplicity\n• Flexibility ↔ Predictability\n• Coupling ↔ Duplication\n• Speed of delivery ↔ Long-term maintainability\n• Operational complexity ↔ Developer experience\n\nSenior engineers make these trade-offs explicit rather than pretending they don't exist."
+      },
+      {
+        "heading": "The trade-off matrix",
+        "content": "When evaluating options, use a simple matrix:\n\n<pre><code>                    | Monolith | Microservices | Modular Monolith\n────────────────────|──────────|───────────────|─────────────────\nDeployment speed    | Slow     | Fast (per svc)| Medium\nOperational cost    | Low      | High          | Low\nTeam independence   | Low      | High          | Medium\nDebugging           | Easy     | Hard          | Easy\nData consistency    | Simple   | Complex       | Simple\nScaling granularity | Coarse   | Fine          | Coarse\nInitial complexity  | Low      | High          | Medium</code></pre>\n\nNobody wins every row. The right choice depends on which rows matter most for your context."
+      },
+      {
+        "heading": "How to present trade-offs in interviews",
+        "content": "<strong>Pattern:</strong>\n\n1. State the options clearly\n2. List the criteria that matter for this context\n3. Evaluate each option against each criterion\n4. State your recommendation with rationale\n5. Acknowledge what you're giving up\n\n<strong>Example:</strong>\n\"For this service, I'd choose a modular monolith over microservices because we're a team of 4, we share a database, and our primary constraint is delivery speed. We give up independent scaling and deployment, but those aren't bottlenecks at our current volume.\""
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "The most powerful question in a senior interview is: \"When would you NOT use this?\"\n\n<strong>When NOT to use Kafka:</strong> Low volume, synchronous request-reply, team without operational expertise\n\n<strong>When NOT to use microservices:</strong> Small team, shared data model, early-stage product where boundaries are unclear\n\n<strong>When NOT to use Kotlin:</strong> Team entirely in Java with no migration plan, simple CRUD app where boilerplate isn't the bottleneck\n\n<strong>When NOT to use Redis:</strong> Data that must survive node failures without replication, complex queries, primary data store\n\nBeing able to argue AGAINST your recommendation demonstrates mastery."
+      }
+    ]
+  },
+  {
+    "id": "theory-mindset-production",
+    "topic": "mindset",
+    "subtopic": "ms-production",
+    "title": "Production Thinking",
+    "sections": [
+      {
+        "heading": "The gap between development and production",
+        "content": "Code that works in development may fail in production because of:\n\n• Scale (10 requests vs 10,000 concurrent)\n• State (fresh database vs 5 years of accumulated data)\n• Failure modes (network partitions, slow dependencies, disk full)\n• Time (race conditions that appear after hours/days)\n• Resources (memory limits, connection pools, thread exhaustion)\n\nSenior engineers think about production from the first design decision."
+      },
+      {
+        "heading": "Questions to ask about every feature",
+        "content": "<strong>Before writing code:</strong>\n• What happens under 10× load?\n• What happens when the database is slow (100ms → 3s)?\n• What happens when an external service is unavailable?\n• What does the monitoring look like? How will I know it's broken?\n• What does recovery look like? Can I retry safely?\n• What data could be lost? Is that acceptable?\n\n<strong>Before deploying:</strong>\n• Can I deploy this without downtime?\n• Can I roll back if something goes wrong?\n• What metrics should I watch for the first hour?\n• Does this change the resource requirements (memory, CPU, connections)?"
+      },
+      {
+        "heading": "Production incidents teach more than books",
+        "content": "The most valuable interview answers come from production experience:\n\n• \"We had connection pool exhaustion because an LDAP call was inside a transaction...\"\n• \"The Kafka consumer stopped processing due to a partition rebalance loop...\"\n• \"The report took 16 minutes because of a correlated subquery on 2M rows...\"\n\nEach incident teaches:\n1. How to detect the problem (monitoring, alerts)\n2. How to diagnose (logs, metrics, thread dumps)\n3. How to fix (immediate + permanent)\n4. How to prevent (design changes, testing)\n\nPrepare 3–5 incident stories with this structure."
+      },
+      {
+        "heading": "Observability as a design requirement",
+        "content": "Production-ready code is observable code:\n\n• <strong>Metrics:</strong> Request rate, error rate, latency percentiles, queue depth\n• <strong>Logs:</strong> Structured, with correlation IDs, at appropriate levels\n• <strong>Traces:</strong> Request path through services, timing per component\n• <strong>Alerts:</strong> Actionable (not noisy), with runbooks\n\nA senior engineer doesn't add observability after the fact. It's part of the initial design:\n\n\"Before I implement this, how will we know it's working correctly in production?\""
+      }
+    ]
+  }
+]

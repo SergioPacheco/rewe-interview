@@ -114,7 +114,8 @@ export class TopicService {
       '/data/exercises/k8s.json',
       '/data/exercises/kotlin.json',
       '/data/exercises/angular.json',
-      '/data/exercises/stories.json'
+      '/data/exercises/stories.json',
+      '/data/exercises/mindset.json'
     ];
 
     const results = await Promise.allSettled(
@@ -152,7 +153,8 @@ export class TopicService {
       '/data/topics/theory-security.json',
       '/data/topics/theory-system-design.json',
       '/data/topics/theory-behavioral.json',
-      '/data/topics/theory-stories.json'
+      '/data/topics/theory-stories.json',
+      '/data/topics/theory-mindset.json'
     ];
 
     const results = await Promise.allSettled(

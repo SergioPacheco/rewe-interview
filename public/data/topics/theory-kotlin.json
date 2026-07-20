@@ -1,50 +1,202 @@
 [
   {
-    "id": "theory-kotlin-basics",
-    "title": "Kotlin — What Java Developers Need to Know",
+    "id": "theory-kotlin-why",
+    "topic": "kotlin",
+    "subtopic": "kt-why",
+    "title": "Why Kotlin?",
     "sections": [
       {
-        "heading": "Why Kotlin? (REWE TRAB uses it)",
-        "content": "The TRAB vacancy lists <strong>Kotlin/Java</strong> (Kotlin first!). This means the team likely prefers Kotlin for new code while maintaining existing Java.\n\n<strong>Kotlin advantages over Java:</strong>\n• Null safety built into the type system (no more NullPointerException)\n• Concise syntax (50% less boilerplate)\n• Data classes (like Records but more powerful)\n• Extension functions (add methods to existing classes)\n• Coroutines (lightweight async — better than CompletableFuture)\n• 100% interoperable with Java (call Java from Kotlin and vice versa)\n• Runs on same JVM, same bytecode, same tools\n\n<strong>Your honest position:</strong>\n\"I don't have production Kotlin experience, but I understand the language well from studying it. The concepts map directly to what I know in Java — null safety is what I do manually with Optional, data classes are like Records, extension functions are like utility methods. I can be productive in Kotlin within weeks.\"\n\n<pre><code>// Java\npublic class DeliveryDTO {\n    private final Long id;\n    private final String driverId;\n    private final DeliveryStatus status;\n    // + constructor, getters, equals, hashCode, toString (40 lines)\n}\n\n// Kotlin equivalent (1 line!)\ndata class DeliveryDTO(val id: Long, val driverId: String, val status: DeliveryStatus)</code></pre>"
+        "heading": "Overview",
+        "content": "Kotlin is a modern statically typed programming language developed by JetBrains and officially released in 2016. It runs on the JVM, compiles to JavaScript, and supports native binaries.\n\nUnlike many new languages, Kotlin was not created to replace Java. Its primary goal is to improve developer productivity while remaining fully interoperable with the existing Java ecosystem.\n\nToday Kotlin is widely adopted in Android development, backend systems using Spring Boot, server-side applications built with Ktor, and cloud-native services deployed on the JVM."
       },
       {
-        "heading": "Kotlin vs Java — side by side",
-        "content": "<pre><code>// Variables\nval name: String = \"REWE\"           // immutable (like final)\nvar count: Int = 0                   // mutable\nval inferred = \"type inferred\"       // no explicit type needed\n\n// Null safety\nval driver: String = \"Carlos\"        // CANNOT be null\nval driver: String? = null           // CAN be null (nullable type)\n\ndriver?.length                       // safe call (returns null if driver is null)\ndriver ?: \"Unknown\"                  // elvis operator (default if null)\ndriver!!.length                      // force unwrap (throws NPE if null — avoid!)\n\n// Functions\nfun calculatePrice(distance: Int, express: Boolean = false): BigDecimal {\n    return if (express) BigDecimal(distance * 1.5) else BigDecimal(distance)\n}\n// Default parameters! No need for overloaded methods.\n\n// String templates\nval msg = \"Delivery $id dispatched to undefined\"\n\n// When expression (powerful switch)\nval label = when (status) {\n    PLANNED -> \"Waiting\"\n    DISPATCHED -> \"On the way\"\n    DELIVERED -> \"Done\"\n    else -> \"Unknown\"\n}\n\n// When with conditions\nval priority = when {\n    delivery.isLate() && delivery.isExpress() -> CRITICAL\n    delivery.isLate() -> HIGH\n    else -> NORMAL\n}</code></pre>"
+        "heading": "Why does it exist?",
+        "content": "To understand Kotlin, it is important to understand Java's history.\n\nJava became one of the most successful enterprise programming languages ever created because of its portability, strong ecosystem and backwards compatibility.\n\nHowever, after more than twenty years of evolution, Java accumulated several characteristics that negatively affected developer productivity:\n\n• excessive boilerplate\n• weak null safety\n• verbose syntax\n• lack of extension methods\n• cumbersome functional programming\n• mutable objects by default\n• repetitive DTOs\n\nJetBrains wanted a language capable of solving these problems without forcing companies to abandon the JVM.\n\nInstead of replacing Java, Kotlin complements it. Existing Java libraries continue to work without modification. Companies can migrate gradually."
+      },
+      {
+        "heading": "Business Value",
+        "content": "Senior engineers rarely choose technologies because of syntax. They choose technologies because they reduce cost and risk.\n\nKotlin provides value by:\n\n• reducing production bugs caused by null references\n• decreasing maintenance costs through less code\n• reducing boilerplate by 30–50%\n• improving readability for code review\n• encouraging immutable designs\n• increasing developer productivity\n\nMany companies report fewer defects after adopting Kotlin because the compiler prevents entire classes of errors before deployment."
+      },
+      {
+        "heading": "How it works internally",
+        "content": "One common misconception is that Kotlin requires a new runtime. It does not.\n\nKotlin compiles to ordinary JVM bytecode. The generated bytecode can be executed by any standard JVM. When Java calls Kotlin—or Kotlin calls Java—both execute inside the same runtime.\n\nThe compiler simply generates different bytecode:\n\n• properties become getters and setters\n• data classes generate equals(), hashCode(), copy() and toString()\n• suspend functions become state machines\n• extension functions become static methods with the receiver as first parameter\n\nUnderstanding the generated bytecode is important because it explains both Kotlin's performance and its interoperability."
+      },
+      {
+        "heading": "Architecture Perspective",
+        "content": "Kotlin naturally encourages modern software architecture.\n\nIts emphasis on immutability aligns well with:\n\n• Domain-Driven Design\n• Clean Architecture\n• Hexagonal Architecture\n• CQRS\n• Event-Driven Systems\n\nInstead of creating mutable entities with dozens of setters, Kotlin encourages immutable value objects. This reduces accidental state changes and simplifies concurrent applications."
+      },
+      {
+        "heading": "Production Considerations",
+        "content": "Before adopting Kotlin in production, teams should evaluate:\n\n• Java interoperability edge cases\n• Framework compatibility (Spring, Micronaut, Quarkus)\n• Reflection libraries (Jackson, MapStruct)\n• Annotation processing (kapt vs KSP)\n• Serialization (kotlinx.serialization vs Jackson)\n• Build performance (Kotlin compiler is slower than javac)\n• Monitoring and profiling tools\n\nAlthough Kotlin integrates well with Spring Boot, libraries such as Jackson, Hibernate and MapStruct require Kotlin-specific configuration."
+      },
+      {
+        "heading": "Performance",
+        "content": "<strong>Is Kotlin slower than Java?</strong>\n\nThe answer is usually no. Both compile to JVM bytecode.\n\nPerformance differences typically come from:\n\n• generated allocations (lambdas, inline functions)\n• reflection overhead\n• boxing of primitives\n• coroutine scheduling\n• collection operations (sequences vs eager)\n\nMost enterprise applications will not notice any measurable difference. Where performance is critical, Kotlin provides <code>inline</code> functions to eliminate lambda allocation overhead."
+      },
+      {
+        "heading": "Trade-offs",
+        "content": "<strong>Advantages:</strong>\n• safer code (null safety at compile time)\n• less boilerplate (30–50% reduction)\n• better readability\n• modern concurrency (coroutines)\n• excellent Java interoperability\n\n<strong>Disadvantages:</strong>\n• steeper learning curve for advanced features\n• more compiler magic (harder to debug bytecode)\n• interoperability edge cases with Java frameworks\n• annotation processing complexity (kapt)\n• smaller backend community than Java (growing)\n• slower compilation"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "Many developers misuse Kotlin because they write Java using Kotlin syntax.\n\nCommon mistakes include:\n\n• using mutable collections everywhere\n• abusing <code>!!</code> (non-null assertion) instead of safe handling\n• using <code>GlobalScope</code> for coroutines\n• creating data classes as JPA entities without understanding implications\n• ignoring structured concurrency\n• overusing extension functions (polluting namespaces)"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Junior developers often describe Kotlin by listing language features.\n\nSenior engineers describe the engineering problems it solves.\n\nInstead of saying:\n<em>\"Kotlin has data classes.\"</em>\n\nExplain:\n<em>\"Data classes eliminate repetitive boilerplate, encourage immutable DTOs and improve maintainability. They reduce accidental complexity while generating optimized equals(), hashCode() and copy() implementations automatically.\"</em>\n\nThat demonstrates architectural thinking, not just syntax knowledge."
+      },
+      {
+        "heading": "REWE Example",
+        "content": "Imagine the TRAB logistics platform manages deliveries to thousands of supermarkets. Every delivery event contains dozens of immutable attributes.\n\nUsing Kotlin data classes:\n\n<pre><code>data class DeliveryEvent(\n    val orderId: String,\n    val warehouse: String,\n    val route: String,\n    val timestamp: Instant\n)</code></pre>\n\nmakes these domain events naturally immutable, thread-safe and easier to serialize to Kafka.\n\nWhen combined with coroutines, Kotlin also enables highly scalable asynchronous processing for routing, inventory updates and warehouse communication."
+      },
+      {
+        "heading": "Summary",
+        "content": "Kotlin is not simply a more concise Java.\n\nIt is a language designed to eliminate common sources of defects while improving developer productivity.\n\nIts greatest strengths are not syntax but safety, immutability and modern concurrency.\n\nSenior engineers should understand not only how to write Kotlin code but why its design decisions lead to more maintainable enterprise systems."
       }
-    ],
-    "topic": "kotlin",
-    "subtopic": "kotlin-basics"
+    ]
   },
   {
-    "id": "theory-kotlin-null",
-    "title": "Kotlin Null Safety — Eliminating NullPointerException",
+    "id": "theory-kotlin-fundamentals",
+    "topic": "kotlin",
+    "subtopic": "kt-fundamentals",
+    "title": "Language Fundamentals",
     "sections": [
       {
-        "heading": "The billion-dollar problem solved",
-        "content": "In Java, ANY reference can be null. In Kotlin, nullability is part of the TYPE SYSTEM:\n\n<pre><code>// Kotlin — compiler PREVENTS null errors\nfun findDriver(id: Long): Driver {          // NEVER null (guaranteed)\n    return driverRepo.findById(id)\n        ?: throw NotFoundException(\"Driver $id not found\")\n}\n\nfun findDriverMaybe(id: Long): Driver? {    // MIGHT be null (explicit)\n    return driverRepo.findByIdOrNull(id)\n}\n\n// Compiler enforces:\nval driver: Driver? = findDriverMaybe(42)\ndriver.name        // ❌ COMPILE ERROR! driver might be null\ndriver?.name       // ✅ returns null if driver is null\ndriver!!.name      // ⚠️ compiles but throws NPE if null (avoid!)\n\n// Smart cast — compiler tracks null checks\nif (driver != null) {\n    driver.name    // ✅ compiler knows it's not null here\n}\n\n// Elvis operator — provide default\nval name = driver?.name ?: \"Unassigned\"</code></pre>\n\n<strong>Java equivalent (verbose):</strong>\n<pre><code>// Java — you must remember to check\nOptional&lt;Driver&gt; driver = repo.findById(id);\nString name = driver.map(Driver::getName).orElse(\"Unassigned\");\n// But Optional doesn't prevent NPE on other references!</code></pre>\n\n<strong>Key insight:</strong> Kotlin makes the NULL/NOT-NULL decision explicit in EVERY variable declaration. The compiler catches 90% of NPEs at compile time."
+        "heading": "Overview",
+        "content": "Kotlin fundamentals include variables, types, control flow, functions and the basic building blocks that distinguish it from Java at the syntax level.\n\nUnderstanding these fundamentals is essential not because they are difficult, but because Kotlin's defaults differ from Java's defaults. In Java, things are mutable and nullable by default. In Kotlin, things are immutable and non-null by default.\n\nThis inversion of defaults is the single most impactful design decision in the language."
+      },
+      {
+        "heading": "Variables and Type Inference",
+        "content": "<pre><code>// Immutable (preferred) — cannot be reassigned\nval name: String = \"Delivery Service\"\nval count = 42  // type inferred as Int\n\n// Mutable — can be reassigned\nvar status = \"PENDING\"\nstatus = \"DISPATCHED\"  // OK\n\n// val does NOT mean the object is immutable — only the reference\nval list = mutableListOf(1, 2, 3)\nlist.add(4)  // OK — the list content changes, but 'list' still points to the same object</code></pre>\n\n<strong>Key distinction:</strong> <code>val</code> = immutable reference (like Java's <code>final</code>). It does not guarantee deep immutability. Use immutable collections for that."
+      },
+      {
+        "heading": "Functions",
+        "content": "<pre><code>// Standard function\nfun calculateDeliveryTime(distance: Double, speed: Double): Duration {\n    return Duration.ofMinutes((distance / speed * 60).toLong())\n}\n\n// Single-expression function (return type inferred)\nfun isExpressDelivery(distance: Double) = distance < 10.0\n\n// Default parameters (eliminates overloading)\nfun createRoute(\n    origin: String,\n    destination: String,\n    priority: Int = 0,\n    express: Boolean = false\n): Route { ... }\n\n// Named arguments (improves readability at call site)\nval route = createRoute(\n    origin = \"Warehouse-A\",\n    destination = \"Store-42\",\n    express = true\n)</code></pre>\n\n<strong>Production impact:</strong> Default parameters eliminate Java's telescoping constructors. Named arguments make code self-documenting without comments."
+      },
+      {
+        "heading": "Control Flow as Expressions",
+        "content": "In Kotlin, <code>if</code>, <code>when</code> and <code>try</code> are expressions that return values:\n\n<pre><code>// if as expression\nval label = if (delivery.isExpress) \"EXPRESS\" else \"STANDARD\"\n\n// when (replaces switch — exhaustive with sealed classes)\nval fee = when (delivery.type) {\n    DeliveryType.EXPRESS -> 9.99\n    DeliveryType.STANDARD -> 4.99\n    DeliveryType.PICKUP -> 0.0\n}\n\n// try as expression\nval port = try {\n    config[\"server.port\"].toInt()\n} catch (e: NumberFormatException) {\n    8080\n}</code></pre>\n\n<strong>Why this matters:</strong> Expressions encourage <code>val</code> usage because you can initialize immutable variables from complex logic without intermediate mutable state."
+      },
+      {
+        "heading": "String Templates",
+        "content": "<pre><code>val orderId = \"ORD-2024-001\"\nval warehouse = \"Hamburg-Central\"\n\n// Simple interpolation\nval message = \"Order $orderId shipped from $warehouse\"\n\n// Expression interpolation\nval summary = \"Total: ${orders.size} orders, ${orders.sumOf { it.weight }}kg\"</code></pre>\n\nNo more <code>String.format()</code> or concatenation chains."
+      },
+      {
+        "heading": "Best Practices",
+        "content": "• Prefer <code>val</code> over <code>var</code> — mutability should be the exception\n• Use type inference for local variables, explicit types for public APIs\n• Use <code>when</code> instead of long <code>if-else</code> chains\n• Use named arguments when calling functions with more than 2 parameters\n• Use default parameters instead of method overloading\n• Keep functions small and focused (single-expression when possible)"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<strong>Q: What is the difference between val and const val?</strong>\n\n<code>val</code> is a runtime constant — assigned once, possibly at runtime.\n<code>const val</code> is a compile-time constant — must be a primitive or String, known at compilation. Used for truly fixed values like configuration keys.\n\n<strong>Q: Why does Kotlin not have checked exceptions?</strong>\n\nKotlin's designers studied empirical evidence that checked exceptions in Java lead to empty catch blocks and swallowed errors. The language relies on documentation and nullability instead of forcing exception handling in signatures."
       }
-    ],
-    "topic": "kotlin",
-    "subtopic": "kotlin-null"
+    ]
   },
   {
-    "id": "theory-kotlin-classes",
-    "title": "Kotlin Classes, Data Classes & Extensions",
+    "id": "theory-kotlin-null-safety",
+    "topic": "kotlin",
+    "subtopic": "kt-null",
+    "title": "Null Safety",
     "sections": [
       {
-        "heading": "Data classes (like Java Records but better)",
-        "content": "<pre><code>// Data class — auto-generates everything\ndata class DeliveryEvent(\n    val deliveryId: String,\n    val status: DeliveryStatus,\n    val timestamp: Instant,\n    val driverId: String? = null  // optional with default\n) {\n    // Can add methods\n    fun isLate(): Boolean = status == DELAYED\n\n    // copy() with modifications (Records don't have this!)\n    // val updated = event.copy(status = DELIVERED)\n}\n\n// Usage:\nval event = DeliveryEvent(\"D-123\", PLANNED, Instant.now())\nval dispatched = event.copy(status = DISPATCHED, driverId = \"driver-42\")\n// Original unchanged (immutable) + new instance with modifications\n\n// Destructuring:\nval (id, status, time) = event\nprintln(\"$id is $status at $time\")</code></pre>\n\n<strong>Data class vs Java Record:</strong>\n| Feature | Kotlin data class | Java Record |\n|---------|:-:|:-:|\n| Immutable by default | ✅ (val) | ✅ |\n| copy() with modifications | ✅ | ❌ |\n| Default parameter values | ✅ | ❌ |\n| Destructuring | ✅ | ❌ |\n| componentN() functions | ✅ | ❌ |\n| Can have mutable fields | ✅ (var) | ❌ |\n| Inheritance | ❌ (final) | ❌ (final) |"
+        "heading": "Overview",
+        "content": "Null safety is Kotlin's most important feature for production systems. Tony Hoare called null references his \"billion-dollar mistake.\" Kotlin addresses this at the type system level.\n\nIn Kotlin, types are non-nullable by default. A <code>String</code> can never be null. A <code>String?</code> explicitly declares that null is a valid value. The compiler enforces correct handling at every usage point."
       },
       {
-        "heading": "Extension functions",
-        "content": "Add methods to existing classes WITHOUT modifying them:\n\n<pre><code>// Add method to String\nfun String.toDeliveryId(): String = \"DEL-DEL-000001\"\n\"123\".toDeliveryId()  // \"DEL-000123\"\n\n// Add method to LocalDateTime\nfun LocalDateTime.isBusinessHours(): Boolean =\n    hour in 8..17 && dayOfWeek !in listOf(SATURDAY, SUNDAY)\n\n// Add method to List\nfun List&lt;Delivery&gt;.activeOnly(): List&lt;Delivery&gt; =\n    filter { it.status == ACTIVE }\n\n// Usage:\nval active = deliveries.activeOnly()\n\n// Extension on nullable type\nfun String?.orDefault(): String = this ?: \"N/A\"\nnull.orDefault()  // \"N/A\"</code></pre>\n\n<strong>Java equivalent:</strong> utility classes (DeliveryUtils.toDeliveryId(str)). Same logic, but Kotlin syntax reads more naturally."
+        "heading": "Why does it exist?",
+        "content": "NullPointerException is the most common runtime exception in Java applications.\n\nIn Java:\n<pre><code>String name = service.getUser().getName(); // Any of these can be null\n// NPE at runtime, discovered in production</code></pre>\n\nIn Kotlin:\n<pre><code>val name: String = service.getUser().name // Compiler guarantees non-null\nval name: String? = service.getUser()?.name // Explicitly nullable, must handle</code></pre>\n\nThe difference: errors move from runtime to compile time. Production incidents become compilation errors."
       },
       {
-        "heading": "Kotlin + Spring Boot",
-        "content": "<pre><code>@RestController\n@RequestMapping(\"/api/v1/deliveries\")\nclass DeliveryController(\n    private val service: DeliveryService  // constructor injection (no @Autowired)\n) {\n\n    @GetMapping(\"/{id}\")\n    fun findById(@PathVariable id: Long): ResponseEntity&lt;DeliveryDTO&gt; =\n        ResponseEntity.ok(service.findById(id))\n\n    @PostMapping\n    fun create(@Valid @RequestBody request: CreateDeliveryRequest): ResponseEntity&lt;DeliveryDTO&gt; {\n        val delivery = service.create(request)\n        val location = ServletUriComponentsBuilder.fromCurrentRequest()\n            .path(\"/{id}\").buildAndExpand(delivery.id).toUri()\n        return ResponseEntity.created(location).body(delivery)\n    }\n}\n\n@Service\nclass DeliveryService(\n    private val repo: DeliveryRepository,\n    private val events: EventPublisher\n) {\n    @Transactional\n    fun dispatch(id: Long, driverId: String) {\n        val delivery = repo.findById(id)\n            ?: throw DeliveryNotFoundException(id)\n        delivery.dispatch(driverId)\n        repo.save(delivery)\n        events.publish(DeliveryDispatched(id, driverId))\n    }\n}</code></pre>\n\n<strong>Key differences from Java + Spring Boot:</strong>\n• Constructor injection by default (parameters in class declaration)\n• No semicolons, no `new` keyword\n• `val` = immutable, `var` = mutable\n• Elvis operator (`?:`) instead of .orElseThrow()\n• Expression body functions (`= ResponseEntity.ok(...)`)\n• String templates (`\"Delivery $id\"`) instead of concatenation"
+        "heading": "Core Concepts",
+        "content": "<pre><code>// Non-nullable — cannot hold null\nval name: String = \"Sergio\"  // OK\nval name: String = null       // COMPILATION ERROR\n\n// Nullable — explicitly allows null\nval name: String? = null      // OK\nval length = name.length      // COMPILATION ERROR — must handle null first\n\n// Safe call operator (?.)\nval length: Int? = name?.length  // Returns null if name is null\n\n// Elvis operator (?:)\nval length: Int = name?.length ?: 0  // Default value if null\n\n// Smart cast\nif (name != null) {\n    println(name.length)  // Compiler knows it's non-null here\n}\n\n// Non-null assertion (!!) — AVOID in production code\nval length = name!!.length  // Throws NPE if null — same as Java</code></pre>"
+      },
+      {
+        "heading": "Production Considerations",
+        "content": "<strong>Platform types from Java:</strong>\n\nWhen calling Java code, Kotlin cannot know if a return value is nullable. The type becomes a \"platform type\" shown as <code>String!</code>.\n\n<pre><code>// Java method: String getName() — no @Nullable/@NonNull annotation\nval name = javaService.getName() // Type is String! (platform type)\nval length = name.length          // May throw NPE at runtime!\n\n// Safe approach: always declare the expected nullability\nval name: String? = javaService.getName()  // Treat as nullable\nval name: String = javaService.getName()   // Will throw immediately if null (fail-fast)</code></pre>\n\n<strong>Best practice:</strong> Add <code>@Nullable</code>/<code>@NonNull</code> annotations to Java code that Kotlin consumes. Spring and JetBrains annotations both work."
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "• Using <code>!!</code> everywhere — defeats the purpose of null safety\n• Not handling platform types from Java — silent NPE risk\n• Using <code>lateinit var</code> when a nullable type or lazy initialization would be safer\n• Overusing nullable types — if something should never be null, declare it non-nullable and validate at the boundary\n• Catching NPE instead of fixing the nullability contract"
+      },
+      {
+        "heading": "Best Practices",
+        "content": "• Push nullability to the edges (API boundaries, database results)\n• Keep domain model non-nullable — validate and convert at entry points\n• Use <code>requireNotNull()</code> and <code>checkNotNull()</code> for clear fail-fast\n• Use sealed classes instead of nullable return types for complex results\n• Prefer <code>?.let { }</code> for scoped operations on nullable values\n• Use <code>@NonNull</code> annotations on Java APIs consumed by Kotlin"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Null safety is not about avoiding <code>!!</code>.\n\nIt is about designing APIs where null is an explicit, documented choice.\n\n<pre><code>// Junior: returns null for \"not found\"\nfun findDriver(id: String): Driver? = ...\n\n// Senior: uses sealed result for clarity\nsealed interface DriverResult {\n    data class Found(val driver: Driver) : DriverResult\n    data class NotFound(val id: String) : DriverResult\n    data class Inactive(val driver: Driver, val reason: String) : DriverResult\n}</code></pre>\n\nThe sealed approach communicates intent, is exhaustive at compile time, and prevents callers from forgetting edge cases."
+      },
+      {
+        "heading": "REWE Example",
+        "content": "In a delivery tracking system, a driver may or may not be assigned:\n\n<pre><code>data class Delivery(\n    val id: String,\n    val route: Route,\n    val driver: Driver?,        // Not yet assigned\n    val estimatedArrival: Instant?  // Unknown until dispatched\n)\n\nfun getTrackingMessage(delivery: Delivery): String {\n    val driverName = delivery.driver?.name ?: \"Unassigned\"\n    val eta = delivery.estimatedArrival\n        ?.let { \"ETA: ${it.formatForDisplay()}\" }\n        ?: \"ETA: Calculating...\"\n    \n    return \"$driverName — $eta\"\n}</code></pre>\n\nThe type system documents exactly which fields may be absent and forces every consumer to handle both cases."
       }
-    ],
+    ]
+  },
+  {
+    "id": "theory-kotlin-extensions",
     "topic": "kotlin",
-    "subtopic": "kotlin-classes"
+    "subtopic": "kt-extensions",
+    "title": "Extension Functions",
+    "sections": [
+      {
+        "heading": "Overview",
+        "content": "Extension functions allow adding methods to existing classes without modifying their source code or using inheritance.\n\nThis is one of Kotlin's most powerful features for creating expressive, domain-specific APIs while keeping classes focused on their core responsibility."
+      },
+      {
+        "heading": "Why does it exist?",
+        "content": "In Java, when you need utility methods for a class you don't own, you create static utility classes:\n\n<pre><code>// Java — scattered utilities\nStringUtils.capitalize(name)\nCollectionUtils.isEmpty(list)\nDateUtils.format(instant, pattern)</code></pre>\n\nThis leads to proliferation of <code>*Utils</code> classes that are hard to discover.\n\nKotlin extensions solve this by attaching the function to the type:\n\n<pre><code>// Kotlin — discoverable via autocomplete on the type\nname.capitalize()\nlist.isEmpty()\ninstant.format(pattern)</code></pre>"
+      },
+      {
+        "heading": "How it works internally",
+        "content": "Extension functions are compiled to static methods. The receiver becomes the first parameter:\n\n<pre><code>// Kotlin source\nfun String.removeWhitespace(): String = this.replace(\" \", \"\")\n\n// Generated bytecode (decompiled to Java)\npublic static String removeWhitespace(String $this$removeWhitespace) {\n    return $this$removeWhitespace.replace(\" \", \"\");\n}</code></pre>\n\n<strong>Important implications:</strong>\n• Extensions are resolved statically (no virtual dispatch)\n• They cannot access private members of the class\n• They cannot override existing members\n• They are simply syntactic sugar over static methods"
+      },
+      {
+        "heading": "Core Concepts",
+        "content": "<pre><code>// Extension function\nfun Delivery.isLate(): Boolean =\n    this.actualArrival?.isAfter(this.estimatedArrival) ?: false\n\n// Extension property\nval Delivery.delayMinutes: Long\n    get() = Duration.between(estimatedArrival, actualArrival ?: Instant.now()).toMinutes()\n\n// Generic extension\nfun <T> List<T>.secondOrNull(): T? = if (size >= 2) this[1] else null\n\n// Nullable receiver\nfun String?.orEmpty(): String = this ?: \"\"\n\n// Usage\nval delivery = getDelivery(id)\nif (delivery.isLate()) {\n    alert(\"Delivery ${delivery.id} is ${delivery.delayMinutes} minutes late\")\n}</code></pre>"
+      },
+      {
+        "heading": "Best Practices",
+        "content": "• Use extensions to add domain behavior to library types\n• Keep extensions near the domain that uses them (not global)\n• Prefer extension functions over inheritance for behavior composition\n• Use extension functions on interfaces for default behavior\n• Don't use extensions to replace methods that should be on the class itself\n• Limit scope: define extensions as members of a class when they need private context"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "• Defining too many global extensions (pollutes autocomplete)\n• Expecting polymorphic behavior (extensions are static)\n• Using extensions to access internals via reflection\n• Creating extensions that duplicate existing stdlib functions\n• Not organizing extensions by domain module"
+      },
+      {
+        "heading": "REWE Example",
+        "content": "<pre><code>// Domain-specific extensions for the logistics context\nfun Route.totalDistance(): Kilometers =\n    stops.zipWithNext().sumOf { (a, b) -> a.distanceTo(b) }\n\nfun List<Delivery>.groupByWarehouse(): Map<Warehouse, List<Delivery>> =\n    groupBy { it.origin }\n\nfun Instant.isWithinDeliveryWindow(): Boolean {\n    val now = Instant.now()\n    return this.isAfter(now.minus(4, ChronoUnit.HOURS))\n        && this.isBefore(now.plus(8, ChronoUnit.HOURS))\n}\n\n// Clean, readable business logic\nval lateDeliveries = todayDeliveries\n    .filter { it.isLate() }\n    .groupByWarehouse()</code></pre>"
+      }
+    ]
+  },
+  {
+    "id": "theory-kotlin-functional",
+    "topic": "kotlin",
+    "subtopic": "kt-functional",
+    "title": "Functional Programming",
+    "sections": [
+      {
+        "heading": "Overview",
+        "content": "Kotlin is not a purely functional language. It is a pragmatic multi-paradigm language that provides strong functional programming support where it improves clarity and safety.\n\nHigher-order functions, lambdas, immutability and sequence processing are first-class citizens in Kotlin, making functional patterns natural rather than forced."
+      },
+      {
+        "heading": "Higher-Order Functions",
+        "content": "A higher-order function takes a function as parameter or returns one:\n\n<pre><code>// Function parameter\nfun <T> List<T>.filterAndLog(\n    predicate: (T) -> Boolean,\n    logger: (T) -> Unit = {}\n): List<T> {\n    return filter { item ->\n        val matches = predicate(item)\n        if (!matches) logger(item)\n        matches\n    }\n}\n\n// Usage\nval validDeliveries = deliveries.filterAndLog(\n    predicate = { it.weight <= maxWeight },\n    logger = { log.warn(\"Rejected: ${it.id} exceeds weight limit\") }\n)</code></pre>\n\n<strong>Why this matters:</strong> Higher-order functions enable the Strategy pattern without classes, reduce boilerplate in cross-cutting concerns, and make testing easier through function injection."
+      },
+      {
+        "heading": "Inline Functions",
+        "content": "Lambda functions in JVM languages create objects. The <code>inline</code> keyword eliminates this overhead:\n\n<pre><code>// Without inline: creates a Function object on every call\nfun <T> measure(block: () -> T): T { ... }\n\n// With inline: compiler copies the body at each call site\ninline fun <T> measure(block: () -> T): T {\n    val start = System.nanoTime()\n    val result = block()\n    val elapsed = System.nanoTime() - start\n    log.debug(\"Executed in ${elapsed}ns\")\n    return result\n}\n\n// At the call site, no Function object is created\nval result = measure { repository.findAll() }</code></pre>\n\n<strong>Production impact:</strong> Kotlin's standard library functions (<code>let</code>, <code>apply</code>, <code>filter</code>, <code>map</code>) are all <code>inline</code>. This means using lambdas in Kotlin typically has zero allocation overhead — unlike Java streams."
+      },
+      {
+        "heading": "Sequences (Lazy Evaluation)",
+        "content": "<pre><code>// Eager: creates intermediate lists at each step\nval result = deliveries\n    .filter { it.isExpress }    // creates List\n    .map { it.route }           // creates List\n    .take(10)                   // creates List\n\n// Lazy: processes element by element, stops at 10\nval result = deliveries.asSequence()\n    .filter { it.isExpress }    // no intermediate collection\n    .map { it.route }           // no intermediate collection\n    .take(10)                   // stops processing after 10\n    .toList()                   // terminal operation</code></pre>\n\n<strong>When to use sequences:</strong>\n• Large collections (1000+ elements)\n• Multiple transformation steps\n• Early termination (<code>first</code>, <code>take</code>)\n• Memory-sensitive operations\n\n<strong>When eager is fine:</strong>\n• Small collections\n• Single operation\n• When you need the intermediate results"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "• Overusing sequences for small collections (overhead exceeds benefit)\n• Creating deeply nested lambdas (extract named functions)\n• Mutating external state inside functional operations\n• Ignoring return types of scope functions (let, run, apply)\n• Using <code>forEach</code> with side effects when a simple loop is clearer"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Functional programming in Kotlin is not about avoiding all mutation.\n\nIt is about:\n• Making mutation explicit and contained\n• Using immutable data structures at boundaries\n• Preferring expressions over statements\n• Composing small functions into pipelines\n• Using higher-order functions to eliminate structural duplication\n\nThe goal is <strong>clarity</strong>, not purity."
+      }
+    ]
   }
 ]

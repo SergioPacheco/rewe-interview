@@ -1,497 +1,168 @@
 [
   {
-    "id": "kotlin-null-01",
+    "id": "kt-why-1",
     "type": "ORAL_ANSWER",
     "topic": "kotlin",
-    "subtopic": "Null Safety",
-    "difficulty": "beginner",
-    "question": "How does Kotlin's null safety work and how does it differ from Java?",
-    "interviewerIntent": "Null safety is Kotlin's flagship feature. Checks if candidate truly understands the type system, not just the syntax.",
-    "answer": "In Kotlin, types are non-nullable by default \u2014 String cannot hold null, only String? can. This is enforced at compile time, not runtime. To access a nullable type: use ?. (safe call, returns null if receiver is null), !! (not-null assertion, throws NPE if null \u2014 use sparingly), ?: (Elvis operator, provides a default if null), or a null check with if. In Java, any reference can be null and NPE is a runtime surprise. Kotlin's approach moves null checks to compile time \u2014 the compiler rejects code that doesn't handle potential nulls. The practical impact: teams write explicit null handling instead of hoping for the best.",
-    "shortAnswer": "Non-nullable by default. String? for nullable. Compile-time enforcement. Safe call (?.), Elvis (?:), not-null assertion (!!). Java: all refs nullable, NPE at runtime. Kotlin: handle nulls or don't compile.",
+    "subtopic": "kt-why",
+    "difficulty": "senior",
+    "question": "Why would a team choose Kotlin over Java for a new backend microservice? What trade-offs would you consider?",
     "keyPoints": [
-      "String \u2260 String? at the type level",
-      "?. safe call: person?.address?.city \u2014 null if any link is null",
-      "?: Elvis: name ?: 'Unknown' \u2014 default if null",
-      "!! asserts non-null \u2014 throws KotlinNullPointerException if wrong",
-      "let {} for block execution on non-null: name?.let { println(it) }"
+      "Null safety eliminates NPE class of bugs at compile time",
+      "30-50% less boilerplate (data classes, default params, type inference)",
+      "Coroutines for efficient async without callback complexity",
+      "Full Java interop — gradual migration, same libraries",
+      "Trade-offs: slower compilation, steeper learning curve, kapt complexity"
     ],
+    "modelAnswer": "Kotlin reduces production defects through compile-time null safety and encourages immutable designs through val-by-default and data classes. For a new service, the 30-50% boilerplate reduction improves maintainability. Coroutines provide efficient concurrency without reactive complexity. The main trade-offs are slower compilation, a learning curve for the team, and some framework friction with annotation processing. I would choose Kotlin for a new service but would not rewrite existing Java services without business justification.",
     "followUps": [
-      {
-        "question": "When would you use !! and when is it a code smell?",
-        "answerHint": "!! is justified when you have external proof of non-null the compiler can't see (e.g., a value set in @BeforeEach in tests). In production code, it's usually a sign of poor API design \u2014 prefer ?: or requireNotNull() with a message."
-      },
-      {
-        "question": "What is the difference between let, run, also, apply, and with?",
-        "answerHint": "Scope functions: let (returns lambda result, 'it' as context), apply (returns receiver, 'this' as context), also (returns receiver, 'it' as context), run (returns lambda result, 'this'), with (returns lambda result, receiver as arg)."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Using !! everywhere instead of proper null handling",
-      "Thinking nullable types add runtime overhead \u2014 it's purely compile-time",
-      "Forgetting that Java interop can introduce platform types (nullability unknown)"
+      {"question": "How would you handle a team where half the developers don't know Kotlin?", "answerHint": "Gradual adoption, pair programming, Java-first modules that Kotlin consumes"},
+      {"question": "What problems have you seen when mixing Kotlin and Java in the same project?", "answerHint": "Platform types, null annotations needed on Java side, build complexity"}
     ]
   },
   {
-    "id": "kotlin-null-02",
+    "id": "kt-why-2",
     "type": "ORAL_ANSWER",
     "topic": "kotlin",
-    "subtopic": "Null Safety",
-    "difficulty": "intermediate",
-    "question": "What are platform types in Kotlin and why do they matter when calling Java code?",
-    "interviewerIntent": "Platform types are a common gotcha when mixing Java and Kotlin. Shows real interop experience.",
-    "answer": "When Kotlin calls Java code, the nullability of Java types is unknown \u2014 Java doesn't have the @Nullable/@NotNull distinction enforced at the type system level. Kotlin represents these as platform types (shown as String! in IDE) \u2014 the compiler cannot enforce null safety on them. If you call a Java method that returns String and treat it as non-nullable String, you get no compile error, but an NPE at runtime if the Java method returns null. Solutions: annotate Java code with @Nullable/@NotNull (Kotlin respects these), assign the result to a nullable type in Kotlin (String?), or validate immediately with checkNotNull(). REWE context: when calling Spring Framework APIs from Kotlin, always check if returned values can be null.",
-    "shortAnswer": "Java types have unknown nullability \u2014 platform types. No compile-time safety for them. Use @Nullable/@NotNull in Java, or assign to String? in Kotlin, or checkNotNull() immediately.",
+    "subtopic": "kt-why",
+    "difficulty": "senior",
+    "question": "How does Kotlin compile to the JVM? What does this mean for performance and interoperability?",
     "keyPoints": [
-      "Platform types shown as String! in IDE \u2014 neither nullable nor non-nullable",
-      "@Nullable and @NotNull annotations on Java code are respected by Kotlin",
-      "Kotlin stdlib wraps common Java APIs with nullability info",
-      "Assign Java result to nullable (String?) to force explicit handling",
-      "Spring Kotlin extensions provide null-safe wrappers for common Spring APIs"
+      "Compiles to standard JVM bytecode (same as Java)",
+      "No custom runtime required",
+      "Properties become getters/setters, data classes generate equals/hashCode/copy",
+      "Suspend functions become state machines",
+      "Performance is equivalent — differences come from allocations, not the language"
     ],
+    "modelAnswer": "Kotlin compiles to standard JVM bytecode executable by any JVM. There is no separate runtime. Properties become getter/setter pairs, data classes generate standard object methods, and suspend functions compile to state machines with continuations. Performance is essentially equivalent to Java — any differences come from specific patterns like lambda allocations, which Kotlin mitigates through inline functions."
+  },
+  {
+    "id": "kt-fundamentals-1",
+    "type": "PREDICT_OUTPUT",
+    "topic": "kotlin",
+    "subtopic": "kt-fundamentals",
+    "difficulty": "medium",
+    "question": "What does this code print?",
+    "code": "val items = mutableListOf(1, 2, 3)\nval copy = items\ncopy.add(4)\nprintln(items.size)\nprintln(items === copy)",
+    "answer": "4\ntrue",
+    "explanation": "val makes the reference immutable, not the object. 'copy' and 'items' point to the same mutable list. Adding to 'copy' modifies the same list. === checks reference equality, which is true."
+  },
+  {
+    "id": "kt-fundamentals-2",
+    "type": "ORAL_ANSWER",
+    "topic": "kotlin",
+    "subtopic": "kt-fundamentals",
+    "difficulty": "senior",
+    "question": "Explain the difference between val, const val, and var. When would you use each?",
+    "keyPoints": [
+      "var: mutable reference, reassignable",
+      "val: immutable reference (like final), assigned once at runtime",
+      "const val: compile-time constant, must be primitive or String, top-level or companion",
+      "val does NOT mean the object is immutable — just the reference"
+    ],
+    "modelAnswer": "var is a mutable reference — use it for loop counters or accumulating state where necessary. val is an immutable reference assigned once, possibly at runtime — use it for everything else (95% of variables). const val is a compile-time constant inlined by the compiler — use it for truly fixed values like config keys, header names, or error codes. Important: val prevents reassignment but does not make the object immutable — a val pointing to a MutableList can still have elements added."
+  },
+  {
+    "id": "kt-null-1",
+    "type": "ORAL_ANSWER",
+    "topic": "kotlin",
+    "subtopic": "kt-null",
+    "difficulty": "senior",
+    "question": "How does Kotlin's null safety work? How do you handle nullable types coming from Java code?",
+    "keyPoints": [
+      "Types are non-nullable by default (String vs String?)",
+      "Compiler enforces null handling at every usage",
+      "Safe call (?.), Elvis (?:), smart casts",
+      "Java returns platform types (String!) — nullability unknown",
+      "Add @Nullable/@NonNull to Java APIs, or declare explicit type on Kotlin side"
+    ],
+    "modelAnswer": "Kotlin splits every type into nullable (String?) and non-nullable (String). The compiler refuses to call methods on nullable types without handling null first — via safe calls, Elvis operator, or smart casts after null checks. When consuming Java APIs, Kotlin sees 'platform types' where nullability is unknown. The safe approach is to explicitly declare the expected type on the Kotlin side, or annotate the Java code with @Nullable/@NonNull. I avoid !! in production code — it defeats the purpose of null safety."
+  },
+  {
+    "id": "kt-null-2",
+    "type": "PREDICT_OUTPUT",
+    "topic": "kotlin",
+    "subtopic": "kt-null",
+    "difficulty": "medium",
+    "question": "What does this code print?",
+    "code": "val name: String? = null\nval length = name?.length ?: -1\nval upper = name?.uppercase() ?: \"UNKNOWN\"\nprintln(\"$length $upper\")",
+    "answer": "-1 UNKNOWN",
+    "explanation": "name is null. name?.length returns null, Elvis (?:) provides -1. name?.uppercase() returns null, Elvis provides \"UNKNOWN\"."
+  },
+  {
+    "id": "kt-null-3",
+    "type": "ORAL_ANSWER",
+    "topic": "kotlin",
+    "subtopic": "kt-null",
+    "difficulty": "senior",
+    "question": "When would you use a sealed class instead of a nullable return type?",
+    "keyPoints": [
+      "Nullable only communicates present/absent",
+      "Sealed class communicates WHY something is absent",
+      "Compiler enforces exhaustive when-checks",
+      "Better for operations with multiple failure modes"
+    ],
+    "modelAnswer": "A nullable return type communicates only two states: present or absent. A sealed class can represent multiple outcomes with context — Found, NotFound, Error, Unauthorized, etc. The compiler enforces that callers handle all cases. I use nullable for simple lookups where absence is obvious, and sealed classes when the caller needs to distinguish between different reasons for absence or failure.",
     "followUps": [
-      {
-        "question": "How does Spring Boot handle Kotlin null safety in repositories?",
-        "answerHint": "Spring Data Kotlin extensions return T? instead of T for findById and similar. Kotlin-aware Spring modules leverage null safety in function signatures."
-      },
-      {
-        "question": "What is requireNotNull() and when do you use it?",
-        "answerHint": "requireNotNull(value) { 'message' } throws IllegalArgumentException with a message if value is null. Use at function entry points for contract-checking instead of !!."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Assuming Java APIs are null-safe when called from Kotlin",
-      "Using !! on Java return values without knowing if they can be null",
-      "Ignoring IDE warnings about platform types"
+      {"question": "How does this compare to Java's Optional?", "answerHint": "Optional is heap-allocated, limited to present/absent. Sealed class is richer and zero-allocation (value classes)."}
     ]
   },
   {
-    "id": "kotlin-data-classes-01",
+    "id": "kt-extensions-1",
     "type": "ORAL_ANSWER",
     "topic": "kotlin",
-    "subtopic": "Data Classes",
-    "difficulty": "beginner",
-    "question": "What is a data class in Kotlin and what does it give you for free?",
-    "interviewerIntent": "Data classes are a daily Kotlin feature. Shows familiarity with Kotlin's conciseness and the practical impact on DTO/model code.",
-    "answer": "A data class is declared with 'data class Person(val name: String, val age: Int)'. The compiler automatically generates: equals() and hashCode() based on all properties in the primary constructor, toString() that prints all properties, copy() function for creating modified copies, and componentN() functions for destructuring. This eliminates the boilerplate that Java requires (or Lombok provides). Key restriction: properties used in equals/hashCode/toString must be in the primary constructor \u2014 properties declared in the body are excluded. Ideal for DTOs, value objects, and immutable models. With val (immutable), data classes make excellent value objects.",
-    "shortAnswer": "data class auto-generates: equals/hashCode, toString, copy(), componentN() for destructuring. All from primary constructor properties. Eliminates DTO boilerplate. Use val for immutability.",
+    "subtopic": "kt-extensions",
+    "difficulty": "senior",
+    "question": "How do extension functions work internally? What are their limitations?",
     "keyPoints": [
-      "Only primary constructor properties participate in equals/hashCode/toString",
-      "copy() allows creating modified instances: person.copy(age = 31)",
-      "Destructuring: val (name, age) = person \u2014 uses componentN()",
-      "data class cannot be abstract, open, sealed, or inner",
-      "Equivalent to Java record (Java 16+) plus copy() and destructuring"
+      "Compiled to static methods with receiver as first parameter",
+      "Resolved statically (no virtual dispatch/polymorphism)",
+      "Cannot access private members",
+      "Cannot override existing class members",
+      "Syntactic sugar — no runtime cost"
     ],
-    "followUps": [
-      {
-        "question": "What is the difference between data class and regular class for equals()?",
-        "answerHint": "Regular class equals() uses reference equality (same object). Data class equals() uses structural equality (same property values). Two Person(name='Alice') instances are equal with data class."
-      },
-      {
-        "question": "When would you NOT use a data class?",
-        "answerHint": "When you need inheritance (data classes can't be open), when the class has mutable state that shouldn't participate in equality, or when you need custom equals behavior."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Declaring properties in the class body expecting them in equals()/toString()",
-      "Using data class for entities with mutable JPA state \u2014 equals on mutable fields is dangerous",
-      "Thinking data class implies immutability \u2014 use val, not var, for immutability"
-    ]
+    "modelAnswer": "Extension functions compile to static methods where the receiver becomes the first parameter. This means they are resolved at compile time based on the declared type, not the runtime type — no polymorphism. They cannot access private members of the class and cannot override existing methods. Their power is in discoverability and readability — you write list.secondOrNull() instead of ListUtils.secondOrNull(list). But understanding the static nature is critical to avoid surprises with inheritance."
   },
   {
-    "id": "kotlin-extensions-01",
-    "type": "ORAL_ANSWER",
+    "id": "kt-extensions-2",
+    "type": "PREDICT_OUTPUT",
     "topic": "kotlin",
-    "subtopic": "Extension Functions",
-    "difficulty": "intermediate",
-    "question": "What are extension functions in Kotlin and how do they improve code readability?",
-    "interviewerIntent": "Extension functions are a key Kotlin differentiator. Shows ability to write idiomatic Kotlin rather than Java-style utility classes.",
-    "answer": "Extension functions let you add new functions to existing classes without modifying them or using inheritance. Syntax: fun String.isPalindrome(): Boolean = this == this.reversed(). Calling: 'racecar'.isPalindrome(). They are syntactic sugar \u2014 compiled to static methods with the receiver as the first parameter. Benefits: fluent APIs (user.toDTO() instead of UserMapper.toDTO(user)), extending third-party or final classes, grouping related operations on a type. They don't actually modify the class \u2014 no access to private members. Dispatch is static (not virtual), so they don't override methods and don't participate in polymorphism.",
-    "shortAnswer": "Extension functions add methods to existing types without inheritance. Syntactic sugar for static methods. Enable fluent APIs, extend third-party classes. No access to private members. Static dispatch.",
-    "keyPoints": [
-      "fun ReceiverType.funcName(): ReturnType",
-      "Inside: 'this' refers to the receiver",
-      "Compiled to static method \u2014 no virtual dispatch",
-      "Extension functions on nullable types: fun String?.isNullOrBlank()",
-      "Cannot override existing methods \u2014 they shadow, not override"
-    ],
-    "followUps": [
-      {
-        "question": "What is an extension property?",
-        "answerHint": "Same concept for properties: val String.wordCount: Int get() = split(' ').size. No backing field \u2014 must be computed via getter."
-      },
-      {
-        "question": "How do extension functions interact with inheritance?",
-        "answerHint": "They don't \u2014 dispatch is based on the declared type, not runtime type. If Animal has an extension and Dog extends Animal, calling the extension on a Dog variable typed as Animal calls the Animal extension."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Expecting extension functions to access private members",
-      "Thinking extension functions participate in polymorphism",
-      "Overusing extensions \u2014 creating extension functions for everything produces scattered, hard-to-find code"
-    ]
+    "subtopic": "kt-extensions",
+    "difficulty": "hard",
+    "question": "What does this code print? Why?",
+    "code": "open class Shape\nclass Circle : Shape()\n\nfun Shape.name() = \"Shape\"\nfun Circle.name() = \"Circle\"\n\nfun printName(shape: Shape) {\n    println(shape.name())\n}\n\nprintName(Circle())",
+    "answer": "Shape",
+    "explanation": "Extension functions are resolved statically based on the declared type of the variable, not the runtime type. The parameter is declared as Shape, so Shape.name() is called even though the actual object is a Circle. This is because extensions compile to static methods — there is no virtual dispatch."
   },
   {
-    "id": "kotlin-sealed-01",
+    "id": "kt-functional-1",
     "type": "ORAL_ANSWER",
     "topic": "kotlin",
-    "subtopic": "Sealed Classes",
-    "difficulty": "intermediate",
-    "question": "What are sealed classes in Kotlin and when do you use them over enums?",
-    "interviewerIntent": "Sealed classes enable exhaustive when expressions and model complex state. Distinguishes functional-style thinking.",
-    "answer": "A sealed class restricts its subclasses to the same package/file, making the hierarchy closed and known at compile time. This enables exhaustive when expressions \u2014 the compiler requires handling every subclass, which is checked at compile time. Unlike enums (which are single instances), sealed class subclasses can be regular classes, data classes, or objects, each with their own state. Use sealed over enum when: each case needs different data (Success with a value, Error with a message and code, Loading with progress), when cases need functions or complex behavior, or when modeling ADTs (algebraic data types). Kotlin 1.5+: sealed interfaces allow multi-inheritance of sealed hierarchies.",
-    "shortAnswer": "Sealed class = closed hierarchy, exhaustive when. Unlike enum: each subclass has its own state/fields. Use when cases need different data. Compiler enforces exhaustiveness in when expressions.",
+    "subtopic": "kt-functional",
+    "difficulty": "senior",
+    "question": "What is the difference between eager collection operations and sequences in Kotlin? When would you use each?",
     "keyPoints": [
-      "sealed class + when = exhaustive \u2014 compiler error if case is missing",
-      "Subclasses can be data class (has state), object (singleton), or class",
-      "sealed interface: allows a class to implement multiple sealed hierarchies",
-      "Result<T> pattern: sealed class Result<T> { data class Success<T>(val data: T); data class Error(val msg: String) }",
-      "Kotlin 1.9+: subclasses can be in different files in the same package"
+      "Eager: creates intermediate collections at each step, processes all elements",
+      "Sequence: lazy, element-by-element, no intermediate collections",
+      "Sequences benefit large collections, multiple steps, early termination",
+      "Eager is fine for small collections or single operations",
+      "Inline functions make eager lambdas allocation-free"
     ],
-    "followUps": [
-      {
-        "question": "How do sealed classes work with functional programming patterns?",
-        "answerHint": "They model sum types (OR types). Result is either Success OR Failure. You can map/fold over them like Option/Either in functional languages. Arrow-kt extends this."
-      },
-      {
-        "question": "What is the difference between sealed class and abstract class?",
-        "answerHint": "Abstract class: subclasses anywhere, open hierarchy, no exhaustive when. Sealed class: restricted hierarchy, exhaustive when. Both prevent direct instantiation."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Using enum when cases need different data structures",
-      "Forgetting else in when over sealed class \u2014 defeats exhaustiveness checking",
-      "Making sealed subclasses in different modules \u2014 not allowed (same compilation unit)"
-    ]
+    "modelAnswer": "Eager operations (filter, map on List) create a new collection at each step and process all elements. Sequences are lazy — they process one element through the entire chain before moving to the next, creating no intermediate collections. Use sequences for large collections with multiple transformations or early termination (first, take). For small collections, eager is simpler and equally fast because Kotlin's inline functions eliminate lambda allocation overhead."
   },
   {
-    "id": "kotlin-coroutines-01",
+    "id": "kt-functional-2",
     "type": "ORAL_ANSWER",
     "topic": "kotlin",
-    "subtopic": "Coroutines",
-    "difficulty": "intermediate",
-    "question": "What are coroutines in Kotlin and how do they differ from threads?",
-    "interviewerIntent": "Coroutines are Kotlin's primary concurrency mechanism. Checks conceptual understanding before going into API details.",
-    "answer": "Coroutines are lightweight, cooperative concurrency primitives. Unlike threads (OS-level, 1-2MB stack, preemptive scheduling), coroutines are user-space, stackless (kilobytes), and cooperative (suspend themselves explicitly). You can run thousands of coroutines on a few threads. The key mechanism: suspend functions \u2014 functions that can pause execution without blocking a thread, allowing the thread to run other coroutines. When a suspend function is called (e.g., delay, network I/O), the coroutine suspends and the thread is freed for other work. When the operation completes, the coroutine resumes on an available thread. This gives sequential-looking async code without callback hell.",
-    "shortAnswer": "Coroutines = lightweight (KB, not MB), cooperative (suspend voluntarily), user-space. Thousands on few threads. suspend functions pause without blocking. Sequential async code without callbacks.",
+    "subtopic": "kt-functional",
+    "difficulty": "senior",
+    "question": "Explain inline functions. Why does Kotlin use them extensively in the standard library?",
     "keyPoints": [
-      "suspend function = can suspend without blocking the thread",
-      "Coroutine scope defines the lifecycle \u2014 cancellation is structured",
-      "Dispatcher: Dispatchers.IO for I/O, Dispatchers.Default for CPU, Dispatchers.Main for UI",
-      "launch returns Job (fire and forget), async returns Deferred<T> (has result)",
-      "Structured concurrency: parent scope cancels children on failure"
+      "Compiler copies function body at call site (no function object created)",
+      "Eliminates lambda allocation overhead",
+      "Standard library (let, apply, filter, map) all inline",
+      "Enables non-local returns",
+      "Trade-off: increases bytecode size"
     ],
-    "followUps": [
-      {
-        "question": "What is structured concurrency?",
-        "answerHint": "Coroutines launched in a scope are children of that scope. If the scope is cancelled, all children are cancelled. If a child fails, the parent (and siblings) are cancelled. No coroutine leaks."
-      },
-      {
-        "question": "How do you call a suspend function from non-suspend Java code?",
-        "answerHint": "runBlocking { } bridges suspend and non-suspend worlds. In production, prefer running in a coroutine scope managed by the framework (Spring WebFlux, Ktor, Android ViewModel)."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Using runBlocking in production server code \u2014 blocks a thread, defeats the purpose",
-      "GlobalScope.launch \u2014 no structured cancellation, coroutine leaks",
-      "Confusing delay() (non-blocking suspend) with Thread.sleep() (blocks thread)"
-    ]
-  },
-  {
-    "id": "kotlin-coroutines-02",
-    "type": "ORAL_ANSWER",
-    "topic": "kotlin",
-    "subtopic": "Coroutines",
-    "difficulty": "advanced",
-    "question": "What is the difference between launch and async in Kotlin coroutines?",
-    "interviewerIntent": "Core coroutine API. Candidates who only know launch miss async/await for parallel decomposition.",
-    "answer": "launch starts a coroutine for fire-and-forget work \u2014 it returns a Job (handle for cancellation, no result). async starts a coroutine that produces a result \u2014 it returns Deferred<T>. Call await() on a Deferred to get the result (suspending until it's ready). The power of async is parallel decomposition: val userDeferred = async { fetchUser(id) }; val ordersDeferred = async { fetchOrders(id) }; val user = userDeferred.await(); val orders = ordersDeferred.await(). Both run concurrently; you collect results afterward. Without async, sequential suspension would be: fetchUser then fetchOrders = combined wait time. With async: max(fetchUser, fetchOrders) wait time.",
-    "shortAnswer": "launch = fire-and-forget, returns Job. async = returns Deferred<T>, call await() for result. async enables parallel decomposition: start both, await both = max latency, not sum.",
-    "keyPoints": [
-      "launch for side effects (logging, sending events)",
-      "async for values you need to collect later",
-      "await() suspends caller until Deferred completes",
-      "Parallel: val a = async { }; val b = async { }; a.await() + b.await()",
-      "async with await() immediately = same as direct call (no parallelism)"
-    ],
-    "followUps": [
-      {
-        "question": "What happens if an async coroutine throws an exception?",
-        "answerHint": "The exception is stored in the Deferred and rethrown when await() is called. If await() is never called, the exception propagates to the parent scope on cancellation."
-      },
-      {
-        "question": "What is coroutineScope {} and how is it different from GlobalScope?",
-        "answerHint": "coroutineScope {} creates a scope that inherits the parent context and is cancelled with the parent. GlobalScope has no parent \u2014 it lives for the whole application lifecycle. Avoid GlobalScope."
-      }
-    ],
-    "mistakesToAvoid": [
-      "val result = async { compute() }.await() \u2014 sequential, no parallelism benefit over direct call",
-      "Not handling exceptions from async \u2014 silently lost until await()",
-      "Using GlobalScope.async in library code \u2014 callers cannot cancel it"
-    ]
-  },
-  {
-    "id": "kotlin-data-classes-02",
-    "type": "ORAL_ANSWER",
-    "topic": "kotlin",
-    "subtopic": "Data Classes",
-    "difficulty": "intermediate",
-    "question": "What are value classes in Kotlin (formerly inline classes) and when do you use them?",
-    "interviewerIntent": "Value classes are a powerful Kotlin feature for type-safe wrappers. Shows understanding of type safety without runtime overhead.",
-    "answer": "@JvmInline value class UserId(val value: Long). A value class wraps a single value and adds type safety with (almost) zero runtime overhead \u2014 the compiler inlines the underlying type at most call sites, avoiding object allocation. Key use case: preventing primitive obsession \u2014 instead of Long for userId and Long for orderId (easy to mix up), use UserId(Long) and OrderId(Long). The compiler treats them as different types, catching mistakes at compile time. Limitations: only one primary constructor property, cannot have init blocks with arbitrary logic, some boxing still occurs in generic contexts.",
-    "shortAnswer": "@JvmInline value class UserId(val value: Long). Type-safe wrapper, zero overhead at most call sites (inlined). Prevents primitive obsession. Compiler distinguishes UserId from OrderId even though both wrap Long.",
-    "keyPoints": [
-      "@JvmInline annotation required for JVM",
-      "Single property in primary constructor",
-      "Inlined at call sites \u2014 no object allocation in most cases",
-      "Boxing occurs in nullable positions and generics",
-      "Can have methods and implement interfaces"
-    ],
-    "followUps": [
-      {
-        "question": "What is primitive obsession and how do value classes solve it?",
-        "answerHint": "Using primitive types (String, Long) for domain concepts (email, userId) leads to mixing them up \u2014 passing email where userId is expected. Value classes make them distinct types."
-      },
-      {
-        "question": "What is the difference between typealias and value class?",
-        "answerHint": "typealias UserId = Long is just an alias \u2014 the compiler treats UserId and Long as identical. Value class creates a distinct type \u2014 UserId and OrderId are different even if both wrap Long."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Using typealias when you need actual type distinction",
-      "Expecting value classes to be zero-cost in all contexts \u2014 nullable and generic positions box",
-      "Multiple properties in value class \u2014 not allowed"
-    ]
-  },
-  {
-    "id": "kotlin-extensions-02",
-    "type": "ORAL_ANSWER",
-    "topic": "kotlin",
-    "subtopic": "Extension Functions",
-    "difficulty": "intermediate",
-    "question": "How do scope functions (let, run, apply, also, with) work and when do you use each?",
-    "interviewerIntent": "Scope functions are idiomatic Kotlin. Misuse creates unreadable code; correct use is concise and expressive.",
-    "answer": "Scope functions execute a block on an object. Key distinctions: context object reference (this or it) and return value (receiver or lambda result). let: context=it, returns lambda result \u2014 use for null-safe blocks (?.let) and transformations. apply: context=this, returns receiver \u2014 use for object initialization (builder pattern). also: context=it, returns receiver \u2014 use for side effects that don't change the object (logging, validation). run: context=this, returns lambda result \u2014 use as a scoped computation. with: context=this, returns lambda result, non-extension \u2014 use when you have the object already. Rule of thumb: apply for setup, let for null safety, also for side effects, run for computations.",
-    "shortAnswer": "let (it, result) = null safety + transform. apply (this, receiver) = init/builder. also (it, receiver) = side effects. run (this, result) = scoped compute. with = non-extension run.",
-    "keyPoints": [
-      "let: obj?.let { doSomethingWith(it) } \u2014 null-safe block",
-      "apply: Person().apply { name = 'Alice'; age = 30 } \u2014 returns Person",
-      "also: list.also { log.debug('Size: {}', it.size) } \u2014 returns list unchanged",
-      "run: val result = config.run { parse(connectionString) } \u2014 scoped computation",
-      "Chaining: obj.apply { init() }.also { validate(it) }.let { process(it) }"
-    ],
-    "followUps": [
-      {
-        "question": "When is using scope functions a code smell?",
-        "answerHint": "Deeply nested scope functions, using the wrong one (apply when let is clearer), or replacing simple if-null checks with let when readability suffers."
-      },
-      {
-        "question": "How does takeIf work?",
-        "answerHint": "takeIf { predicate } returns the receiver if predicate is true, null otherwise. takeUnless is the inverse. Useful for null-safe conditional chains."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Mixing up this-receivers and it-receivers in nested scope functions",
-      "Using apply when the return value is the lambda result (use run instead)",
-      "Overusing scope functions \u2014 sometimes a simple variable assignment is clearer"
-    ]
-  },
-  {
-    "id": "kotlin-sealed-02",
-    "type": "ORAL_ANSWER",
-    "topic": "kotlin",
-    "subtopic": "Sealed Classes",
-    "difficulty": "advanced",
-    "question": "How do you use sealed classes to model a Result type and eliminate exceptions for control flow?",
-    "interviewerIntent": "Railway-oriented programming with sealed classes is idiomatic Kotlin. Shows functional thinking applied to error handling.",
-    "answer": "Define a sealed class Result<T>: Success(val data: T) and Failure(val error: Throwable, val message: String). Functions return Result<T> instead of throwing. Callers use when expression to handle both cases exhaustively. Benefits: errors are explicit in the return type (no surprise exceptions), the compiler forces handling both cases, chains can be built with map/flatMap extensions. Example: fun findUser(id: Long): Result<User> = try { Result.Success(repo.findById(id)) } catch (e: Exception) { Result.Failure(e, 'User not found') }. This makes the happy path and error path equally visible. Kotlin's own Result<T> in stdlib does this, as does Arrow-kt's Either<E, A>.",
-    "shortAnswer": "sealed class Result<T>: Success(data), Failure(error). Return Result instead of throwing. when expression forces exhaustive handling. Errors explicit in return type, not hidden.",
-    "keyPoints": [
-      "Exceptions as control flow are invisible to callers \u2014 Result makes errors explicit",
-      "when on sealed Result is exhaustive \u2014 compiler enforces error handling",
-      "Kotlin stdlib Result<T>: runCatching { } wraps in Result, getOrElse, onFailure",
-      "Arrow-kt Either<L, R>: Left = error, Right = success \u2014 more functional composition",
-      "Extension functions on Result enable map/flatMap chaining"
-    ],
-    "followUps": [
-      {
-        "question": "When should you use exceptions vs Result?",
-        "answerHint": "Exceptions for programming errors (bugs, unexpected states). Result for expected domain failures (user not found, validation failed, external service unavailable). Exceptions are for developers; Result is for business logic."
-      },
-      {
-        "question": "What is Arrow-kt and when would you use it over Kotlin stdlib Result?",
-        "answerHint": "Arrow-kt provides Either, Option, Validated, and full functional composition. Use when you need map/flatMap chaining, parallel validation errors, or full railway-oriented programming."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Using exceptions for expected business failures \u2014 hides error paths from callers",
-      "Returning null instead of Result \u2014 loses error context",
-      "Not providing map/flatMap extensions \u2014 makes chaining awkward"
-    ]
-  },
-  {
-    "id": "kotlin-coroutines-03",
-    "type": "ORAL_ANSWER",
-    "topic": "kotlin",
-    "subtopic": "Coroutines",
-    "difficulty": "advanced",
-    "question": "What is Flow in Kotlin and how does it differ from channels and sequences?",
-    "interviewerIntent": "Flow is Kotlin's reactive streams equivalent. Distinguishes candidates with real async Kotlin experience.",
-    "answer": "Flow<T> is a cold, asynchronous stream of values. Cold means it doesn't produce values until collected. Sequence<T> is similar but synchronous (blocking). Channel is a hot, concurrent queue between coroutines. Flow is the coroutine-native alternative to RxJava's Observable. Key characteristics: cold (computation starts at collect), cancelable (respects coroutine cancellation), context-preserving (flowOn() switches upstream context). Operators: map, filter, transform, flatMapConcat, flatMapMerge, combine, zip, buffer. Terminal operators: collect, toList, first, reduce, fold. Stateflow and SharedFlow are hot flows \u2014 SharedFlow for events (broadcast), StateFlow for state (always has a value, like LiveData).",
-    "shortAnswer": "Flow = cold async stream. Sequence = cold sync. Channel = hot concurrent queue. StateFlow = hot state (like LiveData). SharedFlow = hot event broadcast. Collect starts the flow.",
-    "keyPoints": [
-      "Cold: no execution until collect {} is called",
-      "flowOn(Dispatchers.IO) switches context for upstream operators",
-      "buffer() decouples producer and consumer speed",
-      "StateFlow: always has a value, new collectors get current state",
-      "SharedFlow: no initial value, configurable replay cache"
-    ],
-    "followUps": [
-      {
-        "question": "How do you convert a callback-based API to Flow?",
-        "answerHint": "callbackFlow { } \u2014 install callback that calls trySend(value), awaitClose { removeCallback() } when the flow is cancelled."
-      },
-      {
-        "question": "What is backpressure and how does Flow handle it?",
-        "answerHint": "Backpressure = consumer slower than producer. Flow handles it via suspension \u2014 producer suspends at emit() until consumer is ready. buffer() or conflate() change this behavior."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Collecting a Flow inside a launch without proper lifecycle scope \u2014 leaks",
-      "Confusing cold Flow with hot SharedFlow \u2014 cold doesn't produce until collected",
-      "Using Channel when Flow is sufficient \u2014 channels are lower-level"
-    ]
-  },
-  {
-    "id": "kotlin-null-03",
-    "type": "ORAL_ANSWER",
-    "topic": "kotlin",
-    "subtopic": "Null Safety",
-    "difficulty": "intermediate",
-    "question": "How do you handle null safety in Kotlin when working with collections?",
-    "interviewerIntent": "Collections and nulls have multiple dimensions \u2014 nullable collection, collection of nullables. Common source of confusion.",
-    "answer": "Three different scenarios: (1) Nullable collection: List<String>? \u2014 the list itself might not exist. Use ?.size or orEmpty() to get an empty list instead of null. (2) Collection of nullables: List<String?> \u2014 the list exists but elements might be null. Use filterNotNull() to get List<String>. (3) Nullable collection of nullables: List<String?>? \u2014 both. For processing: nullableList?.filterNotNull()?.map { it.length } handles all cases. Useful functions: orEmpty() (null list \u2192 empty list), emptyList(), filterNotNull(), mapNotNull() (map + filter nulls in one), firstOrNull(), lastOrNull(), singleOrNull(). Prefer non-nullable collections of non-nullable items \u2014 the cleanest design.",
-    "shortAnswer": "List<String>? = nullable list (use orEmpty()). List<String?> = list with nullable items (use filterNotNull()). mapNotNull() maps and filters nulls. Prefer List<String> when possible.",
-    "keyPoints": [
-      "List<String>? vs List<String?> vs List<String?>? \u2014 three distinct types",
-      "orEmpty(): List<String>? \u2192 List<String> (empty if null)",
-      "filterNotNull(): List<String?> \u2192 List<String>",
-      "mapNotNull { }: maps and removes null results in one pass",
-      "firstOrNull(), lastOrNull() return null instead of throwing on empty"
-    ],
-    "followUps": [
-      {
-        "question": "What does getOrElse() do on a list?",
-        "answerHint": "list.getOrElse(index) { defaultValue } \u2014 returns the element at index if valid, otherwise returns the lambda result. Prevents IndexOutOfBoundsException."
-      },
-      {
-        "question": "How do you safely access a map value that might not exist?",
-        "answerHint": "map[key] returns V? (nullable). Use map[key] ?: default or getOrDefault(key, default) or getOrElse(key) { computeDefault() }."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Forgetting that map[key] returns nullable \u2014 can cause NPE with !!",
-      "Using list[0] without checking isEmpty() \u2014 throws if list is empty",
-      "Creating List<String?> when the list should simply not contain nulls \u2014 redesign the producer"
-    ]
-  },
-  {
-    "id": "kotlin-extensions-03",
-    "type": "ORAL_ANSWER",
-    "topic": "kotlin",
-    "subtopic": "Extension Functions",
-    "difficulty": "advanced",
-    "question": "What are higher-order functions and lambdas in Kotlin, and how do they enable DSL creation?",
-    "interviewerIntent": "Higher-order functions and DSLs are advanced Kotlin. Candidates who understand them can read and write idiomatic Kotlin APIs like Ktor or Gradle Kotlin DSL.",
-    "answer": "Higher-order functions accept or return functions. A function type in Kotlin: (String, Int) -> Boolean. Lambda syntax: { s, i -> s.length > i }. Trailing lambda convention: if the last parameter is a function, it can be placed outside the parentheses \u2014 most DSLs leverage this. Function with receiver type \u2014 (T.() -> Unit) \u2014 receives 'this' as a context, enabling builder DSLs. Example: fun buildHtml(block: HtmlBuilder.() -> Unit): String. Callers write: buildHtml { p { text('Hello') } } \u2014 the lambda has HtmlBuilder as 'this', so all HtmlBuilder methods are in scope. This is how Kotlin DSLs (Gradle, Ktor routing, Exposed) work.",
-    "shortAnswer": "Higher-order functions take/return functions. Lambda: { a, b -> expr }. Trailing lambda: last param outside parens. Function with receiver T.() -> Unit: lambda has T as 'this'. Enables DSLs.",
-    "keyPoints": [
-      "Function type: (A, B) -> C. Nullable: ((A) -> B)?",
-      "Trailing lambda: list.filter { it > 0 } instead of filter({ it > 0 })",
-      "Function with receiver enables builder/DSL pattern",
-      "inline modifier avoids lambda object allocation for performance",
-      "crossinline and noinline for inline function nuances"
-    ],
-    "followUps": [
-      {
-        "question": "What does the inline keyword do for higher-order functions?",
-        "answerHint": "inline copies the function body and lambda body to the call site at compile time \u2014 avoids lambda object allocation and enables non-local returns from lambdas."
-      },
-      {
-        "question": "What is a non-local return?",
-        "answerHint": "In an inline lambda, return exits the enclosing function (not just the lambda). Useful: list.forEach { if (condition) return } exits the entire function."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Not using trailing lambda convention \u2014 verbose and non-idiomatic",
-      "Capturing large objects in lambdas unnecessarily \u2014 causes memory retention",
-      "Creating DSLs with @DslMarker \u2014 forgetting to annotate can cause confusing scope leaks"
-    ]
-  },
-  {
-    "id": "kotlin-sealed-03",
-    "type": "ORAL_ANSWER",
-    "topic": "kotlin",
-    "subtopic": "Sealed Classes",
-    "difficulty": "intermediate",
-    "question": "How does Kotlin's when expression differ from Java's switch and why is it more powerful?",
-    "interviewerIntent": "when is central to Kotlin. Understanding its full capabilities separates experienced Kotlin developers.",
-    "answer": "Kotlin's when is an expression (returns a value) vs Java switch's statement. Key enhancements: (1) Any type in branches \u2014 not just constants, can use ranges, conditions, is-checks. (2) Exhaustiveness checking with sealed classes and enums \u2014 compile error if case is missing. (3) Smart casts \u2014 after 'is Dog ->' inside the branch, the value is automatically cast to Dog. (4) No fall-through \u2014 each branch ends without break. (5) Multiple values per branch: is String, is Int ->. (6) Subject-less when for condition chains: when { x > 0 -> 'positive'; else -> 'other' }. Sealed + when = powerful pattern matching.",
-    "shortAnswer": "when is an expression (has a value). Works on any type. Exhaustive with sealed/enum. Smart casts in is-branches. No fall-through. Multiple conditions per branch. Can be subject-less.",
-    "keyPoints": [
-      "when as expression: val result = when (x) { ... }",
-      "Smart cast: when (animal) { is Dog -> animal.bark() // animal is Dog here }",
-      "Range check: in 1..10 -> 'small'",
-      "Sealed class when must be exhaustive or have else",
-      "Subject-less when: when { condition1 -> ...; condition2 -> ... }"
-    ],
-    "followUps": [
-      {
-        "question": "What is smart casting and when does it not work?",
-        "answerHint": "After a type check, the compiler knows the type and casts automatically. Doesn't work if the variable is mutable (var) and could be changed by another thread between check and use."
-      },
-      {
-        "question": "Can when have multiple statements in a branch?",
-        "answerHint": "Yes \u2014 wrap in braces: is Dog -> { val dog = animal; dog.fetch() }. The last expression is the branch's value."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Forgetting that when is an expression \u2014 assigning the result is the idiomatic way",
-      "Adding else to sealed class when \u2014 defeats exhaustiveness checking",
-      "Using if-else chains where when would be clearer"
-    ]
-  },
-  {
-    "id": "kotlin-data-classes-03",
-    "type": "ORAL_ANSWER",
-    "topic": "kotlin",
-    "subtopic": "Data Classes",
-    "difficulty": "advanced",
-    "question": "How do you handle immutability and defensive copies in Kotlin, and why does it matter for concurrent code?",
-    "interviewerIntent": "Immutability is critical for thread safety and reasoning. Tests understanding beyond syntax.",
-    "answer": "Kotlin has val (immutable reference, like final in Java) and var (mutable). However, val does not mean the object itself is immutable \u2014 val list: MutableList<String> is an immutable reference to a mutable list. True immutability: val with data class with all val properties and using List<T> (not MutableList<T>). For concurrent code: immutable objects need no synchronization \u2014 safe to share. data class copy() creates a shallow copy \u2014 enough for value objects with immutable fields. Deep copy requires manual implementation. Collections.unmodifiableList() equivalent: toList() on a MutableList returns a new immutable snapshot. For shared state: prefer immutable data + atomic updates (copy with new values) over mutable state + synchronization.",
-    "shortAnswer": "val = immutable reference, not immutable object. True immutability: val + immutable types. data class copy() = shallow copy. Immutable objects need no synchronization. toList() creates immutable snapshot.",
-    "keyPoints": [
-      "val list: MutableList = still mutable content",
-      "Prefer List<T> over MutableList<T> in function signatures",
-      "data class with val fields + List<T> = effectively immutable",
-      "copy() is shallow \u2014 nested mutable objects are shared",
-      "toList()/toSet()/toMap() create defensive copies"
-    ],
-    "followUps": [
-      {
-        "question": "What is the difference between listOf() and mutableListOf()?",
-        "answerHint": "listOf() returns a read-only view (but the backing implementation may be mutable). mutableListOf() returns MutableList with add/remove. For true immutability, use persistentListOf() from kotlinx.collections.immutable."
-      },
-      {
-        "question": "What is kotlinx.collections.immutable?",
-        "answerHint": "Kotlin library providing truly persistent/immutable collections (PersistentList, PersistentMap). Efficient structural sharing \u2014 copies only changed paths, not the whole collection."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Thinking val means the object is immutable",
-      "Returning a MutableList from a public API \u2014 callers can modify your internal state",
-      "Relying on data class copy() for deep immutability when fields are mutable"
-    ]
+    "modelAnswer": "Inline functions have their body copied at the call site by the compiler. This eliminates the overhead of creating Function objects for lambdas. The standard library extensively uses inline for scope functions (let, apply, run) and collection operations (filter, map). This means using lambdas in Kotlin has zero allocation cost — unlike Java where every lambda creates a synthetic class. The trade-off is increased bytecode size, so only small utility functions should be inline."
   }
 ]

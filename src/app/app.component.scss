@@ -50,6 +50,17 @@
   height: var(--topbar-height);
   background: var(--rewe-red);
 
+  /* Red area extends behind catbar rounded corners */
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -24px;
+    left: 0;
+    right: 0;
+    height: 24px;
+    background: var(--rewe-red);
+  }
+
   &__inner {
     display: flex;
     align-items: stretch;
@@ -195,7 +206,6 @@
   border-radius: 24px 24px 0 0;
   border-bottom: 1px solid var(--border-subtle);
   box-shadow: 0 1px 2px rgb(0 0 0 / 5%);
-  overflow: hidden;
 
   &__inner {
     display: flex;

@@ -16,7 +16,8 @@
         "content": "<pre><code>2xx — SUCCESS\n  200 OK              — general success (GET, PUT, PATCH)\n  201 Created         — resource created (POST) + Location header\n  204 No Content      — success with no body (DELETE)\n\n3xx — REDIRECTION\n  301 Moved Permanently\n  304 Not Modified    — cache still valid (ETag)\n\n4xx — CLIENT ERROR (your fault)\n  400 Bad Request     — validation failed, malformed payload\n  401 Unauthorized    — not authenticated (missing/bad token)\n  403 Forbidden       — authenticated but not authorized\n  404 Not Found       — resource doesn't exist\n  409 Conflict        — state conflict (duplicate, version mismatch)\n  422 Unprocessable   — semantically invalid (valid JSON but bad data)\n  429 Too Many Reqs   — rate limited\n\n5xx — SERVER ERROR (our fault)\n  500 Internal Error  — unexpected failure (bug, timeout)\n  502 Bad Gateway     — upstream service failed\n  503 Unavailable     — overloaded or maintenance\n  504 Gateway Timeout — upstream timed out</code></pre>\n\n<strong>Interview tip:</strong> \"400 vs 422?\" — 400 = can't even parse the request. 422 = parsed it, but the content violates business rules."
       }
     ],
-    "topic": "rest"
+    "topic": "rest",
+    "subtopic": "rest-verbs"
   },
   {
     "id": "theory-rest-design",
@@ -63,6 +64,7 @@
         "content": "When REST is not the best choice:\n\n• Real-time bidirectional communication (use WebSocket or SSE)\n• High-frequency internal service communication where HTTP overhead matters (use gRPC)\n• Event notification between services (use messaging — Kafka, RabbitMQ)\n• File uploads >100MB (use streaming or chunked upload protocols)\n• When you need strong typing across service boundaries (consider gRPC + protobuf)"
       }
     ],
-    "topic": "rest"
+    "topic": "rest",
+    "subtopic": "rest-versioning"
   }
 ]

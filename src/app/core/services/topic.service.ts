@@ -59,9 +59,9 @@ export class TopicService {
   }
 
   /** Get theory chapters for a specific topic */
-  getTheory(topicId: string): TheoryChapter[] {
+  getTheory(topicId: string, subtopicId?: string): TheoryChapter[] {
     return this.theory().filter(t =>
-      t.topic === topicId || t.id.startsWith(`theory-${topicId}`)
+      t.topic === topicId && (!subtopicId || t.subtopic === subtopicId)
     );
   }
 

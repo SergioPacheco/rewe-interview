@@ -58,11 +58,11 @@ for (const topic of topics) {
     if (questions.length > 0) coveredPractice++;
 
     if (chapters.length === 0) {
-      warnings.push(`${topic.id}/${subtopic.id}: missing Learn content (${subtopic.label})`);
+      errors.push(`${topic.id}/${subtopic.id}: missing Learn content (${subtopic.label})`);
     }
 
     if (questions.length === 0) {
-      warnings.push(`${topic.id}/${subtopic.id}: missing Practice content (${subtopic.label})`);
+      errors.push(`${topic.id}/${subtopic.id}: missing Practice content (${subtopic.label})`);
     }
   }
 }
@@ -96,6 +96,8 @@ for (const dup of [...new Set(dupExercises)]) {
 }
 
 // Report
+const strict = !process.argv.includes('--warn-only');
+
 console.log('📊 Content Validation Report');
 console.log('─'.repeat(50));
 console.log(`  Topics:     ${topics.length}`);
@@ -104,6 +106,7 @@ console.log(`  Chapters:   ${allChapters.length}`);
 console.log(`  Exercises:  ${allExercises.length}`);
 console.log(`  Learn coverage:    ${coveredLearn}/${totalSubtopics} subtopics (${Math.round(100*coveredLearn/totalSubtopics)}%)`);
 console.log(`  Practice coverage: ${coveredPractice}/${totalSubtopics} subtopics (${Math.round(100*coveredPractice/totalSubtopics)}%)`);
+console.log(`  Mode:       ${strict ? 'STRICT (missing content = error)' : 'WARN-ONLY'}`);
 console.log('─'.repeat(50));
 
 if (errors.length > 0) {
@@ -120,10 +123,17 @@ if (errors.length === 0 && warnings.length === 0) {
   console.log('\n✅ All subtopics have Learn and Practice content.');
 }
 
-// Exit with error only for critical issues (duplicates)
-if (errors.length > 0) {
+// In strict mode: missing content blocks the build
+// In warn-only mode: only structural errors (duplicates) block the build
+if (strict && errors.length > 0) {
+  console.log(`\n💡 To build with incomplete content, use: npm run build:dev`);
   process.exit(1);
 }
 
-// Warnings don't fail the build but are visible
+// Structural errors always block
+const structuralErrors = errors.filter(e => e.startsWith('Duplicate'));
+if (structuralErrors.length > 0) {
+  process.exit(1);
+}
+
 process.exit(0);

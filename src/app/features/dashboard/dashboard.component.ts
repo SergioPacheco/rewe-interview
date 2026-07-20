@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink } from '@angular/router';
 import { ProgressService } from '../../core/services/progress.service';
 import { TopicService } from '../../core/services/topic.service';
+import { Topic } from '../../models';
 
 @Component({
   selector: 'app-dashboard',
@@ -15,9 +16,41 @@ export class DashboardComponent {
   protected progressService = inject(ProgressService);
   protected topicService = inject(TopicService);
 
-  allTopics = computed(() => this.topicService.topics());
+  // Section definitions — which topics go in which section
+  private readonly learnIds = [
+    'oop', 'solid', 'collections', 'java-modern', 'sql', 'spring',
+    'rest', 'security', 'jpa', 'concurrency', 'patterns', 'testing',
+    'docker', 'k8s', 'kotlin', 'angular', 'kafka'
+  ];
 
-  /** Technology logo URLs (CDN-hosted SVGs/PNGs) */
+  private readonly interviewIds = ['system-design', 'behavioral', 'mindset'];
+  private readonly experienceIds = ['stories', 'portfolio'];
+  private readonly reweIds = ['rewe'];
+
+  // Computed signals for each section
+  readonly learnTopics = computed(() =>
+    this.topicService.topics().filter(t => this.learnIds.includes(t.id))
+  );
+
+  readonly practiceTopics = computed(() =>
+    this.topicService.topics().filter(t =>
+      this.learnIds.includes(t.id) && this.topicService.getQuestions(t.id).length > 0
+    )
+  );
+
+  readonly interviewTopics = computed(() =>
+    this.topicService.topics().filter(t => this.interviewIds.includes(t.id))
+  );
+
+  readonly experienceTopics = computed(() =>
+    this.topicService.topics().filter(t => this.experienceIds.includes(t.id))
+  );
+
+  readonly reweTopics = computed(() =>
+    this.topicService.topics().filter(t => this.reweIds.includes(t.id))
+  );
+
+  /** Technology logo URLs */
   private readonly logos: Record<string, string> = {
     'rewe': 'assets/rewe-logo.svg',
     'mindset': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/thealgorithms/thealgorithms-original.svg',
@@ -40,6 +73,7 @@ export class DashboardComponent {
     'k8s': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-original.svg',
     'kotlin': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kotlin/kotlin-original.svg',
     'angular': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/angularjs/angularjs-original.svg',
+    'java-modern': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
   };
 
   getImageUrl(topicId: string): string {

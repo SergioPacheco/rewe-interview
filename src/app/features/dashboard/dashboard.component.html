@@ -1,61 +1,132 @@
 <section class="hero">
-  <h1 class="hero__title">Think like a Senior Engineer.</h1>
-  <p class="hero__subtitle">Not a technology guide. A training ground for architectural thinking, trade-off analysis and production-grade decision making.</p>
+  <h1 class="hero__title">Learn it. Practise it. Defend it.</h1>
+  <p class="hero__subtitle">Progressive preparation: from fundamentals to senior-level interview pressure.</p>
   <div class="hero__stats">
     <span class="hero__stat">21 topics</span>
     <span class="hero__sep">·</span>
-    <span class="hero__stat">648+ scenarios</span>
+    <span class="hero__stat">4 progressive levels</span>
     <span class="hero__sep">·</span>
-    <span class="hero__stat">Senior & Staff depth</span>
+    <span class="hero__stat">695+ exercises</span>
   </div>
 </section>
 
-<div class="product-grid">
-  @for (topic of allTopics(); track topic.id) {
-    <a
-      class="product-card"
-      [routerLink]="['/topic', topic.id]"
-    >
-      <div class="product-card__image">
-        <img
-          class="product-card__img"
-          [src]="getImageUrl(topic.id)"
-          [alt]="topic.name"
-          loading="lazy"
-        />
+<!-- ===== SECTION 1: LEARN ===== -->
+<section class="dashboard-section">
+  <div class="dashboard-section__header">
+    <h2 class="dashboard-section__title">📖 Learn</h2>
+    <p class="dashboard-section__desc">Master the concepts. Explanations, examples, code — answers fully visible.</p>
+  </div>
+  <div class="product-grid">
+    @for (topic of learnTopics(); track topic.id) {
+      <a class="product-card" [routerLink]="['/topic', topic.id]">
+        <div class="product-card__image">
+          <img class="product-card__img" [src]="getImageUrl(topic.id)" [alt]="topic.name" loading="lazy" />
+          @if (getMastery(topic.id) > 0) {
+            <span class="product-card__discount">{{ getMastery(topic.id) }}%</span>
+          }
+        </div>
+        <h3 class="product-card__name">{{ topic.name }}</h3>
+        <p class="product-card__desc">{{ topic.desc }}</p>
+        <div class="product-card__footer">
+          <span class="product-card__tag product-card__tag--learn">Learn</span>
+          <span class="product-card__price product-card__price--dark">{{ getTheoryCount(topic.id) }} chapters</span>
+        </div>
+      </a>
+    }
+  </div>
+</section>
 
-        @if (getMastery(topic.id) > 0) {
-          <span class="product-card__discount">
-            {{ getMastery(topic.id) }}%
-          </span>
-        }
-      </div>
+<!-- ===== SECTION 2: PRACTICE ===== -->
+<section class="dashboard-section">
+  <div class="dashboard-section__header">
+    <h2 class="dashboard-section__title">🎯 Practice</h2>
+    <p class="dashboard-section__desc">Test your understanding. Answer hidden until you try.</p>
+  </div>
+  <div class="product-grid">
+    @for (topic of practiceTopics(); track topic.id) {
+      <a class="product-card" [routerLink]="['/topic', topic.id]" fragment="practice">
+        <div class="product-card__image">
+          <img class="product-card__img" [src]="getImageUrl(topic.id)" [alt]="topic.name" loading="lazy" />
+          @if (getMastery(topic.id) > 0) {
+            <span class="product-card__discount">{{ getMastery(topic.id) }}%</span>
+          }
+        </div>
+        <h3 class="product-card__name">{{ topic.name }}</h3>
+        <p class="product-card__desc">{{ topic.desc }}</p>
+        <div class="product-card__footer">
+          <span class="product-card__tag">Practice</span>
+          <span class="product-card__price">{{ getExerciseCount(topic.id) }} questions</span>
+        </div>
+      </a>
+    }
+  </div>
+</section>
 
-      <h3 class="product-card__name">
-        {{ topic.name }}
-      </h3>
+<!-- ===== SECTION 3: INTERVIEW ===== -->
+<section class="dashboard-section">
+  <div class="dashboard-section__header">
+    <h2 class="dashboard-section__title">🎙️ Interview</h2>
+    <p class="dashboard-section__desc">Simulate senior pressure. Clarify, decide, defend — answer only after follow-ups.</p>
+  </div>
+  <div class="product-grid">
+    @for (topic of interviewTopics(); track topic.id) {
+      <a class="product-card" [routerLink]="['/topic', topic.id]">
+        <div class="product-card__image">
+          <img class="product-card__img" [src]="getImageUrl(topic.id)" [alt]="topic.name" loading="lazy" />
+        </div>
+        <h3 class="product-card__name">{{ topic.name }}</h3>
+        <p class="product-card__desc">{{ topic.desc }}</p>
+        <div class="product-card__footer">
+          <span class="product-card__tag product-card__tag--interview">Interview</span>
+          <span class="product-card__price product-card__price--dark">Senior level</span>
+        </div>
+      </a>
+    }
+  </div>
+</section>
 
-      <p class="product-card__desc">
-        {{ topic.desc }}
-      </p>
+<!-- ===== SECTION 4: MY EXPERIENCE ===== -->
+<section class="dashboard-section">
+  <div class="dashboard-section__header">
+    <h2 class="dashboard-section__title">💼 My Experience</h2>
+    <p class="dashboard-section__desc">Real cases, real numbers, real tools. Defensible in 10 minutes without help.</p>
+  </div>
+  <div class="product-grid">
+    @for (topic of experienceTopics(); track topic.id) {
+      <a class="product-card" [routerLink]="['/topic', topic.id]">
+        <div class="product-card__image">
+          <img class="product-card__img" [src]="getImageUrl(topic.id)" [alt]="topic.name" loading="lazy" />
+        </div>
+        <h3 class="product-card__name">{{ topic.name }}</h3>
+        <p class="product-card__desc">{{ topic.desc }}</p>
+        <div class="product-card__footer">
+          <span class="product-card__tag product-card__tag--experience">Evidence</span>
+          <span class="product-card__price product-card__price--dark">Real cases</span>
+        </div>
+      </a>
+    }
+  </div>
+</section>
 
-      <div class="product-card__footer">
-        @if (getExerciseCount(topic.id) > 0) {
-          <span class="product-card__tag">Aktion</span>
-
-          <span class="product-card__price">
-            {{ getExerciseCount(topic.id) }}
-          </span>
-        } @else {
-          <span class="product-card__tag product-card__tag--gray">
-            Theory
-          </span>
-
-          <span class="product-card__price product-card__price--dark">
-            {{ getTheoryCount(topic.id) }}
-          </span>
-        }
-      </div>
-    </a>
-  }
-</div>
+<!-- ===== SECTION 5: REWE ===== -->
+<section class="dashboard-section">
+  <div class="dashboard-section__header">
+    <h2 class="dashboard-section__title">🏪 REWE</h2>
+    <p class="dashboard-section__desc">Confirmed facts, inferences, and questions to ask. Nothing claimed without evidence.</p>
+  </div>
+  <div class="product-grid">
+    @for (topic of reweTopics(); track topic.id) {
+      <a class="product-card" [routerLink]="['/topic', topic.id]">
+        <div class="product-card__image">
+          <img class="product-card__img" [src]="getImageUrl(topic.id)" [alt]="topic.name" loading="lazy" />
+        </div>
+        <h3 class="product-card__name">{{ topic.name }}</h3>
+        <p class="product-card__desc">{{ topic.desc }}</p>
+        <div class="product-card__footer">
+          <span class="product-card__tag product-card__tag--rewe">REWE</span>
+          <span class="product-card__price product-card__price--dark">Facts + Inferences</span>
+        </div>
+      </a>
+    }
+  </div>
+</section>

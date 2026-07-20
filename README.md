@@ -1,8 +1,8 @@
 # ☕ REWE Interview Prep
 
-**Angular 19 · Signals · Standalone · REWE.de Design System**
+**Angular 19 · Signals · Standalone · Progressive Learning**
 
-An interactive interview preparation app for the **Fullstack Developer** position at REWE Digital Spain (Team TRAB). Built with Angular 19 using advanced techniques: Signals, standalone components, lazy loading, and a pixel-perfect header replicating REWE.de's visual design.
+An interview preparation app for the **Fullstack Developer** position at REWE Digital (Team TRAB). Combines progressive learning (foundations → application → interview pressure) with honest experience classification.
 
 🔗 **Live:** [GitHub Pages](https://sergiopacheco.github.io/rewe-interview/)
 
@@ -25,18 +25,29 @@ npx ng test --watch=false # Unit tests
 
 ---
 
-## ✨ Features
+## 🎯 Structure: Learn → Practice → Interview
 
-- **REWE.de Header** — Pixel-perfect reproduction: red topbar with active tab connecting to white catbar (rounded top corners), search + topic shortcuts
-- **Functional Search** — Client-side filtering of sidebar topics in real-time with auto-expand
-- **Dashboard** — Product-card grid (e-commerce style) with topic cards
-- **Learn Tab** — Theory chapters with `white-space: pre-line` for bullet points, `<strong>`, `<pre><code>` blocks
-- **Practice Tab** — Flashcard-style questions with reveal pattern, dark IDE code blocks, markdown-rendered answers
-- **Resume Page** — Full CV with professional styling
-- **Portfolio Page** — Project showcase (SinapiPRO)
-- **Sidebar** — Collapsible topic tree with subtopics, domain-based grouping, and search filtering
-- **648 Practice Questions** — Multiple types across all topics
-- **Markdown Pipe** — Renders `**bold**`, `` `code` ``, ```fenced blocks```, bullet lists in answers
+The site separates **learning** from **interview simulation**:
+
+| Section | Purpose | Answer visible? |
+|---------|---------|:---------------:|
+| **Learn** | Concepts, examples, code — full explanations | ✅ Always |
+| **Practice** | Exercises with hidden answers — try first | After attempt |
+| **Interview** | Senior pressure simulation — clarify, decide, defend | After follow-ups |
+| **My Experience** | Real cases with real numbers | ✅ Reference |
+| **REWE** | Facts vs inferences — nothing claimed without evidence | ✅ Classified |
+
+---
+
+## 📊 Content
+
+- **21 topics** across backend, distributed systems, frontend, and interview domains
+- **126 theory chapters** with code examples and production context
+- **695 exercises** — ORAL_ANSWER, PREDICT_OUTPUT, FILL_BLANK, PICK_INVALID, ORDER_STEPS
+- **24 senior-level questions** with follow-up pressure and experience classification
+- **5 System Design pilots** (schema v2) with scoring rubric and coach debrief
+- **REWE content** classified: ✅ Confirmed | 🔶 Inferred | 🚫 Unknown
+- **My Stories** — only real cases (26,705 inscriptions, 48k queries → 2 seconds)
 
 ---
 
@@ -45,70 +56,48 @@ npx ng test --watch=false # Unit tests
 ```
 src/app/
 ├── core/services/
+│   ├── topic.service.ts          ← Data loader + subtopic normalization
 │   ├── quiz-engine.service.ts    ← Quiz state machine (Signals)
-│   ├── progress.service.ts       ← XP, streak, mastery (localStorage)
-│   ├── storage.service.ts        ← localStorage abstraction
-│   └── topic.service.ts          ← JSON data loader, getGrouped(), getQuestions()
+│   └── progress.service.ts       ← XP, streak, mastery (localStorage)
 ├── features/
-│   ├── dashboard/                ← Product grid (REWE e-commerce cards)
-│   ├── theory/                   ← Learn + Practice tabs, markdown answers
-│   ├── quiz/                     ← Standalone quiz (fallback route)
-│   └── resume/                   ← Full CV page
+│   ├── dashboard/                ← 5-section landing (Learn/Practice/Interview/Experience/REWE)
+│   ├── theory/                   ← Learn + Practice tabs (answer hidden until attempt)
+│   ├── quiz/                     ← Standalone quiz mode
+│   └── resume/                   ← CV page
 ├── shared/pipes/
-│   └── markdown.pipe.ts          ← Converts MD → HTML for [innerHTML]
-├── models/index.ts               ← Topic, Question, TheoryChapter interfaces
-├── app.component.*               ← Shell: header (REWE exact) + sidebar + content
-├── app.config.ts                 ← Providers (functional)
-└── app.routes.ts                 ← Lazy routes + guards + resolvers
+│   └── markdown.pipe.ts          ← MD → HTML rendering
+└── models/index.ts               ← TypeScript interfaces
 
 public/data/
-├── exercises/                    ← 20 JSON files, 648+ exercises
-└── topics/                       ← 22 theory files + index.json (21 topics)
+├── exercises/                    ← 24 JSON files, 695+ exercises
+│   ├── senior-questions.json     ← 24 senior-level with follow-ups
+│   └── system-design-v2-pilots.json ← Schema v2 with rubric
+└── topics/                       ← Theory files + index.json
 ```
 
 ---
 
-## 🎯 Angular 19 Techniques Demonstrated
+## 🎯 Angular 19 Techniques
 
 | Technique | Where |
 |-----------|-------|
-| `signal()` / `computed()` | All services, app.component |
+| `signal()` / `computed()` | All services, components |
 | `@if` / `@for` / `@switch` | All templates |
 | `inject()` function-based DI | All injectables |
 | `standalone: true` (zero NgModules) | Every component |
 | `loadComponent` lazy loading | app.routes.ts |
-| `CanActivateFn` functional guard | quiz.guard.ts |
-| `ResolveFn` functional resolver | topic.resolver.ts |
-| `routerLinkActive` | Header nav, catbar icons |
-| `FormsModule` + `ngModel` with signals | Search bar |
-| `[innerHTML]` + custom Pipe | Markdown rendering |
-| `withViewTransitions()` | app.config.ts |
+| `ChangeDetectionStrategy.OnPush` | Dashboard |
+| `toSignal()` from rxjs | Route params |
 
 ---
 
-## 📊 Content
+## ⚠️ Honest Limitations
 
-- **21 topics** across 6 domain groups (Interview, Backend, Distributed Systems, Frontend, Quality & Ops, More)
-- **101 subtopics** — each with deterministic Learn/Practice association
-- **101 theory chapters** — With code examples, tables, bullet points
-- **648+ exercises** — ORAL_ANSWER, PREDICT_OUTPUT, FILL_BLANK, PICK_INVALID, ORDER_STEPS, SYSTEM_DESIGN
-- **Content validator** — `npm run content:validate` checks coverage for every subtopic
-- **REWE-specific** — Team TRAB context, NEO platform, transport logistics scenarios, interview prep
-- **My Stories** — Real experience evidence (SQL optimization, N+1 fix, production incident, design patterns)
-
----
-
-## 🎨 Design System (REWE.de Reproduction)
-
-| Element | Implementation |
-|---------|---------------|
-| **Topbar** | Red `#cc071e`, 58px, active tab with `margin-top: 14px` + `border-radius: 18px 18px 0 0` connecting to catbar |
-| **Catbar** | White, `border-radius: 20px 20px 0 0`, search input (border 2px `#1c1c1c`) + topic icon shortcuts |
-| **Search** | Functional filter with clear (✕) button, REWE-style outline border |
-| **Sidebar** | Priority-grouped topics, collapsible subtopics, real-time search filter |
-| **Cards** | Product-card style with border, image area, footer tags |
-| **Code blocks** | Dark theme (`#1e1e1e`), JetBrains Mono, `white-space: pre` |
-| **Container** | Max-width 1290px, centered |
+- **Not a complete interview simulator** — no timer, no recording, no AI evaluation yet
+- **REWE content is partially inferred** — clearly labeled, not presented as fact
+- **Experience stories are real** — but limited to cases I can defend for 10 minutes
+- **Schema v2 exercises** don't have dedicated UI yet — rendered with basic format
+- **No distributed tracing, Kafka, or WebSocket production experience** — clearly stated in experienceLevel fields
 
 ---
 

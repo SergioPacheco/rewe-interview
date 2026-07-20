@@ -224,3 +224,78 @@
     }
   }
 }
+
+/* ===== EXPORT BUTTON ===== */
+.resume-actions {
+  max-width: 860px;
+  margin: 0 auto 1rem;
+  display: flex;
+  justify-content: flex-end;
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.25rem;
+    background: #cc071e;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 160ms ease, transform 80ms ease;
+
+    &:hover {
+      background: #a3051a;
+    }
+
+    &:active {
+      transform: scale(0.97);
+    }
+  }
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  :host {
+    padding: 0;
+    margin: 0;
+  }
+
+  .resume {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 10pt;
+    line-height: 1.4;
+  }
+
+  .resume__header {
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .resume__name {
+    font-size: 16pt;
+  }
+
+  .resume__section {
+    page-break-inside: avoid;
+  }
+
+  .resume__section-title {
+    font-size: 11pt;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+}

@@ -305,3 +305,27 @@ img, svg {
 .hl-string { color: #ce9178; }
 .hl-number { color: #b5cea8; }
 .hl-comment { color: #6a9955; font-style: italic; }
+
+/* ===== PRINT: Hide app shell, show only content ===== */
+@media print {
+  .rewe-header,
+  .sidebar,
+  .breadcrumb,
+  .no-print {
+    display: none !important;
+  }
+
+  .rewe-body {
+    display: block !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+  }
+
+  body {
+    background: white !important;
+  }
+}

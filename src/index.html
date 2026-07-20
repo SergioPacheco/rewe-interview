@@ -29,17 +29,17 @@
   <!-- GitHub Pages SPA routing: recover route from 404 redirect -->
   <script>
     (function() {
-      var redirect = sessionStorage.redirect;
-      delete sessionStorage.redirect;
-      if (redirect && redirect !== location.href) {
-        history.replaceState(null, null, redirect);
-      } else {
-        // Check query param from 404.html redirect
-        var params = new URLSearchParams(location.search);
-        var route = params.get('p');
-        if (route) {
-          history.replaceState(null, null, route);
-        }
+      var params = new URLSearchParams(location.search);
+      var route = params.get('p');
+      if (route) {
+        // route is the Angular path (e.g., /topic/collections)
+        // We need to prepend the base path for replaceState
+        var base = document.querySelector('base').getAttribute('href') || '/';
+        // Remove trailing slash from base, remove leading slash from route
+        var cleanBase = base.replace(/\/$/, '');
+        var cleanRoute = route.replace(/^\//, '');
+        var fullPath = cleanBase + '/' + cleanRoute;
+        history.replaceState(null, null, fullPath + location.hash);
       }
     })();
   </script>

@@ -86,6 +86,33 @@ export class QuizEngineService {
     this.progressService.updateStreak();
   }
 
+  /** Start a mixed practice session with questions from all topics */
+  startMixed(maxQuestions = 15): void {
+    const allQuestions = this.topicService.questions();
+
+    // Shuffle and limit
+    const shuffled = this.shuffle([...allQuestions]);
+    const selected = shuffled.slice(0, Math.min(maxQuestions, shuffled.length));
+
+    if (selected.length === 0) {
+      console.warn('[QuizEngine] No questions available for mixed practice');
+      return;
+    }
+
+    this.session.set({
+      topicId: 'mixed',
+      subtopicId: undefined,
+      questions: selected,
+      currentIndex: 0,
+      answers: [],
+      startedAt: new Date().toISOString(),
+      combo: 0,
+      maxCombo: 0
+    });
+
+    this.progressService.updateStreak();
+  }
+
   /** Submit an answer for the current question */
   submitAnswer(userAnswer: unknown): AnswerResult {
     const s = this.session();

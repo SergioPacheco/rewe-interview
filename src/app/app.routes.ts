@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { quizGuard } from './core/guards/quiz.guard';
+import { practiceRedirectGuard } from './core/guards/practice-redirect.guard';
 import { topicResolver } from './core/guards/topic.resolver';
 
 /**
@@ -18,6 +19,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/dashboard/dashboard.component')
       .then(m => m.DashboardComponent),
     title: 'REWE Interview — Dashboard'
+  },
+  {
+    path: 'practice',
+    canActivate: [practiceRedirectGuard],
+    loadComponent: () => import('./features/quiz/quiz.component')
+      .then(m => m.QuizComponent),
+    title: 'Practice'
   },
   {
     path: 'resume',
@@ -40,6 +48,7 @@ export const routes: Routes = [
     loadComponent: () => import('./features/theory/theory.component')
       .then(m => m.TheoryComponent),
     resolve: { topic: topicResolver },
+    runGuardsAndResolvers: 'always',
     title: 'Theory'
   },
   {

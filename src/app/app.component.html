@@ -30,6 +30,14 @@
             </a>
 
             <a
+              routerLink="/practice"
+              class="topbar__link"
+              routerLinkActive="topbar__link--active"
+            >
+              Practice
+            </a>
+
+            <a
               routerLink="/resume"
               class="topbar__link"
               routerLinkActive="topbar__link--active"
@@ -166,15 +174,37 @@
 
                 @if (expandedTopic() === topic.id) {
                   <div class="sidebar__subtopics">
-                    @for (sub of topic.subtopics; track sub.id) {
+                    <!-- Practice all for this topic -->
+                    @if (hasExercises(topic.id)) {
                       <a
-                        class="sidebar__subitem"
-                        [routerLink]="['/topic', topic.id]"
-                        [fragment]="sub.id"
+                        class="sidebar__subitem sidebar__subitem--practice"
+                        [routerLink]="['/quiz', topic.id]"
                         (click)="closeSidebarOnMobile()"
                       >
-                        {{ sub.label }}
+                        🎯 Practice All
                       </a>
+                    }
+                    @for (sub of topic.subtopics; track sub.id) {
+                      <div class="sidebar__sub-row">
+                        <a
+                          class="sidebar__subitem"
+                          [routerLink]="['/topic', topic.id]"
+                          [fragment]="sub.id"
+                          (click)="closeSidebarOnMobile()"
+                        >
+                          {{ sub.label }}
+                        </a>
+                        @if (hasExercises(topic.id, sub.id)) {
+                          <a
+                            class="sidebar__sub-practice"
+                            [routerLink]="['/quiz', topic.id, getExerciseSubtopicKey(topic.id, sub.id)]"
+                            (click)="closeSidebarOnMobile()"
+                            title="Practice {{ sub.label }}"
+                          >
+                            🎯
+                          </a>
+                        }
+                      </div>
                     }
                   </div>
                 }

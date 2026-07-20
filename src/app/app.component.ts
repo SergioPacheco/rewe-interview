@@ -87,6 +87,36 @@ export class AppComponent implements OnInit {
     );
   }
 
+  hasExercises(topicId: string, subtopicId?: string): boolean {
+    if (!subtopicId) {
+      return this.topicService.getQuestions(topicId).length > 0;
+    }
+    // Exercises use subtopic labels (e.g., "Encapsulation"), not IDs (e.g., "oop-encapsulation")
+    // Try matching by ID first, then by label
+    const byId = this.topicService.getQuestions(topicId, subtopicId).length > 0;
+    if (byId) return true;
+
+    // Find the label for this subtopic ID
+    const topic = this.topicService.getTopic(topicId);
+    const sub = topic?.subtopics?.find(s => s.id === subtopicId);
+    if (sub) {
+      return this.topicService.getQuestions(topicId, sub.label).length > 0;
+    }
+    return false;
+  }
+
+  /** Get the subtopic identifier that matches exercises (could be ID or label) */
+  getExerciseSubtopicKey(topicId: string, subtopicId: string): string {
+    // If exercises use the ID directly
+    if (this.topicService.getQuestions(topicId, subtopicId).length > 0) {
+      return subtopicId;
+    }
+    // Otherwise use the label
+    const topic = this.topicService.getTopic(topicId);
+    const sub = topic?.subtopics?.find(s => s.id === subtopicId);
+    return sub?.label ?? subtopicId;
+  }
+
   onSearch(query: string): void {
     this.searchQuery.set(query);
     // Auto-expand topics that match

@@ -1,4 +1,4 @@
-import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
@@ -15,7 +15,7 @@ import { SyntaxHighlightPipe } from '../../shared/pipes/syntax-highlight.pipe';
   templateUrl: './theory.component.html',
   styleUrl: './theory.component.scss'
 })
-export class TheoryComponent implements OnInit {
+export class TheoryComponent {
   private route = inject(ActivatedRoute);
   private topicService = inject(TopicService);
   protected engine = inject(QuizEngineService);
@@ -77,32 +77,33 @@ export class TheoryComponent implements OnInit {
     return all.filter(ch => ch.subtopic === sub);
   });
 
-  // ===== Lifecycle =====
+  constructor() {
+    // React to topic/subtopic changes (fixes sidebar navigation without reload)
+    effect(() => {
+      const topicId = this.topicId();
+      const subtopic = this.selectedSubtopic();
+      const isLoading = this.loading();
 
-  async ngOnInit(): Promise<void> {
-    // Wait for topic service to finish loading
-    await this.waitForData();
+      if (isLoading || !topicId) return;
 
-    // If no theory, go directly to practice
-    if (!this.hasTheory() && this.hasExercises()) {
-      this.activeTab.set('practice');
-      this.startEngine();
-    }
+      // Reset tab state when navigation changes
+      const hasTheory = this.visibleChapters().length > 0;
+      const hasExercises = this.exerciseCount() > 0;
 
-    this.practiceReady.set(true);
-  }
+      if (!hasTheory && hasExercises) {
+        this.activeTab.set('practice');
+        this.startEngine();
+      } else {
+        this.activeTab.set('learn');
+      }
 
-  private waitForData(): Promise<void> {
-    return new Promise(resolve => {
-      const check = () => {
-        if (!this.topicService.loading()) {
-          resolve();
-        } else {
-          setTimeout(check, 50);
-        }
-      };
-      check();
-    });
+      // Stop any running practice session when navigating
+      if (this.engine.isActive() && this.activeTab() === 'learn') {
+        this.engine.end();
+      }
+
+      this.practiceReady.set(true);
+    }, { allowSignalWrites: true });
   }
 
   // ===== Methods =====

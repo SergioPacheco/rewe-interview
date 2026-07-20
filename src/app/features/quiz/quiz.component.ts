@@ -315,17 +315,23 @@ export class QuizComponent {
   ];
 
   constructor() {
-    // Auto-start quiz when topicId is available
+    // Auto-start quiz when topicId is available (for /quiz/:topicId routes)
+    // For /practice route, the guard already starts the engine
     effect(() => {
       const id = this.topicId();
-      if (id && !this.engine.isActive()) {
+      if (id && !this.engine.isActive() && !this.engine.isComplete()) {
         this.engine.start(id, this.subtopicId());
       }
     }, { allowSignalWrites: true });
   }
 
   startQuiz(): void {
-    this.engine.start(this.topicId(), this.subtopicId());
+    const id = this.topicId();
+    if (id) {
+      this.engine.start(id, this.subtopicId());
+    } else {
+      this.engine.startMixed();
+    }
     this.resetLocal();
   }
 

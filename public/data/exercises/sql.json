@@ -432,5 +432,61 @@
       "interview-prep",
       "senior-level"
     ]
+  },
+  {
+    "id": "interview-db-conc-01",
+    "type": "ORAL_ANSWER",
+    "topic": "sql",
+    "subtopic": "Concurrency Control",
+    "difficulty": "senior",
+    "question": "Two planners try to assign the same driver at the same time. How do you prevent double assignment?",
+    "interviewerIntent": "Test real-world concurrency solution",
+    "answer": "I would enforce the invariant in the database, not only in application code.\n\nDepending on the model, I could use a unique constraint representing the driver and scheduling interval, optimistic locking with a version column, or a short pessimistic lock when contention is high.\n\nThe application must handle the conflict and return a meaningful response, normally 409 Conflict.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-db-conc-02",
+    "type": "ORAL_ANSWER",
+    "topic": "sql",
+    "subtopic": "Locking",
+    "difficulty": "senior",
+    "question": "When would you choose optimistic instead of pessimistic locking?",
+    "interviewerIntent": "Check locking strategy judgment",
+    "answer": "Optimistic locking is preferable when conflicts are uncommon. It allows higher concurrency and detects conflicting updates at commit time through a version column.\n\nPessimistic locking is useful when conflicts are frequent or when the cost of retrying is high, but it increases blocking and deadlock risk.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-db-conc-03",
+    "type": "ORAL_ANSWER",
+    "topic": "sql",
+    "subtopic": "Deadlocks",
+    "difficulty": "senior",
+    "question": "What causes a database deadlock, and how do you handle it?",
+    "interviewerIntent": "Verify deadlock handling knowledge",
+    "answer": "A deadlock occurs when transactions wait for locks held by each other.\n\nI reduce the probability by keeping transactions short, accessing resources in a consistent order and indexing queries so fewer rows are locked.\n\nBecause deadlocks can still happen, the application should recognize the database error and retry the complete transaction when the operation is safe to retry.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-db-conc-04",
+    "type": "ORAL_ANSWER",
+    "topic": "sql",
+    "subtopic": "Indexes",
+    "difficulty": "senior",
+    "question": "Why can adding an index make writes slower?",
+    "interviewerIntent": "Check index trade-off awareness",
+    "answer": "Every insert, update or delete may also need to update the index.\n\nIndexes consume storage, increase WAL generation and can create maintenance overhead. I add them based on actual access patterns and execution plans, not automatically for every column.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

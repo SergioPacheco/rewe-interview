@@ -1234,5 +1234,61 @@
       "interview-prep",
       "senior-level"
     ]
+  },
+  {
+    "id": "interview-spring-adv-01",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Transactions",
+    "difficulty": "senior",
+    "question": "What happens when a @Transactional method calls another transactional method in the same class?",
+    "interviewerIntent": "Test proxy-based transaction awareness",
+    "answer": "Spring transaction management is normally proxy-based. A direct internal call does not pass through the proxy, so the transaction annotation on the called method may not be applied.\n\nI would usually move the transactional boundary to another Spring bean or redesign the service boundary rather than trying to obtain the proxy manually.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-adv-02",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Transactions",
+    "difficulty": "senior",
+    "question": "What is the difference between REQUIRED and REQUIRES_NEW?",
+    "interviewerIntent": "Check propagation understanding",
+    "answer": "REQUIRED joins the current transaction or creates one if none exists.\n\nREQUIRES_NEW suspends the current transaction and starts an independent one. It may be useful for an audit record that must survive a failure in the main operation, but it must be used carefully because it changes atomicity and consumes another database connection.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-adv-03",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Async Processing",
+    "difficulty": "senior",
+    "question": "Why can @Async cause problems with transactions and security context?",
+    "interviewerIntent": "Verify async pitfall awareness",
+    "answer": "The asynchronous method executes on another thread.\n\nThread-bound information such as the current transaction, diagnostic context or security context may not automatically propagate. I would explicitly define the execution model and avoid assuming that the caller's transaction continues in the asynchronous operation.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-adv-04",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Production Config",
+    "difficulty": "senior",
+    "question": "How do you configure a production thread pool?",
+    "interviewerIntent": "Test production tuning knowledge",
+    "answer": "I start from the nature of the workload.\n\nCPU-bound work normally uses a pool near the available processor count. I/O-bound work can use more threads, but database connections, external-service limits and memory must also be considered.\n\nThe queue must be bounded, rejection behavior must be defined and pool saturation must be monitored.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

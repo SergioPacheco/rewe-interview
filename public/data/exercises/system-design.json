@@ -392,5 +392,201 @@
       "interview-prep",
       "senior-level"
     ]
+  },
+  {
+    "id": "interview-obs-01",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "SLO & SRE",
+    "difficulty": "senior",
+    "question": "What is the difference between an SLA, SLO and SLI?",
+    "interviewerIntent": "Test SRE fundamentals",
+    "answer": "An SLI is the measured indicator, such as successful request percentage or p95 latency.\n\nAn SLO is the internal target for that indicator.\n\nAn SLA is the formal commitment made to customers and may include consequences if the commitment is not met.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-obs-02",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "SLO & SRE",
+    "difficulty": "senior",
+    "question": "What is an error budget?",
+    "interviewerIntent": "Check error budget concept",
+    "answer": "An error budget is the amount of unreliability allowed by the SLO.\n\nFor example, an availability target of 99.9% permits approximately 0.1% unavailability over the measurement period. Teams can use the remaining budget to balance delivery speed and reliability.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-obs-03",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Metrics",
+    "difficulty": "senior",
+    "question": "Why are averages dangerous for latency?",
+    "interviewerIntent": "Verify metrics understanding",
+    "answer": "An average can hide a small but important group of extremely slow requests.\n\nPercentiles such as p95 and p99 show the experience of slower users and are more useful for detecting tail-latency problems.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-obs-04",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Business Monitoring",
+    "difficulty": "senior",
+    "question": "What would you monitor for a logistics process besides HTTP metrics?",
+    "interviewerIntent": "Test business observability thinking",
+    "answer": "I would monitor business-flow indicators:\n\n- deliveries stuck in one state\n- routes not assigned before departure\n- events waiting for reconciliation\n- duplicate assignments\n- unusually low completion volume\n- delay between physical operation and system update\n\nA technically healthy service can still represent a broken business process.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-ddd-01",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Bounded Contexts",
+    "difficulty": "senior",
+    "question": "What could be the bounded contexts in transport logistics?",
+    "interviewerIntent": "Test domain modeling thinking",
+    "answer": "Possible bounded contexts could include transport planning, delivery execution, driver management, carrier integration, route optimization, communication and billing.\n\nI would not decide the boundaries only from technical components. I would examine ownership, terminology, business rules, rate of change and transactional consistency requirements.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-ddd-02",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Aggregates",
+    "difficulty": "senior",
+    "question": "What is an aggregate?",
+    "interviewerIntent": "Check aggregate understanding",
+    "answer": "An aggregate is a consistency boundary containing one or more domain objects and controlled through an aggregate root.\n\nIn a delivery aggregate, operations such as dispatching or completing the delivery should be performed through the delivery root so its invariants remain valid.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-ddd-03",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Transaction Boundaries",
+    "difficulty": "senior",
+    "question": "When should two operations be in the same transaction?",
+    "interviewerIntent": "Test transaction boundary judgment",
+    "answer": "They should normally share a transaction when the business invariant requires immediate atomic consistency and the data belongs to the same service boundary.\n\nOperations across independent services should generally use an explicit distributed workflow instead of trying to reproduce a local ACID transaction across the network.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-ddd-04",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Anti-Corruption Layer",
+    "difficulty": "senior",
+    "question": "What is an anti-corruption layer?",
+    "interviewerIntent": "Verify ACL understanding",
+    "answer": "It protects one domain model from the terminology and structures of another system.\n\nWhen integrating a modern transport service with a legacy platform or an external carrier, the layer translates external messages into the internal domain language instead of allowing the external model to spread through the application.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-ddd-05",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Architecture",
+    "difficulty": "senior",
+    "question": "When would you choose a modular monolith instead of microservices?",
+    "interviewerIntent": "Test architecture pragmatism",
+    "answer": "I would choose a modular monolith when the domain boundaries are not mature, the team is relatively small, independent scaling is not required and operational simplicity is more valuable than independent deployment.\n\nI would preserve clear module boundaries so services can be extracted later if the business justifies it.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-logistics-01",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Offline Operations",
+    "difficulty": "senior",
+    "question": "A truck loses connectivity for two hours. How should the system behave?",
+    "interviewerIntent": "Test offline-first design thinking",
+    "answer": "The driver application should support offline operation for essential tasks.\n\nActions should be recorded locally with stable identifiers and timestamps, then synchronized when connectivity returns.\n\nThe backend must treat synchronization as at-least-once, process commands idempotently and resolve conflicts using explicit domain rules rather than only last-write-wins.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-logistics-02",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Event Processing",
+    "difficulty": "senior",
+    "question": "How would you process driver-location events at scale?",
+    "interviewerIntent": "Test high-throughput event design",
+    "answer": "I would partition events by driver or vehicle identifier to preserve ordering per source.\n\nThe hot current location could be stored in Redis, while historical positions could be written asynchronously to a time-series or analytical store.\n\nI would reduce unnecessary volume through sampling, movement thresholds or batching, depending on the precision required.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-logistics-03",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Event Ordering",
+    "difficulty": "senior",
+    "question": "A delivery event arrives out of order. What do you do?",
+    "interviewerIntent": "Check event ordering strategy",
+    "answer": "I would include an event identifier, aggregate identifier, occurrence time and preferably an aggregate sequence or version.\n\nThe consumer can reject, buffer or reconcile an out-of-order event depending on the business requirement. Relying only on Kafka arrival time is insufficient when events come from offline devices or multiple systems.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-logistics-04",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Idempotency",
+    "difficulty": "senior",
+    "question": "How do you prevent duplicate delivery confirmation?",
+    "interviewerIntent": "Verify idempotency in logistics context",
+    "answer": "The command should include an idempotency key or a stable operation identifier.\n\nThe database must record processed operations under a uniqueness constraint. Repeating the command should return the previously produced result instead of applying the state transition again.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-logistics-05",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Integration",
+    "difficulty": "senior",
+    "question": "How would you handle an external carrier sending malformed files or messages?",
+    "interviewerIntent": "Test integration resilience",
+    "answer": "I would validate at the integration boundary, quarantine invalid input, preserve the original payload securely and provide actionable diagnostics.\n\nInvalid records should not block all valid records in the same batch. I would expose reconciliation tooling because operational teams need to see, correct and replay failures.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

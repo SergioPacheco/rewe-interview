@@ -1025,5 +1025,61 @@
       "interview-prep",
       "senior-level"
     ]
+  },
+  {
+    "id": "interview-kafka-ops-01",
+    "type": "ORAL_ANSWER",
+    "topic": "kafka",
+    "subtopic": "Rebalancing",
+    "difficulty": "senior",
+    "question": "What happens during a Kafka consumer-group rebalance?",
+    "interviewerIntent": "Test operational Kafka knowledge",
+    "answer": "Kafka redistributes partitions among consumers in the same group.\n\nDuring the rebalance, processing may pause, and partitions can move to different consumers. Long processing times or unstable consumers can cause frequent rebalances.\n\nI would configure poll intervals carefully, keep handlers predictable and use cooperative rebalancing when appropriate.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-kafka-ops-02",
+    "type": "ORAL_ANSWER",
+    "topic": "kafka",
+    "subtopic": "Schema Evolution",
+    "difficulty": "senior",
+    "question": "How do you evolve an event schema without breaking consumers?",
+    "interviewerIntent": "Check schema evolution understanding",
+    "answer": "I prefer backward-compatible changes, such as adding optional fields with defaults.\n\nProducers should not assume that all consumers are upgraded simultaneously. I would use schema validation, compatibility rules and version events only when the semantic contract truly changes.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-kafka-ops-03",
+    "type": "ORAL_ANSWER",
+    "topic": "kafka",
+    "subtopic": "Ordering",
+    "difficulty": "senior",
+    "question": "How do you preserve ordering in Kafka?",
+    "interviewerIntent": "Verify partition key understanding",
+    "answer": "Kafka guarantees ordering only within a partition.\n\nEvents that require ordering must use the same partition key, such as `deliveryId`. However, concentrating too many messages under one key can reduce parallelism, so the key must match the business ordering requirement.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-kafka-ops-04",
+    "type": "ORAL_ANSWER",
+    "topic": "kafka",
+    "subtopic": "Exactly-Once",
+    "difficulty": "senior",
+    "question": "Does exactly-once delivery mean the business operation happens exactly once?",
+    "interviewerIntent": "Test exactly-once semantics understanding",
+    "answer": "Not automatically.\n\nKafka exactly-once features can coordinate Kafka reads and writes, but side effects in an external database or HTTP service still require idempotency or another consistency mechanism.\n\nI design consumers assuming that duplicate delivery can occur.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

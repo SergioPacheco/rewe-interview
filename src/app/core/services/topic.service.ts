@@ -101,6 +101,7 @@ export class TopicService {
       '/data/exercises/behavioral.json',
       '/data/exercises/system-design.json',
       '/data/exercises/rewe.json',
+      '/data/exercises/security.json',
       '/data/exercises/testing.json',
       '/data/exercises/docker.json',
       '/data/exercises/k8s.json',

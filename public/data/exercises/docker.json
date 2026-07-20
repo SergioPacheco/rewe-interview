@@ -14,7 +14,7 @@
       "cgroups limit CPU, memory, and I/O",
       "Shared kernel is the key difference from VMs",
       "Container images are layered, immutable filesystems",
-      "Docker is not the only container runtime \u2014 containerd, podman also exist"
+      "Docker is not the only container runtime — containerd, podman also exist"
     ],
     "followUps": [
       {
@@ -28,7 +28,7 @@
     ],
     "mistakesToAvoid": [
       "Saying containers are 'like VMs but lighter' without explaining the kernel sharing",
-      "Thinking Docker invented containers \u2014 LXC and namespaces predate Docker",
+      "Thinking Docker invented containers — LXC and namespaces predate Docker",
       "Assuming containers are fully isolated from the host"
     ]
   },
@@ -40,11 +40,11 @@
     "difficulty": "intermediate",
     "question": "What happens when you run 'docker run -d -p 8080:80 nginx'? Walk me through each flag.",
     "interviewerIntent": "Checks practical Docker CLI knowledge and understanding of port mapping and detached mode.",
-    "answer": "docker run creates and starts a new container from the nginx image. -d runs it in detached mode (background), so the terminal is not attached to the container's stdout. -p 8080:80 maps port 8080 on the host to port 80 inside the container \u2014 traffic hitting localhost:8080 is forwarded to the container's port 80. nginx is the image name; Docker pulls it from Docker Hub if not cached locally. The result: an nginx web server accessible at http://localhost:8080 running in the background. To see it: docker ps. To stop it: docker stop <container-id>.",
+    "answer": "docker run creates and starts a new container from the nginx image. -d runs it in detached mode (background), so the terminal is not attached to the container's stdout. -p 8080:80 maps port 8080 on the host to port 80 inside the container — traffic hitting localhost:8080 is forwarded to the container's port 80. nginx is the image name; Docker pulls it from Docker Hub if not cached locally. The result: an nginx web server accessible at http://localhost:8080 running in the background. To see it: docker ps. To stop it: docker stop <container-id>.",
     "shortAnswer": "-d = detached (background). -p host:container port mapping. nginx = image from Docker Hub. Result: nginx on localhost:8080 running in background.",
     "keyPoints": [
       "-d detaches from stdio; container runs in background",
-      "-p hostPort:containerPort \u2014 host port is what you access externally",
+      "-p hostPort:containerPort — host port is what you access externally",
       "Image pulled from Docker Hub if not in local cache",
       "docker ps shows running containers",
       "docker logs <id> to see output from detached container"
@@ -52,7 +52,7 @@
     "followUps": [
       {
         "question": "How do you run a container and get an interactive shell?",
-        "answerHint": "docker run -it image /bin/sh \u2014 -i keeps stdin open, -t allocates a pseudo-TTY."
+        "answerHint": "docker run -it image /bin/sh — -i keeps stdin open, -t allocates a pseudo-TTY."
       },
       {
         "question": "What is the difference between docker run and docker start?",
@@ -62,7 +62,7 @@
     "mistakesToAvoid": [
       "Confusing -p 8080:80 order (host:container, not container:host)",
       "Forgetting that -d means you need docker logs to see output",
-      "Thinking the container is deleted when stopped \u2014 use docker rm to delete"
+      "Thinking the container is deleted when stopped — use docker rm to delete"
     ]
   },
   {
@@ -73,7 +73,7 @@
     "difficulty": "beginner",
     "question": "What is a Docker image and how are layers used?",
     "interviewerIntent": "Understanding of image layers is foundational for writing efficient Dockerfiles and understanding caching.",
-    "answer": "A Docker image is a read-only, layered filesystem. Each instruction in a Dockerfile creates a new layer stacked on top of the previous one. Layers are content-addressed and cached \u2014 if a layer has not changed, Docker reuses it from cache instead of rebuilding. This means instruction order matters: put rarely-changing instructions (install dependencies) before frequently-changing ones (copy source code) to maximize cache hits. When you push or pull an image, only the changed layers transfer. A container adds a thin writable layer on top of the image layers \u2014 the image itself is never modified.",
+    "answer": "A Docker image is a read-only, layered filesystem. Each instruction in a Dockerfile creates a new layer stacked on top of the previous one. Layers are content-addressed and cached — if a layer has not changed, Docker reuses it from cache instead of rebuilding. This means instruction order matters: put rarely-changing instructions (install dependencies) before frequently-changing ones (copy source code) to maximize cache hits. When you push or pull an image, only the changed layers transfer. A container adds a thin writable layer on top of the image layers — the image itself is never modified.",
     "shortAnswer": "Image = stacked read-only layers. Each Dockerfile instruction = one layer. Layers are cached. Order matters: stable instructions first to maximize cache reuse.",
     "keyPoints": [
       "Each RUN, COPY, ADD instruction creates a layer",
@@ -89,12 +89,12 @@
       },
       {
         "question": "What is a dangling image?",
-        "answerHint": "An image with no tag and no container using it \u2014 usually a previous build replaced by a newer one with the same tag. Clean with docker image prune."
+        "answerHint": "An image with no tag and no container using it — usually a previous build replaced by a newer one with the same tag. Clean with docker image prune."
       }
     ],
     "mistakesToAvoid": [
-      "Putting COPY . . before RUN npm install \u2014 invalidates dependency cache on every source change",
-      "Not using .dockerignore \u2014 copies node_modules or .git into the image",
+      "Putting COPY . . before RUN npm install — invalidates dependency cache on every source change",
+      "Not using .dockerignore — copies node_modules or .git into the image",
       "Creating many layers with separate RUN commands for related operations"
     ]
   },
@@ -106,7 +106,7 @@
     "difficulty": "intermediate",
     "question": "What is a multi-stage build in Docker and why is it important?",
     "interviewerIntent": "Multi-stage builds are standard practice for production images. Candidates who don't know them produce bloated images with build tools included.",
-    "answer": "Multi-stage builds use multiple FROM instructions in one Dockerfile. Each stage can have its own base image and instructions. The final stage copies only the artifacts from previous stages \u2014 discarding build tools, source code, and intermediate files. Example: a Java app uses a Maven stage to compile (FROM maven:3.9 AS builder, RUN mvn package), then a second stage copies only the JAR (FROM eclipse-temurin:17-jre, COPY --from=builder /app/target/app.jar). The final image has only the JRE and the JAR \u2014 no Maven, no source code. This dramatically reduces image size (from ~600MB to ~200MB) and attack surface.",
+    "answer": "Multi-stage builds use multiple FROM instructions in one Dockerfile. Each stage can have its own base image and instructions. The final stage copies only the artifacts from previous stages — discarding build tools, source code, and intermediate files. Example: a Java app uses a Maven stage to compile (FROM maven:3.9 AS builder, RUN mvn package), then a second stage copies only the JAR (FROM eclipse-temurin:17-jre, COPY --from=builder /app/target/app.jar). The final image has only the JRE and the JAR — no Maven, no source code. This dramatically reduces image size (from ~600MB to ~200MB) and attack surface.",
     "shortAnswer": "Multiple FROM stages. Build stage compiles/installs. Final stage copies only artifacts. Eliminates build tools from production image. Reduces size and attack surface.",
     "keyPoints": [
       "Each FROM starts a new stage with its own filesystem",
@@ -122,7 +122,7 @@
       },
       {
         "question": "How do you build only a specific stage?",
-        "answerHint": "docker build --target stageName . \u2014 useful for running tests in CI without producing the final image."
+        "answerHint": "docker build --target stageName . — useful for running tests in CI without producing the final image."
       }
     ],
     "mistakesToAvoid": [
@@ -139,7 +139,7 @@
     "difficulty": "intermediate",
     "question": "What is the difference between CMD and ENTRYPOINT in a Dockerfile?",
     "interviewerIntent": "Frequently confused. Understanding the difference is necessary for writing flexible, production-ready images.",
-    "answer": "ENTRYPOINT defines the executable that always runs \u2014 it is not overridden by arguments to docker run. CMD provides default arguments to ENTRYPOINT (or a default command if no ENTRYPOINT is set). When both are used: ENTRYPOINT is the process, CMD is the default args. docker run myimage --verbose would replace CMD but not ENTRYPOINT. A common pattern: ENTRYPOINT [\"java\", \"-jar\", \"app.jar\"] with CMD [\"--spring.profiles.active=prod\"] as default profile. To override ENTRYPOINT: docker run --entrypoint /bin/sh myimage. For scripts, ENTRYPOINT with exec form ['./entrypoint.sh'] is preferred to preserve signal handling.",
+    "answer": "ENTRYPOINT defines the executable that always runs — it is not overridden by arguments to docker run. CMD provides default arguments to ENTRYPOINT (or a default command if no ENTRYPOINT is set). When both are used: ENTRYPOINT is the process, CMD is the default args. docker run myimage --verbose would replace CMD but not ENTRYPOINT. A common pattern: ENTRYPOINT [\"java\", \"-jar\", \"app.jar\"] with CMD [\"--spring.profiles.active=prod\"] as default profile. To override ENTRYPOINT: docker run --entrypoint /bin/sh myimage. For scripts, ENTRYPOINT with exec form ['./entrypoint.sh'] is preferred to preserve signal handling.",
     "shortAnswer": "ENTRYPOINT = always-run executable (not overridden by docker run args). CMD = default args to ENTRYPOINT or default command. Both in exec form [] for signal handling.",
     "keyPoints": [
       "ENTRYPOINT is not replaced by docker run arguments",
@@ -151,7 +151,7 @@
     "followUps": [
       {
         "question": "Why does exec form matter for signal handling?",
-        "answerHint": "Shell form makes /bin/sh PID 1, which may not forward SIGTERM to the real process. Exec form makes your process PID 1, receiving signals directly \u2014 critical for graceful shutdown."
+        "answerHint": "Shell form makes /bin/sh PID 1, which may not forward SIGTERM to the real process. Exec form makes your process PID 1, receiving signals directly — critical for graceful shutdown."
       },
       {
         "question": "When would you use only CMD without ENTRYPOINT?",
@@ -159,8 +159,8 @@
       }
     ],
     "mistakesToAvoid": [
-      "Shell form for ENTRYPOINT \u2014 breaks SIGTERM handling",
-      "Putting the full command in ENTRYPOINT with no CMD \u2014 makes it inflexible",
+      "Shell form for ENTRYPOINT — breaks SIGTERM handling",
+      "Putting the full command in ENTRYPOINT with no CMD — makes it inflexible",
       "Confusing which one docker run arguments replace"
     ]
   },
@@ -172,7 +172,7 @@
     "difficulty": "intermediate",
     "question": "What is Docker Compose and how do you use it for a multi-service application?",
     "interviewerIntent": "Docker Compose is standard for local development. Checks practical multi-service orchestration knowledge.",
-    "answer": "Docker Compose defines and runs multi-container applications via a docker-compose.yml file. Each service defines its image or build context, environment variables, ports, volumes, and dependencies. 'docker compose up' starts all services; 'docker compose down' stops and removes containers. Services communicate by service name within the compose network \u2014 app can reach db at postgres://db:5432. Key features: depends_on for startup order (but not readiness \u2014 use healthchecks), volumes for persistent data, networks for isolation between service groups, and override files (docker-compose.override.yml) for local dev differences.",
+    "answer": "Docker Compose defines and runs multi-container applications via a docker-compose.yml file. Each service defines its image or build context, environment variables, ports, volumes, and dependencies. 'docker compose up' starts all services; 'docker compose down' stops and removes containers. Services communicate by service name within the compose network — app can reach db at postgres://db:5432. Key features: depends_on for startup order (but not readiness — use healthchecks), volumes for persistent data, networks for isolation between service groups, and override files (docker-compose.override.yml) for local dev differences.",
     "shortAnswer": "docker-compose.yml defines services, networks, volumes. Services reach each other by name. docker compose up/down. depends_on for order, healthcheck for readiness.",
     "keyPoints": [
       "Services communicate via service name on the default network",
@@ -193,8 +193,8 @@
     ],
     "mistakesToAvoid": [
       "Using depends_on without healthcheck for readiness-sensitive services",
-      "Hardcoding passwords in docker-compose.yml \u2014 use env_file or secrets",
-      "Not defining volumes for databases \u2014 losing data on docker compose down"
+      "Hardcoding passwords in docker-compose.yml — use env_file or secrets",
+      "Not defining volumes for databases — losing data on docker compose down"
     ]
   },
   {
@@ -205,11 +205,11 @@
     "difficulty": "intermediate",
     "question": "How does Docker networking work? What are the main network drivers?",
     "interviewerIntent": "Networking is a common source of issues in containerized apps. Checks understanding of bridge, host, and overlay networks.",
-    "answer": "Docker provides several network drivers. Bridge (default): creates a virtual network on the host; containers on the same bridge network communicate by IP or name. Each docker-compose project gets its own bridge network automatically. Host: container shares the host network stack directly \u2014 no port mapping needed, but no network isolation. None: no networking. Overlay: multi-host networking for Docker Swarm. In practice for development: compose creates a bridge network; services reach each other by service name via Docker's embedded DNS. For production on Kubernetes: Docker networking is replaced by the CNI plugin (Calico, Flannel, etc).",
+    "answer": "Docker provides several network drivers. Bridge (default): creates a virtual network on the host; containers on the same bridge network communicate by IP or name. Each docker-compose project gets its own bridge network automatically. Host: container shares the host network stack directly — no port mapping needed, but no network isolation. None: no networking. Overlay: multi-host networking for Docker Swarm. In practice for development: compose creates a bridge network; services reach each other by service name via Docker's embedded DNS. For production on Kubernetes: Docker networking is replaced by the CNI plugin (Calico, Flannel, etc).",
     "shortAnswer": "Bridge (default, container-to-container by name), Host (shares host network, no isolation), Overlay (multi-host Swarm). Compose auto-creates bridge; services talk by service name.",
     "keyPoints": [
       "Bridge: isolated virtual network, containers talk by name",
-      "Host: shares host network \u2014 no port mapping, no isolation",
+      "Host: shares host network — no port mapping, no isolation",
       "Compose creates a project-scoped bridge network automatically",
       "Docker embedded DNS resolves service names within a network",
       "Containers on different networks cannot communicate by default"
@@ -221,11 +221,11 @@
       },
       {
         "question": "When would you use --network host?",
-        "answerHint": "When the container needs to access host-only services or when port mapping overhead matters. Avoid in production \u2014 no network isolation."
+        "answerHint": "When the container needs to access host-only services or when port mapping overhead matters. Avoid in production — no network isolation."
       }
     ],
     "mistakesToAvoid": [
-      "Using localhost inside a container to reach another container \u2014 use service name",
+      "Using localhost inside a container to reach another container — use service name",
       "Exposing all ports with -p without considering security",
       "Assuming containers on different compose projects can communicate by name"
     ]
@@ -238,7 +238,7 @@
     "difficulty": "advanced",
     "question": "How do you optimize a Docker image for a Java Spring Boot application?",
     "interviewerIntent": "Practical question combining Dockerfile best practices with Java-specific knowledge. Shows production readiness.",
-    "answer": "Key optimizations: (1) Multi-stage build \u2014 Maven/Gradle stage to build the JAR, JRE-only final stage (eclipse-temurin:17-jre instead of JDK). (2) Layer the JAR \u2014 Spring Boot layered JARs split into dependencies, spring-boot-loader, snapshot-dependencies, and application layers; dependencies change rarely so they're cached. (3) Use a non-root user \u2014 RUN addgroup -S spring && adduser -S spring -G spring, USER spring. (4) JVM flags for containers: -XX:+UseContainerSupport (default in Java 11+) respects cgroup memory limits; set -Xmx explicitly or use -XX:MaxRAMPercentage=75. (5) COPY .dockerignore to exclude target/, .git, etc.",
+    "answer": "Key optimizations: (1) Multi-stage build — Maven/Gradle stage to build the JAR, JRE-only final stage (eclipse-temurin:17-jre instead of JDK). (2) Layer the JAR — Spring Boot layered JARs split into dependencies, spring-boot-loader, snapshot-dependencies, and application layers; dependencies change rarely so they're cached. (3) Use a non-root user — RUN addgroup -S spring && adduser -S spring -G spring, USER spring. (4) JVM flags for containers: -XX:+UseContainerSupport (default in Java 11+) respects cgroup memory limits; set -Xmx explicitly or use -XX:MaxRAMPercentage=75. (5) COPY .dockerignore to exclude target/, .git, etc.",
     "shortAnswer": "Multi-stage (JRE only), layered JAR for cache, non-root user, -XX:MaxRAMPercentage for container memory, .dockerignore to exclude build artifacts.",
     "keyPoints": [
       "eclipse-temurin:17-jre saves ~200MB vs JDK image",
@@ -250,7 +250,7 @@
     "followUps": [
       {
         "question": "What is GraalVM native image and when is it worth it for Spring Boot?",
-        "answerHint": "Compiles to native binary \u2014 sub-second startup, low memory. Worth it for serverless/short-lived workloads. Long-running services benefit less and lose dynamic features."
+        "answerHint": "Compiles to native binary — sub-second startup, low memory. Worth it for serverless/short-lived workloads. Long-running services benefit less and lose dynamic features."
       },
       {
         "question": "How do you set JVM heap size in a Kubernetes pod?",
@@ -258,8 +258,8 @@
       }
     ],
     "mistakesToAvoid": [
-      "Using JDK image in production \u2014 includes compiler and tools not needed at runtime",
-      "Not setting memory limits \u2014 JVM uses host RAM by default, causing OOMKilled",
+      "Using JDK image in production — includes compiler and tools not needed at runtime",
+      "Not setting memory limits — JVM uses host RAM by default, causing OOMKilled",
       "Running as root inside the container"
     ]
   },
@@ -271,7 +271,7 @@
     "difficulty": "intermediate",
     "question": "What is .dockerignore and why is it important?",
     "interviewerIntent": "Often overlooked but critical for cache efficiency and security. Missing .dockerignore is a common production mistake.",
-    "answer": ".dockerignore works like .gitignore \u2014 it lists files and directories to exclude from the build context sent to the Docker daemon. Without it, the entire project directory is sent, including node_modules, target/, .git, test data, and local configs. This causes problems: large build context slows the build, COPY . . includes unwanted files in the image, and any change in excluded files (like .git) invalidates the COPY cache layer. Typical .dockerignore entries: .git, target/, node_modules/, *.md, .env, test/, .idea/.",
+    "answer": ".dockerignore works like .gitignore — it lists files and directories to exclude from the build context sent to the Docker daemon. Without it, the entire project directory is sent, including node_modules, target/, .git, test data, and local configs. This causes problems: large build context slows the build, COPY . . includes unwanted files in the image, and any change in excluded files (like .git) invalidates the COPY cache layer. Typical .dockerignore entries: .git, target/, node_modules/, *.md, .env, test/, .idea/.",
     "shortAnswer": ".dockerignore excludes files from build context. Without it: slow builds, bloated images, cache invalidation on .git changes. Always exclude .git, target/, node_modules/.",
     "keyPoints": [
       "Reduces build context size sent to Docker daemon",
@@ -287,12 +287,12 @@
       },
       {
         "question": "What happens if you COPY a file that's in .dockerignore?",
-        "answerHint": "The COPY instruction fails with 'no such file or directory' \u2014 the file was excluded from the build context before Docker processes the Dockerfile."
+        "answerHint": "The COPY instruction fails with 'no such file or directory' — the file was excluded from the build context before Docker processes the Dockerfile."
       }
     ],
     "mistakesToAvoid": [
       "Forgetting .dockerignore and including node_modules/ in the image",
-      "Not excluding .git \u2014 causes cache miss on every commit",
+      "Not excluding .git — causes cache miss on every commit",
       "Excluding files needed by the build"
     ]
   },
@@ -304,12 +304,12 @@
     "difficulty": "intermediate",
     "question": "How do you manage persistent data in Docker? What are volumes vs bind mounts?",
     "interviewerIntent": "Data persistence is a fundamental concern for stateful services. Checks understanding of Docker storage options.",
-    "answer": "Docker containers are ephemeral \u2014 data written inside is lost when the container is removed. Two main persistence mechanisms: Volumes are managed by Docker, stored in /var/lib/docker/volumes/, and are portable between containers. They're the preferred way to persist database data. Bind mounts map a host directory into the container \u2014 changes on host reflect immediately inside. Preferred for development (mounting source code for hot reload). Key difference: volumes are Docker-managed (docker volume ls, docker volume prune), bind mounts are host-path-dependent. For databases in production: named volume. For development config or code: bind mount.",
+    "answer": "Docker containers are ephemeral — data written inside is lost when the container is removed. Two main persistence mechanisms: Volumes are managed by Docker, stored in /var/lib/docker/volumes/, and are portable between containers. They're the preferred way to persist database data. Bind mounts map a host directory into the container — changes on host reflect immediately inside. Preferred for development (mounting source code for hot reload). Key difference: volumes are Docker-managed (docker volume ls, docker volume prune), bind mounts are host-path-dependent. For databases in production: named volume. For development config or code: bind mount.",
     "shortAnswer": "Volume = Docker-managed, portable, preferred for production data. Bind mount = host path mapped into container, preferred for dev (live code reload). Containers are ephemeral without one.",
     "keyPoints": [
       "Named volumes: docker volume create, referenced by name in compose",
       "Bind mounts: absolute host path mapped to container path",
-      "tmpfs mount: in-memory, not persisted \u2014 for sensitive temporary data",
+      "tmpfs mount: in-memory, not persisted — for sensitive temporary data",
       "Volumes survive docker compose down; use -v flag to also remove volumes",
       "Never store production database data only in container filesystem"
     ],
@@ -325,7 +325,7 @@
     ],
     "mistakesToAvoid": [
       "Assuming container data persists after docker rm",
-      "Using bind mounts in production \u2014 host path dependency is fragile",
+      "Using bind mounts in production — host path dependency is fragile",
       "Forgetting to define volumes for database containers in compose"
     ]
   },
@@ -337,14 +337,14 @@
     "difficulty": "advanced",
     "question": "How do you handle secrets and environment-specific configuration in Docker Compose?",
     "interviewerIntent": "Security-conscious candidates avoid hardcoded secrets. This distinguishes developers who have shipped to production from those who only develop locally.",
-    "answer": "Best practices: use env_file to load from a .env file not committed to git. Docker Compose reads .env automatically for variable substitution (${DB_PASSWORD}). For production, Docker Secrets (Swarm) or Kubernetes Secrets mount secrets as files \u2014 read by the app from /run/secrets/. Never hardcode credentials in docker-compose.yml. For different environments: use override files \u2014 docker-compose.yml as base, docker-compose.override.yml for local dev, docker-compose.prod.yml for production (docker compose -f docker-compose.yml -f docker-compose.prod.yml up). This avoids duplicating the full config per environment.",
+    "answer": "Best practices: use env_file to load from a .env file not committed to git. Docker Compose reads .env automatically for variable substitution (${DB_PASSWORD}). For production, Docker Secrets (Swarm) or Kubernetes Secrets mount secrets as files — read by the app from /run/secrets/. Never hardcode credentials in docker-compose.yml. For different environments: use override files — docker-compose.yml as base, docker-compose.override.yml for local dev, docker-compose.prod.yml for production (docker compose -f docker-compose.yml -f docker-compose.prod.yml up). This avoids duplicating the full config per environment.",
     "shortAnswer": "env_file for .env not in git. Variable substitution with ${VAR}. Override files for env-specific config. Never hardcode secrets. Production: Docker Secrets or K8s Secrets as files.",
     "keyPoints": [
-      ".env file loaded automatically \u2014 add to .gitignore",
+      ".env file loaded automatically — add to .gitignore",
       "Variable substitution: ${VARIABLE:-default} with fallback",
       "Override files: base + environment-specific layer",
       "docker-compose.override.yml merged automatically with docker compose up",
-      "Docker Secrets mount as files \u2014 more secure than env vars for sensitive data"
+      "Docker Secrets mount as files — more secure than env vars for sensitive data"
     ],
     "followUps": [
       {
@@ -353,7 +353,7 @@
       },
       {
         "question": "How do you validate that required environment variables are set?",
-        "answerHint": "Use ${REQUIRED_VAR:?Error message} syntax in docker-compose.yml \u2014 Compose fails with the error message if the variable is unset."
+        "answerHint": "Use ${REQUIRED_VAR:?Error message} syntax in docker-compose.yml — Compose fails with the error message if the variable is unset."
       }
     ],
     "mistakesToAvoid": [
@@ -382,7 +382,7 @@
     "followUps": [
       {
         "question": "What is a distroless image?",
-        "answerHint": "Images with only the runtime (JRE, Python, etc.) and no OS utilities \u2014 no shell, no package manager. Dramatically reduces attack surface. gcr.io/distroless/ images."
+        "answerHint": "Images with only the runtime (JRE, Python, etc.) and no OS utilities — no shell, no package manager. Dramatically reduces attack surface. gcr.io/distroless/ images."
       },
       {
         "question": "How do you handle false positives in image scanning?",
@@ -390,8 +390,8 @@
       }
     ],
     "mistakesToAvoid": [
-      "Building images once and never rebuilding \u2014 base image vulnerabilities accumulate",
-      "Using :latest tag \u2014 unpredictable, not reproducible",
+      "Building images once and never rebuilding — base image vulnerabilities accumulate",
+      "Using :latest tag — unpredictable, not reproducible",
       "Ignoring high severity findings because they seem theoretical"
     ]
   },
@@ -403,14 +403,14 @@
     "difficulty": "advanced",
     "question": "How do you debug a running container or investigate why a container keeps crashing?",
     "interviewerIntent": "Practical troubleshooting skill. Candidates who can debug containers independently are much more valuable in production.",
-    "answer": "For a running container: docker exec -it <id> /bin/sh for an interactive shell. docker logs <id> or docker logs -f <id> for streaming logs. docker inspect <id> for metadata, environment variables, mounts, and network config. docker stats <id> for live CPU/memory usage. For a crashing container: docker logs <id> shows the last output before crash. docker inspect <id> shows exit code and error. If the container exits immediately: override the entrypoint to get a shell \u2014 docker run --entrypoint /bin/sh -it myimage. Check OOMKilled in docker inspect State.OOMKilled (true = memory limit hit). Use --restart no to prevent automatic restart during debugging.",
+    "answer": "For a running container: docker exec -it <id> /bin/sh for an interactive shell. docker logs <id> or docker logs -f <id> for streaming logs. docker inspect <id> for metadata, environment variables, mounts, and network config. docker stats <id> for live CPU/memory usage. For a crashing container: docker logs <id> shows the last output before crash. docker inspect <id> shows exit code and error. If the container exits immediately: override the entrypoint to get a shell — docker run --entrypoint /bin/sh -it myimage. Check OOMKilled in docker inspect State.OOMKilled (true = memory limit hit). Use --restart no to prevent automatic restart during debugging.",
     "shortAnswer": "Running: docker exec -it for shell, docker logs for output, docker stats for resources. Crashing: check exit code via inspect, override entrypoint to get shell, check OOMKilled.",
     "keyPoints": [
-      "docker exec -it <id> /bin/sh \u2014 interactive shell in running container",
-      "docker logs --tail 100 -f \u2014 last 100 lines + follow",
+      "docker exec -it <id> /bin/sh — interactive shell in running container",
+      "docker logs --tail 100 -f — last 100 lines + follow",
       "docker inspect State.ExitCode and State.OOMKilled",
       "docker run --entrypoint /bin/sh to debug containers that exit immediately",
-      "docker events \u2014 real-time event stream from Docker daemon"
+      "docker events — real-time event stream from Docker daemon"
     ],
     "followUps": [
       {
@@ -436,7 +436,7 @@
     "difficulty": "beginner",
     "question": "What is the difference between COPY and ADD in a Dockerfile?",
     "interviewerIntent": "Simple but important distinction. ADD has hidden behaviors that can cause security and reproducibility issues.",
-    "answer": "COPY simply copies files from the build context into the image. ADD does everything COPY does, plus: it can fetch remote URLs (ADD http://example.com/file.tar.gz /app/) and it automatically extracts tar archives. The Docker best practice is to always use COPY unless you specifically need the tar extraction feature. ADD with URLs is discouraged because it cannot be cached effectively and introduces remote dependencies into the build. If you need to download a file, use RUN curl or RUN wget instead \u2014 it's explicit and cacheable. COPY is predictable; ADD has magic behavior that surprises people.",
+    "answer": "COPY simply copies files from the build context into the image. ADD does everything COPY does, plus: it can fetch remote URLs (ADD http://example.com/file.tar.gz /app/) and it automatically extracts tar archives. The Docker best practice is to always use COPY unless you specifically need the tar extraction feature. ADD with URLs is discouraged because it cannot be cached effectively and introduces remote dependencies into the build. If you need to download a file, use RUN curl or RUN wget instead — it's explicit and cacheable. COPY is predictable; ADD has magic behavior that surprises people.",
     "shortAnswer": "COPY = simple file copy. ADD = COPY + URL fetch + tar extraction. Always prefer COPY. Use RUN curl for downloads. ADD's magic behavior is a source of surprises.",
     "keyPoints": [
       "COPY is explicit and predictable",
@@ -448,16 +448,16 @@
     "followUps": [
       {
         "question": "Can COPY handle glob patterns?",
-        "answerHint": "Yes \u2014 COPY src/*.jar /app/ copies all JARs from src. Uses Go filepath.Match patterns."
+        "answerHint": "Yes — COPY src/*.jar /app/ copies all JARs from src. Uses Go filepath.Match patterns."
       },
       {
         "question": "How do you copy files from a previous stage using COPY?",
-        "answerHint": "COPY --from=stageName /path/in/stage /path/in/current \u2014 the --from flag targets a named stage."
+        "answerHint": "COPY --from=stageName /path/in/stage /path/in/current — the --from flag targets a named stage."
       }
     ],
     "mistakesToAvoid": [
       "Using ADD when COPY suffices",
-      "Using ADD with a URL \u2014 not cacheable, non-reproducible",
+      "Using ADD with a URL — not cacheable, non-reproducible",
       "Expecting ADD to recursively copy directories like cp -r (it does, but COPY is clearer)"
     ]
   },
@@ -469,7 +469,7 @@
     "difficulty": "intermediate",
     "question": "How does health checking work in Docker and why is it critical for orchestration?",
     "interviewerIntent": "Health checks bridge Docker and Kubernetes readiness. Candidates who understand them write more reliable service deployments.",
-    "answer": "HEALTHCHECK in Dockerfile defines a command that Docker runs periodically inside the container to determine if it's healthy. Syntax: HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080/actuator/health || exit 1. Status: starting (initial), healthy, unhealthy. Docker Compose depends_on with condition: service_healthy waits for a service to be healthy before starting dependents \u2014 solving the 'database not ready' race condition. In Kubernetes, liveness and readiness probes replace the Docker HEALTHCHECK for pod scheduling and traffic routing. Key: health check should test actual readiness (can the app serve requests?), not just that the process is running.",
+    "answer": "HEALTHCHECK in Dockerfile defines a command that Docker runs periodically inside the container to determine if it's healthy. Syntax: HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080/actuator/health || exit 1. Status: starting (initial), healthy, unhealthy. Docker Compose depends_on with condition: service_healthy waits for a service to be healthy before starting dependents — solving the 'database not ready' race condition. In Kubernetes, liveness and readiness probes replace the Docker HEALTHCHECK for pod scheduling and traffic routing. Key: health check should test actual readiness (can the app serve requests?), not just that the process is running.",
     "shortAnswer": "HEALTHCHECK runs a command periodically. Status: starting/healthy/unhealthy. In Compose: depends_on condition: service_healthy. In K8s: replaced by liveness/readiness probes.",
     "keyPoints": [
       "--interval (how often), --timeout (max wait), --retries (failures before unhealthy)",
@@ -490,8 +490,50 @@
     ],
     "mistakesToAvoid": [
       "Health check that only verifies the process is running, not that it can serve requests",
-      "Expensive health checks (full DB query, external HTTP) \u2014 they run every 30s",
+      "Expensive health checks (full DB query, external HTTP) — they run every 30s",
       "Not using service_healthy in depends_on and wondering why app starts before DB is ready"
+    ]
+  },
+  {
+    "id": "interview-cicd-01",
+    "type": "ORAL_ANSWER",
+    "topic": "docker",
+    "subtopic": "CI/CD Pipeline",
+    "difficulty": "senior",
+    "question": "What should a production CI/CD pipeline contain?",
+    "interviewerIntent": "Test CI/CD completeness",
+    "answer": "A typical pipeline should compile, run unit and integration tests, perform static analysis and dependency-security checks, build an immutable artifact, generate provenance or an SBOM when required, and publish the artifact to a controlled registry.\n\nDeployment should use environment-specific configuration, automated health verification and an explicit rollback strategy.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-cicd-02",
+    "type": "ORAL_ANSWER",
+    "topic": "docker",
+    "subtopic": "Deployment Strategies",
+    "difficulty": "senior",
+    "question": "What is the difference between blue-green and canary deployment?",
+    "interviewerIntent": "Check deployment strategy knowledge",
+    "answer": "Blue-green keeps two complete environments and switches traffic from one to the other.\n\nCanary deployment gradually sends a percentage of traffic to the new version.\n\nBlue-green offers a simple rollback but requires more duplicated capacity. Canary provides controlled exposure but requires strong observability and routing capabilities.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-cicd-03",
+    "type": "ORAL_ANSWER",
+    "topic": "docker",
+    "subtopic": "Database Migrations",
+    "difficulty": "senior",
+    "question": "How do you deploy a database-breaking change safely?",
+    "interviewerIntent": "Test safe migration strategy",
+    "answer": "I use the expand-and-contract pattern.\n\nFirst, add the new schema in a backward-compatible form. Then deploy code capable of working with both versions, migrate or backfill data, switch reads and writes, and only later remove the obsolete structure.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
     ]
   }
 ]

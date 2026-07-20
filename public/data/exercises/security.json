@@ -1,0 +1,212 @@
+[
+  {
+    "id": "security-auth-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Authentication & Authorization",
+    "difficulty": "senior",
+    "question": "What is the difference between authentication and authorization?",
+    "interviewerIntent": "Fundamental security concept distinction",
+    "answer": "Authentication answers **who** the user or system is. Authorization determines **what** that authenticated identity is allowed to do.\n\nIn a logistics platform, a driver, warehouse employee and transport planner may all be authenticated, but they must have different permissions. I would normally enforce coarse-grained access through roles and more specific business rules through resource-level authorization.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-microservice-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Service-to-Service Security",
+    "difficulty": "senior",
+    "question": "How would you secure communication between microservices?",
+    "interviewerIntent": "Test understanding of zero-trust and mTLS",
+    "answer": "I would not rely only on the internal network.\n\nI would use TLS for transport encryption, short-lived service identities or tokens, least-privilege authorization and secret rotation. For sensitive integrations, mutual TLS can authenticate both services.\n\nI would also validate the audience and issuer of tokens, avoid forwarding user credentials unnecessarily and audit privileged operations.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-jwt-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "JWT & Tokens",
+    "difficulty": "senior",
+    "question": "Where should JWT validation happen?",
+    "interviewerIntent": "Check defense-in-depth understanding",
+    "answer": "Basic validation may happen at the API gateway, but downstream services should not blindly trust forwarded data.\n\nEach service should validate the information required for its own authorization decisions. Gateway validation reduces duplicated work, while service-level checks preserve defense in depth.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-idor-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Access Control",
+    "difficulty": "senior",
+    "question": "How do you prevent insecure direct object references?",
+    "interviewerIntent": "Verify IDOR prevention awareness",
+    "answer": "Authorization must be checked against the requested resource, not only against the user's role.\n\nA driver requesting `/deliveries/123` should only receive that delivery if it belongs to the driver or the user has an appropriate planning role. Hiding identifiers or using UUIDs does not replace authorization.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-kafka-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Event Security",
+    "difficulty": "senior",
+    "question": "How would you protect Kafka topics?",
+    "interviewerIntent": "Check event-system security thinking",
+    "answer": "I would use authenticated producers and consumers, topic-level ACLs, encryption in transit and separate service accounts.\n\nA notification service should consume delivery events but should not be allowed to publish route-planning commands. I would also avoid putting unnecessary personal information into events.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-oauth-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "OAuth2 & OIDC",
+    "difficulty": "senior",
+    "question": "How does OAuth2 differ from direct credential-based authentication?",
+    "interviewerIntent": "Verify OAuth2 understanding",
+    "answer": "OAuth2 delegates authorization through tokens issued by a trusted authorization server. The application never sees the user's actual credentials.\n\nThis separates identity management from application logic, supports scoped access and enables token revocation without changing passwords.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-spring-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Spring Security",
+    "difficulty": "senior",
+    "question": "How does the Spring Security filter chain work?",
+    "interviewerIntent": "Test Spring Security internals",
+    "answer": "Spring Security registers a chain of servlet filters that intercept every request. Each filter performs a specific function: authentication, CSRF protection, session management, authorization.\n\nThe order matters. Authentication must resolve identity before authorization can check permissions. Custom filters can be added at specific positions in the chain.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-csrf-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Web Security",
+    "difficulty": "senior",
+    "question": "When is CSRF protection necessary?",
+    "interviewerIntent": "Check CSRF understanding",
+    "answer": "CSRF protection is necessary when the application uses session-based authentication with cookies. A malicious page could forge requests that the browser automatically includes cookies for.\n\nFor stateless APIs using Bearer tokens in the Authorization header, CSRF is typically not a risk because the browser does not automatically attach the token.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-injection-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Injection Prevention",
+    "difficulty": "senior",
+    "question": "How do you prevent SQL injection?",
+    "interviewerIntent": "Fundamental injection prevention",
+    "answer": "I use parameterized queries or prepared statements — never string concatenation of user input into SQL.\n\nWith JPA, named parameters handle this. For native queries, I still use parameter binding. Input validation adds defense in depth but is not a replacement for parameterized queries.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-xss-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Web Security",
+    "difficulty": "senior",
+    "question": "How does Angular protect against XSS?",
+    "interviewerIntent": "Check frontend security awareness",
+    "answer": "Angular automatically sanitizes untrusted values in templates. Interpolation escapes HTML by default. Properties like `[innerHTML]` trigger Angular's sanitizer which removes dangerous elements.\n\nBypassing with `bypassSecurityTrustHtml` should only be used with content the application fully controls. User-generated Markdown should pass through an explicit sanitization library.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-secrets-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Secret Management",
+    "difficulty": "senior",
+    "question": "How should application secrets be managed?",
+    "interviewerIntent": "Verify operational security practices",
+    "answer": "Secrets should never be committed to source control.\n\nI would use environment-specific secret management — Kubernetes secrets, cloud KMS, or a vault. Secrets should be rotated regularly, access should be audited, and the application should support rotation without restart when possible.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-gdpr-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Data Protection",
+    "difficulty": "senior",
+    "question": "What are the main implications of GDPR for a logistics application?",
+    "interviewerIntent": "Check GDPR awareness for logistics domain",
+    "answer": "Driver location data, customer addresses and contact information are personal data.\n\nThe application must have a legal basis for processing, limit retention periods, support data subject requests, minimize collection and protect data in transit and at rest.\n\nI would also consider data anonymization for analytics and clear ownership of personal data across services.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-owasp-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "OWASP Top 10",
+    "difficulty": "senior",
+    "question": "Which OWASP Top 10 risks are most relevant to a microservices logistics platform?",
+    "interviewerIntent": "OWASP awareness in context",
+    "answer": "Broken Access Control (authorization across services), Injection (especially in legacy integrations), Security Misconfiguration (container and cloud defaults), Vulnerable Dependencies (supply chain), and Server-Side Request Forgery (internal service communication).\n\nI would address these through architecture reviews, dependency scanning, automated security testing and defense in depth.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-audit-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Audit & Compliance",
+    "difficulty": "senior",
+    "question": "What should an audit log capture?",
+    "interviewerIntent": "Check audit logging practices",
+    "answer": "An audit log should capture who performed an action, what was changed, when it happened, from where, and the previous and new state when relevant.\n\nAudit logs should be append-only, tamper-resistant, and stored separately from application data. For logistics, critical events include delivery assignments, status transitions and access to personal data.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "security-cors-01",
+    "type": "ORAL_ANSWER",
+    "topic": "security",
+    "subtopic": "Web Security",
+    "difficulty": "senior",
+    "question": "How do you configure CORS correctly?",
+    "interviewerIntent": "Verify CORS configuration understanding",
+    "answer": "I would allow only specific trusted origins, not wildcard. I would limit allowed methods and headers to what the frontend actually needs.\n\nCredentials require explicit configuration on both server and client. Preflight caching reduces request overhead. Misconfigured CORS is a common source of both security issues and confusing debugging.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  }
+]

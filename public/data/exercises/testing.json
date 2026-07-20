@@ -23,7 +23,7 @@
       },
       {
         "question": "What is @TestFactory used for?",
-        "answerHint": "Generating dynamic tests at runtime \u2014 useful when test cases are data-driven and not known at compile time."
+        "answerHint": "Generating dynamic tests at runtime — useful when test cases are data-driven and not known at compile time."
       }
     ],
     "mistakesToAvoid": [
@@ -73,19 +73,19 @@
     "difficulty": "beginner",
     "question": "What is the difference between @Mock, @Spy, and @InjectMocks in Mockito?",
     "interviewerIntent": "Core Mockito knowledge. Candidates who confuse @Mock and @Spy or don't know @InjectMocks have limited practical testing experience.",
-    "answer": "@Mock creates a full mock \u2014 all methods return default values (null, 0, false, empty list) unless stubbed. @Spy creates a partial mock wrapping a real object \u2014 methods execute real code unless stubbed. @InjectMocks creates an instance of the class under test and injects @Mock/@Spy fields into it via constructor, setter, or field injection. In practice: use @Mock for dependencies you want full control over, @Spy when you need to verify calls on a real implementation while stubbing only specific methods, and avoid @Spy as a default because it couples tests to implementation details.",
+    "answer": "@Mock creates a full mock — all methods return default values (null, 0, false, empty list) unless stubbed. @Spy creates a partial mock wrapping a real object — methods execute real code unless stubbed. @InjectMocks creates an instance of the class under test and injects @Mock/@Spy fields into it via constructor, setter, or field injection. In practice: use @Mock for dependencies you want full control over, @Spy when you need to verify calls on a real implementation while stubbing only specific methods, and avoid @Spy as a default because it couples tests to implementation details.",
     "shortAnswer": "@Mock = full mock (all stubbed). @Spy = real object with selective stubbing. @InjectMocks = the class under test with mocks injected.",
     "keyPoints": [
       "@Mock returns safe defaults unless stubbed with when()",
       "@Spy calls real methods unless explicitly stubbed with doReturn()",
       "@InjectMocks requires @ExtendWith(MockitoExtension.class)",
-      "Prefer @Mock over @Spy \u2014 @Spy couples tests to implementation",
+      "Prefer @Mock over @Spy — @Spy couples tests to implementation",
       "Use doReturn() not when() with @Spy to avoid calling real method during stubbing"
     ],
     "followUps": [
       {
         "question": "When would you legitimately use @Spy?",
-        "answerHint": "When testing a class with some methods that call other methods of the same class, and you want to stub only the internal calls. Rare \u2014 often signals a design issue."
+        "answerHint": "When testing a class with some methods that call other methods of the same class, and you want to stub only the internal calls. Rare — often signals a design issue."
       },
       {
         "question": "What happens if @InjectMocks cannot inject a dependency?",
@@ -95,7 +95,7 @@
     "mistakesToAvoid": [
       "Using @Spy as default instead of @Mock",
       "Forgetting @ExtendWith(MockitoExtension.class) and wondering why mocks are null",
-      "Using when() to stub a @Spy method \u2014 it calls the real method first"
+      "Using when() to stub a @Spy method — it calls the real method first"
     ]
   },
   {
@@ -106,19 +106,19 @@
     "difficulty": "intermediate",
     "question": "Walk me through the TDD cycle. How do you apply it in practice on a real task?",
     "interviewerIntent": "Distinguish candidates who understand TDD as a design tool from those who think it just means writing tests before code.",
-    "answer": "TDD follows Red-Green-Refactor: write a failing test that defines the desired behavior (Red), write the minimum code to make it pass (Green), then improve the code without changing behavior (Refactor). In practice on a real task: I start with the simplest case \u2014 for a price calculator, the first test might be 'calculateTotal with one item returns item price'. I write the test, watch it fail (confirming the test runs), write just enough code to pass it (even hardcoding the return value initially), then add the next test case that forces real implementation. Each cycle takes 2-5 minutes. The benefit is not just tests \u2014 TDD forces you to design the interface before the implementation, which leads to simpler APIs.",
-    "shortAnswer": "Red (failing test) \u2192 Green (minimum code to pass) \u2192 Refactor (clean up). Each cycle 2-5 min. TDD is a design tool, not just a testing technique.",
+    "answer": "TDD follows Red-Green-Refactor: write a failing test that defines the desired behavior (Red), write the minimum code to make it pass (Green), then improve the code without changing behavior (Refactor). In practice on a real task: I start with the simplest case — for a price calculator, the first test might be 'calculateTotal with one item returns item price'. I write the test, watch it fail (confirming the test runs), write just enough code to pass it (even hardcoding the return value initially), then add the next test case that forces real implementation. Each cycle takes 2-5 minutes. The benefit is not just tests — TDD forces you to design the interface before the implementation, which leads to simpler APIs.",
+    "shortAnswer": "Red (failing test) → Green (minimum code to pass) → Refactor (clean up). Each cycle 2-5 min. TDD is a design tool, not just a testing technique.",
     "keyPoints": [
       "Red-Green-Refactor is the cycle, not Red-Red-Red",
       "Start with the simplest case, not edge cases",
       "The failing test must fail for the right reason",
-      "Green means minimum code \u2014 even hardcoding is valid temporarily",
+      "Green means minimum code — even hardcoding is valid temporarily",
       "Refactor only when all tests are green"
     ],
     "followUps": [
       {
         "question": "What do you do when TDD slows you down significantly?",
-        "answerHint": "For pure algorithmic logic, TDD is fast. For UI or integration-heavy code, I write tests after \u2014 TDD has a cost/benefit tradeoff per context."
+        "answerHint": "For pure algorithmic logic, TDD is fast. For UI or integration-heavy code, I write tests after — TDD has a cost/benefit tradeoff per context."
       },
       {
         "question": "How does TDD change how you design APIs?",
@@ -126,9 +126,9 @@
       }
     ],
     "mistakesToAvoid": [
-      "Writing all tests first, then all implementation \u2014 that's not TDD",
+      "Writing all tests first, then all implementation — that's not TDD",
       "Writing tests that are too complex before any implementation exists",
-      "Skipping the refactor step \u2014 this is where design improvement happens",
+      "Skipping the refactor step — this is where design improvement happens",
       "Testing implementation details instead of observable behavior"
     ]
   },
@@ -140,13 +140,13 @@
     "difficulty": "intermediate",
     "question": "What is the difference between unit tests and integration tests? When do you use each?",
     "interviewerIntent": "Check if candidate understands test boundaries and can make pragmatic decisions about test type rather than applying one approach everywhere.",
-    "answer": "Unit tests test a single class/function in isolation with all dependencies mocked \u2014 fast (milliseconds), deterministic, run on every commit. Integration tests test how components interact together \u2014 with real database, real HTTP calls, or real message brokers \u2014 slower (seconds to minutes), can have external dependencies. I use unit tests for business logic, validation rules, and transformations where I control all inputs. I use integration tests for repositories (to verify JPQL/SQL against a real database), REST controllers (to verify serialization and HTTP semantics), and message consumers (to verify the full message-to-action flow). The key is not quantity but coverage of the right things \u2014 unit tests for logic, integration tests for contracts between components.",
+    "answer": "Unit tests test a single class/function in isolation with all dependencies mocked — fast (milliseconds), deterministic, run on every commit. Integration tests test how components interact together — with real database, real HTTP calls, or real message brokers — slower (seconds to minutes), can have external dependencies. I use unit tests for business logic, validation rules, and transformations where I control all inputs. I use integration tests for repositories (to verify JPQL/SQL against a real database), REST controllers (to verify serialization and HTTP semantics), and message consumers (to verify the full message-to-action flow). The key is not quantity but coverage of the right things — unit tests for logic, integration tests for contracts between components.",
     "shortAnswer": "Unit = isolated, mocked, milliseconds. Integration = real dependencies, seconds. Unit for logic, integration for component contracts (DB, HTTP, messaging).",
     "keyPoints": [
       "Unit tests are fast because nothing external runs",
       "Integration tests verify contracts, not logic",
       "Repository tests need a real database (H2 or Testcontainers)",
-      "@SpringBootTest is heavy \u2014 prefer @WebMvcTest or @DataJpaTest slices",
+      "@SpringBootTest is heavy — prefer @WebMvcTest or @DataJpaTest slices",
       "Test pyramid: many unit, some integration, few E2E"
     ],
     "followUps": [
@@ -160,9 +160,9 @@
       }
     ],
     "mistakesToAvoid": [
-      "Using @SpringBootTest for everything \u2014 it loads the full context and is slow",
-      "Mocking the database in integration tests \u2014 defeats the purpose",
-      "Ignoring test isolation \u2014 tests that depend on order are fragile"
+      "Using @SpringBootTest for everything — it loads the full context and is slow",
+      "Mocking the database in integration tests — defeats the purpose",
+      "Ignoring test isolation — tests that depend on order are fragile"
     ]
   },
   {
@@ -172,11 +172,11 @@
     "subtopic": "Integration Tests",
     "difficulty": "advanced",
     "question": "How do you test a Spring Boot REST controller without starting the full application context?",
-    "interviewerIntent": "Checks knowledge of Spring Boot test slices \u2014 a sign of experience with large test suites that need to stay fast.",
-    "answer": "@WebMvcTest loads only the web layer \u2014 controllers, filters, and MockMvc \u2014 without the service or repository layers. You mock the service with @MockBean. This is much faster than @SpringBootTest. Example: @WebMvcTest(OrderController.class) with @MockBean OrderService. Then use MockMvc to perform requests and assert HTTP status, response body, and headers. For JSON assertions, use jsonPath(). This approach tests serialization, validation, HTTP status codes, and controller logic without touching the database.",
+    "interviewerIntent": "Checks knowledge of Spring Boot test slices — a sign of experience with large test suites that need to stay fast.",
+    "answer": "@WebMvcTest loads only the web layer — controllers, filters, and MockMvc — without the service or repository layers. You mock the service with @MockBean. This is much faster than @SpringBootTest. Example: @WebMvcTest(OrderController.class) with @MockBean OrderService. Then use MockMvc to perform requests and assert HTTP status, response body, and headers. For JSON assertions, use jsonPath(). This approach tests serialization, validation, HTTP status codes, and controller logic without touching the database.",
     "shortAnswer": "@WebMvcTest loads only the web layer. Mock services with @MockBean. Use MockMvc to test HTTP contract without starting full context.",
     "keyPoints": [
-      "@WebMvcTest is a test slice \u2014 much faster than @SpringBootTest",
+      "@WebMvcTest is a test slice — much faster than @SpringBootTest",
       "Use @MockBean for services and repositories",
       "MockMvc.perform() tests HTTP request/response cycle",
       "Test HTTP status, response body, headers, and validation errors",
@@ -194,8 +194,8 @@
     ],
     "mistakesToAvoid": [
       "Using @SpringBootTest when @WebMvcTest is sufficient",
-      "Forgetting @MockBean for services \u2014 controller will fail to instantiate",
-      "Not testing 4xx responses \u2014 validation and error handling are important"
+      "Forgetting @MockBean for services — controller will fail to instantiate",
+      "Not testing 4xx responses — validation and error handling are important"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "question": "What is the test pyramid and how does it guide your test strategy?",
     "interviewerIntent": "Assess strategic thinking about testing. Candidates who write mostly E2E tests or skip unit tests have skewed pyramids that cause slow, fragile test suites.",
     "answer": "The test pyramid (Mike Cohn) has three layers: unit tests at the base (many, fast, cheap), integration tests in the middle (fewer, slower, more expensive), and E2E tests at the top (fewest, slowest, most expensive). The shape guides investment: most tests should be unit tests because they're fast and give immediate feedback. Integration tests cover component boundaries. E2E tests cover critical user journeys only. An inverted pyramid (mostly E2E) means slow feedback loops and fragile tests that break for unrelated reasons. I aim for roughly 70% unit, 20% integration, 10% E2E in a typical backend service.",
-    "shortAnswer": "Many unit (fast, cheap) \u2192 fewer integration (component boundaries) \u2192 few E2E (critical paths only). 70/20/10 ratio. Inverted pyramid = slow, fragile suite.",
+    "shortAnswer": "Many unit (fast, cheap) → fewer integration (component boundaries) → few E2E (critical paths only). 70/20/10 ratio. Inverted pyramid = slow, fragile suite.",
     "keyPoints": [
       "Unit tests catch logic bugs in milliseconds",
       "Integration tests catch contract bugs between components",
@@ -218,7 +218,7 @@
     "followUps": [
       {
         "question": "What is the testing trophy (Kent C. Dodds)?",
-        "answerHint": "A variation that emphasizes integration tests over unit tests for frontend \u2014 because unit tests of components with mocked dependencies give false confidence."
+        "answerHint": "A variation that emphasizes integration tests over unit tests for frontend — because unit tests of components with mocked dependencies give false confidence."
       },
       {
         "question": "How do you handle flaky tests?",
@@ -226,9 +226,9 @@
       }
     ],
     "mistakesToAvoid": [
-      "Writing only E2E tests \u2014 they're the most expensive to maintain",
+      "Writing only E2E tests — they're the most expensive to maintain",
       "Thinking more tests always means better quality",
-      "Ignoring test execution time \u2014 a suite that takes 30 minutes is not used"
+      "Ignoring test execution time — a suite that takes 30 minutes is not used"
     ]
   },
   {
@@ -239,8 +239,8 @@
     "difficulty": "intermediate",
     "question": "How do you use ArgumentCaptor and when is it appropriate?",
     "interviewerIntent": "ArgumentCaptor is a key tool for verifying what arguments a method was called with. Tests that don't use it often use any() and miss important assertions.",
-    "answer": "ArgumentCaptor captures the argument passed to a mock method so you can assert on it. Use it when the SUT creates an object internally and passes it to a dependency \u2014 you can't access that object directly, but you can capture it. Example: service creates an EmailDTO and calls emailSender.send(dto). With a captor, I capture dto and assert its fields. Declare with @Captor EmailCaptor captor or ArgumentCaptor.forClass(Email.class), then verify(emailSender).send(captor.capture()), then assertEquals(expected, captor.getValue()). Use it when the content of the argument IS the rule being tested. Avoid it when any() is sufficient and the argument's content is not the point.",
-    "shortAnswer": "ArgumentCaptor captures arguments passed to mocks for assertion. Use when the argument's content is the rule under test \u2014 not as a default replacement for any().",
+    "answer": "ArgumentCaptor captures the argument passed to a mock method so you can assert on it. Use it when the SUT creates an object internally and passes it to a dependency — you can't access that object directly, but you can capture it. Example: service creates an EmailDTO and calls emailSender.send(dto). With a captor, I capture dto and assert its fields. Declare with @Captor EmailCaptor captor or ArgumentCaptor.forClass(Email.class), then verify(emailSender).send(captor.capture()), then assertEquals(expected, captor.getValue()). Use it when the content of the argument IS the rule being tested. Avoid it when any() is sufficient and the argument's content is not the point.",
+    "shortAnswer": "ArgumentCaptor captures arguments passed to mocks for assertion. Use when the argument's content is the rule under test — not as a default replacement for any().",
     "keyPoints": [
       "Declare with @Captor or ArgumentCaptor.forClass()",
       "captor.capture() goes inside verify()",
@@ -259,8 +259,8 @@
       }
     ],
     "mistakesToAvoid": [
-      "Calling captor.getValue() before verify() \u2014 it throws",
-      "Using captors when any() would suffice \u2014 over-specification",
+      "Calling captor.getValue() before verify() — it throws",
+      "Using captors when any() would suffice — over-specification",
       "Forgetting that captured object may be mutated after capture if mutable"
     ]
   },
@@ -276,7 +276,7 @@
     "shortAnswer": "Ports-and-adapters: TDD the domain against interface mocks (fast). Test adapters (DB, HTTP) separately with integration tests. Keeps TDD cycles milliseconds fast.",
     "keyPoints": [
       "Define interfaces (ports) for external dependencies",
-      "TDD domain logic with mocks/fakes \u2014 no database needed",
+      "TDD domain logic with mocks/fakes — no database needed",
       "Integration tests verify the real adapter separately",
       "Fakes (in-memory implementations) are better than mocks for complex scenarios",
       "Never mock what you don't own (mock your interface, not the JPA API)"
@@ -288,13 +288,13 @@
       },
       {
         "question": "When would you use Testcontainers instead of mocks for TDD?",
-        "answerHint": "When the database behavior is the thing being designed \u2014 schema queries, constraints, transactions. But only after the core logic is TDD'd with mocks."
+        "answerHint": "When the database behavior is the thing being designed — schema queries, constraints, transactions. But only after the core logic is TDD'd with mocks."
       }
     ],
     "mistakesToAvoid": [
-      "Starting TDD with a running database \u2014 defeats the speed benefit",
+      "Starting TDD with a running database — defeats the speed benefit",
       "Mocking concrete classes instead of interfaces",
-      "Having 100% mocked tests with no integration tests \u2014 gives false confidence"
+      "Having 100% mocked tests with no integration tests — gives false confidence"
     ]
   },
   {
@@ -305,14 +305,14 @@
     "difficulty": "intermediate",
     "question": "How do you decide what NOT to test?",
     "interviewerIntent": "A key sign of testing maturity. Over-testing is as harmful as under-testing. Experienced developers know when tests add no value.",
-    "answer": "I don't test: simple getters/setters with no logic, framework behavior (Spring's dependency injection itself), configuration classes with no branching logic, trivial delegation (a service that just calls a repository with no transformation), and generated code. I also don't test implementation details \u2014 HOW code works internally \u2014 only observable behavior. The rule is: would this test break if I refactored the implementation without changing behavior? If yes, it's testing implementation, not behavior. I focus on tests where failure would be a meaningful signal. A test that always passes or fails only due to refactoring adds noise, not signal.",
+    "answer": "I don't test: simple getters/setters with no logic, framework behavior (Spring's dependency injection itself), configuration classes with no branching logic, trivial delegation (a service that just calls a repository with no transformation), and generated code. I also don't test implementation details — HOW code works internally — only observable behavior. The rule is: would this test break if I refactored the implementation without changing behavior? If yes, it's testing implementation, not behavior. I focus on tests where failure would be a meaningful signal. A test that always passes or fails only due to refactoring adds noise, not signal.",
     "shortAnswer": "Don't test: getters/setters, framework behavior, trivial delegation, implementation details. Test observable behavior. If refactoring breaks the test without changing behavior, it's a bad test.",
     "keyPoints": [
       "Trivial getters/setters are not worth testing",
       "Framework behavior (Spring DI, JPA) is already tested by the framework",
       "Test behavior, not implementation",
-      "If test breaks on refactor with no behavior change \u2014 delete it",
-      "100% coverage is not a goal \u2014 meaningful coverage is"
+      "If test breaks on refactor with no behavior change — delete it",
+      "100% coverage is not a goal — meaningful coverage is"
     ],
     "followUps": [
       {
@@ -321,7 +321,7 @@
       },
       {
         "question": "Should you test private methods?",
-        "answerHint": "No \u2014 test them through the public API. If a private method needs direct testing, it's a signal it should be extracted to its own class."
+        "answerHint": "No — test them through the public API. If a private method needs direct testing, it's a signal it should be extracted to its own class."
       }
     ],
     "mistakesToAvoid": [
@@ -338,7 +338,7 @@
     "difficulty": "intermediate",
     "question": "How do you write and organize parameterized tests in JUnit 5?",
     "interviewerIntent": "Parameterized tests are essential for testing multiple input scenarios without code duplication. Candidates who don't know them write many near-identical test methods.",
-    "answer": "@ParameterizedTest replaces @Test for data-driven tests. Sources: @ValueSource for simple arrays of literals, @CsvSource for multiple parameters inline, @MethodSource for complex objects (references a static method returning Stream<Arguments>), @EnumSource for enum values. Each combination runs as a separate test with its own entry in the report. Use @DisplayName with {0}, {1} placeholders to get readable names per combination. Example: testing a price validator with multiple valid and invalid prices \u2014 one @ParameterizedTest with @CsvSource('10.0, true', '-1.0, false', '0.0, false') covers all cases cleanly.",
+    "answer": "@ParameterizedTest replaces @Test for data-driven tests. Sources: @ValueSource for simple arrays of literals, @CsvSource for multiple parameters inline, @MethodSource for complex objects (references a static method returning Stream<Arguments>), @EnumSource for enum values. Each combination runs as a separate test with its own entry in the report. Use @DisplayName with {0}, {1} placeholders to get readable names per combination. Example: testing a price validator with multiple valid and invalid prices — one @ParameterizedTest with @CsvSource('10.0, true', '-1.0, false', '0.0, false') covers all cases cleanly.",
     "shortAnswer": "@ParameterizedTest with @ValueSource, @CsvSource, or @MethodSource. Each combination is a separate test run. Use @DisplayName with {0} for readable reports.",
     "keyPoints": [
       "@ValueSource for single primitive/string arrays",
@@ -360,7 +360,7 @@
     "mistakesToAvoid": [
       "Writing 10 identical test methods for 10 input variations",
       "Using @MethodSource with non-static methods (requires @TestInstance(PER_CLASS))",
-      "Complex logic inside @CsvSource strings \u2014 extract to @MethodSource"
+      "Complex logic inside @CsvSource strings — extract to @MethodSource"
     ]
   },
   {
@@ -370,11 +370,11 @@
     "subtopic": "Mockito",
     "difficulty": "advanced",
     "question": "How do you test code that throws exceptions? How do you verify both the exception and its message?",
-    "interviewerIntent": "Exception testing is frequently done wrong \u2014 either testing the wrong exception type or not verifying the message/cause.",
-    "answer": "JUnit 5's assertThrows() is the standard approach: Throwable ex = assertThrows(OrderNotFoundException.class, () -> service.findOrder(-1L)). It returns the exception, so you can then assert on its message, cause, or custom fields: assertEquals('Order -1 not found', ex.getMessage()). For Mockito, when the mock should throw: when(repo.findById(any())).thenThrow(new RuntimeException('DB error')). For void methods: doThrow(new Exception()).when(repo).delete(any()). Avoid the older @Test(expected=X) JUnit 4 approach \u2014 it doesn't let you assert on the exception's message or cause.",
+    "interviewerIntent": "Exception testing is frequently done wrong — either testing the wrong exception type or not verifying the message/cause.",
+    "answer": "JUnit 5's assertThrows() is the standard approach: Throwable ex = assertThrows(OrderNotFoundException.class, () -> service.findOrder(-1L)). It returns the exception, so you can then assert on its message, cause, or custom fields: assertEquals('Order -1 not found', ex.getMessage()). For Mockito, when the mock should throw: when(repo.findById(any())).thenThrow(new RuntimeException('DB error')). For void methods: doThrow(new Exception()).when(repo).delete(any()). Avoid the older @Test(expected=X) JUnit 4 approach — it doesn't let you assert on the exception's message or cause.",
     "shortAnswer": "assertThrows() returns the exception for further assertion. Verify both type AND message. For mocks throwing: when().thenThrow() or doThrow().when() for void methods.",
     "keyPoints": [
-      "assertThrows() returns the exception \u2014 always capture it",
+      "assertThrows() returns the exception — always capture it",
       "Assert both exception type AND message when message is part of the contract",
       "thenThrow() for non-void mocked methods",
       "doThrow().when() for void mocked methods",
@@ -383,7 +383,7 @@
     "followUps": [
       {
         "question": "How do you test that no exception is thrown?",
-        "answerHint": "assertDoesNotThrow(() -> service.validOperation()). Or simply let the test pass \u2014 if no exception occurs, the test passes naturally."
+        "answerHint": "assertDoesNotThrow(() -> service.validOperation()). Or simply let the test pass — if no exception occurs, the test passes naturally."
       },
       {
         "question": "What is the difference between assertThrows and assertThrowsExactly?",
@@ -391,8 +391,8 @@
       }
     ],
     "mistakesToAvoid": [
-      "Using @Test(expected=X) \u2014 cannot assert on exception details",
-      "Catching the exception in a try/catch inside the test \u2014 masks failures",
+      "Using @Test(expected=X) — cannot assert on exception details",
+      "Catching the exception in a try/catch inside the test — masks failures",
       "Not asserting the message when it's part of the API contract"
     ]
   },
@@ -424,9 +424,9 @@
       }
     ],
     "mistakesToAvoid": [
-      "Thread.sleep() in async tests \u2014 flaky and slow",
-      "Testing the @KafkaListener method directly without a real message \u2014 misses deserialization and headers",
-      "Not resetting consumer offsets between tests \u2014 causes message replay"
+      "Thread.sleep() in async tests — flaky and slow",
+      "Testing the @KafkaListener method directly without a real message — misses deserialization and headers",
+      "Not resetting consumer offsets between tests — causes message replay"
     ]
   },
   {
@@ -437,19 +437,19 @@
     "difficulty": "advanced",
     "question": "How do you introduce tests into a legacy codebase with no existing test coverage?",
     "interviewerIntent": "A practical challenge in every enterprise team. Candidates who know characterization tests and the strangler fig pattern show real-world experience.",
-    "answer": "I follow a safe approach: first, identify the riskiest parts \u2014 code that changes frequently and has no tests. Second, write characterization tests (also called approval tests) \u2014 tests that document current behavior without judgment. These fail if behavior changes, giving a safety net. Third, when modifying code, write a test for the specific behavior I'm changing BEFORE changing it \u2014 so I know the test was green, then red after my change, then green again. Fourth, extract dependencies to interfaces to enable mocking. I avoid trying to get 100% coverage of legacy code immediately \u2014 instead, test grows as code is touched. The Strangler Fig pattern: add tests at the seams (public API entry points) first.",
+    "answer": "I follow a safe approach: first, identify the riskiest parts — code that changes frequently and has no tests. Second, write characterization tests (also called approval tests) — tests that document current behavior without judgment. These fail if behavior changes, giving a safety net. Third, when modifying code, write a test for the specific behavior I'm changing BEFORE changing it — so I know the test was green, then red after my change, then green again. Fourth, extract dependencies to interfaces to enable mocking. I avoid trying to get 100% coverage of legacy code immediately — instead, test grows as code is touched. The Strangler Fig pattern: add tests at the seams (public API entry points) first.",
     "shortAnswer": "Characterization tests first (document current behavior). Add tests for what you're about to change. Extract interfaces to enable mocking. Grow coverage as code is touched, not all at once.",
     "keyPoints": [
       "Characterization tests capture current behavior, not desired behavior",
       "Write test BEFORE touching legacy code, not after",
       "Seam points: public methods, interface boundaries",
-      "Avoid @Spy on legacy classes \u2014 extract interfaces instead",
-      "Don't aim for 100% legacy coverage \u2014 focus on high-risk, high-change areas"
+      "Avoid @Spy on legacy classes — extract interfaces instead",
+      "Don't aim for 100% legacy coverage — focus on high-risk, high-change areas"
     ],
     "followUps": [
       {
         "question": "What is Michael Feathers' definition of a 'seam'?",
-        "answerHint": "A place in code where behavior can be changed without modifying the code in that place \u2014 typically an interface, constructor parameter, or method override point."
+        "answerHint": "A place in code where behavior can be changed without modifying the code in that place — typically an interface, constructor parameter, or method override point."
       },
       {
         "question": "How do you handle static method calls in legacy code that need to be tested?",
@@ -457,9 +457,9 @@
       }
     ],
     "mistakesToAvoid": [
-      "Refactoring legacy code before writing tests \u2014 you have no safety net",
+      "Refactoring legacy code before writing tests — you have no safety net",
       "Writing tests that pass by checking what the broken code does",
-      "Trying to test everything at once \u2014 causes analysis paralysis"
+      "Trying to test everything at once — causes analysis paralysis"
     ]
   },
   {
@@ -470,11 +470,11 @@
     "difficulty": "beginner",
     "question": "What is the AAA pattern in unit testing and why does it matter?",
     "interviewerIntent": "Basic test structure knowledge. Tests without clear structure are hard to read and maintain. AAA is the industry standard.",
-    "answer": "AAA stands for Arrange-Act-Assert. Arrange: set up the preconditions and inputs (create objects, stub mocks, define expected values). Act: invoke the method under test \u2014 ideally one line. Assert: verify the outcome (return value, exception thrown, or side effect via verify()). The pattern matters because it makes tests readable as mini-specifications: here's the context, here's the action, here's what should happen. Tests that mix arrangement and assertion throughout are confusing. I enforce AAA with blank lines or comments between sections. The Act section should be exactly one call \u2014 if it's multiple calls, you're testing a workflow, not a unit.",
-    "shortAnswer": "Arrange (setup) \u2192 Act (one call) \u2192 Assert (verify outcome). Makes tests readable as specs. Act = one line. Mix of all three = hard to read.",
+    "answer": "AAA stands for Arrange-Act-Assert. Arrange: set up the preconditions and inputs (create objects, stub mocks, define expected values). Act: invoke the method under test — ideally one line. Assert: verify the outcome (return value, exception thrown, or side effect via verify()). The pattern matters because it makes tests readable as mini-specifications: here's the context, here's the action, here's what should happen. Tests that mix arrangement and assertion throughout are confusing. I enforce AAA with blank lines or comments between sections. The Act section should be exactly one call — if it's multiple calls, you're testing a workflow, not a unit.",
+    "shortAnswer": "Arrange (setup) → Act (one call) → Assert (verify outcome). Makes tests readable as specs. Act = one line. Mix of all three = hard to read.",
     "keyPoints": [
       "Arrange: all setup before the action",
-      "Act: single method invocation \u2014 one line",
+      "Act: single method invocation — one line",
       "Assert: verify outcome, not implementation",
       "Blank lines between sections improve readability",
       "Given-When-Then is equivalent BDD terminology"
@@ -490,9 +490,65 @@
       }
     ],
     "mistakesToAvoid": [
-      "Multiple Act invocations in one test \u2014 tests multiple things",
+      "Multiple Act invocations in one test — tests multiple things",
       "Assertions mixed into Arrange section",
       "Using verify() when the return value is the real assertion"
+    ]
+  },
+  {
+    "id": "interview-test-adv-01",
+    "type": "ORAL_ANSWER",
+    "topic": "testing",
+    "subtopic": "Integration Tests",
+    "difficulty": "senior",
+    "question": "What should not be mocked in an integration test?",
+    "interviewerIntent": "Check testing strategy judgment",
+    "answer": "I avoid mocking components whose real integration behavior is what the test must verify.\n\nFor a repository test, I prefer a real database environment, often using Testcontainers. For an HTTP integration test, I exercise serialization, validation, security and persistence together.\n\nI mock only external boundaries that are outside the scope of the test.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-test-adv-02",
+    "type": "ORAL_ANSWER",
+    "topic": "testing",
+    "subtopic": "Test Strategies",
+    "difficulty": "senior",
+    "question": "What is the difference between a unit test and a component test?",
+    "interviewerIntent": "Verify test taxonomy understanding",
+    "answer": "A unit test isolates a small unit of behavior and normally runs without infrastructure.\n\nA component test exercises a deployable service or meaningful application slice through its public interface while replacing external systems.\n\nComponent tests give more confidence than heavily mocked unit tests while remaining faster and more stable than full end-to-end tests.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-test-adv-03",
+    "type": "ORAL_ANSWER",
+    "topic": "testing",
+    "subtopic": "Kafka Testing",
+    "difficulty": "senior",
+    "question": "How do you test Kafka consumers?",
+    "interviewerIntent": "Test Kafka testing strategy",
+    "answer": "I test the business handler independently first.\n\nThen I add an integration test with a real Kafka-compatible environment to verify serialization, topic configuration, consumer behavior and offset handling.\n\nI also test duplicate delivery, retry behavior, malformed messages and dead-letter routing.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-test-adv-04",
+    "type": "ORAL_ANSWER",
+    "topic": "testing",
+    "subtopic": "Flaky Tests",
+    "difficulty": "senior",
+    "question": "What makes a test flaky?",
+    "interviewerIntent": "Check test reliability awareness",
+    "answer": "A flaky test depends on uncontrolled conditions such as timing, execution order, shared state, real clocks, random data, external networks or asynchronous operations without deterministic synchronization.\n\nThe solution is not usually more retries. The solution is controlling those dependencies.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
     ]
   }
 ]

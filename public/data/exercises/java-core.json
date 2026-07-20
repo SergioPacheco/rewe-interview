@@ -2788,5 +2788,61 @@
     "answer": "None of the above",
     "explain": "The add() and get() methods are available on ArrayList. However, ArrayList uses size rather than length to get the number of elements. Therefore, Option D is correct. If length was changed to size, Option B would compile if put in the blank. Option A still wouldn’t compile in the blank because a cas",
     "code": "forgot to include the data type. Which of the following reference types can fill in the blank to complete this method? public static void secret( ____________mystery) {\n  mystery.add(\"metal\");\nString str = mystery.get(0);\nint num = mystery.length();\n}"
+  },
+  {
+    "id": "interview-jvm-01",
+    "type": "ORAL_ANSWER",
+    "topic": "collections",
+    "subtopic": "Memory Management",
+    "difficulty": "senior",
+    "question": "What is a memory leak in Java if Java has garbage collection?",
+    "interviewerIntent": "Check JVM memory understanding",
+    "answer": "A Java memory leak happens when objects are no longer useful but remain reachable, so the garbage collector cannot reclaim them.\n\nCommon causes include static collections, unbounded caches, listeners that are never removed, ThreadLocal values and queues that grow without limits.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jvm-02",
+    "type": "ORAL_ANSWER",
+    "topic": "collections",
+    "subtopic": "Memory Management",
+    "difficulty": "senior",
+    "question": "How would you investigate an OutOfMemoryError?",
+    "interviewerIntent": "Test production troubleshooting skills",
+    "answer": "I would first identify which memory area failed: heap, metaspace, direct buffer or native memory.\n\nI would preserve evidence by capturing the heap dump, GC logs and container metrics. Then I would inspect dominant objects, retention paths and allocation growth using tools such as Eclipse MAT, JFR or a profiler.\n\nIncreasing the heap without understanding the retention pattern would only postpone the incident.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jvm-03",
+    "type": "ORAL_ANSWER",
+    "topic": "collections",
+    "subtopic": "Concurrency",
+    "difficulty": "senior",
+    "question": "What is the difference between volatile and synchronized?",
+    "interviewerIntent": "Check concurrency fundamentals",
+    "answer": "`volatile` guarantees visibility of the latest value and restricts reordering around that variable, but it does not make compound operations atomic.\n\n`synchronized` provides mutual exclusion and visibility. For example, `counter++` is still unsafe with only volatile because it is a read-modify-write operation.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jvm-04",
+    "type": "ORAL_ANSWER",
+    "topic": "collections",
+    "subtopic": "Virtual Threads",
+    "difficulty": "senior",
+    "question": "When would you use virtual threads?",
+    "interviewerIntent": "Test Java 21 knowledge",
+    "answer": "Virtual threads are useful for applications with many concurrent blocking I/O operations, such as HTTP or database calls.\n\nThey do not make CPU-intensive work faster, and they do not remove external limits such as database connection-pool size. I would also check for thread pinning and avoid introducing them without measuring the workload.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

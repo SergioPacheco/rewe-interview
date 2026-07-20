@@ -94,6 +94,18 @@
       {
         "heading": "The goal",
         "content": "<strong>Goal:</strong> Reduce coupling between high-level business logic and low-level infrastructure details by introducing an interface between them.\n\n<strong>Key insight:</strong> The interface is defined BY the business layer (what it needs), NOT by the infrastructure (what it offers). This INVERTS the dependency — infrastructure depends on business abstractions.\n\n<strong>Connection to DI (Dependency Injection):</strong>\n• DIP = the PRINCIPLE (depend on abstractions)\n• DI = the TECHNIQUE (provide implementations externally)\n• Spring/CDI = the CONTAINER that wires them together\n\n<pre><code>// In Spring Boot, DIP + DI work together:\n@Service\nclass DeliveryService {\n    private final DeliveryRepository repo;  // DIP: depends on interface\n\n    DeliveryService(DeliveryRepository repo) {  // DI: Spring injects impl\n        this.repo = repo;\n    }\n}</code></pre>\n\n<strong>Credit:</strong> Visual metaphors inspired by <a href=\"https://medium.com/backticks-tildes/the-s-o-l-i-d-principles-in-pictures-b34ce2f1e898\" target=\"_blank\" style=\"color: var(--blue);\">Ugonna Thelma's \"SOLID Principles in Pictures\"</a>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers apply SOLID pragmatically — they know when to follow the principles and when following them creates unnecessary abstraction.\n\nKey insight: SOLID principles are guidelines for managing change. If nothing changes, the abstraction has no value.\n\n• SRP: 'One reason to change' — but don't split a 20-line class into 5 classes preemptively\n• OCP: Open for extension — but only at the points where you KNOW extension will happen\n• LSP: Violations usually indicate wrong inheritance hierarchy — fix the model, not the code\n• ISP: Split interfaces when you have real consumers that need different subsets\n• DIP: Invert dependencies at architectural boundaries — not between every class"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "SOLID in TRAB logistics:\n\n• SRP: RouteCalculator calculates. RouteValidator validates. RoutePersister persists. Each changes for different reasons.\n• OCP: Adding a new carrier (DHL, Hermes) should not modify existing carrier code → carrier interface + implementations\n• LSP: An ExpressDelivery must honor all guarantees of a Delivery — adding constraints that callers don't expect breaks substitution\n• ISP: The driver app needs DriverDeliveryView (location, next stop). The warehouse needs WarehouseDeliveryView (full manifest). One interface doesn't serve both.\n• DIP: The domain layer defines DeliveryRepository interface. The infrastructure layer provides PostgresDeliveryRepository. Domain doesn't know about PostgreSQL."
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When SOLID becomes over-engineering:\n\n• Creating interfaces for classes with exactly one implementation and no test-double need\n• Splitting a cohesive 50-line class into 5 files to satisfy SRP mechanically\n• Adding abstraction layers 'in case we need to switch databases' when you never will\n• DIP everywhere — injecting a DateProvider just to unit-test time-dependent code when a test clock suffices"
       }
     ],
     "topic": "solid",

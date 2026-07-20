@@ -49,6 +49,18 @@
       {
         "heading": "Top interview questions and answers",
         "content": "<strong>\"PUT vs POST?\"</strong>\nPOST creates a new resource (server assigns ID). PUT replaces a resource at a known URL.\nPOST /deliveries → 201 + Location header.\nPUT /deliveries/4567 → 200 (replaced) or 201 (created at that URL).\n\n<strong>\"How do you handle versioning?\"</strong>\nURL path versioning (/v1/, /v2/) for clarity. Both versions delegate to the same business logic. Version adapters handle request/response transformation. Never duplicate business code.\n\n<strong>\"How do you secure a REST API?\"</strong>\n• Authentication: JWT/OAuth2 tokens in Authorization header\n• Authorization: role/permission checks in the business layer\n• Input validation: Bean Validation + max sizes + parameterized queries\n• Rate limiting: per-client quotas (API gateway)\n• HTTPS: always (never plain HTTP in production)\n\n<strong>\"REST vs GraphQL?\"</strong>\nREST: simpler, cacheable, well-understood. Better for CRUD and standard APIs.\nGraphQL: flexible queries, reduces over/under-fetching. Better for complex UIs with varied data needs.\nFor REWE transport logistics: REST is the standard choice (well-defined resources, predictable patterns).\n\n<strong>\"What makes an API 'RESTful'?\"</strong>\nStateless, resource-oriented, proper HTTP verbs, proper status codes, HATEOAS (links in responses — often skipped in practice). The pragmatic answer: \"We follow REST conventions for verbs and status codes, resource-oriented URLs, and stateless communication. We don't implement full HATEOAS because the ROI is low for internal APIs.\""
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers design APIs for evolution, not just for today's requirements.\n\nKey distinctions:\n• API versioning strategy must be decided BEFORE the first consumer exists\n• Idempotency is not optional for any operation that can be retried\n• Pagination must use stable ordering — offset/limit breaks with concurrent inserts\n• Error responses should help the client recover, not just report failure\n• Rate limiting, circuit breaking and timeout budgets are API design concerns, not afterthoughts"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's API ecosystem:\n\n• The delivery tracking API serves mobile apps, warehouse dashboards and external carriers — all with different needs\n• Versioning (v1, v2) allows evolving the API without breaking existing consumers during rolling deploys\n• Webhook callbacks notify external carriers of delivery status changes — requiring idempotent receivers\n• Bulk endpoints (POST /deliveries/batch) handle morning route planning imports (500+ deliveries at once)\n• API Gateway handles authentication, rate limiting and routing to the correct service version"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When REST is not the best choice:\n\n• Real-time bidirectional communication (use WebSocket or SSE)\n• High-frequency internal service communication where HTTP overhead matters (use gRPC)\n• Event notification between services (use messaging — Kafka, RabbitMQ)\n• File uploads >100MB (use streaming or chunked upload protocols)\n• When you need strong typing across service boundaries (consider gRPC + protobuf)"
       }
     ],
     "topic": "rest"

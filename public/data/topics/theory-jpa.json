@@ -34,6 +34,18 @@
       {
         "heading": "Query approaches compared",
         "content": "<pre><code>// 1. JPQL — object-oriented SQL (portable, type-safe-ish)\n@Query(\"SELECT d FROM Delivery d WHERE d.status = :status AND d.scheduledAt > :after\")\nList&lt;Delivery&gt; findPlanned(@Param(\"status\") DeliveryStatus s, @Param(\"after\") LocalDateTime t);\n\n// 2. Criteria API — programmatic, fully type-safe (verbose)\nCriteriaBuilder cb = em.getCriteriaBuilder();\nCriteriaQuery&lt;Delivery&gt; q = cb.createQuery(Delivery.class);\nRoot&lt;Delivery&gt; d = q.from(Delivery.class);\nq.where(cb.equal(d.get(\"status\"), status),\n        cb.greaterThan(d.get(\"scheduledAt\"), after));\n// Good for dynamic filters (optional parameters)\n\n// 3. Native SQL — when you need DB-specific features\n@Query(value = \"\"\"\n    SELECT d.* FROM logistics.delivery d\n    WHERE d.status = :status\n    AND d.scheduled_at > :after\n    ORDER BY d.scheduled_at\n    LIMIT :limit\n    \"\"\", nativeQuery = true)\nList&lt;Delivery&gt; findPlannedNative(...);</code></pre>\n\n<strong>When to use each:</strong>\n• JPQL: standard queries, portable, works with entity names\n• Criteria: dynamic filters (search forms with optional fields)\n• Native: PostgreSQL-specific (JSONB, DISTINCT ON, window functions, CTEs)\n\n<strong>Key rule:</strong> NEVER `SELECT *` in native queries for performance-critical paths. Project only needed columns into DTOs."
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers understand that JPA/Hibernate is an abstraction with costs.\n\nKey distinctions:\n• The persistence context is a first-level cache — understanding its lifecycle prevents bugs\n• LazyInitializationException is a design problem, not a framework bug\n• N+1 queries are the #1 performance issue — detected through query counting, not response time\n• Dirty checking has a cost proportional to managed entities — large batches should use stateless sessions or raw JDBC\n• Entity relationships define the object graph — they don't define how you should query data"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's logistics domain:\n\n• Delivery entities with many relationships (route, driver, stops, events) are prime candidates for N+1\n• Listing endpoints use DTO projections — never full entities\n• Batch operations (update 10K delivery statuses) bypass JPA entirely — use JDBC batch with native SQL\n• The persistence context is cleared between batch iterations to prevent memory exhaustion\n• Optimistic locking (@Version) prevents concurrent route assignment conflicts"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When NOT to use JPA:\n\n• Bulk operations (>1000 rows) — use JDBC batch or jOOQ\n• Complex reporting queries with aggregations — use native SQL or a dedicated read model\n• Event sourcing — JPA's entity model conflicts with append-only event stores\n• High-frequency writes where dirty checking overhead is measurable\n• Simple CRUD with 2-3 tables where the abstraction adds complexity without benefit"
       }
     ],
     "topic": "jpa"

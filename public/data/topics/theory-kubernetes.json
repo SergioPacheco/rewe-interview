@@ -32,6 +32,18 @@
       {
         "heading": "Graceful shutdown",
         "content": "When Kubernetes terminates a pod (deploy, scale-down), your app must shut down cleanly:\n\n<pre><code># Spring Boot application.yml\nserver:\n  shutdown: graceful\nspring:\n  lifecycle:\n    timeout-per-shutdown-phase: 30s</code></pre>\n\n<strong>Shutdown sequence (note: some steps may overlap):</strong>\n1. K8s sends SIGTERM to the pod\n2. Pod begins removal from Service endpoints (propagation takes time)\n3. preStop hook executes (if configured — commonly a short sleep to allow endpoint propagation)\n4. App stops accepting new requests\n5. App finishes in-flight requests (up to 30s)\n6. App closes DB connections, flushes buffers, commits Kafka offsets\n7. App exits\n8. If still running after <code>terminationGracePeriodSeconds</code> → SIGKILL (forced)\n\n<strong>Important:</strong> Steps 1 and 2 happen concurrently. Requests may still arrive briefly after SIGTERM because endpoint removal propagates asynchronously through the cluster. A <code>preStop</code> sleep (e.g., 5s) gives the endpoint removal time to propagate.\n\n<strong>What goes wrong without graceful shutdown:</strong>\n• In-flight requests get 502 errors\n• Kafka offsets not committed → messages reprocessed\n• DB transactions not committed → data loss\n• File handles not closed → corruption"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers use Kubernetes to solve operational problems, not to add resume keywords.\n\nKey distinctions:\n• Kubernetes is an operational tax — it only makes sense when the benefits exceed the cost\n• Pod resource requests affect scheduling; limits prevent noisy neighbors — both must be tuned\n• Liveness probes that include external dependencies cause cascading restarts during outages\n• Graceful shutdown requires preStop hooks + readiness removal + in-flight request draining\n• Autoscaling needs stable metrics — don't scale on CPU if your bottleneck is database connections"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's Kubernetes cluster:\n\n• Delivery services scale horizontally during morning route-planning peaks (2→8 pods)\n• Pod Disruption Budgets ensure at least 2 replicas survive node maintenance\n• Resource requests are tuned based on profiling: most services need 512Mi–1Gi memory\n• Rolling updates with maxUnavailable=0 ensure zero-downtime deployments\n• Namespace separation: logistics, warehouse, drivers — each with resource quotas"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When NOT to use Kubernetes:\n\n• Single service, single team, simple deployment — a VM or PaaS is simpler\n• When the team has <3 services and no operational expertise\n• For batch jobs that run once daily — serverless or managed job schedulers are simpler\n• When the overhead of maintaining a cluster exceeds the benefit of orchestration\n• If you can't afford a dedicated platform team or managed Kubernetes service"
       }
     ]
   }

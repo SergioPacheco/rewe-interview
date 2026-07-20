@@ -109,6 +109,18 @@
       {
         "heading": "Spring Boot Actuator",
         "content": "Actuator provides production-ready endpoints for monitoring:\n\n<pre><code># application.yml\nmanagement:\n  endpoints:\n    web:\n      exposure:\n        include: health, info, metrics, prometheus\n  endpoint:\n    health:\n      show-details: when-authorized\n  health:\n    db:\n      enabled: true\n    kafka:\n      enabled: true</code></pre>\n\n<strong>Key endpoints:</strong>\n<table>\n<tr><th>Endpoint</th><th>Purpose</th><th>Kubernetes probe</th></tr>\n<tr><td><code>/actuator/health/liveness</code></td><td>Is app alive?</td><td>livenessProbe</td></tr>\n<tr><td><code>/actuator/health/readiness</code></td><td>Can accept traffic?</td><td>readinessProbe</td></tr>\n<tr><td><code>/actuator/metrics</code></td><td>Application metrics</td><td>Prometheus scrape</td></tr>\n<tr><td><code>/actuator/info</code></td><td>Build info, git commit</td><td>Dashboard</td></tr>\n</table>\n\n<strong>Custom health indicator:</strong>\n<pre><code>@Component\npublic class KafkaHealthIndicator implements HealthIndicator {\n\n    private final KafkaTemplate&lt;String, ?&gt; kafka;\n\n    @Override\n    public Health health() {\n        try {\n            kafka.partitionsFor(\"delivery-events\");\n            return Health.up().withDetail(\"topic\", \"reachable\").build();\n        } catch (Exception e) {\n            return Health.down(e).build();\n        }\n    }\n}</code></pre>\n\n<strong>Java EE equivalent:</strong> MicroProfile Health (<code>/health/live</code>, <code>/health/ready</code>). Same concept, different API.\n\n<strong>REWE context:</strong> Kubernetes uses these probes to decide whether to send traffic to a pod (readiness) or restart it (liveness). Critical for transport logistics where downtime means delayed deliveries."
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers don't just know how to configure Spring Boot — they understand the proxy model, transaction boundaries, and the cost of auto-configuration magic.\n\nKey distinctions:\n• Understanding self-invocation and why @Transactional fails on internal calls\n• Knowing when @Async creates more problems than it solves\n• Recognizing that 'convention over configuration' means you must understand the conventions\n• Evaluating startup time, memory footprint and cold-start implications for serverless"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's logistics platform, Spring Boot services handle route planning, delivery tracking and warehouse communication.\n\nConsider:\n• How would you structure a service that processes 20K delivery events/hour?\n• When would Spring WebFlux provide benefit over Spring MVC for this workload?\n• How would you handle graceful shutdown when a Kafka consumer is mid-batch?\n• What monitoring (Actuator, Micrometer) is essential for a logistics service?"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When NOT to use Spring Boot:\n\n• Serverless functions where cold start matters (consider Quarkus/Micronaut with GraalVM)\n• Ultra-low-latency systems where GC pauses or reflection overhead is unacceptable\n• Simple CLI tools where a DI framework adds unnecessary complexity\n• When the team needs fine-grained control over every dependency and configuration\n• Kotlin-first projects where Ktor provides a more idiomatic experience"
       }
     ],
     "topic": "spring",

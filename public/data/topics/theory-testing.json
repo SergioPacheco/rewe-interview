@@ -42,6 +42,18 @@
       {
         "heading": "Testing Kafka with EmbeddedKafka",
         "content": "<pre><code>@SpringBootTest\n@EmbeddedKafka(topics = \"delivery-events\")\nclass DeliveryEventIntegrationTest {\n\n    @Autowired private KafkaTemplate&lt;String, DeliveryEvent&gt; producer;\n    @Autowired private DeliveryEventConsumer consumer;\n\n    @Test\n    void shouldProcessDeliveryCompletedEvent() {\n        var event = new DeliveryCompletedEvent(\"4567\", Instant.now(), 12);\n\n        producer.send(\"delivery-events\", \"4567\", event);\n\n        // Wait for async processing\n        await().atMost(5, SECONDS).untilAsserted(() ->\n            assertTrue(invoiceRepo.existsByDeliveryId(\"4567\"))\n        );\n    }\n}</code></pre>\n\n<strong>Test levels for Kafka:</strong>\n• Unit: mock KafkaTemplate, verify send() called with correct args\n• Integration: EmbeddedKafka or Testcontainers Kafka\n• Don't test: Kafka itself (it works — test YOUR logic)"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers design testable systems. Testing is a design feedback mechanism, not just verification.\n\nKey distinctions:\n• If a class is hard to test, the design is wrong — not the test framework\n• The test pyramid exists because fast feedback matters more than exhaustive integration coverage\n• Test names should describe behavior, not implementation: 'should reject late delivery' not 'testMethod1'\n• Mocking everything creates brittle tests coupled to implementation — mock only at architectural boundaries\n• Integration tests prove the wiring works; unit tests prove the logic works — both are needed"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's test strategy:\n\n• Unit tests cover route optimization algorithms (pure logic, fast, deterministic)\n• Integration tests verify Kafka consumer behavior with embedded broker\n• Contract tests ensure the delivery API doesn't break the mobile app\n• Performance tests validate that route planning completes within 30s for 500 deliveries\n• Testcontainers spin up PostgreSQL for repository tests — no mocking the database"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When NOT to write tests:\n\n• Auto-generated boilerplate (getters/setters, trivial delegation)\n• Third-party library internals (test YOUR usage, not their implementation)\n• UI layout details that change frequently (test behavior, not pixel position)\n• Prototypes and spikes that will be thrown away\n• Configuration files (validate via integration tests, not unit tests)"
       }
     ],
     "topic": "testing",

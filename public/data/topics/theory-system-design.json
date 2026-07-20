@@ -52,6 +52,18 @@
       {
         "heading": "What to Monitor in Logistics",
         "content": "<ul><li>Deliveries stuck in a state > N minutes</li><li>Routes not assigned before departure time</li><li>Consumer lag on critical topics</li><li>Duplicate assignment attempts</li><li>Delay between physical event and system update</li><li>Reconciliation queue depth</li></ul><p>A technically healthy service can still represent a broken business process.</p>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers design systems for failure, not just for success.\n\nKey distinctions:\n• Start with requirements and constraints, not with technology choices\n• Distinguish between functional requirements (what it does) and non-functional (how well)\n• Every box in a diagram is an operational burden — fewer boxes is often better\n• Consistency, availability and partition tolerance are real trade-offs, not theoretical concepts\n• The best architecture is the simplest one that meets current requirements with room to evolve"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "TRAB transport logistics system design scenarios:\n\n• Delivery Tracking: real-time location updates from 500 drivers, visible to warehouses and customers\n• Route Optimization: batch computation every morning + real-time adjustments for delays\n• Warehouse Communication: reliable event delivery for inventory updates across 10K stores\n• External Carrier Integration: third-party APIs with varying reliability and response times\n• Offline Driver App: drivers in areas without connectivity, sync when reconnected"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When NOT to use common patterns:\n\n• Microservices: when team is <8 people, when domain boundaries are unclear, when you can't afford operational complexity\n• Event sourcing: when simple CRUD works, when you don't need audit history, when eventual consistency is unacceptable\n• CQRS: when read and write models are nearly identical, when the complexity isn't justified by scale\n• API Gateway: when you have <3 services, when adding a single point of failure\n• Distributed cache: when database is fast enough, when cache invalidation complexity exceeds the latency saved"
       }
     ],
     "topic": "system-design",

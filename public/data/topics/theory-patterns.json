@@ -42,6 +42,18 @@
       {
         "heading": "What it solves",
         "content": "When an object has many optional parameters and telescoping constructors become unreadable.\n\n<pre><code>// Problem: constructor with 8 parameters\nnew Delivery(driverId, routeId, scheduledAt, priority, maxStops, vehicleType, notes, customerId);\n// Which parameter is which? Easy to swap two strings by mistake.\n\n// Solution: Builder\nDelivery delivery = Delivery.builder()\n    .driverId(\"D-42\")\n    .routeId(\"R-7\")\n    .scheduledAt(LocalDateTime.now().plusHours(2))\n    .priority(Priority.HIGH)\n    .maxStops(15)\n    .vehicleType(VehicleType.VAN)\n    .notes(\"Fragile items\")\n    .build();\n\n// Implementation (or use Lombok @Builder)\npublic class Delivery {\n    private final String driverId;\n    private final String routeId;\n    // ... all fields final\n\n    private Delivery(Builder builder) {\n        this.driverId = builder.driverId;\n        this.routeId = builder.routeId;\n        // ...\n    }\n\n    public static Builder builder() { return new Builder(); }\n\n    public static class Builder {\n        private String driverId;\n        private String routeId;\n        // ...\n        public Builder driverId(String id) { this.driverId = id; return this; }\n        public Builder routeId(String id) { this.routeId = id; return this; }\n        public Delivery build() { return new Delivery(this); }\n    }\n}</code></pre>\n\n<strong>In practice:</strong> Use Lombok's `@Builder` or Java records (for simple cases). Hand-write only when you need validation in `build()`."
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers know design patterns as vocabulary for communication, not as mandatory architecture.\n\nKey distinctions:\n• The value of knowing patterns is recognizing WHEN a problem calls for one — not applying them preemptively\n• Every pattern has a cost (indirection, complexity) — justify it with a real extensibility need\n• In interview scenarios, explain WHY you chose the pattern and what alternative you rejected\n• The most commonly asked patterns in Senior interviews: Strategy, Observer, Template Method, Builder, Factory\n• Framework patterns (Dependency Injection, Proxy, Template Method) are more relevant than GoF trivia"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "Patterns in TRAB logistics:\n\n• Strategy: different routing algorithms (shortest, cheapest, greenest) selected per delivery type\n• Observer: delivery status changes notify warehouse, driver app, customer portal, and analytics\n• Template Method: document generation (delivery note, invoice, return label) — same workflow, different content\n• Builder: complex Route objects with many optional parameters (time windows, vehicle constraints, priority)\n• Factory: creating appropriate Carrier implementation based on delivery destination and service level"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When NOT to use patterns:\n\n• When the simple solution (if/else, direct method call) is clear and unlikely to change\n• When introducing a pattern for a single implementation (no variation = no pattern needed)\n• When the team doesn't recognize the pattern — it becomes obfuscation, not communication\n• When you're adding patterns to impress rather than to solve a real extensibility problem"
       }
     ],
     "topic": "patterns",

@@ -129,6 +129,18 @@
       {
         "heading": "D — Dependency Inversion Principle",
         "content": "High-level business logic depends on <strong>abstractions</strong>, not on low-level infrastructure details.\n\n<pre><code>// ❌ Business depends on infrastructure:\n@Service\nclass DeliveryService {\n    private final KafkaTemplate kafka;   // knows about Kafka!\n    private final JdbcTemplate jdbc;     // knows about JDBC!\n}\n\n// ✅ Business depends on abstractions:\n@Service\nclass DeliveryService {\n    private final DeliveryRepository repo;            // interface\n    private final LogisticsEventPublisher events;     // interface\n}\n\n// Infrastructure IMPLEMENTS the abstractions:\n@Component class JpaDeliveryRepository implements DeliveryRepository { ... }\n@Component class KafkaEventPublisher implements LogisticsEventPublisher { ... }</code></pre>\n\n<strong>Key insight:</strong> The interface is defined BY the business layer (what it needs). Infrastructure implements it (how it's done). This INVERTS the dependency direction — infrastructure depends on business abstractions, not the reverse.\n\n<strong>DIP ≠ DI:</strong>\n• DIP = principle (depend on abstractions)\n• DI = technique (provide dependencies externally)\n• CDI/Spring = containers that implement DI"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers use OOP as a tool for managing complexity — not as a religion.\n\nKey distinctions:\n• Polymorphism is the most powerful OOP concept for interview scenarios — it enables extensibility without modification\n• Inheritance creates coupling — prefer composition unless there's a genuine 'is-a' relationship\n• Encapsulation is about protecting invariants, not just making fields private\n• The best OO designs have high cohesion (class does one thing well) and low coupling (few dependencies)\n• Design patterns are named solutions to OOP problems — learn them as vocabulary, not as mandatory architecture"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's logistics domain:\n\n• Delivery types (Express, Standard, Pickup) share behavior but vary in pricing and routing → polymorphism\n• Route calculation strategies (shortest, fastest, cheapest) → Strategy pattern with polymorphic dispatch\n• A Delivery is NOT a Route — it HAS a route → composition, not inheritance\n• Vehicle types (truck, van, cargo bike) share a common interface but differ in capacity constraints"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When OOP is not the best approach:\n\n• Pure data transformations (functional style is clearer)\n• Simple scripts and glue code where classes add unnecessary ceremony\n• Stateless utility functions that don't benefit from encapsulation\n• Event processing pipelines where data flows through functions\n• When the domain has no meaningful state or behavior to encapsulate"
       }
     ],
     "topic": "oop"

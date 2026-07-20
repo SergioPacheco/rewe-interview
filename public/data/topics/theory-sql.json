@@ -58,6 +58,18 @@
       {
         "heading": "Query optimization checklist",
         "content": "<strong>1. SELECT only what you need:</strong>\n<pre><code>-- ❌ SELECT * (loads all columns, including BLOBs)\nSELECT * FROM delivery;\n\n-- ✓ SELECT specific columns\nSELECT id, status, driver_id, scheduled_at FROM delivery;\n\n-- ✓ DTO projection (JPA)\n@Query(\"SELECT new DeliveryDTO(d.id, d.status, d.scheduledAt) FROM Delivery d\")</code></pre>\n\n<strong>2. LIMIT always on user-facing queries:</strong>\n<pre><code>-- ❌ No limit — could return 1 million rows\nSELECT * FROM delivery WHERE status = 'PLANNED';\n\n-- ✓ Always paginate\nSELECT * FROM delivery WHERE status = 'PLANNED'\nORDER BY scheduled_at, id  -- deterministic ordering!\nLIMIT 50 OFFSET 0;</code></pre>\n\n<strong>3. Avoid functions on indexed columns:</strong>\n<pre><code>-- ❌ Index on scheduled_at is NOT used (function wraps the column)\nWHERE EXTRACT(YEAR FROM scheduled_at) = 2026\n\n-- ✓ Range comparison uses index\nWHERE scheduled_at >= '2026-01-01' AND scheduled_at < '2027-01-01'</code></pre>\n\n<strong>4. Prefer EXISTS over IN for large subqueries:</strong>\n<pre><code>-- ❌ IN materializes entire subquery result\nWHERE id IN (SELECT delivery_id FROM stop WHERE status = 'FAILED')\n\n-- ✓ EXISTS stops at first match\nWHERE EXISTS (SELECT 1 FROM stop s WHERE s.delivery_id = d.id AND s.status = 'FAILED')</code></pre>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers don't just write SQL — they read execution plans, understand the query planner's decisions, and design schemas for their access patterns.\n\nKey distinctions:\n• An index that improves one query may degrade writes across the table\n• EXPLAIN ANALYZE is the single most important debugging tool\n• The difference between a 100ms query and a 10s query is often one missing composite index\n• Isolation levels are a trade-off between correctness and throughput, not a default to set and forget\n• Connection pooling, statement timeouts and lock monitoring are production essentials"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's delivery database:\n\n• Route planning queries join deliveries × stops × drivers × time windows\n• Indexes must support both real-time lookups (by driver, by route) and batch reporting (by date range, by warehouse)\n• PostgreSQL's MVCC means long-running reports don't block transactional inserts — but they can bloat the table\n• Partitioning delivery_events by month keeps recent data fast while archiving history\n• The N+1 problem appears when loading route details for a list of deliveries — solved with JOIN FETCH or batch loading"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When NOT to optimize SQL prematurely:\n\n• Don't add indexes before measuring — each index costs write performance and storage\n• Don't denormalize before proving the JOIN is actually the bottleneck\n• Don't use database-level caching when application-level caching (Redis) is more appropriate\n• Don't use SERIALIZABLE isolation unless you can prove the anomaly you're preventing\n• Don't use stored procedures for business logic that changes frequently"
       }
     ],
     "topic": "sql",

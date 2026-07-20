@@ -50,6 +50,18 @@
       {
         "heading": "PrimeNG — like PrimeFaces for Angular",
         "content": "<strong>If you know PrimeFaces (JSF), you know PrimeNG:</strong>\n\n<table>\n<tr><th>PrimeFaces (Java EE)</th><th>PrimeNG (Angular)</th></tr>\n<tr><td>&lt;p:dataTable&gt;</td><td>&lt;p-table&gt;</td></tr>\n<tr><td>&lt;p:dialog&gt;</td><td>&lt;p-dialog&gt;</td></tr>\n<tr><td>&lt;p:autoComplete&gt;</td><td>&lt;p-autoComplete&gt;</td></tr>\n<tr><td>&lt;p:chart&gt;</td><td>&lt;p-chart&gt; (or ECharts)</td></tr>\n<tr><td>&lt;p:calendar&gt;</td><td>&lt;p-datePicker&gt;</td></tr>\n<tr><td>&lt;p:commandButton&gt;</td><td>&lt;p-button&gt;</td></tr>\n<tr><td>LazyDataModel</td><td>[lazy]=\"true\" + (onLazyLoad)</td></tr>\n<tr><td>rendered=\"#{}\"</td><td>*ngIf / @if</td></tr>\n<tr><td>value=\"#{bean.list}\"</td><td>[value]=\"deliveries()\"</td></tr>\n</table>\n\n<strong>Interview answer:</strong> \"I've used PrimeFaces extensively — PrimeNG is the same component library for Angular. The concepts transfer: data tables with lazy loading, dialogs, forms with validation, charts. The API is different but the mental model is identical.\""
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers understand Angular as an opinionated platform for enterprise applications, not just a component framework.\n\nKey distinctions:\n• Signals replace most uses of RxJS for component state — simpler mental model, better performance\n• Change detection strategy (OnPush) is not optional for performance — it should be the default\n• Lazy loading at the route level is the minimum — @defer provides component-level code splitting\n• Standalone components eliminate NgModules — the mental model is simpler but requires explicit imports\n• Testing Angular is about testing behavior through the component's public API, not implementation details"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In a TRAB driver dashboard (Angular frontend):\n\n• Real-time delivery updates via Server-Sent Events, rendered through signals\n• Route visualization with lazy-loaded map component (@defer until visible)\n• Offline capability for drivers in areas without connectivity (service worker + IndexedDB)\n• PrimeNG data tables for warehouse managers with server-side pagination\n• Strict Content Security Policy — no inline scripts, sanitized user input"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When Angular may not be the best choice:\n\n• Simple marketing pages or blogs (static site generator is lighter)\n• Small internal tools where React/Vue's lower ceremony speeds development\n• When the team is primarily backend with limited frontend experience (consider HTMX or server-rendered)\n• Real-time collaborative applications where frameworks with fine-grained reactivity (SolidJS) perform better\n• Mobile-first applications where React Native or Flutter provide better native experience"
       }
     ],
     "topic": "angular",

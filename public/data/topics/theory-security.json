@@ -54,6 +54,18 @@
       {
         "heading": "XSS in Angular",
         "content": "<p>Angular sanitizes by default in templates. But <code>[innerHTML]</code> requires care:</p><pre><code>// Angular sanitizes this automatically\n{{ userInput }}\n\n// This is sanitized but allows safe HTML\n[innerHTML]=\"userContent\"\n\n// ❌ DANGEROUS — bypasses sanitizer\n[innerHTML]=\"bypassSecurityTrustHtml(userInput)\"</code></pre>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers think of security as layers, not as a single gate.\n\nKey distinctions:\n• Authentication (who are you?) and authorization (what can you do?) are separate concerns with separate failure modes\n• OAuth2 is a delegation protocol, not an authentication protocol — OpenID Connect adds identity\n• JWTs are not session tokens — they cannot be revoked individually without a revocation list\n• Input validation at the API boundary prevents injection regardless of framework-level protections\n• Security misconfigurations in containers, clouds and CI/CD are now more common than application-level vulnerabilities"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's security model:\n\n• Drivers authenticate via mobile app (OAuth2 + refresh tokens with short-lived access tokens)\n• Service-to-service: mTLS between internal services, API keys for external carriers\n• Authorization: drivers can only see their own deliveries, warehouse managers see their warehouse only\n• GDPR: driver location data retained for 90 days only, customer data anonymized after delivery completion\n• External carrier API: rate-limited, IP-whitelisted, with request signing for integrity verification"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When NOT to add security complexity:\n\n• Internal-only services behind a service mesh that already handles mTLS\n• Development environments where security friction slows iteration (but never disable in staging)\n• When adding a WAF that blocks legitimate traffic — security that prevents usage is not security\n• Over-engineering session management for a service with no user state"
       }
     ],
     "topic": "security",

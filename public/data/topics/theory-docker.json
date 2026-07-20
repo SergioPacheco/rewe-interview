@@ -40,6 +40,18 @@
       {
         "heading": "Production considerations",
         "content": "Docker Compose is primarily for <strong>local development and CI</strong>.\n\nFor production orchestration, use Kubernetes (or similar). Key differences:\n\n• Compose: single host, no auto-healing, manual scaling\n• Kubernetes: multi-node, self-healing, auto-scaling, rolling updates\n\nCompose is still valuable for:\n• Local development environments\n• Integration test setups (e.g., Testcontainers)\n• CI pipelines that need a full stack"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers understand containers as deployment units, not development environments.\n\nKey distinctions:\n• Image layers affect build time, push time and pull time — optimize the layer order\n• Multi-stage builds are mandatory — never ship build tools in production images\n• Health checks in Docker are for standalone deployments — Kubernetes uses its own probes\n• Container resource limits must match JVM settings (Xmx + metaspace + threads < container memory)\n• Security: never run as root, scan images for vulnerabilities, pin base image versions"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's deployment pipeline:\n\n• Each microservice is a Docker image built in CI, pushed to a private registry\n• Images are immutable — configuration comes from environment variables and ConfigMaps\n• Base images are standardized (eclipse-temurin:21-jre) for consistency and patching\n• Local development uses Docker Compose to replicate PostgreSQL, Kafka and dependent services\n• Image scanning (Trivy/Snyk) runs in CI before any image reaches staging"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When Docker adds unnecessary complexity:\n\n• Local development of a single service that only needs a JVM\n• When native performance is critical and container overhead (though minimal) matters\n• When the team has no operational knowledge of containers and Kubernetes isn't planned\n• For serverless functions where the platform manages the runtime\n• When regulatory requirements mandate specific OS hardening that conflicts with containerization"
       }
     ]
   }

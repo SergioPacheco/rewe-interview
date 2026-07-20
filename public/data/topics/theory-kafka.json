@@ -148,6 +148,18 @@
       {
         "heading": "Solving problems with Kafka",
         "content": "<strong>Problem: \"Was this message processed?\"</strong>\nKafka: check consumer group offset vs message offset. If committed offset ≥ message offset → processed.\n\n<strong>Problem: \"Message processed but result is wrong\"</strong>\nKafka: reset offset to before the problematic message → reprocess with fixed logic. Impossible in ActiveMQ (message already deleted).\n\n<strong>Problem: \"Consumer is slow, messages accumulating\"</strong>\nKafka: add partitions + add consumer instances (horizontal scaling). Monitor consumer lag metric.\n\n<strong>Problem: \"Need to process events in order\"</strong>\nKafka: use partition key = entity ID. All events for same entity go to same partition → guaranteed order within partition.\n\n<strong>Problem: \"One bad message blocks the entire queue\"</strong>\nKafka: send to Dead Letter Topic (DLT) after N retries. Consumer continues with next message. Ops investigates DLT.\n\n<strong>Problem: \"New service needs historical data\"</strong>\nKafka: set consumer offset to 0 (or specific timestamp) → replay all retained events. Build state from scratch.\n\n<strong>Conclusion:</strong> Kafka gives fine-grained control over message processing with guarantees of exactly-once processing (when configured), ordering per partition, and the ability to replay and monitor. While ActiveMQ is adequate for traditional messaging, Kafka excels where high performance, scalability, and advanced real-time data processing are required."
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers understand Kafka as a distributed commit log, not just a message queue.\n\nKey distinctions:\n• Partitions determine parallelism — consumer count is bounded by partition count\n• Consumer group rebalancing is the most common source of production issues\n• Exactly-once semantics only works within Kafka (consume-transform-produce) — not with external sinks\n• Schema evolution is an operational concern from day one, not something to add later\n• Kafka is infrastructure — it requires dedicated operational expertise"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's transport logistics:\n\n• Delivery events (created, dispatched, arrived, delayed) flow through Kafka topics\n• Ordering per route is critical — achieved via partition key on route_id\n• Consumer lag monitoring detects when route planning falls behind\n• Dead letter topics handle poison messages (malformed delivery events) without blocking the main flow\n• Schema Registry ensures producers and consumers agree on event structure during rolling deploys"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When NOT to use Kafka:\n\n• Low volume (<100 events/sec) where a database-backed queue or even REST polling suffices\n• Request-reply patterns where synchronous communication is simpler\n• Teams without operational expertise for broker management, monitoring and troubleshooting\n• When you need complex routing/filtering (RabbitMQ's exchange model may be more appropriate)\n• Transactional outbox scenarios where CDC (Debezium) + simpler messaging works\n• When the entire system runs on a single node"
       }
     ],
     "topic": "kafka"

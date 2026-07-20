@@ -42,6 +42,18 @@
       {
         "heading": "Common thread-safety patterns",
         "content": "<pre><code>// ConcurrentHashMap — thread-safe map (BUT not for compound operations)\nConcurrentHashMap&lt;String, Integer&gt; cache = new ConcurrentHashMap&lt;&gt;();\n\n// ❌ NOT atomic (check-then-act race condition)\nif (!cache.containsKey(key)) {\n    cache.put(key, computeValue()); // another thread might insert between check and put\n}\n\n// ✅ Atomic compound operation\ncache.computeIfAbsent(key, k -> computeValue());\n\n// ✅ Spring: singleton beans are thread-safe IF they have no mutable fields\n@Service\npublic class DeliveryService {\n    private final DeliveryRepository repo; // final = safe\n    // NO mutable instance fields!\n}\n\n// ❌ Dangerous: mutable field in singleton\n@Service\npublic class BadService {\n    private List&lt;String&gt; buffer = new ArrayList&lt;&gt;(); // shared across ALL requests!\n}</code></pre>\n\n<strong>Interview answer:</strong> \"In Spring Boot, services are singletons shared across threads. I ensure thread safety by: (1) using only final immutable fields, (2) keeping mutable state in method-local variables, (3) using atomic operations for shared counters/caches.\""
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers know that concurrency bugs are the hardest to reproduce and the most dangerous in production.\n\nKey distinctions:\n• Thread safety is not about synchronized — it's about managing shared mutable state\n• A race condition may not manifest in testing but appear under production load\n• Thread pools are bounded resources — exhausting them cascades to the entire system\n• CompletableFuture composes well but error handling is non-obvious\n• Virtual Threads (Java 21) eliminate most reasons to use reactive programming for I/O-bound work"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's high-throughput delivery processing:\n\n• Route optimization uses parallel streams for CPU-bound segment calculations\n• Delivery event consumers run with controlled parallelism (Kafka maxPollRecords + thread pool)\n• External API calls (weather, traffic) use CompletableFuture with timeout to avoid blocking\n• Connection pool exhaustion is the #1 concurrency incident — caused by holding connections during external calls\n• Virtual Threads would simplify the codebase by eliminating reactive wrappers for blocking JDBC"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When NOT to add concurrency:\n\n• When the operation is I/O-bound on a single resource (adding threads just creates contention)\n• When the code is already fast enough sequentially\n• When debugging complexity outweighs performance gain\n• When the shared state is too complex to reason about safely\n• When you can solve the problem with batching or caching instead of parallelism"
       }
     ],
     "topic": "concurrency",

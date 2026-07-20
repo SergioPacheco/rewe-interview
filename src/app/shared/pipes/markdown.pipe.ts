@@ -33,6 +33,16 @@ export class MarkdownPipe implements PipeTransform {
 
     let html = value;
 
+    // If already contains HTML block elements, return as-is (already formatted)
+    if (/<(table|div|pre|ul|ol|h[1-6])\b/i.test(html)) {
+      // Still process markdown tables if mixed content
+      html = this.convertMarkdownTables(html);
+      return html;
+    }
+
+    // Markdown tables: | col | col |
+    html = this.convertMarkdownTables(html);
+
     // Fenced code blocks: ```...```
     html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_match, _lang, code) => {
       const highlighted = this.highlightCode(code.trim());
@@ -61,10 +71,10 @@ export class MarkdownPipe implements PipeTransform {
     html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
 
     // Line breaks: double newline = paragraph break, single = <br>
-    // First, protect <pre> blocks
-    const parts = html.split(/(<pre[\s\S]*?<\/pre>)/g);
+    // First, protect <pre> and <table> blocks
+    const parts = html.split(/(<(?:pre|table)[\s\S]*?<\/(?:pre|table)>)/g);
     html = parts.map((part, i) => {
-      if (i % 2 === 1) return part; // Inside <pre>, leave as-is
+      if (i % 2 === 1) return part; // Inside block element, leave as-is
       // Double newlines → paragraph separator
       part = part.replace(/\n\n+/g, '</p><p>');
       // Single newlines → <br>
@@ -73,7 +83,7 @@ export class MarkdownPipe implements PipeTransform {
     }).join('');
 
     // Wrap in paragraph if it doesn't start with block element
-    if (!html.startsWith('<h') && !html.startsWith('<ul') && !html.startsWith('<pre') && !html.startsWith('<p')) {
+    if (!html.startsWith('<h') && !html.startsWith('<ul') && !html.startsWith('<pre') && !html.startsWith('<p') && !html.startsWith('<table')) {
       html = '<p>' + html + '</p>';
     }
 
@@ -81,6 +91,52 @@ export class MarkdownPipe implements PipeTransform {
     html = html.replace(/<p>\s*<\/p>/g, '');
 
     return html;
+  }
+
+  /**
+   * Convert Markdown tables (| col | col |) to HTML <table>.
+   */
+  private convertMarkdownTables(html: string): string {
+    // Match consecutive lines that start with |
+    return html.replace(/((?:^\|.+\|$\n?)+)/gm, (tableBlock) => {
+      const lines = tableBlock.trim().split('\n').filter(l => l.trim());
+      if (lines.length < 2) return tableBlock; // Need at least header + separator
+
+      // Check if second line is separator (|---|---|)
+      const isSeparator = (line: string) => /^\|[\s\-:]+\|/.test(line.trim());
+      const hasSeparator = lines.length >= 2 && isSeparator(lines[1]);
+
+      const parseRow = (line: string): string[] =>
+        line.split('|').slice(1, -1).map(cell => cell.trim());
+
+      let tableHtml = '<table>';
+
+      if (hasSeparator) {
+        // Header row
+        const headers = parseRow(lines[0]);
+        tableHtml += '<thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
+
+        // Body rows (skip separator line)
+        tableHtml += '<tbody>';
+        for (let i = 2; i < lines.length; i++) {
+          if (!lines[i].trim()) continue;
+          const cells = parseRow(lines[i]);
+          tableHtml += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+        }
+        tableHtml += '</tbody>';
+      } else {
+        // No separator — all rows are body
+        tableHtml += '<tbody>';
+        for (const line of lines) {
+          const cells = parseRow(line);
+          tableHtml += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+        }
+        tableHtml += '</tbody>';
+      }
+
+      tableHtml += '</table>';
+      return tableHtml;
+    });
   }
 
   private highlightCode(code: string): string {

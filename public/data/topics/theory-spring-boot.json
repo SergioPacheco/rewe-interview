@@ -126,5 +126,33 @@
     ],
     "topic": "spring",
     "subtopic": "spring-actuator"
+  },
+  {
+    "id": "theory-spring-transactions",
+    "title": "Spring Transactions & Proxies",
+    "sections": [
+      {
+        "heading": "How @Transactional works (proxy-based AOP)",
+        "content": "Spring transactions use <strong>AOP proxies</strong>. When you annotate a method with <code>@Transactional</code>, Spring wraps the bean in a proxy that manages the transaction lifecycle.\n\n<pre><code>@Service\npublic class DeliveryService {\n\n    @Transactional\n    public void dispatch(Long deliveryId) {\n        Delivery d = repository.findById(deliveryId).orElseThrow();\n        d.setStatus(DISPATCHED);\n        d.setDispatchedAt(Instant.now());\n        eventPublisher.publish(new DeliveryDispatched(d));\n        // If exception → automatic rollback\n        // If success → automatic commit\n    }\n}</code></pre>\n\n<strong>What the proxy actually does:</strong>\n<pre><code>// Pseudo-code of what Spring generates\npublic void dispatch(Long id) {\n    TransactionStatus tx = txManager.getTransaction(definition);\n    try {\n        target.dispatch(id);  // YOUR code\n        txManager.commit(tx);\n    } catch (RuntimeException e) {\n        txManager.rollback(tx);\n        throw e;\n    }\n}</code></pre>"
+      },
+      {
+        "heading": "The self-invocation trap",
+        "content": "<strong>The #1 Spring transaction pitfall:</strong> calling a @Transactional method from within the same class bypasses the proxy.\n\n<pre><code>@Service\npublic class OrderService {\n\n    public void processOrder(Order order) {\n        // ❌ This calls the METHOD DIRECTLY, not through the proxy!\n        // @Transactional is IGNORED\n        this.saveOrder(order);\n    }\n\n    @Transactional\n    public void saveOrder(Order order) {\n        repository.save(order);\n        // No transaction! Changes may not be committed.\n    }\n}\n\n// ✅ Fix: inject self or extract to another service\n@Service\npublic class OrderService {\n    @Autowired private OrderPersistence persistence;\n\n    public void processOrder(Order order) {\n        persistence.saveOrder(order); // Goes through proxy ✅\n    }\n}</code></pre>\n\n<strong>Why?</strong> <code>this.method()</code> bypasses the proxy. Only calls from OUTSIDE the class go through the transactional proxy."
+      },
+      {
+        "heading": "Propagation levels",
+        "content": "<table>\n<tr><th>Propagation</th><th>Behavior</th><th>When to use</th></tr>\n<tr><td><code>REQUIRED</code> (default)</td><td>Join existing TX or create new</td><td>Most service methods</td></tr>\n<tr><td><code>REQUIRES_NEW</code></td><td>Always create new TX (suspend current)</td><td>Audit logs that must persist even on rollback</td></tr>\n<tr><td><code>MANDATORY</code></td><td>Must run within existing TX (throws if none)</td><td>Repository methods that should never be called alone</td></tr>\n<tr><td><code>NOT_SUPPORTED</code></td><td>Suspend TX, run without</td><td>Read-only queries, external calls</td></tr>\n<tr><td><code>NEVER</code></td><td>Throw if TX exists</td><td>Methods that must NOT run in transaction</td></tr>\n</table>\n\n<pre><code>@Transactional(propagation = Propagation.REQUIRES_NEW)\npublic void auditAction(String action, Long userId) {\n    // This commits even if the caller rolls back\n    auditRepository.save(new AuditEntry(action, userId, Instant.now()));\n}</code></pre>"
+      },
+      {
+        "heading": "Rollback rules",
+        "content": "<strong>Default behavior:</strong>\n• <strong>RuntimeException</strong> (unchecked) → <strong>rollback</strong>\n• <strong>Checked Exception</strong> → <strong>NO rollback</strong> (commit!)\n\nThis surprises many developers:\n\n<pre><code>@Transactional\npublic void transfer(Long from, Long to, BigDecimal amount) throws InsufficientFundsException {\n    debit(from, amount);\n    credit(to, amount);\n    // If InsufficientFundsException (checked) is thrown:\n    // Transaction COMMITS! Partial state persisted! 💥\n}\n\n// ✅ Fix: explicit rollback rule\n@Transactional(rollbackFor = Exception.class)\npublic void transfer(Long from, Long to, BigDecimal amount) throws InsufficientFundsException {\n    // Now ANY exception triggers rollback\n}</code></pre>\n\n<strong>Best practice:</strong> Always use <code>rollbackFor = Exception.class</code> unless you have a specific reason not to."
+      },
+      {
+        "heading": "Read-only optimization",
+        "content": "<pre><code>@Transactional(readOnly = true)\npublic List&lt;Delivery&gt; findActiveDeliveries() {\n    return repository.findByStatus(ACTIVE);\n}\n\n// What readOnly = true does:\n// 1. Hints to DB driver (some DBs optimize read paths)\n// 2. Hibernate skips dirty checking (no flush needed)\n// 3. Connection may use read replica (if configured)\n// 4. Documents intent — this method does NOT write</code></pre>\n\n<strong>Rule of thumb:</strong>\n• Query methods → <code>@Transactional(readOnly = true)</code>\n• Write methods → <code>@Transactional</code> (or <code>@Transactional(rollbackFor = Exception.class)</code>)\n• Don't put @Transactional on Controllers — keep it at Service layer"
+      }
+    ],
+    "topic": "spring",
+    "subtopic": "spring-transactions"
   }
 ]

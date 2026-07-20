@@ -1,9 +1,15 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { filter } from 'rxjs';
 import { TopicService } from './core/services/topic.service';
 import { ProgressService } from './core/services/progress.service';
 import { Topic } from './models';
+
+interface Breadcrumb {
+  label: string;
+  url: string | null;
+}
 
 @Component({
   selector: 'app-root',
@@ -20,6 +26,7 @@ export class AppComponent implements OnInit {
   sidebarOpen = signal(false);
   expandedTopic = signal<string | null>(null);
   searchQuery = signal('');
+  breadcrumbs = signal<Breadcrumb[]>([]);
 
   readonly priorityGroups = [
     { priority: 0 as const, label: '' },
@@ -30,6 +37,37 @@ export class AppComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.topicService.loadAll();
+
+    // Build breadcrumbs on navigation
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd)
+    ).subscribe(() => this.updateBreadcrumbs());
+    this.updateBreadcrumbs();
+  }
+
+  private updateBreadcrumbs(): void {
+    const url = this.router.url;
+    const crumbs: Breadcrumb[] = [{ label: '🏠 Home', url: '/' }];
+
+    if (url === '/' || url === '') {
+      this.breadcrumbs.set([]);
+      return;
+    }
+
+    const parts = url.split('#')[0].split('?')[0].split('/').filter(Boolean);
+
+    if (parts[0] === 'topic' && parts[1]) {
+      const topic = this.topicService.getTopic(parts[1]);
+      crumbs.push({ label: topic?.name ?? parts[1], url: null });
+    } else if (parts[0] === 'quiz' && parts[1]) {
+      const topic = this.topicService.getTopic(parts[1]);
+      crumbs.push({ label: topic?.name ?? parts[1], url: `/topic/${parts[1]}` });
+      crumbs.push({ label: 'Quiz', url: null });
+    } else if (parts[0] === 'resume') {
+      crumbs.push({ label: 'Resume', url: null });
+    }
+
+    this.breadcrumbs.set(crumbs);
   }
 
   getTopicsByPriority(priority: 0 | 1 | 2 | 3): Topic[] {

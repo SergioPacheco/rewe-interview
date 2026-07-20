@@ -66,5 +66,93 @@
     ],
     "topic": "angular",
     "subtopic": "ng-routing"
+  },
+  {
+    "id": "theory-angular-rxjs",
+    "title": "RxJS & Observables",
+    "sections": [
+      {
+        "heading": "RxJS — Reactive Extensions for JavaScript",
+        "content": "RxJS is the <strong>async backbone</strong> of Angular. It provides Observables — lazy, cancellable streams of data.\n\n<strong>Java parallel:</strong>\n<table>\n<tr><th>Java</th><th>RxJS</th></tr>\n<tr><td>CompletableFuture&lt;T&gt;</td><td>Observable&lt;T&gt; (single emission)</td></tr>\n<tr><td>Stream&lt;T&gt;</td><td>Observable&lt;T&gt; (multiple emissions)</td></tr>\n<tr><td>.thenApply()</td><td>pipe(map())</td></tr>\n<tr><td>.thenCompose()</td><td>pipe(switchMap())</td></tr>\n<tr><td>.exceptionally()</td><td>pipe(catchError())</td></tr>\n<tr><td>ExecutorService</td><td>Scheduler</td></tr>\n</table>\n\n<strong>Key difference:</strong> Observables are <strong>lazy</strong> — nothing executes until you <code>.subscribe()</code>. Like a Java Stream that doesn't run until a terminal operation."
+      },
+      {
+        "heading": "Essential operators (the 20% that solves 80%)",
+        "content": "<pre><code>// map — transform each emission (like Stream.map)\nthis.http.get&lt;UserDTO[]&gt;('/api/users').pipe(\n  map(users =&gt; users.filter(u =&gt; u.active))\n);\n\n// switchMap — flatten + cancel previous (search autocomplete)\nthis.searchInput.valueChanges.pipe(\n  debounceTime(300),\n  distinctUntilChanged(),\n  switchMap(term =&gt; this.http.get(`/api/search?q=${term}`))\n);\n\n// catchError — handle errors in the stream\nthis.http.get('/api/deliveries').pipe(\n  catchError(err =&gt; {\n    this.error.set('Failed to load deliveries');\n    return of([]);  // fallback empty array\n  })\n);\n\n// takeUntilDestroyed — auto-unsubscribe (Angular 16+)\nprivate destroyRef = inject(DestroyRef);\n\nngOnInit() {\n  this.ws.messages$.pipe(\n    takeUntilDestroyed(this.destroyRef)\n  ).subscribe(msg =&gt; this.messages.update(m =&gt; [...m, msg]));\n}\n\n// combineLatest — wait for multiple sources\ncombineLatest([this.drivers$, this.routes$]).pipe(\n  map(([drivers, routes]) =&gt; this.assignDriversToRoutes(drivers, routes))\n);</code></pre>\n\n<strong>Operator decision guide:</strong>\n• Transform each value → <code>map()</code>\n• One Observable per emission (flatten) → <code>switchMap()</code> (cancel prev) or <code>mergeMap()</code> (parallel)\n• Side effects → <code>tap()</code>\n• Error handling → <code>catchError()</code>\n• Timing → <code>debounceTime()</code>, <code>throttleTime()</code>\n• Combine streams → <code>combineLatest()</code>, <code>forkJoin()</code>"
+      },
+      {
+        "heading": "Subjects — when you need to push values",
+        "content": "<pre><code>// BehaviorSubject — holds current value (like a mutable signal)\n@Injectable({ providedIn: 'root' })\nexport class NotificationService {\n  private notifications$ = new BehaviorSubject&lt;Notification[]&gt;([]);\n\n  // Expose as Observable (read-only to consumers)\n  readonly notifications = this.notifications$.asObservable();\n\n  push(n: Notification) {\n    this.notifications$.next([...this.notifications$.value, n]);\n  }\n\n  clear() {\n    this.notifications$.next([]);\n  }\n}\n\n// Subject types:\n// Subject        — no initial value, hot (misses emissions before subscribe)\n// BehaviorSubject — has initial value, replays latest to new subscribers\n// ReplaySubject  — replays N past values to new subscribers\n// AsyncSubject   — emits only the LAST value, on complete</code></pre>\n\n<strong>Modern Angular preference:</strong> Use <code>signal()</code> for synchronous state, <code>BehaviorSubject</code> only when you need Observable integration (pipes, async operators)."
+      },
+      {
+        "heading": "Memory leaks — the #1 Angular pitfall",
+        "content": "Every <code>.subscribe()</code> without cleanup is a potential memory leak.\n\n<pre><code>// ❌ LEAK — subscription lives forever\nngOnInit() {\n  this.ws.messages$.subscribe(msg =&gt; this.handle(msg));\n}\n\n// ✅ Modern Angular 16+ — takeUntilDestroyed\nngOnInit() {\n  this.ws.messages$.pipe(\n    takeUntilDestroyed(this.destroyRef)\n  ).subscribe(msg =&gt; this.handle(msg));\n}\n\n// ✅ Async pipe (auto-subscribes AND unsubscribes)\n// Template: {{ deliveries$ | async }}\n\n// ✅ toSignal() — converts Observable to Signal (auto-cleanup)\ndeliveries = toSignal(this.deliveryService.findAll(), { initialValue: [] });</code></pre>\n\n<strong>Rules:</strong>\n• HTTP calls: <strong>no cleanup needed</strong> (they complete after one emission)\n• WebSocket/interval/fromEvent: <strong>always cleanup</strong>\n• Prefer <code>toSignal()</code> or <code>| async</code> pipe over manual subscribe\n• <code>takeUntilDestroyed()</code> is the modern escape hatch"
+      }
+    ],
+    "topic": "angular",
+    "subtopic": "ng-rxjs"
+  },
+  {
+    "id": "theory-angular-signals",
+    "title": "Signals & State Management",
+    "sections": [
+      {
+        "heading": "Signals — Angular's reactive primitive (Angular 16+)",
+        "content": "Signals are Angular's answer to React hooks / Vue refs. They provide <strong>fine-grained reactivity</strong> without RxJS complexity.\n\n<pre><code>// Basic signal\nconst count = signal(0);       // WritableSignal&lt;number&gt;\nconsole.log(count());          // Read: 0\ncount.set(5);                  // Write: replace value\ncount.update(v =&gt; v + 1);     // Write: based on current value\n\n// Computed signal (derived state — like a database view)\nconst doubled = computed(() =&gt; count() * 2);  // auto-tracks dependencies\n// doubled() re-evaluates ONLY when count() changes\n\n// Effect (side effect when signal changes)\neffect(() =&gt; {\n  console.log(`Count changed to ${count()}`);\n  // Runs after each change, auto-tracks dependencies\n});</code></pre>\n\n<strong>Java parallel:</strong>\n• <code>signal()</code> → AtomicReference with change notification\n• <code>computed()</code> → a cached getter that invalidates when dependencies change\n• <code>effect()</code> → an event listener that fires on state change"
+      },
+      {
+        "heading": "Signal-based component pattern",
+        "content": "<pre><code>@Component({\n  selector: 'app-delivery-dashboard',\n  standalone: true,\n  changeDetection: ChangeDetectionStrategy.OnPush,\n  template: `\n    &lt;h2&gt;Dashboard ({{ totalActive() }} active)&lt;/h2&gt;\n\n    @if (loading()) {\n      &lt;p-progressSpinner /&gt;\n    } @else {\n      @for (d of filteredDeliveries(); track d.id) {\n        &lt;app-delivery-card [delivery]=\"d\" (dispatched)=\"onDispatch($event)\" /&gt;\n      }\n    }\n\n    @if (filteredDeliveries().length === 0) {\n      &lt;p&gt;No deliveries match filter.&lt;/p&gt;\n    }\n  `\n})\nexport class DeliveryDashboardComponent {\n  private service = inject(DeliveryService);\n\n  // State\n  deliveries = signal&lt;Delivery[]&gt;([]);\n  loading = signal(true);\n  filter = signal&lt;DeliveryStatus | 'ALL'&gt;('ALL');\n\n  // Derived\n  filteredDeliveries = computed(() =&gt; {\n    const f = this.filter();\n    return f === 'ALL'\n      ? this.deliveries()\n      : this.deliveries().filter(d =&gt; d.status === f);\n  });\n\n  totalActive = computed(() =&gt;\n    this.deliveries().filter(d =&gt; d.status !== 'DELIVERED').length\n  );\n\n  constructor() {\n    this.loadData();\n  }\n\n  private loadData() {\n    this.service.findAll().subscribe({\n      next: data =&gt; { this.deliveries.set(data); this.loading.set(false); },\n      error: () =&gt; this.loading.set(false)\n    });\n  }\n\n  onDispatch(id: number) {\n    this.deliveries.update(list =&gt;\n      list.map(d =&gt; d.id === id ? { ...d, status: 'DISPATCHED' } : d)\n    );\n  }\n}</code></pre>"
+      },
+      {
+        "heading": "input() and output() — signal-based component IO (Angular 17.1+)",
+        "content": "<pre><code>// Modern signal-based inputs/outputs\n@Component({\n  selector: 'app-delivery-card',\n  standalone: true,\n  template: `\n    &lt;div class=\"card\"&gt;\n      &lt;h3&gt;{{ delivery().driverName }}&lt;/h3&gt;\n      &lt;p-tag [severity]=\"statusColor()\"&gt;{{ delivery().status }}&lt;/p-tag&gt;\n      &lt;button (click)=\"dispatched.emit(delivery().id)\"&gt;Dispatch&lt;/button&gt;\n    &lt;/div&gt;\n  `\n})\nexport class DeliveryCardComponent {\n  // Signal-based input (replaces @Input())\n  delivery = input.required&lt;Delivery&gt;();\n\n  // Signal-based output (replaces @Output() + EventEmitter)\n  dispatched = output&lt;number&gt;();\n\n  // Computed from input signal\n  statusColor = computed(() =&gt; {\n    switch (this.delivery().status) {\n      case 'DELIVERED': return 'success';\n      case 'DELAYED': return 'danger';\n      default: return 'info';\n    }\n  });\n}</code></pre>\n\n<strong>Benefits over decorators:</strong>\n• Type-safe, no undefined initial state with <code>input.required()</code>\n• Can use <code>computed()</code> directly from inputs\n• Better tree-shaking and AOT optimization"
+      },
+      {
+        "heading": "Signals vs RxJS — when to use which",
+        "content": "<table>\n<tr><th>Use Signals when</th><th>Use RxJS when</th></tr>\n<tr><td>Synchronous state (counters, flags, lists)</td><td>HTTP calls (return Observable)</td></tr>\n<tr><td>Derived/computed values</td><td>WebSocket streams</td></tr>\n<tr><td>Component local state</td><td>Complex async transformations (debounce, retry, combine)</td></tr>\n<tr><td>Simple parent→child data flow</td><td>Event streams (fromEvent, interval)</td></tr>\n<tr><td>Replacing BehaviorSubject for state</td><td>When you need operators (switchMap, mergeMap)</td></tr>\n</table>\n\n<strong>Hybrid pattern (recommended):</strong>\n<pre><code>// Service: RxJS for async, expose as signal\n@Injectable({ providedIn: 'root' })\nexport class DeliveryStore {\n  private http = inject(HttpClient);\n\n  // Internal RxJS (HTTP is inherently async)\n  private deliveries$ = this.http.get&lt;Delivery[]&gt;('/api/deliveries');\n\n  // Expose as signal (components consume synchronously)\n  deliveries = toSignal(this.deliveries$, { initialValue: [] });\n\n  // Computed\n  activeCount = computed(() =&gt; this.deliveries().filter(d =&gt; d.active).length);\n}</code></pre>"
+      }
+    ],
+    "topic": "angular",
+    "subtopic": "ng-signals"
+  },
+  {
+    "id": "theory-angular-forms",
+    "title": "Forms & Validation",
+    "sections": [
+      {
+        "heading": "Two form approaches in Angular",
+        "content": "Angular provides two form systems:\n\n<table>\n<tr><th>Template-driven</th><th>Reactive forms</th></tr>\n<tr><td>Logic in template (ngModel)</td><td>Logic in TypeScript (FormControl)</td></tr>\n<tr><td>Simple forms, rapid prototyping</td><td>Complex forms, dynamic fields</td></tr>\n<tr><td>Less testable</td><td>Highly testable (pure TS)</td></tr>\n<tr><td>Like JSF managed bean binding</td><td>Like Spring @Valid with ConstraintValidator</td></tr>\n</table>\n\n<strong>TRAB preference:</strong> Reactive Forms for anything beyond a search box."
+      },
+      {
+        "heading": "Reactive Forms — full control",
+        "content": "<pre><code>@Component({\n  standalone: true,\n  imports: [ReactiveFormsModule, InputTextModule, ButtonModule],\n  template: `\n    &lt;form [formGroup]=\"deliveryForm\" (ngSubmit)=\"onSubmit()\"&gt;\n      &lt;div&gt;\n        &lt;label for=\"driver\"&gt;Driver&lt;/label&gt;\n        &lt;input pInputText id=\"driver\" formControlName=\"driverName\" /&gt;\n        @if (f['driverName'].errors?.['required'] &amp;&amp; f['driverName'].touched) {\n          &lt;small class=\"p-error\"&gt;Driver is required&lt;/small&gt;\n        }\n      &lt;/div&gt;\n\n      &lt;div&gt;\n        &lt;label for=\"stops\"&gt;Number of stops&lt;/label&gt;\n        &lt;input pInputText id=\"stops\" type=\"number\" formControlName=\"stops\" /&gt;\n        @if (f['stops'].errors?.['min']) {\n          &lt;small class=\"p-error\"&gt;At least 1 stop required&lt;/small&gt;\n        }\n      &lt;/div&gt;\n\n      &lt;button pButton type=\"submit\" [disabled]=\"deliveryForm.invalid\"&gt;Create&lt;/button&gt;\n    &lt;/form&gt;\n  `\n})\nexport class CreateDeliveryComponent {\n  private fb = inject(FormBuilder);\n\n  deliveryForm = this.fb.group({\n    driverName: ['', [Validators.required, Validators.minLength(2)]],\n    stops: [1, [Validators.required, Validators.min(1), Validators.max(50)]],\n    scheduledAt: ['', Validators.required],\n    priority: ['NORMAL']\n  });\n\n  get f() { return this.deliveryForm.controls; }\n\n  onSubmit() {\n    if (this.deliveryForm.valid) {\n      const dto = this.deliveryForm.getRawValue();\n      // Send to API\n    }\n  }\n}</code></pre>"
+      },
+      {
+        "heading": "Custom validators — like Bean Validation",
+        "content": "<pre><code>// Custom validator (like @ConstraintValidator in Java)\nexport function futureDate(): ValidatorFn {\n  return (control: AbstractControl): ValidationErrors | null =&gt; {\n    const date = new Date(control.value);\n    return date &gt; new Date() ? null : { futureDate: true };\n  };\n}\n\n// Async validator (like checking uniqueness against API)\nexport function uniqueDriver(service: DriverService): AsyncValidatorFn {\n  return (control: AbstractControl): Observable&lt;ValidationErrors | null&gt; =&gt; {\n    return service.exists(control.value).pipe(\n      map(exists =&gt; exists ? { driverTaken: true } : null),\n      catchError(() =&gt; of(null))\n    );\n  };\n}\n\n// Usage:\ndriverName: ['', [Validators.required], [uniqueDriver(this.driverService)]]</code></pre>\n\n<strong>Parallel to Java:</strong>\n• <code>Validators.required</code> → <code>@NotNull</code>\n• <code>Validators.min(1)</code> → <code>@Min(1)</code>\n• <code>Validators.pattern()</code> → <code>@Pattern</code>\n• Custom ValidatorFn → <code>ConstraintValidator&lt;A, T&gt;</code>"
+      }
+    ],
+    "topic": "angular",
+    "subtopic": "ng-forms"
+  },
+  {
+    "id": "theory-angular-testing",
+    "title": "Angular Testing",
+    "sections": [
+      {
+        "heading": "Testing stack",
+        "content": "Angular uses:\n• <strong>Jasmine</strong> — test framework (describe/it/expect) — like JUnit\n• <strong>Karma</strong> — test runner — like Maven Surefire\n• <strong>TestBed</strong> — DI container for tests — like Spring TestContext\n\n<pre><code>describe('DeliveryService', () =&gt; {\n  let service: DeliveryService;\n  let httpMock: HttpTestingController;\n\n  beforeEach(() =&gt; {\n    TestBed.configureTestingModule({\n      providers: [\n        provideHttpClient(),\n        provideHttpClientTesting()\n      ]\n    });\n    service = TestBed.inject(DeliveryService);\n    httpMock = TestBed.inject(HttpTestingController);\n  });\n\n  afterEach(() =&gt; httpMock.verify());\n\n  it('should fetch deliveries', () =&gt; {\n    const mockData: Delivery[] = [\n      { id: 1, status: 'PLANNED', driverName: 'Hans', scheduledAt: '2024-01-15' }\n    ];\n\n    service.findAll().subscribe(data =&gt; {\n      expect(data.length).toBe(1);\n      expect(data[0].driverName).toBe('Hans');\n    });\n\n    const req = httpMock.expectOne('/api/v1/deliveries');\n    expect(req.request.method).toBe('GET');\n    req.flush(mockData);\n  });\n});</code></pre>"
+      },
+      {
+        "heading": "Component testing",
+        "content": "<pre><code>describe('DeliveryCardComponent', () =&gt; {\n  it('should display driver name', () =&gt; {\n    const fixture = TestBed.createComponent(DeliveryCardComponent);\n    const component = fixture.componentInstance;\n\n    // Set signal input\n    fixture.componentRef.setInput('delivery', {\n      id: 1, status: 'PLANNED', driverName: 'Hans', scheduledAt: '2024-01-15'\n    });\n\n    fixture.detectChanges();\n\n    const el = fixture.nativeElement;\n    expect(el.querySelector('h3').textContent).toContain('Hans');\n  });\n\n  it('should emit dispatched event on button click', () =&gt; {\n    const fixture = TestBed.createComponent(DeliveryCardComponent);\n    fixture.componentRef.setInput('delivery', {\n      id: 42, status: 'PLANNED', driverName: 'Hans', scheduledAt: '2024-01-15'\n    });\n    fixture.detectChanges();\n\n    let emittedId: number | undefined;\n    fixture.componentInstance.dispatched.subscribe(id =&gt; emittedId = id);\n\n    fixture.nativeElement.querySelector('button').click();\n    expect(emittedId).toBe(42);\n  });\n});</code></pre>\n\n<strong>Testing signals:</strong> Call the signal function directly — <code>expect(component.totalActive()).toBe(3)</code>."
+      },
+      {
+        "heading": "Testing patterns (pyramid)",
+        "content": "<table>\n<tr><th>Level</th><th>What</th><th>Tool</th><th>%</th></tr>\n<tr><td>Unit</td><td>Services, pipes, pure logic</td><td>Jasmine + TestBed</td><td>60%</td></tr>\n<tr><td>Integration</td><td>Components + template + DI</td><td>TestBed + fixture</td><td>30%</td></tr>\n<tr><td>E2E</td><td>Full app flows</td><td>Playwright/Cypress</td><td>10%</td></tr>\n</table>\n\n<strong>What to test in Angular:</strong>\n• Services: business logic, HTTP calls (mock with HttpTestingController)\n• Components: inputs/outputs, template rendering, user interactions\n• Pipes: pure transform logic (easiest to test)\n• Guards: navigation logic\n\n<strong>What NOT to test:</strong>\n• Angular framework internals (routing works, DI works)\n• Third-party libraries (PrimeNG renders correctly)\n• Trivial getters/setters with no logic"
+      }
+    ],
+    "topic": "angular",
+    "subtopic": "ng-testing"
   }
 ]

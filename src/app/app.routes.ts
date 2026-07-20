@@ -26,6 +26,11 @@ export const routes: Routes = [
     title: 'Resume'
   },
   {
+    path: 'portfolio',
+    redirectTo: 'topic/portfolio',
+    pathMatch: 'full'
+  },
+  {
     path: 'topic/java-modern',
     redirectTo: 'topic/collections',
     pathMatch: 'full'

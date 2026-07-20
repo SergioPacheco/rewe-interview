@@ -51,22 +51,20 @@ describe('AppComponent', () => {
     expect(app.expandedTopic()).toBe('kafka');
   });
 
-  it('should toggle theme between light and dark', () => {
+  it('should have domainGroups defined', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-
-    expect(app.theme()).toBe('light');
-    app.toggleTheme();
-    expect(app.theme()).toBe('dark');
-    app.toggleTheme();
-    expect(app.theme()).toBe('light');
+    expect(app.domainGroups.length).toBeGreaterThan(0);
   });
 
-  it('should persist theme to localStorage', () => {
+  it('should handle search', () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
 
-    app.toggleTheme();
-    expect(localStorage.getItem('rewe-interview-theme')).toBe('dark');
+    app.onSearch('spring');
+    expect(app.searchQuery()).toBe('spring');
+
+    app.onSearch('');
+    expect(app.searchQuery()).toBe('');
   });
 });

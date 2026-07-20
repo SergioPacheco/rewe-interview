@@ -36,7 +36,7 @@ export class TopicService {
     this.loading.set(true);
     try {
       const [topicsData, questionsData, theoryData] = await Promise.all([
-        this.loadJson<Topic[]>('/data/topics/index.json'),
+        this.loadJson<Topic[]>('data/topics/index.json'),
         this.loadAllQuestions(),
         this.loadAllTheory()
       ]);
@@ -88,34 +88,35 @@ export class TopicService {
   // === Private helpers ===
 
   private async loadJson<T>(path: string): Promise<T> {
-    const response = await fetch(path);
+    const url = new URL(path, document.baseURI).href;
+    const response = await fetch(url);
     if (!response.ok) throw new Error(`HTTP ${response.status}: ${path}`);
     return response.json();
   }
 
   private async loadAllQuestions(): Promise<Question[]> {
     const files = [
-      '/data/exercises/java-core.json',
-      '/data/exercises/oop.json',
-      '/data/exercises/solid.json',
-      '/data/exercises/spring-boot.json',
-      '/data/exercises/kafka.json',
-      '/data/exercises/sql.json',
-      '/data/exercises/rest.json',
-      '/data/exercises/concurrency.json',
-      '/data/exercises/design-patterns.json',
-      '/data/exercises/jpa.json',
-      '/data/exercises/behavioral.json',
-      '/data/exercises/system-design.json',
-      '/data/exercises/rewe.json',
-      '/data/exercises/security.json',
-      '/data/exercises/testing.json',
-      '/data/exercises/docker.json',
-      '/data/exercises/k8s.json',
-      '/data/exercises/kotlin.json',
-      '/data/exercises/angular.json',
-      '/data/exercises/stories.json',
-      '/data/exercises/mindset.json'
+      'data/exercises/java-core.json',
+      'data/exercises/oop.json',
+      'data/exercises/solid.json',
+      'data/exercises/spring-boot.json',
+      'data/exercises/kafka.json',
+      'data/exercises/sql.json',
+      'data/exercises/rest.json',
+      'data/exercises/concurrency.json',
+      'data/exercises/design-patterns.json',
+      'data/exercises/jpa.json',
+      'data/exercises/behavioral.json',
+      'data/exercises/system-design.json',
+      'data/exercises/rewe.json',
+      'data/exercises/security.json',
+      'data/exercises/testing.json',
+      'data/exercises/docker.json',
+      'data/exercises/k8s.json',
+      'data/exercises/kotlin.json',
+      'data/exercises/angular.json',
+      'data/exercises/stories.json',
+      'data/exercises/mindset.json'
     ];
 
     const results = await Promise.allSettled(
@@ -131,30 +132,30 @@ export class TopicService {
 
   private async loadAllTheory(): Promise<TheoryChapter[]> {
     const files = [
-      '/data/topics/theory-java-basics.json',
-      '/data/topics/theory-java-modern.json',
-      '/data/topics/theory-rewe.json',
-      '/data/topics/theory-portfolio.json',
-      '/data/topics/theory-spring-boot.json',
-      '/data/topics/theory-kafka.json',
-      '/data/topics/theory-rest.json',
-      '/data/topics/theory-sql.json',
-      '/data/topics/theory-solid.json',
-      '/data/topics/theory-concurrency.json',
-      '/data/topics/theory-patterns.json',
-      '/data/topics/theory-jpa.json',
-      '/data/topics/theory-docker.json',
-      '/data/topics/theory-kubernetes.json',
-      '/data/topics/theory-testing.json',
-      '/data/topics/theory-kotlin.json',
-      '/data/topics/theory-angular.json',
-      '/data/topics/theory-collections.json',
-      '/data/topics/theory-oop.json',
-      '/data/topics/theory-security.json',
-      '/data/topics/theory-system-design.json',
-      '/data/topics/theory-behavioral.json',
-      '/data/topics/theory-stories.json',
-      '/data/topics/theory-mindset.json'
+      'data/topics/theory-java-basics.json',
+      'data/topics/theory-java-modern.json',
+      'data/topics/theory-rewe.json',
+      'data/topics/theory-portfolio.json',
+      'data/topics/theory-spring-boot.json',
+      'data/topics/theory-kafka.json',
+      'data/topics/theory-rest.json',
+      'data/topics/theory-sql.json',
+      'data/topics/theory-solid.json',
+      'data/topics/theory-concurrency.json',
+      'data/topics/theory-patterns.json',
+      'data/topics/theory-jpa.json',
+      'data/topics/theory-docker.json',
+      'data/topics/theory-kubernetes.json',
+      'data/topics/theory-testing.json',
+      'data/topics/theory-kotlin.json',
+      'data/topics/theory-angular.json',
+      'data/topics/theory-collections.json',
+      'data/topics/theory-oop.json',
+      'data/topics/theory-security.json',
+      'data/topics/theory-system-design.json',
+      'data/topics/theory-behavioral.json',
+      'data/topics/theory-stories.json',
+      'data/topics/theory-mindset.json'
     ];
 
     const results = await Promise.allSettled(

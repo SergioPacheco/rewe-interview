@@ -25,6 +25,24 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
   <base href="/">
+
+  <!-- GitHub Pages SPA routing: recover route from 404 redirect -->
+  <script>
+    (function() {
+      var redirect = sessionStorage.redirect;
+      delete sessionStorage.redirect;
+      if (redirect && redirect !== location.href) {
+        history.replaceState(null, null, redirect);
+      } else {
+        // Check query param from 404.html redirect
+        var params = new URLSearchParams(location.search);
+        var route = params.get('p');
+        if (route) {
+          history.replaceState(null, null, route);
+        }
+      }
+    })();
+  </script>
 </head>
 <body>
   <app-root></app-root>

@@ -5,11 +5,20 @@
   <title>REWE Interview Prep</title>
   <script>
     // GitHub Pages SPA redirect hack
-    // Redirects all 404s back to index.html with the original path as a query param
-    const path = window.location.pathname;
-    const search = window.location.search;
+    // Since the app is deployed at /rewe-interview/, we need to preserve the sub-path
+    var repo = '/rewe-interview';
+    var fullPath = window.location.pathname;
+
+    // Remove the repo prefix to get the Angular route
+    var route = fullPath.startsWith(repo)
+      ? fullPath.slice(repo.length)
+      : fullPath;
+
+    var search = window.location.search;
+
+    // Redirect to index.html with the route encoded in query param
     window.location.replace(
-      window.location.origin + '/?p=' + encodeURIComponent(path + search)
+      window.location.origin + repo + '/?p=' + encodeURIComponent(route + search)
     );
   </script>
 </head>

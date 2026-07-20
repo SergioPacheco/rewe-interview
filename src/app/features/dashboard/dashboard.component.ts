@@ -19,7 +19,7 @@ export class DashboardComponent {
 
   /** Technology logo URLs (CDN-hosted SVGs/PNGs) */
   private readonly logos: Record<string, string> = {
-    'rewe': '/assets/rewe-logo.svg',
+    'rewe': 'assets/rewe-logo.svg',
     'mindset': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/thealgorithms/thealgorithms-original.svg',
     'stories': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linkedin/linkedin-original.svg',
     'portfolio': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',

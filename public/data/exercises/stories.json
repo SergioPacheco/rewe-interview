@@ -1,54 +1,100 @@
 [
   {
-    "id": "stories-perf-1",
-    "type": "ORAL_ANSWER",
+    "id": "story-perf-1",
     "topic": "stories",
     "subtopic": "story-performance",
-    "difficulty": "senior",
+    "type": "ORAL_ANSWER",
+    "difficulty": "hard",
     "question": "Tell me about a time you significantly improved system performance.",
+    "interviewerIntent": "Assess systematic diagnosis, root cause thinking, and measurable impact.",
+    "answer": "An inscription listing in our education management system was taking 16 minutes for a unit with 26,705 records. Using Glowroot APM, I identified two combined causes: a cartesian product from incorrect joins multiplying rows exponentially, and N+1 queries fetching complementary data one-by-one (~48,000 total queries). I fixed the joins, added server-side pagination (50 records per page), and replaced individual fetches with batch loading. Result: ~10 queries, ~2 seconds.",
     "keyPoints": [
-      "Start with the measurable problem (16 min report)",
-      "Explain the diagnosis method (EXPLAIN ANALYZE)",
-      "Describe the root cause (correlated subquery, missing indexes)",
-      "Detail the fix (JOIN rewrite, composite indexes, pagination)",
-      "Give the measurable result (16 min → 2 sec)"
+      "26,705 inscriptions \u2014 real scale",
+      "Cartesian product from bad joins",
+      "N+1 generating ~48k queries",
+      "Pagination + batch = ~10 queries",
+      "16 min \u2192 2 sec"
     ],
-    "modelAnswer": "A critical report was taking 16 minutes. I used EXPLAIN ANALYZE and found a correlated subquery executing per row against a 2M-row table without proper indexes. I restructured the query as a pre-aggregated JOIN, created composite indexes matching the filter pattern, and added keyset pagination. The result dropped to 2 seconds — a 480× improvement.",
     "followUps": [
-      {"question": "How did you decide which indexes to create?", "answerHint": "Analyzed the WHERE and JOIN columns, used the leftmost prefix rule for composite indexes"},
-      {"question": "How did you validate the fix wouldn't break anything?", "answerHint": "Compared result sets before/after, ran in staging under load, monitored after deploy"}
+      {
+        "question": "How did you prove it was a cartesian product?",
+        "answerHint": "Glowroot showed the actual row count returned was orders of magnitude higher than the record count. The trace entries revealed the explosion."
+      },
+      {
+        "question": "Why did pagination reduce the query count?",
+        "answerHint": "With only 50 records visible per page, complementary data fetches go from 26,705 individual queries to a single batch IN query for 50 IDs."
+      },
+      {
+        "question": "How did you validate correctness?",
+        "answerHint": "Compared total record counts before/after, spot-checked individual records, verified pagination totals matched the unoptimized full count."
+      },
+      {
+        "question": "What monitoring exists now?",
+        "answerHint": "Glowroot tracks query count and duration per transaction. Any listing exceeding 50 queries or 5 seconds triggers investigation."
+      }
+    ],
+    "mistakesToAvoid": [
+      "Don't say 'added an index' as the only fix",
+      "Don't describe a generic optimization \u2014 give real numbers",
+      "Don't claim tools you didn't use"
     ]
   },
   {
-    "id": "stories-n1-1",
-    "type": "ORAL_ANSWER",
+    "id": "story-n1-1",
     "topic": "stories",
     "subtopic": "story-n1",
-    "difficulty": "senior",
+    "type": "ORAL_ANSWER",
+    "difficulty": "hard",
     "question": "Describe a time you identified and fixed an N+1 query problem.",
+    "interviewerIntent": "Evaluate understanding of ORM behavior and ability to fix at the right level.",
+    "answer": "Same inscription listing \u2014 26,705 records. After the main query, the JSF page triggered lazy-loaded associations for each row during rendering (EL getters in the template). This generated ~48,000 individual SELECT-by-ID queries. The fix was server-side pagination (reducing N from 26,705 to 50) combined with batch loading via IN clause for the visible page. JOIN FETCH wasn't appropriate at this scale \u2014 it would still produce a large result set with multiple collections.",
     "keyPoints": [
-      "Explain what N+1 is (1 + N individual queries for related data)",
-      "How you detected it (monitoring, slow page, query count)",
-      "The fix (JOIN FETCH or DTO projection)",
-      "Measurable improvement"
+      "N+1 triggered by JSF/EL lazy loading during render",
+      "~48,000 queries for 26,705 records",
+      "Pagination reduced N to 50",
+      "Batch IN query for visible page",
+      "JOIN FETCH inappropriate for this scale"
     ],
-    "modelAnswer": "A class listing page was making 41 queries (1 + 40 students). I identified a lazy-loaded relationship triggering individual queries per student. I used JOIN FETCH for the detail view and a DTO projection for the list view. Queries went from 41 to 1, page load from 3.2s to 180ms."
+    "followUps": [
+      {
+        "question": "Why not use JOIN FETCH?",
+        "answerHint": "With 26k records and multiple collections, JOIN FETCH produces a cartesian product in the result. Pagination + batch is the correct pattern at scale."
+      },
+      {
+        "question": "How does JSF cause N+1 differently from a REST API?",
+        "answerHint": "JSF evaluates EL expressions during server-side rendering. Getters in the template trigger lazy loading for EVERY row in the iteration \u2014 all within the same HTTP request and open EntityManager."
+      },
+      {
+        "question": "How did you verify the fix?",
+        "answerHint": "Glowroot trace showed query count drop from ~48k to ~10. Page load confirmed at ~2 seconds."
+      }
+    ]
   },
   {
-    "id": "stories-incident-1",
-    "type": "ORAL_ANSWER",
+    "id": "story-incident-1",
     "topic": "stories",
     "subtopic": "story-incident",
-    "difficulty": "senior",
-    "question": "Tell me about a production incident you resolved.",
+    "type": "ORAL_ANSWER",
+    "difficulty": "medium",
+    "question": "How do you approach diagnosing a production performance issue?",
+    "interviewerIntent": "Evaluate systematic thinking and tooling fluency.",
+    "answer": "I follow a disciplined decomposition: first confirm the symptom in monitoring (Glowroot for latency, Kibana for errors), then decompose the latency \u2014 is it database, external call, CPU, or GC? Identify the single dominant cost (usually 1-2 queries or 1 external call), fix the root cause (not a band-aid), verify the fix in monitoring, and add alerts to prevent recurrence. I never guess, add indexes blindly, or blame infrastructure before checking the application.",
     "keyPoints": [
-      "Timeline: how you became aware",
-      "Diagnosis: what tools and reasoning",
-      "Root cause: connection pool + external call in transaction",
-      "Fix: separated transaction boundaries",
-      "Prevention: what you changed to prevent recurrence"
+      "Confirm in monitoring first",
+      "Decompose latency by component",
+      "Fix root cause, not symptom",
+      "Verify fix in production metrics"
     ],
-    "modelAnswer": "We had connection pool exhaustion causing 502s. I traced it to an LDAP call inside a database transaction — when LDAP was slow, connections were held for 30+ seconds. I separated the boundaries: short DB transaction, external call outside, then another short transaction. I also added timeouts on all external calls and pool utilization monitoring."
+    "followUps": [
+      {
+        "question": "What tools do you use?",
+        "answerHint": "Glowroot for per-transaction latency and query breakdown, Kibana for error patterns, EXPLAIN ANALYZE for specific query plans."
+      },
+      {
+        "question": "Give an example of a band-aid vs real fix.",
+        "answerHint": "Band-aid: adding cache over a bad query. Real fix: fixing the query itself (correct joins, pagination, proper indexes)."
+      }
+    ]
   },
   {
     "id": "stories-template-1",
@@ -63,7 +109,7 @@
       "Show you understand the pattern's purpose (varying steps with fixed skeleton)",
       "Concrete benefit (new document types = 1 new class)"
     ],
-    "modelAnswer": "I used Template Method for document generation. We had certificates, contracts, and confirmations — all following the same workflow (validate permissions, load data, validate rules, render PDF) but with different specifics. The abstract class defines the skeleton; each document type implements only what varies. Adding a new document type now requires one class instead of modifying five."
+    "modelAnswer": "I used Template Method for document generation. We had certificates, contracts, and confirmations \u2014 all following the same workflow (validate permissions, load data, validate rules, render PDF) but with different specifics. The abstract class defines the skeleton; each document type implements only what varies. Adding a new document type now requires one class instead of modifying five."
   },
   {
     "id": "stories-disagree-1",
@@ -88,11 +134,11 @@
     "difficulty": "senior",
     "question": "How do you approach learning a new technology stack?",
     "keyPoints": [
-      "Bridge from what you know (Jakarta EE → Spring)",
+      "Bridge from what you know (Jakarta EE \u2192 Spring)",
       "Concept-first, not syntax-first",
       "Practical application (building projects)",
       "Honest about depth (production JMS vs studied Kafka)"
     ],
-    "modelAnswer": "I bridge from what I know. After 8 years with Jakarta EE, I mapped DI, transactions, and messaging concepts to Spring equivalents. The mental models transfer — only the API changes. For Kafka, I started from JMS knowledge and studied what Kafka does differently. I'm transparent about my depth: production experience with JMS, studied and practiced with Kafka."
+    "modelAnswer": "I bridge from what I know. After 8 years with Jakarta EE, I mapped DI, transactions, and messaging concepts to Spring equivalents. The mental models transfer \u2014 only the API changes. For Kafka, I started from JMS knowledge and studied what Kafka does differently. I'm transparent about my depth: production experience with JMS, studied and practiced with Kafka."
   }
 ]

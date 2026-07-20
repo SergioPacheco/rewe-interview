@@ -37,6 +37,8 @@ export class TheoryComponent {
   selectedAnswer = signal('');
   lastResult = signal<'correct' | 'incorrect' | 'partial'>('incorrect');
   practiceReady = signal(false);
+  private lastTopicId = '';
+  private lastSubtopic: string | null = '';
 
   // Computed
   readonly topic = computed(() => this.topicService.getTopic(this.topicId()));
@@ -86,6 +88,13 @@ export class TheoryComponent {
 
       if (isLoading || !topicId) return;
 
+      // Only reset tab when the route actually changes (not on re-renders)
+      const routeChanged = topicId !== this.lastTopicId || subtopic !== this.lastSubtopic;
+      this.lastTopicId = topicId;
+      this.lastSubtopic = subtopic;
+
+      if (!routeChanged) return;
+
       // Reset tab state when navigation changes
       const hasTheory = this.visibleChapters().length > 0;
       const hasExercises = this.exerciseCount() > 0;
@@ -98,7 +107,7 @@ export class TheoryComponent {
       }
 
       // Stop any running practice session when navigating
-      if (this.engine.isActive() && this.activeTab() === 'learn') {
+      if (this.engine.isActive()) {
         this.engine.end();
       }
 

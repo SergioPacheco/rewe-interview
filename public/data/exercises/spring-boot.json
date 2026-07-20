@@ -1122,5 +1122,117 @@
     ],
     "topic": "spring",
     "id": "spring-performance-caching-40"
+  },
+  {
+    "id": "interview-spring-01",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Spring Fundamentals",
+    "difficulty": "interview",
+    "question": "What is the difference between Spring Framework and Spring Boot?",
+    "interviewerIntent": "Distinguish Spring vs Spring Boot",
+    "answer": "Spring Framework provides the core features such as dependency injection, MVC, transaction management, data access and security.\n\nSpring Boot is built on top of Spring and simplifies application setup through auto-configuration, embedded servers, starter dependencies and sensible defaults.\n\nSpring Boot reduces the amount of manual configuration required to start and operate a Spring application.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-02",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "DI & Beans",
+    "difficulty": "interview",
+    "question": "What is dependency injection?",
+    "interviewerIntent": "Check DI understanding and preference",
+    "answer": "Dependency injection means that objects receive their dependencies from the framework instead of creating them directly.\n\nThis reduces coupling, improves testability and centralises object lifecycle management.\n\nI prefer constructor injection because dependencies are explicit and the object can be immutable.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-03",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Auto-configuration",
+    "difficulty": "interview",
+    "question": "How does Spring Boot auto-configuration work?",
+    "interviewerIntent": "Verify auto-configuration understanding",
+    "answer": "Spring Boot examines the classpath, existing beans and configuration properties.\n\nBased on this information, it conditionally creates common infrastructure beans.\n\nFor example, if Spring MVC and an embedded server are present, Boot configures a web application.\n\nDevelopers can override the defaults by defining their own beans or properties.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-04",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Request Lifecycle",
+    "difficulty": "interview",
+    "question": "What happens when an HTTP request reaches a Spring Boot application?",
+    "interviewerIntent": "Test understanding of the full request flow",
+    "answer": "The request first reaches the embedded web server, such as Tomcat.\n\nIt passes through the servlet filter chain, where Spring Security and other filters may run.\n\nThe `DispatcherServlet` receives the request and selects the appropriate controller method.\n\nThe controller calls the application or service layer.\n\nThe service may execute business rules, transactions and repository operations.\n\nThe result returns to the controller, and Spring normally serialises it to JSON using Jackson.\n\nFinally, the HTTP response is sent to the client.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-05",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Transactions",
+    "difficulty": "interview",
+    "question": "How do transactions work in Spring?",
+    "interviewerIntent": "Check transaction management knowledge",
+    "answer": "Spring usually manages transactions through `@Transactional`.\n\nA proxy intercepts the method call, opens or joins a transaction and commits it when the method succeeds.\n\nIf a configured exception occurs, Spring rolls the transaction back.\n\nI normally place transaction boundaries in the service layer because that layer coordinates business operations.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-06",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Transactions",
+    "difficulty": "interview",
+    "question": "What is a common problem with @Transactional?",
+    "interviewerIntent": "Verify awareness of @Transactional pitfalls",
+    "answer": "A common problem is self-invocation.\n\nWhen one method calls another transactional method inside the same class, the call may bypass the Spring proxy, so the transactional behaviour may not be applied.\n\nOther common issues include incorrect propagation, long-running transactions and performing external calls while holding database locks.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-07",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Async Processing",
+    "difficulty": "interview",
+    "question": "How would you handle a long-running operation?",
+    "interviewerIntent": "Test async architecture thinking",
+    "answer": "I would avoid blocking the HTTP request when the operation can be asynchronous.\n\nFor simple internal tasks, `@Async` with a properly configured executor may be sufficient.\n\nFor reliable distributed processing, I would publish a message or event to a broker such as ActiveMQ or Kafka.\n\nThe client could receive a job identifier and check the processing status later.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-08",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Security",
+    "difficulty": "interview",
+    "question": "How would you secure a REST API?",
+    "interviewerIntent": "Check security awareness",
+    "answer": "I would use Spring Security.\n\nFor stateless APIs, authentication is commonly implemented with OAuth 2.0 or JWT-based access tokens.\n\nI would validate authentication, apply authorisation rules at the appropriate level and follow least-privilege principles.\n\nI would also validate input, protect secrets, use TLS, configure CORS carefully and monitor failed authentication attempts.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

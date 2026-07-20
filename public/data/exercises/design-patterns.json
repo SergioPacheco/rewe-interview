@@ -339,5 +339,89 @@
     ],
     "topic": "patterns",
     "id": "patterns-facade-pattern-18"
+  },
+  {
+    "id": "interview-patterns-01",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Pattern Selection",
+    "difficulty": "interview",
+    "question": "When should you use a design pattern?",
+    "interviewerIntent": "Assess pragmatic use of patterns",
+    "answer": "I use a design pattern when it solves a real and recurring design problem.\n\nExamples include duplicated workflows, complex conditionals, interchangeable behaviour or difficult object creation.\n\nI do not apply patterns only because they are well known.\n\nThe pattern should make the design easier to understand and change, not merely add more classes.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-patterns-02",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Template Method",
+    "difficulty": "interview",
+    "question": "Explain the Template Method pattern.",
+    "interviewerIntent": "Check real-world pattern application",
+    "answer": "Template Method is a behavioural pattern that defines the skeleton of an algorithm in a base class.\n\nThe base class controls the overall sequence, while subclasses implement or customise selected steps.\n\nFor a document-generation system, the common flow could be:\n1. Validate the request.\n2. Load business data.\n3. Build the document content.\n4. Generate the file.\n5. Store audit information.\n\nThe base class keeps this sequence consistent, while each document type implements its specific data and content rules.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-patterns-03",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Pattern Selection",
+    "difficulty": "interview",
+    "question": "What is the difference between Template Method and Strategy?",
+    "interviewerIntent": "Distinguish related patterns",
+    "answer": "Template Method uses inheritance. A base class defines the workflow and subclasses customise specific steps.\n\nStrategy uses composition. A class delegates a variable behaviour to an interchangeable object.\n\nI use Template Method when the overall algorithm is stable and only some steps vary.\n\nI use Strategy when complete behaviours need to be changed independently at runtime or without inheritance.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-patterns-04",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Strategy",
+    "difficulty": "interview",
+    "question": "Explain the Strategy pattern.",
+    "interviewerIntent": "Verify Strategy pattern understanding",
+    "answer": "Strategy defines a family of interchangeable algorithms behind a common interface.\n\nFor example, different discount-calculation strategies can implement the same interface.\n\nThe order service selects or receives the appropriate strategy without containing a large conditional statement.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-patterns-05",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Factory",
+    "difficulty": "interview",
+    "question": "Explain the Factory pattern.",
+    "interviewerIntent": "Check Factory usage",
+    "answer": "Factory centralises object creation.\n\nIt is useful when the caller should not know the details required to instantiate a concrete implementation.\n\nFor example, a document-generator factory may return the correct generator based on the requested document type.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-patterns-06",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Builder",
+    "difficulty": "interview",
+    "question": "Explain the Builder pattern.",
+    "interviewerIntent": "Verify Builder understanding",
+    "answer": "Builder helps create complex objects step by step.\n\nIt is useful when an object has many optional fields or when construction should be readable and controlled.\n\nIt can also help create immutable objects.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

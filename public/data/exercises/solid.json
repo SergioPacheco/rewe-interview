@@ -846,5 +846,75 @@
     "interviewAnswer": "DI is the mechanism — Spring or CDI providing dependencies externally. DIP is the principle — making those dependencies be abstractions owned by the business layer. I use both together: Spring injects implementations of interfaces that my business code defines. This means changing from Kafka to RabbitMQ affects only infrastructure code, never business logic.",
     "topic": "solid",
     "answer": "**Dependency Injection (DI):** A technique where dependencies are provided from outside the class (via constructor, setter, or container). Spring and CDI are DI frameworks.\n\n**Dependency Inversion Principle (DIP):** A design principle: high-level modules should depend on abstractions, not on low-level details. Both layers depend on the abstraction.\n\n\n**Key Difference:** DI = HOW dependencies are provided (mechanism). DIP = WHAT shape dependencies should have (principle). You can inject a concrete KafkaTemplate (DI without DIP) or inject a LogisticsEventPublisher interface (DI + DIP)."
+  },
+  {
+    "id": "interview-solid-01",
+    "type": "ORAL_ANSWER",
+    "topic": "solid",
+    "subtopic": "SOLID Overview",
+    "difficulty": "interview",
+    "question": "What does SOLID mean?",
+    "interviewerIntent": "Basic SOLID awareness",
+    "answer": "SOLID represents five object-oriented design principles:\n\n- **Single Responsibility Principle**\n- **Open/Closed Principle**\n- **Liskov Substitution Principle**\n- **Interface Segregation Principle**\n- **Dependency Inversion Principle**\n\nThey help create code that is easier to extend, test and maintain.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-solid-02",
+    "type": "ORAL_ANSWER",
+    "topic": "solid",
+    "subtopic": "SOLID — SRP",
+    "difficulty": "interview",
+    "question": "Explain the Single Responsibility Principle.",
+    "interviewerIntent": "Check practical SRP application",
+    "answer": "A class should have one main reason to change.\n\nFor example, a document generator should not also query the database, send emails and manage security.\n\nSeparating those responsibilities reduces the impact of changes and makes testing easier.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-solid-03",
+    "type": "ORAL_ANSWER",
+    "topic": "solid",
+    "subtopic": "SOLID — OCP",
+    "difficulty": "interview",
+    "question": "Explain the Open/Closed Principle.",
+    "interviewerIntent": "Verify OCP with pragmatism",
+    "answer": "Software components should be open for extension but closed for modification.\n\nThis means that new behaviour should often be added through new implementations rather than repeatedly modifying stable code.\n\nHowever, I do not create extension points before they are necessary because that could violate YAGNI.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-solid-04",
+    "type": "ORAL_ANSWER",
+    "topic": "solid",
+    "subtopic": "SOLID — ISP",
+    "difficulty": "interview",
+    "question": "Explain the Interface Segregation Principle.",
+    "interviewerIntent": "Check ISP awareness",
+    "answer": "Clients should not depend on methods they do not use.\n\nInstead of creating one large interface with unrelated operations, I prefer smaller and focused interfaces.\n\nThis reduces unnecessary dependencies and avoids implementations with unsupported methods.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-solid-05",
+    "type": "ORAL_ANSWER",
+    "topic": "solid",
+    "subtopic": "SOLID — DIP",
+    "difficulty": "interview",
+    "question": "Explain the Dependency Inversion Principle.",
+    "interviewerIntent": "Verify DIP understanding",
+    "answer": "High-level business code should depend on abstractions rather than concrete infrastructure classes.\n\nFor example, an order service may depend on a `PaymentGateway` interface instead of a specific external payment provider.\n\nThis improves testability and allows infrastructure implementations to change.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

@@ -4,7 +4,7 @@
 
 An interactive interview preparation app for the **Fullstack Developer** position at REWE Digital Spain (Team TRAB). Built with Angular 19 using advanced techniques: Signals, standalone components, lazy loading, and a pixel-perfect header replicating REWE.de's visual design.
 
-🔗 **Live:** [GitHub Pages](https://your-username.github.io/rewe-interview/)
+🔗 **Live:** [GitHub Pages](https://sergiopacheco.github.io/rewe-interview/)
 
 ---
 

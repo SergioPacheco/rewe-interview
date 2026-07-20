@@ -418,5 +418,75 @@
     ],
     "topic": "behavioral",
     "id": "behavioral-general-30"
+  },
+  {
+    "id": "interview-behavioral-01",
+    "type": "ORAL_ANSWER",
+    "topic": "behavioral",
+    "subtopic": "Problem Solving",
+    "difficulty": "interview",
+    "question": "Tell me about a performance problem you solved.",
+    "interviewerIntent": "Assess real problem-solving experience",
+    "answer": "I worked on a process where opening a large set of enrolments took approximately sixteen minutes.\n\nThe main problems were a query that generated an enormous Cartesian product and an N+1 access pattern that executed several queries for each item.\n\nI changed the flow to use proper pagination, count queries, batch loading and lazy detail retrieval.\n\nThe number of queries dropped from tens of thousands to approximately ten, and the response time dropped to around two seconds.\n\nThe key lesson was to measure the complete access pattern instead of optimising only one SQL statement.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-behavioral-02",
+    "type": "ORAL_ANSWER",
+    "topic": "behavioral",
+    "subtopic": "Delivery",
+    "difficulty": "interview",
+    "question": "How do you make a production change safely?",
+    "interviewerIntent": "Check safe deployment practices",
+    "answer": "I first reproduce or understand the problem with logs, metrics, traces and realistic data.\n\nI create a focused change and add automated tests.\n\nFor database changes, I compare execution plans and test with representative data volumes.\n\nI use code review, controlled deployment and monitoring.\n\nFor higher-risk changes, I prefer feature flags, canary releases or a rollback plan.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-behavioral-03",
+    "type": "ORAL_ANSWER",
+    "topic": "behavioral",
+    "subtopic": "Leadership",
+    "difficulty": "interview",
+    "question": "How do you support junior developers?",
+    "interviewerIntent": "Assess mentoring and leadership",
+    "answer": "I try to make the reasoning behind a solution visible.\n\nI use clear naming, small changes, code reviews and examples.\n\nWhen introducing a pattern, I document the problem it solves and the expected extension points.\n\nI avoid unnecessary abstraction because maintainability includes how easily another developer can understand the code.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-behavioral-04",
+    "type": "ORAL_ANSWER",
+    "topic": "behavioral",
+    "subtopic": "Delivery",
+    "difficulty": "interview",
+    "question": "How do you balance clean architecture with delivery speed?",
+    "interviewerIntent": "Check pragmatism and judgment",
+    "answer": "I protect the boundaries that are important for correctness and maintainability, but I avoid adding layers without a clear benefit.\n\nI start with the simplest design that meets the requirement.\n\nI keep business rules testable and isolate unstable infrastructure where practical.\n\nI refactor when duplication, coupling or change frequency demonstrates that a stronger abstraction is needed.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-behavioral-05",
+    "type": "ORAL_ANSWER",
+    "topic": "behavioral",
+    "subtopic": "Honesty & Growth",
+    "difficulty": "interview",
+    "question": "What do you do when you do not know a technology asked about?",
+    "interviewerIntent": "Test honesty and learning approach",
+    "answer": "I answer honestly and connect it to concepts I already understand.\n\nFor example, I have not used Kafka extensively in production, but I have strong JMS and ActiveMQ experience.\n\nI understand asynchronous messaging, retries, consumer processing and failure handling.\n\nThen I explain what I have learned about Kafka and how I would validate my design before using it in production.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

@@ -203,5 +203,89 @@
     ],
     "topic": "jpa",
     "id": "jpa-migration-11"
+  },
+  {
+    "id": "interview-jpa-01",
+    "type": "ORAL_ANSWER",
+    "topic": "jpa",
+    "subtopic": "N+1 Problem",
+    "difficulty": "interview",
+    "question": "What is the N+1 query problem?",
+    "interviewerIntent": "Check awareness of the most common JPA issue",
+    "answer": "The N+1 problem happens when one query loads a list of entities and then additional queries are executed for each item to load related data.\n\nFor example, one query loads one hundred orders and one hundred additional queries load their customers.\n\nThis creates unnecessary database round trips and can severely affect performance.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jpa-02",
+    "type": "ORAL_ANSWER",
+    "topic": "jpa",
+    "subtopic": "N+1 Problem",
+    "difficulty": "interview",
+    "question": "How would you solve the N+1 problem?",
+    "interviewerIntent": "Verify practical N+1 resolution strategies",
+    "answer": "The solution depends on the use case.\n\nOptions include fetch joins, entity graphs, DTO projections and batch fetching.\n\nI avoid changing every relationship to eager loading because that can create larger queries and other performance problems.\n\nI first identify the exact access pattern and fetch only the data required by that operation.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jpa-03",
+    "type": "ORAL_ANSWER",
+    "topic": "jpa",
+    "subtopic": "Fetching Strategies",
+    "difficulty": "interview",
+    "question": "What is the difference between lazy and eager loading?",
+    "interviewerIntent": "Check loading strategy understanding",
+    "answer": "Lazy loading delays fetching a relationship until it is accessed.\n\nEager loading fetches it immediately with the parent entity.\n\nLazy loading reduces unnecessary data retrieval, but it can cause N+1 queries or lazy-initialisation errors.\n\nEager loading may simplify access but can load too much data and create expensive joins.\n\nI select fetching strategies based on the specific query rather than using eager loading globally.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jpa-04",
+    "type": "ORAL_ANSWER",
+    "topic": "jpa",
+    "subtopic": "Caching",
+    "difficulty": "interview",
+    "question": "What is the Hibernate first-level cache?",
+    "interviewerIntent": "Verify L1 cache understanding",
+    "answer": "The first-level cache is associated with the Hibernate session or JPA persistence context.\n\nIt is enabled by default.\n\nWithin the same persistence context, loading the same entity by its identifier normally returns the managed instance without executing another database query.\n\nIt also supports dirty checking and identity consistency.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jpa-05",
+    "type": "ORAL_ANSWER",
+    "topic": "jpa",
+    "subtopic": "Caching",
+    "difficulty": "interview",
+    "question": "What is the Hibernate second-level cache?",
+    "interviewerIntent": "Check L2 cache knowledge and pragmatism",
+    "answer": "The second-level cache is shared across sessions or persistence contexts.\n\nIt can cache entity or collection data and reduce database access for frequently read and rarely changed information.\n\nIt is optional and requires a cache provider and an appropriate invalidation strategy.\n\nI use it selectively because caching highly volatile entities may create complexity with little benefit.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jpa-06",
+    "type": "ORAL_ANSWER",
+    "topic": "jpa",
+    "subtopic": "Caching",
+    "difficulty": "interview",
+    "question": "How are Hibernate L1, L2 and Redis different?",
+    "interviewerIntent": "Distinguish cache levels",
+    "answer": "The Hibernate first-level cache belongs to a single persistence context and mainly manages entities during a transaction or request.\n\nThe second-level cache is shared across Hibernate sessions and caches persistence data.\n\nRedis is an external distributed cache that can store application-level data, API responses, sessions, computed results or shared values across application instances.\n\nThey operate at different levels and can coexist, but every cache layer increases invalidation and observability complexity.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

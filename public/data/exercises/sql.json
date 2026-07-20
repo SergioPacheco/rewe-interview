@@ -362,5 +362,75 @@
     ],
     "topic": "sql",
     "id": "sql-query-patterns-for-jpa-20"
+  },
+  {
+    "id": "interview-sql-01",
+    "type": "ORAL_ANSWER",
+    "topic": "sql",
+    "subtopic": "Performance Investigation",
+    "difficulty": "interview",
+    "question": "How would you investigate a slow SQL query in production?",
+    "interviewerIntent": "Test systematic debugging approach",
+    "answer": "First, I would confirm the query, parameters, execution frequency and business impact.\n\nThen I would inspect the execution plan using `EXPLAIN` or `EXPLAIN ANALYZE`.\n\nI would look for sequential scans, poor join strategies, inaccurate row estimates, expensive sorts, large intermediate results and missing or ineffective indexes.\n\nI would also check table statistics, data distribution, locks, I/O and database load.\n\nAfter proposing a change, I would test it with realistic data, compare execution plans and measure the result before deploying safely.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-sql-02",
+    "type": "ORAL_ANSWER",
+    "topic": "sql",
+    "subtopic": "Indexes",
+    "difficulty": "interview",
+    "question": "How do you decide whether to create an index?",
+    "interviewerIntent": "Check indexing judgment",
+    "answer": "I inspect the query patterns, filters, joins, sorting and selectivity.\n\nAn index should support important and frequent queries.\n\nHowever, indexes consume storage and make inserts, updates and deletes more expensive.\n\nI verify that the index is actually used and that its benefit is greater than its write and maintenance cost.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-sql-03",
+    "type": "ORAL_ANSWER",
+    "topic": "sql",
+    "subtopic": "Read Replicas",
+    "difficulty": "interview",
+    "question": "What is a read replica?",
+    "interviewerIntent": "Verify replica understanding",
+    "answer": "A read replica is a separate PostgreSQL instance that receives changes from the primary database through replication.\n\nThe primary database handles writes.\n\nThe replica replays the primary database's WAL records and can serve read-only queries.\n\nThis allows read traffic to be distributed across multiple database instances.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-sql-04",
+    "type": "ORAL_ANSWER",
+    "topic": "sql",
+    "subtopic": "Read Replicas",
+    "difficulty": "interview",
+    "question": "What are the trade-offs of read replicas?",
+    "interviewerIntent": "Check awareness of replica limitations",
+    "answer": "The main trade-off is replication lag.\n\nA query sent to a replica may temporarily return older data.\n\nThe architecture also adds operational complexity, connection routing, monitoring and failure scenarios.\n\nOperations requiring immediate read-after-write consistency should normally read from the primary.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-sql-05",
+    "type": "ORAL_ANSWER",
+    "topic": "sql",
+    "subtopic": "Read Replicas",
+    "difficulty": "interview",
+    "question": "How would you route reads and writes in Spring?",
+    "interviewerIntent": "Test practical implementation thinking",
+    "answer": "One option is to configure separate primary and replica data sources.\n\nA routing data source can select the connection based on the operation or transaction context.\n\nFor example, read-only transactional operations may use a replica, while write transactions use the primary.\n\nCritical read-after-write operations should remain on the primary.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

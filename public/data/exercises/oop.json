@@ -2481,5 +2481,159 @@
     "answer": "b",
     "explain": "Option B has 8 field-injected dependencies — a God class smell. Field injection hides dependencies (not visible without reading all fields), prevents immutability, and the class clearly has too many responsibilities. Option C shows proper decomposition — grouping related concerns into a sub-orchestrator.",
     "topic": "oop"
+  },
+  {
+    "id": "interview-oop-01",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "OOP Fundamentals",
+    "difficulty": "interview",
+    "question": "What are the four main principles of object-oriented programming?",
+    "interviewerIntent": "Check foundational OOP knowledge",
+    "answer": "The four main principles are encapsulation, abstraction, inheritance and polymorphism.\n\nEncapsulation protects the internal state of an object.\n\nAbstraction exposes only the relevant behaviour.\n\nInheritance allows a class to reuse and specialise behaviour from another class.\n\nPolymorphism allows different implementations to be used through the same contract.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-02",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Encapsulation",
+    "difficulty": "interview",
+    "question": "What is encapsulation?",
+    "interviewerIntent": "Verify understanding beyond just 'private fields'",
+    "answer": "Encapsulation means keeping data and behaviour together inside an object and protecting its internal state.\n\nInstead of exposing fields directly, the object provides methods that preserve its business rules and invariants.\n\nThis reduces coupling and prevents other parts of the application from putting the object into an invalid state.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-03",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Abstraction",
+    "difficulty": "interview",
+    "question": "What is abstraction?",
+    "interviewerIntent": "Check practical understanding of abstraction",
+    "answer": "Abstraction means exposing what an object does without exposing every implementation detail.\n\nFor example, a payment service may expose a `processPayment` method without requiring the caller to understand how the payment provider communicates with external systems.\n\nAbstraction reduces complexity and allows implementations to change without affecting their clients.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-04",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Polymorphism",
+    "difficulty": "interview",
+    "question": "What is polymorphism?",
+    "interviewerIntent": "Verify practical polymorphism usage",
+    "answer": "Polymorphism allows code to work with an interface or base type while different implementations provide different behaviour.\n\nFor example, a `DocumentGenerator` interface may have PDF, certificate and declaration implementations.\n\nThe caller uses the same interface without needing to know the concrete implementation.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-05",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Polymorphism",
+    "difficulty": "interview",
+    "question": "What is the difference between method overloading and method overriding?",
+    "interviewerIntent": "Distinguish compile-time vs runtime polymorphism",
+    "answer": "Method overloading happens when methods have the same name but different parameter lists. It is resolved at compile time.\n\nMethod overriding happens when a subclass provides a new implementation of a method inherited from a parent class or interface. It is resolved at runtime.\n\nOverloading is often described as compile-time polymorphism, while overriding is runtime polymorphism.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-06",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Abstraction",
+    "difficulty": "interview",
+    "question": "What is the difference between an interface and an abstract class?",
+    "interviewerIntent": "Check design decision reasoning",
+    "answer": "An interface defines a contract and is useful when different classes need to provide the same capability.\n\nAn abstract class is useful when related subclasses share state, behaviour or part of an algorithm.\n\nI prefer interfaces when I need flexible contracts and multiple implementations.\n\nI use abstract classes when there is a genuine inheritance relationship and meaningful shared implementation.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-07",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Inheritance",
+    "difficulty": "interview",
+    "question": "When would you use inheritance?",
+    "interviewerIntent": "Assess inheritance vs composition judgment",
+    "answer": "I use inheritance when there is a clear \"is-a\" relationship and the subclasses genuinely respect the behaviour promised by the parent type.\n\nInheritance can be useful when related classes share stable behaviour.\n\nHowever, I avoid using inheritance only for code reuse. In many cases, composition is more flexible and creates less coupling.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-08",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Inheritance",
+    "difficulty": "interview",
+    "question": "What are the trade-offs of inheritance?",
+    "interviewerIntent": "Check awareness of inheritance pitfalls",
+    "answer": "Inheritance can reduce duplication and enable polymorphism.\n\nHowever, it also creates strong coupling between parent and child classes.\n\nChanges in the base class may affect every subclass, which can create the fragile base class problem.\n\nDeep inheritance hierarchies are also difficult to understand and test.\n\nFor that reason, I prefer composition unless inheritance models a genuine and stable relationship.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-09",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Composition",
+    "difficulty": "interview",
+    "question": "Why is composition often preferred over inheritance?",
+    "interviewerIntent": "Verify design maturity",
+    "answer": "Composition allows behaviour to be assembled using smaller collaborating objects.\n\nIt is more flexible because behaviour can be replaced without changing the class hierarchy.\n\nIt also avoids deep inheritance structures and reduces coupling between classes.\n\nI normally choose composition when behaviours vary independently.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-10",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Polymorphism",
+    "difficulty": "interview",
+    "question": "Explain the Liskov Substitution Principle.",
+    "interviewerIntent": "Test LSP understanding with practical implications",
+    "answer": "The Liskov Substitution Principle means that a subtype must be usable wherever its parent type is expected without breaking the program.\n\nThe subtype must respect the contract and expected behaviour of the parent.\n\nIf consumers need type checks or special conditions for a subtype, the abstraction may be incorrect.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-11",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Polymorphism",
+    "difficulty": "interview",
+    "question": "Give an example of an LSP violation.",
+    "interviewerIntent": "Verify concrete understanding of LSP",
+    "answer": "A classic example is a `Bird` class with a `fly` method and a `Penguin` subclass.\n\nA penguin is a bird, but it cannot fly. If the penguin implementation throws an unsupported-operation exception, it breaks the contract of the parent class.\n\nA better design would separate flying behaviour into a `FlyingBird` interface implemented only by birds that can fly.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

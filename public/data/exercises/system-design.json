@@ -294,5 +294,103 @@
     ],
     "topic": "system-design",
     "id": "system-design-overall-architecture-15"
+  },
+  {
+    "id": "interview-system-design-01",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Design Approach",
+    "difficulty": "interview",
+    "question": "How do you start a system-design interview?",
+    "interviewerIntent": "Test structured design thinking",
+    "answer": "I start by clarifying the requirements.\n\nI ask about users, traffic, read and write volumes, latency, consistency, availability, data retention, security and failure expectations.\n\nThen I identify the main use cases and propose a simple high-level architecture.\n\nI explain trade-offs before adding more complex components.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-02",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Scalability",
+    "difficulty": "interview",
+    "question": "What does stateless service mean?",
+    "interviewerIntent": "Check scalability fundamentals",
+    "answer": "A stateless service does not keep client-specific session state only in the memory of one application instance.\n\nAny instance can handle the next request.\n\nShared state is stored in external systems such as databases or distributed caches.\n\nThis makes horizontal scaling and failover easier.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-03",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Consistency",
+    "difficulty": "interview",
+    "question": "What is eventual consistency?",
+    "interviewerIntent": "Verify distributed systems understanding",
+    "answer": "Eventual consistency means that different parts of a distributed system may temporarily have different values, but they converge after updates are propagated.\n\nIt is common with read replicas, caches and event-driven systems.\n\nIt improves scalability and decoupling, but business operations that require immediate consistency need special handling.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-04",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Resilience",
+    "difficulty": "interview",
+    "question": "What is a circuit breaker?",
+    "interviewerIntent": "Check resilience patterns knowledge",
+    "answer": "A circuit breaker stops repeated calls to a dependency that is failing.\n\nAfter a failure threshold, it opens and fails fast.\n\nLater, it allows limited test calls to check whether the dependency has recovered.\n\nThis protects the system from cascading failures.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-05",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Event-Driven",
+    "difficulty": "interview",
+    "question": "What is the transactional outbox pattern?",
+    "interviewerIntent": "Test reliable event publishing knowledge",
+    "answer": "The transactional outbox pattern solves the problem of updating the database and publishing an event reliably.\n\nThe application stores the business change and an outbox record in the same database transaction.\n\nA separate publisher reads the outbox and sends the event to Kafka.\n\nThis avoids a situation where the database commit succeeds but event publication fails, or the reverse.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-06",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Catalogue Design",
+    "difficulty": "interview",
+    "question": "Design a product catalogue service for a supermarket with millions of reads per day.",
+    "interviewerIntent": "Full system design exercise for retail domain",
+    "answer": "First, I would clarify the catalogue size, expected latency, update frequency, regional pricing and consistency requirements.\n\nI would expose a stateless catalogue API behind a load balancer.\n\nProduct data would be stored in PostgreSQL.\n\nFor read-heavy traffic, I could use read replicas and Redis cache.\n\nFrequently accessed product responses would follow a cache-aside strategy.\n\nPrice and product changes could be published through Kafka.\n\nConsumers would update the read model or invalidate related Redis entries.\n\nI would monitor cache hit rate, database latency, replication lag, Kafka consumer lag and API errors.\n\nI would start with a simple architecture and add components only when traffic and operational requirements justify them.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-07",
+    "type": "ORAL_ANSWER",
+    "topic": "system-design",
+    "subtopic": "Checkout Design",
+    "difficulty": "interview",
+    "question": "Design a checkout service for a supermarket.",
+    "interviewerIntent": "Full checkout system design exercise",
+    "answer": "I would first clarify payment methods, stock consistency, expected traffic and failure requirements.\n\nThe checkout service would receive the basket and an idempotency key.\n\nIt would validate product availability and current prices.\n\nThe order would be created in PostgreSQL inside a short transaction.\n\nExternal operations such as payment, notification and analytics should not all be executed inside the same database transaction.\n\nThe service could use an orchestrated workflow or saga.\n\nOrder events would be published to Kafka using a reliable mechanism such as the transactional outbox pattern.\n\nConsumers would process inventory, payment, notification and analytics.\n\nI would track order states explicitly and provide safe retries and compensation for failures.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

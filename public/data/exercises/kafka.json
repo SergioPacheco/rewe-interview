@@ -941,5 +941,89 @@
     ],
     "topic": "kafka",
     "id": "kafka-kafka-vs-alternatives-30"
+  },
+  {
+    "id": "interview-kafka-01",
+    "type": "ORAL_ANSWER",
+    "topic": "kafka",
+    "subtopic": "Messaging Experience",
+    "difficulty": "interview",
+    "question": "What experience do you have with messaging?",
+    "interviewerIntent": "Assess honesty about experience level",
+    "answer": "I have strong production experience with JMS and ActiveMQ in enterprise systems.\n\nI understand queues, topics, producers, consumers, asynchronous processing, retries, transactions and failure handling.\n\nI have not used Kafka extensively in production yet, but I understand its core concepts and how it differs from traditional message brokers.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-kafka-02",
+    "type": "ORAL_ANSWER",
+    "topic": "kafka",
+    "subtopic": "Kafka Fundamentals",
+    "difficulty": "interview",
+    "question": "What is Kafka?",
+    "interviewerIntent": "Check Kafka fundamentals",
+    "answer": "Kafka is a distributed event-streaming platform.\n\nProducers publish records to topics.\n\nTopics are divided into partitions, and records are stored durably and ordered within each partition.\n\nConsumers read the records and track their progress using offsets.\n\nKafka is designed for high-throughput event streams, replay and multiple independent consumers.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-kafka-03",
+    "type": "ORAL_ANSWER",
+    "topic": "kafka",
+    "subtopic": "Kafka vs ActiveMQ",
+    "difficulty": "interview",
+    "question": "What is the difference between ActiveMQ and Kafka?",
+    "interviewerIntent": "Distinguish messaging paradigms",
+    "answer": "ActiveMQ is a traditional message broker and works very well for queues, commands, request-reply messaging and enterprise JMS integration.\n\nKafka is based on a distributed append-only log and is optimised for durable event streams, high throughput, replay and multiple independent consumer groups.\n\nActiveMQ usually focuses on delivering a message to a consumer.\n\nKafka retains records for a configured period, allowing consumers to process or replay them independently.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-kafka-04",
+    "type": "ORAL_ANSWER",
+    "topic": "kafka",
+    "subtopic": "Consumer Groups",
+    "difficulty": "interview",
+    "question": "What is a Kafka consumer group?",
+    "interviewerIntent": "Verify consumer group understanding",
+    "answer": "A consumer group is a set of consumers cooperating to process a topic.\n\nWithin one group, each partition is assigned to only one consumer at a time.\n\nDifferent consumer groups can independently read the same topic.\n\nFor example, inventory, billing and analytics can each use a separate consumer group for the same order events.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-kafka-05",
+    "type": "ORAL_ANSWER",
+    "topic": "kafka",
+    "subtopic": "Idempotency",
+    "difficulty": "interview",
+    "question": "What does idempotent consumer mean?",
+    "interviewerIntent": "Check idempotency understanding",
+    "answer": "An idempotent consumer can process the same event more than once without creating an incorrect result.\n\nThis is important because distributed systems may redeliver messages.\n\nFor example, a payment event could include a unique event identifier, and the consumer stores processed identifiers to avoid charging the customer twice.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-kafka-06",
+    "type": "ORAL_ANSWER",
+    "topic": "kafka",
+    "subtopic": "Error Handling",
+    "difficulty": "interview",
+    "question": "How would you handle Kafka processing failures?",
+    "interviewerIntent": "Test failure handling strategy",
+    "answer": "I would use bounded retries with backoff for transient failures.\n\nConsumers should be idempotent.\n\nFor messages that repeatedly fail, I would use a dead-letter topic or another controlled recovery mechanism.\n\nI would monitor consumer lag, retry rates and dead-letter events.\n\nThe exact strategy depends on whether ordering must be preserved.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
   }
 ]

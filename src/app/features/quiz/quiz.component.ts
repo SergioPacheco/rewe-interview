@@ -106,6 +106,51 @@ import { AnswerResult } from '../../models';
                       🎯 <strong>Interviewer intent:</strong> {{ getField(q, 'interviewerIntent') }}
                     </p>
                   }
+
+                  <!-- Schema V2: Opening Guidance (before answer) -->
+                  @if (getField(q, 'schemaVersion')) {
+                    @if (getField(q, 'context')) {
+                      <p class="quiz__context"><em>{{ getField(q, 'context') }}</em></p>
+                    }
+                    <details class="quiz__details quiz__details--open">
+                      <summary>💡 Opening Guidance</summary>
+                      <div class="quiz__guidance">
+                        <p><strong>Objective:</strong> {{ getFieldNested(q, 'openingGuidance', 'objective') }}</p>
+                        @if (getFieldArray(getFieldObj(q, 'openingGuidance'), 'requiredElements').length > 0) {
+                          <p><strong>Must include:</strong></p>
+                          <ul>
+                            @for (el of getFieldArray(getFieldObj(q, 'openingGuidance'), 'requiredElements'); track $index) {
+                              <li>✅ {{ el }}</li>
+                            }
+                          </ul>
+                        }
+                        @if (getFieldArray(getFieldObj(q, 'openingGuidance'), 'avoid').length > 0) {
+                          <p><strong>Avoid:</strong></p>
+                          <ul>
+                            @for (el of getFieldArray(getFieldObj(q, 'openingGuidance'), 'avoid'); track $index) {
+                              <li>❌ {{ el }}</li>
+                            }
+                          </ul>
+                        }
+                      </div>
+                    </details>
+
+                    <details class="quiz__details">
+                      <summary>❓ Clarifying Questions to Ask ({{ getFieldArray(q, 'clarifyingQuestions').length }})</summary>
+                      <div class="quiz__clarifying">
+                        @for (cq of getFieldArray(q, 'clarifyingQuestions'); track $index) {
+                          <div class="quiz__cq-item">
+                            <strong>{{ cq.question }}</strong>
+                            <details>
+                              <summary>Why it matters</summary>
+                              <p>{{ cq.whyItMatters }}</p>
+                            </details>
+                          </div>
+                        }
+                      </div>
+                    </details>
+                  }
+
                   <textarea
                     class="quiz__text-area"
                     placeholder="Type your answer here (optional — or just practice speaking)..."
@@ -239,6 +284,110 @@ import { AnswerResult } from '../../models';
                       }
                     </ul>
                   </details>
+                }
+
+                <!-- Schema V2: Extended post-reveal content -->
+                @if (getField(q, 'schemaVersion')) {
+                  <!-- Tradeoffs -->
+                  @if (getFieldArray(q, 'tradeoffs').length > 0) {
+                    <details class="quiz__details">
+                      <summary>⚖️ Tradeoffs ({{ getFieldArray(q, 'tradeoffs').length }})</summary>
+                      <div class="quiz__v2-section">
+                        @for (t of getFieldArray(q, 'tradeoffs'); track $index) {
+                          <div class="quiz__v2-card">
+                            <strong>{{ t.dimensionA }}</strong> vs <strong>{{ t.dimensionB }}</strong>
+                            <p>{{ t.domainContext }}</p>
+                            <p><em>→ {{ t.consequence }}</em></p>
+                          </div>
+                        }
+                      </div>
+                    </details>
+                  }
+
+                  <!-- Decision Branches -->
+                  @if (getFieldArray(q, 'decisionBranches').length > 0) {
+                    <details class="quiz__details">
+                      <summary>🌿 Decision Branches ({{ getFieldArray(q, 'decisionBranches').length }})</summary>
+                      <div class="quiz__v2-section">
+                        @for (b of getFieldArray(q, 'decisionBranches'); track $index) {
+                          <div class="quiz__v2-card">
+                            <p><strong>If:</strong> {{ b.condition }}</p>
+                            <p><strong>Then:</strong> {{ b.recommendation }}</p>
+                            <p><em>Rationale:</em> {{ b.rationale }}</p>
+                            @if (b.risks?.length) { <p>⚠️ Risks: {{ b.risks.join(', ') }}</p> }
+                          </div>
+                        }
+                      </div>
+                    </details>
+                  }
+
+                  <!-- Experience Evidence -->
+                  @if (getFieldArray(q, 'experienceEvidence').length > 0) {
+                    <details class="quiz__details">
+                      <summary>🏷️ Experience Classification</summary>
+                      <div class="quiz__v2-section">
+                        @for (e of getFieldArray(q, 'experienceEvidence'); track $index) {
+                          <div class="quiz__v2-card">
+                            <strong>{{ e.area }}</strong> — <span class="quiz__exp-level">{{ e.level }}</span>
+                            <p><em>{{ e.safeWording }}</em></p>
+                          </div>
+                        }
+                      </div>
+                    </details>
+                  }
+
+                  <!-- Scoring Rubric -->
+                  @if (getFieldArray(q, 'scoringRubric').length > 0) {
+                    <details class="quiz__details">
+                      <summary>📊 Scoring Rubric</summary>
+                      <div class="quiz__v2-section">
+                        @for (r of getFieldArray(q, 'scoringRubric'); track $index) {
+                          <div class="quiz__v2-card">
+                            <strong>{{ r.criterion }}</strong> ({{ r.weight }}%)
+                            <p>✅ Strong: {{ r.strongSignals?.join('; ') }}</p>
+                            <p>❌ Weak: {{ r.weakSignals?.join('; ') }}</p>
+                          </div>
+                        }
+                      </div>
+                    </details>
+                  }
+
+                  <!-- Red Flags -->
+                  @if (getFieldArray(q, 'redFlags').length > 0) {
+                    <details class="quiz__details">
+                      <summary>🚩 Red Flags</summary>
+                      <ul class="quiz__mistakes">
+                        @for (f of getFieldArray(q, 'redFlags'); track $index) {
+                          <li>🚩 {{ f }}</li>
+                        }
+                      </ul>
+                    </details>
+                  }
+
+                  <!-- Coach Debrief -->
+                  @if (getFieldObj(q, 'coachDebrief')) {
+                    <details class="quiz__details">
+                      <summary>🎓 Coach Debrief</summary>
+                      <div class="quiz__v2-section">
+                        @if (getFieldArray(getFieldObj(q, 'coachDebrief'), 'strongAnswerElements').length > 0) {
+                          <p><strong>Strong answer includes:</strong></p>
+                          <ul>
+                            @for (el of getFieldArray(getFieldObj(q, 'coachDebrief'), 'strongAnswerElements'); track $index) {
+                              <li>{{ el }}</li>
+                            }
+                          </ul>
+                        }
+                        @if (getFieldArray(getFieldObj(q, 'coachDebrief'), 'commonlyMissedPoints').length > 0) {
+                          <p><strong>Commonly missed:</strong></p>
+                          <ul>
+                            @for (el of getFieldArray(getFieldObj(q, 'coachDebrief'), 'commonlyMissedPoints'); track $index) {
+                              <li>⚠️ {{ el }}</li>
+                            }
+                          </ul>
+                        }
+                      </div>
+                    </details>
+                  }
                 }
 
                 <button class="quiz__next-btn" (click)="nextQuestion()">
@@ -440,5 +589,14 @@ export class QuizComponent {
   getFieldArray(q: unknown, field: string): any[] {
     const val = (q as Record<string, unknown>)[field];
     return Array.isArray(val) ? val : [];
+  }
+
+  getFieldObj(q: unknown, field: string): any {
+    return (q as Record<string, unknown>)?.[field] ?? {};
+  }
+
+  getFieldNested(q: unknown, parent: string, child: string): string {
+    const obj = (q as Record<string, unknown>)?.[parent] as Record<string, unknown> | undefined;
+    return (obj?.[child] as string) ?? '';
   }
 }

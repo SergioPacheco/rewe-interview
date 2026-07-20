@@ -8,16 +8,18 @@
             class="topbar__menu-btn"
             type="button"
             (click)="toggleSidebar()"
-            aria-label="Abrir menu"
+            aria-label="Open navigation"
           >
-            ☰
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16M4 12h16M4 17h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
+            </svg>
           </button>
 
           <a routerLink="/" class="topbar__logo" aria-label="REWE Interview Prep">
             <img src="/assets/rewe-logo.svg" alt="REWE" class="topbar__logo-img" />
           </a>
 
-          <nav class="topbar__nav" aria-label="Navegação principal">
+          <nav class="topbar__nav" aria-label="Primary navigation">
             <a
               routerLink="/"
               class="topbar__link"
@@ -32,7 +34,7 @@
               class="topbar__link"
               routerLinkActive="topbar__link--active"
             >
-              Resume
+              My Resume
             </a>
 
             <a
@@ -40,81 +42,98 @@
               class="topbar__link"
               routerLinkActive="topbar__link--active"
             >
-              Portfolio
+              Projects
             </a>
           </nav>
         </div>
 
-        <div class="topbar__right">
-          <span class="topbar__stat">⚡ {{ progressService.totalXp() }} XP</span>
-          <span class="topbar__stat">🔥 {{ progressService.streak() }}d streak</span>
-        </div>
+        <nav class="topbar__right" aria-label="User navigation">
+          <a routerLink="/" class="topbar__utility">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="8"/>
+              <path d="M12 8v4l3 2"/>
+            </svg>
+            <span>My progress</span>
+          </a>
+
+          <a routerLink="/topic/rewe" class="topbar__utility">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.5"/>
+              <path d="M5.5 20c0-4 3-7 6.5-7s6.5 3 6.5 7"/>
+            </svg>
+            <span>Mock interview</span>
+          </a>
+        </nav>
       </div>
     </div>
 
     <!-- Linha branca -->
     <div class="catbar">
       <div class="catbar__inner">
-        <div class="catbar__search">
+        <label class="catbar__search">
+          <span class="sr-only">Search</span>
+          <svg class="catbar__search-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7"/>
+            <path d="m16 16 4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+          </svg>
           <input
             class="catbar__search-input"
-            type="text"
+            type="search"
             placeholder="Topics, exercises or concepts"
             [ngModel]="searchQuery()"
             (ngModelChange)="onSearch($event)"
           />
           @if (searchQuery()) {
-            <button class="catbar__search-clear" (click)="onSearch('')" aria-label="Clear search">✕</button>
+            <button
+              type="button"
+              class="catbar__search-clear"
+              (click)="onSearch('')"
+              aria-label="Clear search"
+            >×</button>
           }
-          <svg class="catbar__search-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M11 18C12.6664 18 14.1968 17.4177 15.3989 16.4455C15.4205 16.4746 15.4446 16.5026 15.471 16.529L18.471 19.529C18.7632 19.8212 19.2368 19.8212 19.529 19.529C19.8212 19.2368 19.8212 18.7632 19.529 18.471L16.529 15.471C16.5026 15.4446 16.4746 15.4205 16.4455 15.3989C17.4177 14.1968 18 12.6664 18 11C18 7.13401 14.866 4 11 4C7.13401 4 4 7.13401 4 11C4 14.866 7.13401 18 11 18ZM16.5037 11C16.5037 14.0396 14.0396 16.5037 11 16.5037C7.96036 16.5037 5.49625 14.0396 5.49625 11C5.49625 7.96036 7.96036 5.49625 11 5.49625C14.0396 5.49625 16.5037 7.96036 16.5037 11Z" fill="#676767"></path>
-          </svg>
-        </div>
+        </label>
 
-        <nav class="catbar__icons" aria-label="Atalhos">
-          <a
-            routerLink="/topic/oop"
-            class="catbar__item"
-            routerLinkActive="catbar__item--active"
-          >
-            <span class="catbar__icon" aria-hidden="true">🏗️</span>
+        <nav class="catbar__icons" aria-label="Featured topics">
+          <a routerLink="/topic/oop" class="catbar__item" routerLinkActive="catbar__item--active">
+            <svg class="catbar__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="3" width="8" height="8" rx="1.5"/>
+              <rect x="13" y="3" width="8" height="8" rx="1.5"/>
+              <rect x="3" y="13" width="8" height="8" rx="1.5"/>
+              <path d="M16 14v7m-3-3.5h6"/>
+            </svg>
             <span class="catbar__label">OOP</span>
           </a>
 
-          <a
-            routerLink="/topic/collections"
-            class="catbar__item"
-            routerLinkActive="catbar__item--active"
-          >
-            <span class="catbar__icon" aria-hidden="true">☕</span>
-            <span class="catbar__label">Java Core</span>
+          <a routerLink="/topic/collections" class="catbar__item" routerLinkActive="catbar__item--active">
+            <svg class="catbar__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h16M4 12h16M4 18h10"/>
+              <circle cx="20" cy="18" r="2"/>
+            </svg>
+            <span class="catbar__label">Java</span>
           </a>
 
-          <a
-            routerLink="/topic/spring"
-            class="catbar__item"
-            routerLinkActive="catbar__item--active"
-          >
-            <span class="catbar__icon" aria-hidden="true">🌱</span>
+          <a routerLink="/topic/spring" class="catbar__item" routerLinkActive="catbar__item--active">
+            <svg class="catbar__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c1.3 0 2.5-.3 3.6-.7"/>
+              <path d="M8 12c2-2 4-2 6 0s4 2 6 0"/>
+            </svg>
             <span class="catbar__label">Spring</span>
           </a>
 
-          <a
-            routerLink="/topic/kafka"
-            class="catbar__item"
-            routerLinkActive="catbar__item--active"
-          >
-            <span class="catbar__icon" aria-hidden="true">✉️</span>
+          <a routerLink="/topic/kafka" class="catbar__item" routerLinkActive="catbar__item--active">
+            <svg class="catbar__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 4l7 7M4 20l7-7M13 12h8"/>
+              <circle cx="12" cy="12" r="2"/>
+            </svg>
             <span class="catbar__label">Kafka</span>
           </a>
 
-          <a
-            routerLink="/topic/system-design"
-            class="catbar__item"
-            routerLinkActive="catbar__item--active"
-          >
-            <span class="catbar__icon" aria-hidden="true">🏢</span>
-            <span class="catbar__label">System Design</span>
+          <a routerLink="/topic/system-design" class="catbar__item" routerLinkActive="catbar__item--active">
+            <svg class="catbar__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="2" y="3" width="20" height="14" rx="2"/>
+              <path d="M8 21h8M12 17v4"/>
+            </svg>
+            <span class="catbar__label">Design</span>
           </a>
         </nav>
       </div>

@@ -121,6 +121,8 @@ export class TopicService {
       files.map(f => this.loadJson<Question[]>(f))
     );
 
+    this.logRejected(results, files);
+
     return results
       .filter((r): r is PromiseFulfilledResult<Question[]> => r.status === 'fulfilled')
       .flatMap(r => r.value);
@@ -157,8 +159,24 @@ export class TopicService {
       files.map(f => this.loadJson<TheoryChapter[]>(f))
     );
 
+    this.logRejected(results, files);
+
     return results
       .filter((r): r is PromiseFulfilledResult<TheoryChapter[]> => r.status === 'fulfilled')
       .flatMap(r => r.value);
+  }
+
+  /** Log rejected file loads in development */
+  private logRejected(results: PromiseSettledResult<unknown>[], files: string[]): void {
+    const rejected = results
+      .map((r, i) => r.status === 'rejected' ? files[i] : null)
+      .filter(Boolean);
+
+    if (rejected.length > 0) {
+      console.error(
+        `[TopicService] Failed to load ${rejected.length} content file(s):`,
+        rejected
+      );
+    }
   }
 }

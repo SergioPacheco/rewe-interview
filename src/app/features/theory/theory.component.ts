@@ -47,10 +47,13 @@ export class TheoryComponent implements OnInit {
   );
 
   readonly exerciseCount = computed(() =>
-    this.topicService.getQuestions(this.topicId()).length
+    this.topicService.getQuestions(
+      this.topicId(),
+      this.selectedSubtopic() || undefined
+    ).length
   );
 
-  readonly hasTheory = computed(() => this.allChapters().length > 0);
+  readonly hasTheory = computed(() => this.visibleChapters().length > 0);
   readonly hasExercises = computed(() => this.exerciseCount() > 0);
   readonly currentQuestion = computed(() => this.engine.currentQuestion());
 
@@ -66,19 +69,12 @@ export class TheoryComponent implements OnInit {
   readonly visibleChapters = computed<TheoryChapter[]>(() => {
     const all = this.allChapters();
     const sub = this.selectedSubtopic();
-    if (!sub || all.length === 0) return all;
 
-    // Deterministic: use explicit subtopic field first
-    const byField = all.filter(ch => ch.subtopic === sub);
-    if (byField.length > 0) return byField;
+    // No subtopic selected → show all chapters for the topic
+    if (!sub) return all;
 
-    // Fallback: ID-based matching for chapters without explicit subtopic field
-    const subNorm = sub.toLowerCase();
-    const byId = all.filter(ch => ch.id.toLowerCase().includes(subNorm));
-    if (byId.length > 0) return byId;
-
-    // Last resort: show all chapters for this topic
-    return all;
+    // Deterministic: filter by explicit subtopic field
+    return all.filter(ch => ch.subtopic === sub);
   });
 
   // ===== Lifecycle =====

@@ -34,8 +34,8 @@ npx ng test --watch=false # Unit tests
 - **Practice Tab** — Flashcard-style questions with reveal pattern, dark IDE code blocks, markdown-rendered answers
 - **Resume Page** — Full CV with professional styling
 - **Portfolio Page** — Project showcase (SinapiPRO)
-- **Sidebar** — Collapsible topic tree with subtopics, priority grouping, and search filtering
-- **155 OCA/OCP Questions** — Extracted from PDF, code separated into dark theme blocks
+- **Sidebar** — Collapsible topic tree with subtopics, domain-based grouping, and search filtering
+- **648 Practice Questions** — Multiple types across all topics
 - **Markdown Pipe** — Renders `**bold**`, `` `code` ``, ```fenced blocks```, bullet lists in answers
 
 ---
@@ -62,8 +62,8 @@ src/app/
 └── app.routes.ts                 ← Lazy routes + guards + resolvers
 
 public/data/
-├── exercises/                    ← 12 JSON files, 358+ exercises
-└── topics/                       ← 18 theory files + index.json (18 topics)
+├── exercises/                    ← 20 JSON files, 648+ exercises
+└── topics/                       ← 22 theory files + index.json (21 topics)
 ```
 
 ---
@@ -88,10 +88,13 @@ public/data/
 
 ## 📊 Content
 
-- **18 topics** — Java Core (OCA), OOP, SOLID, Spring Boot, Kafka, SQL, REST, JPA, Concurrency, Patterns, Testing, Docker, K8s, Kotlin, Angular, System Design, Behavioral, REWE-specific
-- **358+ exercises** — ORAL_ANSWER, PREDICT_OUTPUT, FILL_BLANK, PICK_INVALID, ORDER_STEPS
-- **86 theory chapters** — With code examples, tables, bullet points
-- **REWE-specific** — Team TRAB context, NEO platform, job description analysis, interview prep
+- **21 topics** across 6 domain groups (Interview, Backend, Distributed Systems, Frontend, Quality & Ops, More)
+- **101 subtopics** — each with deterministic Learn/Practice association
+- **101 theory chapters** — With code examples, tables, bullet points
+- **648+ exercises** — ORAL_ANSWER, PREDICT_OUTPUT, FILL_BLANK, PICK_INVALID, ORDER_STEPS, SYSTEM_DESIGN
+- **Content validator** — `npm run content:validate` checks coverage for every subtopic
+- **REWE-specific** — Team TRAB context, NEO platform, transport logistics scenarios, interview prep
+- **My Stories** — Real experience evidence (SQL optimization, N+1 fix, production incident, design patterns)
 
 ---
 

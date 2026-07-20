@@ -1,16 +1,14 @@
 <div class="topic-view">
   <!-- Tabs: Learn / Practice -->
   <div class="tabs">
-    @if (hasTheory()) {
-      <button class="tabs__btn" [class.tabs__btn--active]="activeTab() === 'learn'" (click)="switchTab('learn')">📖 Learn</button>
-    }
+    <button class="tabs__btn" [class.tabs__btn--active]="activeTab() === 'learn'" (click)="switchTab('learn')">📖 Learn</button>
     @if (hasExercises()) {
       <button class="tabs__btn" [class.tabs__btn--active]="activeTab() === 'practice'" (click)="switchTab('practice')">🎯 Practice</button>
     }
   </div>
 
   <!-- ==================== LEARN TAB ==================== -->
-  @if (activeTab() === 'learn' && hasTheory()) {
+  @if (activeTab() === 'learn') {
     <div class="learn-content">
       @if (visibleChapters().length > 0) {
         @for (chapter of visibleChapters(); track chapter.id) {
@@ -26,6 +24,16 @@
         }
       } @else if (loading()) {
         <div class="empty">Loading content...</div>
+      } @else if (selectedSubtopic()) {
+        <div class="content-warning">
+          <span class="content-warning__icon">📝</span>
+          <p class="content-warning__text">Learn content is not yet available for this subtopic.</p>
+        </div>
+      } @else {
+        <div class="content-warning">
+          <span class="content-warning__icon">📖</span>
+          <p class="content-warning__text">Select a subtopic from the sidebar to view content.</p>
+        </div>
       }
     </div>
   }

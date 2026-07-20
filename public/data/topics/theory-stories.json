@@ -118,5 +118,49 @@
         "content": "<strong>Strategy \u2014 bridge, don't restart:</strong>\n1. <strong>Spring:</strong> Mapped every Jakarta EE concept to its Spring equivalent (CDI\u2192Spring DI, CMT\u2192@Transactional, JAX-RS\u2192Spring MVC). The mental model transferred; only syntax and conventions changed.\n2. <strong>Kafka:</strong> Started from JMS knowledge, then studied what Kafka does differently (log storage, consumer groups, partitions, replay). Built understanding incrementally.\n3. <strong>Angular:</strong> Applied component architecture thinking from building enterprise UIs. Focused on signals, standalone components, and TypeScript strict mode.\n\n<strong>Interview answer:</strong>\n<em>\"I don't treat framework transitions as starting over. I map concepts I already understand deeply \u2014 dependency injection, transaction management, messaging \u2014 to the new framework's implementation. The fundamentals are the same; the API surface is what changes.\"</em>"
       }
     ]
+  },
+  {
+    "id": "theory-stories-legacy",
+    "topic": "stories",
+    "subtopic": "story-legacy",
+    "title": "Legacy Modernization \u2014 Jakarta EE Migration",
+    "sections": [
+      {
+        "heading": "The situation",
+        "content": "<strong>Context:</strong> SGN3 is a large monolithic education management system (300+ schools, thousands of concurrent users) running on Java 11, WildFly 26, Hibernate 5.3, PrimeFaces 10, and Jakarta EE 8.\n\n<strong>The challenge:</strong> Migrating to Java 21, WildFly 39, Hibernate 6, and PrimeFaces 15 \u2014 while the system continues serving production traffic daily. No big-bang rewrite. No feature freeze."
+      },
+      {
+        "heading": "My approach",
+        "content": "<strong>Strategy \u2014 incremental migration with continuous delivery:</strong>\n\n1. <strong>Identify breaking changes systematically</strong> \u2014 catalogued every incompatibility: HQL syntax changes (SELECT by alias, not entity name), EXTRACT return type change (double\u2192numeric in PG14+), PrimeFaces component removals, Hibernate type handling differences.\n\n2. <strong>Fix forward in the current codebase</strong> \u2014 every new code follows H6/PF15 patterns. Existing code is fixed when touched (Boy Scout Rule), not in bulk refactoring sprints.\n\n3. <strong>Automated detection</strong> \u2014 built static analysis tools that run on every branch diff, catching deprecated patterns before they merge: <code>filterMatchMode=\"custom\"</code>, <code>p:inputSwitch</code>, <code>Object[]</code> instead of Tuple, missing aliases in native queries.\n\n4. <strong>Database preparation</strong> \u2014 preparing for PostgreSQL 10\u219218 migration in parallel. Identified every EXTRACT index, every unqualified reference, every null parameter issue."
+      },
+      {
+        "heading": "What this demonstrates",
+        "content": "\u2022 Pragmatic modernization \u2014 no big-bang rewrite, continuous delivery throughout\n\u2022 Deep understanding of framework internals (Hibernate session, PrimeFaces rendering lifecycle)\n\u2022 Ability to create tooling that prevents regression at scale\n\u2022 Patience and discipline \u2014 large migrations are marathons, not sprints\n\u2022 Risk management \u2014 fix patterns proactively, not reactively when the upgrade breaks everything"
+      },
+      {
+        "heading": "Interview defense points",
+        "content": "\u2022 I can explain specific Hibernate 5\u21926 breaking changes and their solutions\n\u2022 I can explain why PrimeFaces components were removed and what replaces them\n\u2022 I can explain the PostgreSQL EXTRACT type change and its impact on Java code\n\u2022 I can show the tooling approach: diff-aware static analysis that only flags new violations\n\u2022 I can discuss why incremental migration is safer than big-bang for a revenue-critical system"
+      }
+    ]
+  },
+  {
+    "id": "theory-stories-ai",
+    "topic": "stories",
+    "subtopic": "story-ai",
+    "title": "AI-Assisted Development \u2014 How I Use AI as a Senior Engineer",
+    "sections": [
+      {
+        "heading": "My actual workflow",
+        "content": "<strong>How I use AI tools daily:</strong>\n\n\u2022 <strong>Investigation accelerator</strong> \u2014 querying databases, understanding unfamiliar modules, reading execution plans, correlating logs with traces. AI handles the breadth; I handle the judgment.\n\n\u2022 <strong>Code generation with strict constraints</strong> \u2014 I define architecture, interfaces, and constraints (via steering documents). AI generates implementation following those rules. I review every line.\n\n\u2022 <strong>Documentation and analysis</strong> \u2014 generating Hard Contracts from requirements, producing code review reports, creating test plans from specifications.\n\n\u2022 <strong>Tooling creation</strong> \u2014 building MCP servers, static analysis scripts, content validators. AI generates the boilerplate; I design the rules and validation logic."
+      },
+      {
+        "heading": "What AI does NOT replace",
+        "content": "<strong>Where human judgment remains essential:</strong>\n\n\u2022 <strong>Architecture decisions</strong> \u2014 AI suggests; I decide based on team context, operational constraints, and long-term maintenance cost.\n\u2022 <strong>Root cause analysis</strong> \u2014 AI can correlate data, but diagnosing why a system behaves unexpectedly requires understanding the domain and history.\n\u2022 <strong>Trade-off evaluation</strong> \u2014 AI presents options; deciding which trade-off is acceptable for this specific team, timeline, and risk tolerance is human work.\n\u2022 <strong>Code review judgment</strong> \u2014 knowing whether a pattern is correct requires understanding the system's invariants, not just language rules."
+      },
+      {
+        "heading": "Honest assessment for the interview",
+        "content": "<strong>What I'd say in the interview:</strong>\n\n<em>\"I use AI tools extensively \u2014 they make me faster at investigation, boilerplate generation, and documentation. But I design the architecture, make the trade-off decisions, review every generated line against production constraints, and take responsibility for what ships. AI is a force multiplier for an experienced engineer, not a replacement for engineering judgment.\"</em>\n\n<strong>Key principle:</strong> AI-generated code enters production through the same review process as human-written code. The accountability is mine regardless of who (or what) typed it."
+      }
+    ]
   }
 ]

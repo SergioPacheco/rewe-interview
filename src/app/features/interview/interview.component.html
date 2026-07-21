@@ -133,7 +133,11 @@
                     @if (example.title) {
                       <h4 class="code-example__title">{{ example.title }}</h4>
                     }
-                    <pre class="code-example__pre"><code>{{ example.code }}</code></pre>
+                    <app-code-block
+                      [code]="example.code"
+                      [language]="example.language"
+                      [label]="example.title || 'Interview code example'"
+                    />
                   </div>
                 }
               </div>

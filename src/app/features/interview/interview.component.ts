@@ -1,6 +1,8 @@
 import { Component, computed, inject, input, effect, signal } from '@angular/core';
 import { InterviewService } from '../../core/services/interview.service';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
+import { SyntaxHighlightPipe } from '../../shared/pipes/syntax-highlight.pipe';
+import { CodeBlockComponent } from '../../shared/components/code-block/code-block.component';
 
 /**
  * Interview tab component — displays interview preparation questions
@@ -10,7 +12,7 @@ import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 @Component({
   selector: 'app-interview',
   standalone: true,
-  imports: [MarkdownPipe],
+  imports: [MarkdownPipe, SyntaxHighlightPipe, CodeBlockComponent],
   templateUrl: './interview.component.html',
   styleUrl: './interview.component.scss'
 })

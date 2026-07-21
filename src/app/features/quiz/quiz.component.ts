@@ -4,6 +4,8 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { QuizEngineService } from '../../core/services/quiz-engine.service';
 import { TopicService } from '../../core/services/topic.service';
+import { SyntaxHighlightPipe } from '../../shared/pipes/syntax-highlight.pipe';
+import { CodeBlockComponent } from '../../shared/components/code-block/code-block.component';
 import { AnswerResult } from '../../models';
 
 /**
@@ -13,7 +15,7 @@ import { AnswerResult } from '../../models';
 @Component({
   selector: 'app-quiz',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, SyntaxHighlightPipe, CodeBlockComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="quiz">
@@ -22,8 +24,50 @@ import { AnswerResult } from '../../models';
         <a routerLink="/" class="quiz__back">← Topics</a>
         @if (topic(); as t) {
           <span class="quiz__topic">{{ t.icon }} {{ t.name }}</span>
+        } @else if (engine.isActive()) {
+          <span class="quiz__topic">🎯 Mixed practice</span>
         }
       </nav>
+
+      <!-- Practice setup: the global route should explain what it starts. -->
+      @if (isSetupVisible()) {
+        <section class="quiz__setup" aria-labelledby="practice-setup-title">
+          <span class="quiz__eyebrow">PRACTICE SESSION</span>
+          <h1 id="practice-setup-title">Practice with a purpose</h1>
+          <p>
+            Choose a mixed revision session or focus on one subject. Answers stay hidden until
+            you submit or review your attempt.
+          </p>
+
+          <div class="quiz__setup-grid">
+            <label class="quiz__field">
+              <span>Focus</span>
+              <select [value]="selectedTopicId()" (change)="setTopic($event)">
+                <option value="mixed">Mixed topics</option>
+                @for (t of practiceTopics(); track t.id) {
+                  <option [value]="t.id">{{ t.icon }} {{ t.name }} · {{ questionCount(t.id) }} questions</option>
+                }
+              </select>
+            </label>
+
+            <label class="quiz__field">
+              <span>Questions</span>
+              <select [value]="selectedQuestionCount()" (change)="setQuestionCount($event)">
+                <option value="5">Quick review · 5</option>
+                <option value="10">Focused session · 10</option>
+                <option value="15">Full session · 15</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="quiz__setup-note">
+            <strong>{{ selectedTopicId() === 'mixed' ? 'Mixed practice' : selectedTopicName() }}</strong>
+            <span>{{ setupDescription() }}</span>
+          </div>
+
+          <button class="quiz__start-btn" (click)="startSelectedPractice()">Start practice →</button>
+        </section>
+      }
 
       <!-- Active quiz -->
       @if (engine.isActive() && !engine.isComplete()) {
@@ -57,7 +101,11 @@ import { AnswerResult } from '../../models';
 
               <!-- Code block (if exercise has code) -->
               @if (getField(q, 'code')) {
-                <pre class="quiz__code"><code [innerHTML]="getField(q, 'code')"></code></pre>
+                <app-code-block
+                  [code]="getField(q, 'code')"
+                  [language]="getField(q, 'language') || 'text'"
+                  label="Exercise code"
+                />
               }
 
               <!-- Snippets (PICK_INVALID type) -->
@@ -72,26 +120,26 @@ import { AnswerResult } from '../../models';
                       [disabled]="showResult()"
                       (click)="selectText(snippet.id || $index.toString())"
                     >
-                      <pre><code [innerHTML]="snippet.code"></code></pre>
+                      <pre><code [innerHTML]="snippet.code | syntaxHighlight"></code></pre>
                     </button>
                   }
                 </div>
               }
 
               <!-- Multiple choices (PREDICT_OUTPUT, FILL_BLANK, SINGLE_CHOICE, etc) -->
-              @if (getFieldArray(q, 'choices').length > 0 && getFieldArray(q, 'snippets').length === 0) {
+              @if (getOptions(q).length > 0 && getFieldArray(q, 'snippets').length === 0) {
                 <div class="quiz__options">
-                  @for (opt of getFieldArray(q, 'choices'); track $index) {
+                  @for (opt of getOptions(q); track optionValue(opt, $index)) {
                     <button
                       class="quiz__option"
-                      [class.quiz__option--selected]="isSelected($index) || textAnswer() === opt"
-                      [class.quiz__option--correct]="showResult() && isCorrectChoice(q, opt, $index)"
-                      [class.quiz__option--wrong]="showResult() && (isSelected($index) || textAnswer() === opt) && !isCorrectChoice(q, opt, $index)"
+                      [class.quiz__option--selected]="isSelected($index)"
+                      [class.quiz__option--correct]="showResult() && isCorrectChoice(q, $index)"
+                      [class.quiz__option--wrong]="showResult() && isSelected($index) && !isCorrectChoice(q, $index)"
                       [disabled]="showResult()"
-                      (click)="selectChoice(q, opt, $index)"
+                      (click)="selectChoice($index)"
                     >
                       <span class="quiz__option-letter">{{ optionLetter($index) }}</span>
-                      <span class="quiz__option-text" [innerHTML]="opt"></span>
+                      <span class="quiz__option-text" [innerHTML]="optionLabel(opt)"></span>
                     </button>
                   }
                 </div>
@@ -175,8 +223,8 @@ import { AnswerResult } from '../../models';
               }
 
               <!-- Free text input (for types without choices) -->
-              @if (!getFieldArray(q, 'choices').length && !getFieldArray(q, 'snippets').length && q.type !== 'ORAL_ANSWER' && q.type !== 'COMPARE') {
-                @if (getField(q, 'blank') || q.type === 'CODE_FIX' || q.type === 'PREDICT_OUTPUT') {
+              @if (!getOptions(q).length && !getFieldArray(q, 'snippets').length && q.type !== 'ORAL_ANSWER' && q.type !== 'COMPARE') {
+                @if (!isSelfReview(q)) {
                   <div class="quiz__input-area">
                     <input
                       type="text"
@@ -195,13 +243,17 @@ import { AnswerResult } from '../../models';
             <!-- Actions -->
             <div class="quiz__actions">
               @if (!showResult()) {
-                <button
-                  class="quiz__check-btn"
-                  [disabled]="!hasAnswer()"
-                  (click)="checkAnswer()"
-                >
-                  CHECK ANSWER
-                </button>
+                @if (isSelfReview(q)) {
+                  <button class="quiz__check-btn" (click)="revealSuggestedAnswer()">REVEAL SUGGESTED ANSWER</button>
+                } @else {
+                  <button
+                    class="quiz__check-btn"
+                    [disabled]="!hasAnswer()"
+                    (click)="checkAnswer()"
+                  >
+                    CHECK ANSWER
+                  </button>
+                }
               } @else {
                 <!-- Feedback -->
                 <div class="quiz__feedback" [attr.data-result]="lastResult()">
@@ -209,14 +261,21 @@ import { AnswerResult } from '../../models';
                     {{ lastResult() === 'correct' ? '✓' : '✗' }}
                   </span>
                   <span class="quiz__feedback-text">
-                    {{ lastResult() === 'correct' ? 'Correct!' : 'Incorrect' }}
+                    {{ selfReview() ? 'Suggested answer' : (lastResult() === 'correct' ? 'Correct!' : 'Incorrect') }}
                   </span>
                 </div>
 
+                @if (getAnswerText(q)) {
+                  <details class="quiz__details quiz__details--open" open>
+                    <summary>📝 Suggested Answer</summary>
+                    <div class="quiz__rich-content">{{ getAnswerText(q) }}</div>
+                  </details>
+                }
+
                 <!-- Explanation -->
-                @if (q.explanation) {
+                @if (q.explanation || getField(q, 'explain')) {
                   <div class="quiz__explanation-box">
-                    <p class="quiz__explanation">{{ q.explanation }}</p>
+                    <p class="quiz__explanation">{{ q.explanation || getField(q, 'explain') }}</p>
                   </div>
                 }
 
@@ -414,7 +473,7 @@ import { AnswerResult } from '../../models';
             </div>
           </div>
           <div class="quiz__complete-actions">
-            <button class="quiz__start-btn" (click)="startQuiz()">
+            <button class="quiz__start-btn" (click)="restartPractice()">
               Practice Again
             </button>
             <a routerLink="/" class="quiz__home-link">← Back to Dashboard</a>
@@ -446,11 +505,25 @@ export class QuizComponent {
   textAnswer = signal('');
   showResult = signal(false);
   lastResult = signal<AnswerResult>('incorrect');
+  selfReview = signal(false);
+  selectedTopicId = signal('mixed');
+  selectedQuestionCount = signal(15);
 
   // Computed
   topic = computed(() => this.topicService.getTopic(this.topicId()));
   availableCount = computed(() =>
     this.topicService.getQuestions(this.topicId(), this.subtopicId()).length
+  );
+  practiceTopics = computed(() => this.topicService.topics().filter(t =>
+    this.topicService.getQuestions(t.id).some(q => this.isPracticeQuestion(q))
+  ));
+  isSetupVisible = computed(() => !this.topicId() && !this.engine.isActive() && !this.engine.isComplete());
+  selectedTopicName = computed(() =>
+    this.topicService.getTopic(this.selectedTopicId())?.name ?? 'Mixed practice'
+  );
+  setupDescription = computed(() => this.selectedTopicId() === 'mixed'
+    ? `${this.selectedQuestionCount()} questions selected randomly across the technical topics.`
+    : `${this.selectedQuestionCount()} questions selected from this topic.`
   );
   progressFraction = computed(() => {
     const total = this.engine.totalInSession();
@@ -484,6 +557,38 @@ export class QuizComponent {
     this.resetLocal();
   }
 
+  startSelectedPractice(): void {
+    const topicId = this.selectedTopicId();
+    const count = this.selectedQuestionCount();
+    if (topicId === 'mixed') {
+      this.engine.startMixed(count);
+    } else {
+      this.engine.start(topicId, undefined, count);
+    }
+    this.resetLocal();
+  }
+
+  restartPractice(): void {
+    if (!this.topicId()) {
+      this.engine.end();
+      this.startSelectedPractice();
+      return;
+    }
+    this.startQuiz();
+  }
+
+  setTopic(event: Event): void {
+    this.selectedTopicId.set((event.target as HTMLSelectElement).value);
+  }
+
+  setQuestionCount(event: Event): void {
+    this.selectedQuestionCount.set(Number((event.target as HTMLSelectElement).value));
+  }
+
+  questionCount(topicId: string): number {
+    return this.topicService.getQuestions(topicId).filter(q => this.isPracticeQuestion(q)).length;
+  }
+
   /** Get the prompt/question text from any exercise type */
   getPrompt(q: unknown): string {
     const item = q as any;
@@ -491,28 +596,17 @@ export class QuizComponent {
   }
 
   /** Select a choice by index (for choices array) */
-  selectChoice(q: unknown, opt: string, index: number): void {
-    const item = q as any;
-    // If answer is string-based, store the option text
-    if (typeof item.answer === 'string') {
-      this.textAnswer.set(opt);
-      this.selectedOptions.set([index]);
-    } else {
-      // answer is index-based
-      this.selectedOptions.set([index]);
-    }
+  selectChoice(index: number): void {
+    this.selectedOptions.set([index]);
   }
 
   /** Check if a choice is the correct one */
-  isCorrectChoice(q: unknown, opt: string, index: number): boolean {
+  isCorrectChoice(q: unknown, index: number): boolean {
     const item = q as any;
-    if (typeof item.answer === 'string') {
-      return item.answer === opt;
-    }
-    if (typeof item.answer === 'number') {
-      return item.answer === index;
-    }
-    return false;
+    const correct = item.answer ?? item.correct ?? item.bestOption;
+    if (typeof correct === 'number') return correct === index;
+    const option = this.getOptions(q)[index];
+    return this.optionValue(option, index) === correct || this.optionLabel(option) === correct;
   }
 
   /** Select text-based answer */
@@ -556,16 +650,19 @@ export class QuizComponent {
       answer = this.textAnswer(); // Self-evaluation
     } else if (q.type === 'PICK_INVALID') {
       answer = this.textAnswer(); // snippet id
-    } else if (this.textAnswer() && q.choices?.includes(this.textAnswer())) {
-      answer = this.textAnswer(); // string-based choice
     } else if (this.selectedOptions().length > 0) {
-      answer = this.selectedOptions()[0]; // index-based
+      answer = this.selectedOptions()[0];
     } else {
       answer = this.textAnswer(); // free text
     }
 
     const result = this.engine.submitAnswer(answer);
     this.lastResult.set(result);
+    this.showResult.set(true);
+  }
+
+  revealSuggestedAnswer(): void {
+    this.selfReview.set(true);
     this.showResult.set(true);
   }
 
@@ -579,6 +676,7 @@ export class QuizComponent {
     this.textAnswer.set('');
     this.showResult.set(false);
     this.lastResult.set('incorrect');
+    this.selfReview.set(false);
   }
 
   /** Access dynamic fields from rich exercise data */
@@ -589,6 +687,52 @@ export class QuizComponent {
   getFieldArray(q: unknown, field: string): any[] {
     const val = (q as Record<string, unknown>)[field];
     return Array.isArray(val) ? val : [];
+  }
+
+  getOptions(q: unknown): any[] {
+    const item = q as Record<string, unknown>;
+    const values = item['choices'] ?? item['options'];
+    return Array.isArray(values) ? values : [];
+  }
+
+  optionLabel(option: unknown): string {
+    if (typeof option === 'string') return option;
+    if (option && typeof option === 'object') {
+      const item = option as Record<string, unknown>;
+      return String(item['text'] ?? item['label'] ?? item['code'] ?? '');
+    }
+    return String(option ?? '');
+  }
+
+  optionValue(option: unknown, index: number): string | number {
+    if (option && typeof option === 'object') {
+      const item = option as Record<string, unknown>;
+      return (item['id'] as string | number | undefined) ?? index;
+    }
+    return typeof option === 'string' ? option : index;
+  }
+
+  getAnswerText(q: unknown): string {
+    const item = q as Record<string, unknown>;
+    const answer = item['modelAnswer'] ?? item['shortAnswer'] ?? item['answer'];
+    if (typeof answer === 'string') return answer;
+    if (Array.isArray(answer)) {
+      const labels = new Map(
+        this.getFieldArray(q, 'items').map((entry: any) => [entry.id, entry.label])
+      );
+      return answer.map(value => labels.get(value) ?? String(value)).join(' → ');
+    }
+    return this.getField(q, 'explain') || this.getField(q, 'explanation');
+  }
+
+  isSelfReview(q: unknown): boolean {
+    const item = q as Record<string, unknown>;
+    if (this.getOptions(q).length || this.getFieldArray(q, 'snippets').length) return false;
+    return ['DESIGN_DECISION', 'CODE_REFACTOR', 'ORDER_EXECUTION', 'COMPARE_CONCEPTS', 'SCENARIO', 'REAL_EXPERIENCE'].includes(String(item['type']));
+  }
+
+  private isPracticeQuestion(q: any): boolean {
+    return q.type !== 'ORAL_ANSWER' && q.type !== 'SYSTEM_DESIGN' && q.schemaVersion !== 2;
   }
 
   getFieldObj(q: unknown, field: string): any {

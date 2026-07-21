@@ -175,5 +175,36 @@
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ej-modern-1",
+    "topic": "java-modern",
+    "subtopic": "java-streams",
+    "difficulty": "INTERMEDIATE",
+    "question": "When should you NOT use Java streams? Give concrete examples where traditional loops are better.",
+    "shortAnswer": "Don't use streams when: 1) you need to mutate local variables (streams require effectively final), 2) you need break/continue/return from enclosing method, 3) the logic is inherently iterative (stateful operations between elements), 4) readability suffers (deeply nested stream chains are worse than a clear loop). Streams excel at: filtering, mapping, grouping, collecting — but are not a universal replacement for loops.",
+    "detailedAnswer": "**Effective Java Item 45 — Use streams judiciously:**\n\n**Streams are WORSE for:**\n```java\n// ❌ Modifying external state\nList<String> results = new ArrayList<>();\nstream.forEach(x -> results.add(transform(x))); // side effect!\n// ✅ Use collector\nList<String> results = stream.map(this::transform).collect(toList());\n\n// ❌ Need early termination with complex condition\n// Traditional loop with break is clearer\n\n// ❌ Multiple return values or exception handling\n// Streams can't throw checked exceptions\n```\n\n**Streams are BETTER for:**\n- Transform sequences: `map`, `flatMap`\n- Filter: `filter`, `takeWhile`\n- Combine: `reduce`, `collect`\n- Search: `findFirst`, `anyMatch`\n- Group: `groupingBy`, `partitioningBy`",
+    "keyPoints": [
+      "Streams are for declarative data transformation",
+      "Side effects in streams are a code smell",
+      "Readability trumps brevity — if stream is hard to read, use a loop",
+      "parallel() only benefits large data with independent operations"
+    ],
+    "redFlags": [
+      "Uses forEach for everything instead of proper collectors",
+      "Cannot explain when loops are better",
+      "Uses parallel() without understanding when it helps"
+    ],
+    "followUps": [
+      {
+        "question": "How does Stream.parallel() actually work under the hood?",
+        "hint": "Uses ForkJoinPool.commonPool(). Splits the source (Spliterator), processes chunks in parallel, merges results. ArrayList splits well (random access), LinkedList doesn't (sequential only)."
+      },
+      {
+        "question": "What happens if you use a stream with a checked exception?",
+        "hint": "Compilation error — functional interfaces don't declare checked exceptions. Options: wrap in unchecked, extract to method with try/catch, or use a library like vavr's Try."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

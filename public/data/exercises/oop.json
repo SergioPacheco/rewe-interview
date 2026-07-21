@@ -2635,5 +2635,14 @@
       "interview-prep",
       "senior-level"
     ]
+  },
+  {
+    "id": "ej-18",
+    "topic": "oop",
+    "subtopic": "oop-composition",
+    "type": "ORAL_ANSWER",
+    "difficulty": "INTERMEDIATE",
+    "question": "Why does Effective Java say 'favor composition over inheritance'? When IS inheritance appropriate?",
+    "answer": "Inheritance violates encapsulation: subclass depends on superclass implementation details. If superclass changes internal behavior, subclass breaks silently (fragile base class problem). Example: InstrumentedHashSet extends HashSet, overrides add() and addAll() to count — but addAll() internally calls add(), causing double-counting. Composition (wrapper/decorator) avoids this by delegating to an instance rather than inheriting implementation. Inheritance is appropriate ONLY for genuine 'is-a' relationships where you control both classes (same package/module) and the superclass is designed for extension."
   }
 ]

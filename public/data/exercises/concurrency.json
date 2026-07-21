@@ -279,5 +279,38 @@
     ],
     "topic": "concurrency",
     "id": "concurrency-spring-async-15"
+  },
+  {
+    "id": "ej-78",
+    "topic": "concurrency",
+    "subtopic": "concurrency-basics",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "SENIOR",
+    "question": "What's wrong with this code? Will it ever terminate?\n\n```java\npublic class StopThread {\n    private static boolean stopRequested;\n    \n    public static void main(String[] args) throws Exception {\n        Thread bg = new Thread(() -> {\n            int i = 0;\n            while (!stopRequested) i++;\n        });\n        bg.start();\n        Thread.sleep(1000);\n        stopRequested = true;\n    }\n}\n```",
+    "correctOutput": "It may NEVER terminate. Without synchronization or volatile, the JVM can hoist the read of stopRequested outside the loop (optimization). The background thread may never see the update. Fix: declare `private static volatile boolean stopRequested;`",
+    "explanation": "Effective Java Item 78. Synchronization is needed not just for atomicity but for visibility between threads. Without volatile or synchronized, a write by one thread has no guarantee of being visible to another thread."
+  },
+  {
+    "id": "ej-80",
+    "topic": "concurrency",
+    "subtopic": "concurrency-basics",
+    "type": "ORAL_ANSWER",
+    "difficulty": "INTERMEDIATE",
+    "question": "Why prefer ExecutorService over creating threads directly? What executor would you choose for a web server?",
+    "answer": "Direct Thread creation: no control over count (can OOM the OS), no reuse, no queue management, no graceful shutdown. ExecutorService provides: thread pooling, task queueing, lifecycle management (shutdown/awaitTermination), Future for async results, scheduled execution. For web server: Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()) or custom ThreadPoolExecutor with bounded queue. For many short I/O tasks: Executors.newCachedThreadPool(). Java 21: Virtual threads via Executors.newVirtualThreadPerTaskExecutor() for I/O-bound workloads."
+  },
+  {
+    "id": "ej-81",
+    "topic": "concurrency",
+    "subtopic": "concurrency-basics",
+    "type": "FILL_BLANK",
+    "difficulty": "INTERMEDIATE",
+    "question": "The three categories of java.util.concurrent utilities are _____, _____, and _____.",
+    "blanks": [
+      "Executor Framework (thread pools)",
+      "Concurrent Collections (ConcurrentHashMap, BlockingQueue)",
+      "Synchronizers (CountDownLatch, Semaphore, CyclicBarrier)"
+    ],
+    "explanation": "Effective Java Item 81: These higher-level utilities should be preferred over wait/notify in virtually all new code. ConcurrentHashMap is the concurrent replacement for Collections.synchronizedMap. CountDownLatch is the simplest synchronizer for one-time events."
   }
 ]

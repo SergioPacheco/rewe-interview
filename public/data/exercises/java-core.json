@@ -2844,5 +2844,75 @@
       "interview-prep",
       "senior-level"
     ]
+  },
+  {
+    "id": "ej-1",
+    "topic": "collections",
+    "subtopic": "java-methods",
+    "type": "ORAL_ANSWER",
+    "difficulty": "INTERMEDIATE",
+    "question": "What are the advantages of static factory methods over constructors? Give examples from the JDK.",
+    "answer": "1) They have names (valueOf, of, getInstance make intent clear). 2) Not required to create new object each time (Boolean.valueOf caches). 3) Can return subtypes (Collections.unmodifiableList returns hidden impl). 4) Returned type can vary by input (EnumSet returns RegularEnumSet or JumboEnumSet). 5) Returned class need not exist at compile time (service provider pattern). Examples: List.of(), Optional.of(), Integer.valueOf(), Files.newInputStream()."
+  },
+  {
+    "id": "ej-2",
+    "topic": "collections",
+    "subtopic": "java-methods",
+    "type": "PICK_INVALID",
+    "difficulty": "INTERMEDIATE",
+    "question": "Which is NOT a benefit of the Builder pattern over telescoping constructors?",
+    "options": [
+      "Named parameters make code readable",
+      "Can enforce invariants in build()",
+      "Faster object creation than constructors",
+      "Immutable objects are easy to create"
+    ],
+    "correctAnswer": "Faster object creation than constructors",
+    "explanation": "Builders are slightly SLOWER (extra object allocation for the builder itself). The benefits are readability, flexibility, and immutability — not raw speed. From Effective Java Item 2."
+  },
+  {
+    "id": "ej-5",
+    "topic": "collections",
+    "subtopic": "java-methods",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "INTERMEDIATE",
+    "question": "Why does Bloch say 'prefer dependency injection to hardwiring resources'? What's wrong with this code?\n\n```java\npublic class SpellChecker {\n    private final Lexicon dictionary = new EnglishLexicon();\n    public boolean isValid(String word) { ... }\n}\n```",
+    "correctOutput": "The class is untestable (can't substitute a mock dictionary), inflexible (only English), and violates SRP (creating its own dependency). Pass the Lexicon via constructor: `SpellChecker(Lexicon dict)` — allows testing with a test dictionary and supports multiple languages.",
+    "explanation": "Effective Java Item 5. This is the foundation of modern DI (Spring, CDI). Static utility classes and singletons that hardwire resources are inappropriate when behavior depends on the underlying resource."
+  },
+  {
+    "id": "ej-7",
+    "topic": "collections",
+    "subtopic": "java-basics",
+    "type": "ORAL_ANSWER",
+    "difficulty": "SENIOR",
+    "question": "What is an 'obsolete object reference' and how does it cause memory leaks in Java? Give an example.",
+    "answer": "An obsolete reference is a reference that will never be dereferenced again but is still held by the program. The GC cannot collect the object or anything reachable from it. Classic example: a Stack implementation that pops by decrementing size but doesn't null out the array slot — the array still references popped objects. Fix: `elements[size] = null`. Common sources: 1) classes managing their own memory (caches, pools), 2) listeners/callbacks not deregistered, 3) inner classes holding outer class reference."
+  },
+  {
+    "id": "ej-10",
+    "topic": "collections",
+    "subtopic": "java-basics",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "INTERMEDIATE",
+    "question": "What happens if you override equals() but NOT hashCode()?\n\n```java\nMap<PhoneNumber, String> map = new HashMap<>();\nmap.put(new PhoneNumber(707, 867, 5309), \"Jenny\");\nString result = map.get(new PhoneNumber(707, 867, 5309));\n```",
+    "correctOutput": "result is null. The two PhoneNumber instances are equal (same digits) but have different hashCodes (default Object.hashCode uses identity). HashMap uses hashCode to find the bucket — different hash means different bucket, so the get() never finds the entry.",
+    "explanation": "Effective Java Item 11: You MUST override hashCode when you override equals. The contract: equal objects must have equal hash codes. Violation breaks HashMap, HashSet, and any hash-based collection."
+  },
+  {
+    "id": "ej-17",
+    "topic": "collections",
+    "subtopic": "java-basics",
+    "type": "ORDER_STEPS",
+    "difficulty": "INTERMEDIATE",
+    "question": "Order the rules for making a class immutable (Effective Java Item 17):",
+    "steps": [
+      "Make all fields final",
+      "Make all fields private",
+      "Don't provide setter methods",
+      "Make the class final (or private constructor + factory)",
+      "Make defensive copies of mutable fields in constructor and accessors"
+    ],
+    "explanation": "All 5 rules together guarantee true immutability. Missing any one can break it. Most commonly forgotten: defensive copies (e.g., a Date field that can be mutated externally) and preventing subclassing (subclass could add mutable state)."
   }
 ]

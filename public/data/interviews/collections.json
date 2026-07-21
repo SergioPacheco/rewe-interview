@@ -322,5 +322,67 @@
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-ej-coll-1",
+    "topic": "collections",
+    "subtopic": "java-methods",
+    "difficulty": "INTERMEDIATE",
+    "question": "When would you use a static factory method instead of a constructor? Give real examples.",
+    "shortAnswer": "When you need named construction (valueOf, of, newInstance), caching (Boolean.valueOf), returning subtypes (Collections.unmodifiableList), or when the class to instantiate isn't known at compile time (service loaders). Constructors are fine for simple cases, but factories scale better for complex APIs.",
+    "detailedAnswer": "**Effective Java Item 1 — Key advantages:**\n\n1. **They have names:** `BigInteger.probablePrime()` is clearer than `new BigInteger(int, int, Random)`\n2. **Not required to create new objects:** `Boolean.valueOf(true)` always returns the same instance\n3. **Can return subtypes:** `List.of()` returns an optimized implementation based on size\n4. **Class of returned object can vary by input:** `EnumSet.of()` returns `RegularEnumSet` (<64 elements) or `JumboEnumSet`\n\n**In Spring Boot context:**\n- `ResponseEntity.ok(body)` — static factory, clear intent\n- `Optional.of()`, `Optional.empty()` — cached instances\n- `Collections.unmodifiableList()` — returns hidden implementation",
+    "keyPoints": [
+      "Named construction is self-documenting",
+      "Instance control enables caching and singletons",
+      "Can return interface types hiding implementation",
+      "Foundation for Service Provider Framework"
+    ],
+    "redFlags": [
+      "Cannot name advantage beyond 'it looks cleaner'",
+      "Doesn't know List.of() or Optional.of() are static factories",
+      "Confuses with Factory Method design pattern"
+    ],
+    "followUps": [
+      {
+        "question": "What's the disadvantage of static factory methods?",
+        "hint": "Classes without public constructors cannot be subclassed. Also, they're hard to find in documentation (no Javadoc section like constructors have)."
+      },
+      {
+        "question": "How does Spring's dependency injection relate to Item 5?",
+        "hint": "DI is the framework-level answer to 'don't hardwire resources'. Spring manages the factory + injection lifecycle."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-ej-coll-2",
+    "topic": "collections",
+    "subtopic": "java-basics",
+    "difficulty": "SENIOR",
+    "question": "Explain the equals/hashCode contract. What breaks if you violate it?",
+    "shortAnswer": "Contract: equal objects MUST have equal hash codes. Violation: HashMap/HashSet silently malfunction — put() and get() use different buckets for logically-equal objects. The object 'disappears' from the map. This is a common source of subtle production bugs, especially with JPA entities used as Map keys.",
+    "detailedAnswer": "**The contract (Item 10, 11):**\n1. `equals` must be reflexive, symmetric, transitive, consistent, and return false for null\n2. If `a.equals(b)` then `a.hashCode() == b.hashCode()` (MANDATORY)\n3. If `a.hashCode() != b.hashCode()` then `!a.equals(b)` (contrapositive)\n4. Unequal objects MAY have equal hash codes (collisions are allowed)\n\n**What breaks:**\n```java\nSet<MyObject> set = new HashSet<>();\nset.add(new MyObject(\"key\"));\nset.contains(new MyObject(\"key\")); // FALSE if hashCode not overridden!\n```\n\n**Production pitfall with JPA:**\n- Default equals/hashCode uses object identity\n- Detached entity ≠ managed entity even with same ID\n- Use business key or ID-based equals (with null check for new entities)",
+    "keyPoints": [
+      "Equal objects MUST have equal hash codes",
+      "HashMap uses hashCode for bucket, equals for identity within bucket",
+      "JPA entities need careful equals/hashCode implementation",
+      "Records auto-generate correct equals/hashCode"
+    ],
+    "redFlags": [
+      "Cannot state the contract precisely",
+      "Doesn't know HashMap breaks silently",
+      "Uses == instead of equals for objects"
+    ],
+    "followUps": [
+      {
+        "question": "How would you implement equals/hashCode for a JPA entity?",
+        "hint": "Use business key (natural key) if stable, or use @Id with null check. Never use @GeneratedValue ID alone (it's null before persist). Records solve this for DTOs."
+      },
+      {
+        "question": "Why does Java's String class cache its hashCode?",
+        "hint": "Strings are immutable and frequently used as Map keys. Caching saves recomputation. hashCode is computed once on first call and stored in a field."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

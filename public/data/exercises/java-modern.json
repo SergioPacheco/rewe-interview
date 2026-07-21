@@ -9,10 +9,21 @@
     "context": "Records were introduced in Java 16 as immutable data carriers.",
     "interviewerIntent": "Checks understanding of records vs regular classes and practical usage.",
     "answer": "Records are immutable data classes with compiler-generated equals, hashCode, toString, and accessors. I use them for DTOs, API responses, events, and value objects — anywhere data should not be mutated after creation. They are NOT suitable for JPA entities (which need mutable state and no-arg constructors).",
-    "keyPoints": ["Immutable by design", "Auto-generated boilerplate", "Ideal for DTOs and events", "Not for JPA entities"],
+    "keyPoints": [
+      "Immutable by design",
+      "Auto-generated boilerplate",
+      "Ideal for DTOs and events",
+      "Not for JPA entities"
+    ],
     "followUps": [
-      {"question": "Can you add methods to a record?", "answerHint": "Yes — instance methods, static methods, and compact constructors for validation."},
-      {"question": "How do records interact with Jackson serialization?", "answerHint": "Jackson supports records natively since 2.12 — uses the canonical constructor for deserialization."}
+      {
+        "question": "Can you add methods to a record?",
+        "answerHint": "Yes — instance methods, static methods, and compact constructors for validation."
+      },
+      {
+        "question": "How do records interact with Jackson serialization?",
+        "answerHint": "Jackson supports records natively since 2.12 — uses the canonical constructor for deserialization."
+      }
     ]
   },
   {
@@ -24,10 +35,21 @@
     "question": "Explain sealed classes and how they enable exhaustive pattern matching.",
     "interviewerIntent": "Tests understanding of closed type hierarchies and their compile-time guarantees.",
     "answer": "Sealed classes restrict which types can extend them — the compiler knows ALL subtypes. Combined with pattern matching in switch (Java 21), you get exhaustive handling: the compiler verifies every subtype is covered, no default case needed. This is ideal for domain outcomes like DeliveryResult.Success, Rejected, RetryableFailure.",
-    "keyPoints": ["Restrict inheritance explicitly", "Compiler knows all subtypes", "Exhaustive switch without default", "Domain modeling: closed outcomes"],
+    "keyPoints": [
+      "Restrict inheritance explicitly",
+      "Compiler knows all subtypes",
+      "Exhaustive switch without default",
+      "Domain modeling: closed outcomes"
+    ],
     "followUps": [
-      {"question": "What's the difference between sealed and final?", "answerHint": "Final allows zero subclasses; sealed allows a specific, controlled set."},
-      {"question": "Can a sealed interface have permitted subtypes in different packages?", "answerHint": "Yes, since Java 17 — permits clause lists them explicitly regardless of package."}
+      {
+        "question": "What's the difference between sealed and final?",
+        "answerHint": "Final allows zero subclasses; sealed allows a specific, controlled set."
+      },
+      {
+        "question": "Can a sealed interface have permitted subtypes in different packages?",
+        "answerHint": "Yes, since Java 17 — permits clause lists them explicitly regardless of package."
+      }
     ]
   },
   {
@@ -50,9 +72,17 @@
     "question": "How do switch expressions differ from switch statements, and why do they matter?",
     "interviewerIntent": "Checks awareness of modern control flow and exhaustiveness.",
     "answer": "Switch expressions return a value (no break needed), use arrow syntax for clarity, and the compiler enforces exhaustiveness — you must handle all cases or provide a default. This eliminates fall-through bugs and makes code more readable. Combined with sealed classes, the compiler guarantees you handle every subtype.",
-    "keyPoints": ["Returns a value", "No fall-through", "Arrow syntax", "Exhaustiveness check"],
+    "keyPoints": [
+      "Returns a value",
+      "No fall-through",
+      "Arrow syntax",
+      "Exhaustiveness check"
+    ],
     "followUps": [
-      {"question": "Can you use yield in a switch expression?", "answerHint": "Yes — yield is used in block cases when you need multiple statements before returning a value."}
+      {
+        "question": "Can you use yield in a switch expression?",
+        "answerHint": "Yes — yield is used in block cases when you need multiple statements before returning a value."
+      }
     ]
   },
   {
@@ -64,9 +94,17 @@
     "question": "When would you use a Stream versus a simple for-loop?",
     "interviewerIntent": "Tests pragmatism — streams aren't always better.",
     "answer": "I use streams when the transformation is a clear pipeline: filter → map → collect. The intent reads like a sentence. I use for-loops when: there's early exit logic, mutation is needed, the operation is simple (just summing), or debugging step-by-step is important. Streams are about clarity, not performance.",
-    "keyPoints": ["Streams for declarative pipelines", "Loops for mutation/early exit", "Readability is the criterion", "Parallel streams rarely help"],
+    "keyPoints": [
+      "Streams for declarative pipelines",
+      "Loops for mutation/early exit",
+      "Readability is the criterion",
+      "Parallel streams rarely help"
+    ],
     "followUps": [
-      {"question": "When would parallel streams help?", "answerHint": "Large collections (10k+) with CPU-bound operations and no shared state. For I/O-bound work, virtual threads are better."}
+      {
+        "question": "When would parallel streams help?",
+        "answerHint": "Large collections (10k+) with CPU-bound operations and no shared state. For I/O-bound work, virtual threads are better."
+      }
     ]
   },
   {
@@ -89,8 +127,18 @@
     "question": "How should Optional be used correctly?",
     "interviewerIntent": "Checks for anti-patterns like Optional fields or Optional parameters.",
     "answer": "Optional is for return types only — methods that might not have a result. Never use Optional as a field, constructor parameter, or method parameter. Use orElseThrow for required values, orElse for defaults, and map/flatMap to chain transformations. An empty collection is better than Optional<List<T>>.",
-    "keyPoints": ["Return types only", "Never as fields or parameters", "orElseThrow for required", "Empty collection > Optional<List>"],
-    "mistakesToAvoid": ["Optional.get() without isPresent check", "Optional as a method parameter", "Optional wrapping a collection", "Nested Optional<Optional<T>>"]
+    "keyPoints": [
+      "Return types only",
+      "Never as fields or parameters",
+      "orElseThrow for required",
+      "Empty collection > Optional<List>"
+    ],
+    "mistakesToAvoid": [
+      "Optional.get() without isPresent check",
+      "Optional as a method parameter",
+      "Optional wrapping a collection",
+      "Nested Optional<Optional<T>>"
+    ]
   },
   {
     "id": "modern-threads-1",
@@ -101,10 +149,21 @@
     "question": "Explain virtual threads and how they change concurrency in Spring Boot.",
     "interviewerIntent": "Tests deep understanding of Project Loom and practical adoption.",
     "answer": "Virtual threads are lightweight JVM-managed threads — millions can coexist because they don't map 1:1 to OS threads. When a virtual thread blocks on I/O, the JVM unmounts it from its carrier platform thread, which can run another virtual thread. In Spring Boot 3.2+, enabling virtual threads means every request handler runs on a virtual thread — you write simple blocking code and get massive concurrency without reactive complexity.",
-    "keyPoints": ["JVM-managed, not OS threads", "Blocking unmounts from carrier", "Simple blocking code scales", "spring.threads.virtual.enabled=true"],
+    "keyPoints": [
+      "JVM-managed, not OS threads",
+      "Blocking unmounts from carrier",
+      "Simple blocking code scales",
+      "spring.threads.virtual.enabled=true"
+    ],
     "followUps": [
-      {"question": "What are the pitfalls?", "answerHint": "Synchronized blocks pin the carrier thread (use ReentrantLock), connection pools still limit concurrency, thread-locals accumulate memory."},
-      {"question": "Do virtual threads replace reactive programming?", "answerHint": "For I/O-bound request-response: yes. For streaming/backpressure scenarios: reactive is still needed."}
+      {
+        "question": "What are the pitfalls?",
+        "answerHint": "Synchronized blocks pin the carrier thread (use ReentrantLock), connection pools still limit concurrency, thread-locals accumulate memory."
+      },
+      {
+        "question": "Do virtual threads replace reactive programming?",
+        "answerHint": "For I/O-bound request-response: yes. For streaming/backpressure scenarios: reactive is still needed."
+      }
     ]
   },
   {
@@ -132,9 +191,17 @@
     "question": "You're starting a new microservice at REWE. Java 17 or 21? Justify your choice.",
     "interviewerIntent": "Tests decision-making and awareness of ecosystem readiness.",
     "answer": "For a new service in 2024+, I'd choose Java 21: it's LTS, Spring Boot 3.2+ fully supports it, and virtual threads eliminate the reactive vs imperative debate for I/O-bound services. The migration cost is near-zero for a greenfield project. For existing services on 17, I'd stay until dependencies fully support 21 and plan a coordinated upgrade.",
-    "keyPoints": ["Java 21 for greenfield", "Virtual threads are the killer feature", "Spring Boot 3.2+ ready", "Existing services: upgrade when deps are ready"],
+    "keyPoints": [
+      "Java 21 for greenfield",
+      "Virtual threads are the killer feature",
+      "Spring Boot 3.2+ ready",
+      "Existing services: upgrade when deps are ready"
+    ],
     "followUps": [
-      {"question": "What are the key migration tasks from 17 to 21?", "answerHint": "Mostly transparent — check for removed APIs, update build plugins, verify library compatibility. No javax→jakarta jump (that was 11→17)."}
+      {
+        "question": "What are the key migration tasks from 17 to 21?",
+        "answerHint": "Mostly transparent — check for removed APIs, update build plugins, verify library compatibility. No javax→jakarta jump (that was 11→17)."
+      }
     ]
   },
   {
@@ -146,7 +213,11 @@
     "question": "Name three Java features since version 17 that improve your daily coding.",
     "interviewerIntent": "Checks if candidate actually uses modern features, not just knows about them.",
     "answer": "1) Records — eliminate DTO boilerplate, 80% of my value objects are now records. 2) Pattern matching in switch — exhaustive handling of sealed hierarchies without instanceof chains. 3) Text blocks — SQL queries, JSON templates, and multi-line strings are finally readable. Each reduces cognitive overhead without adding complexity.",
-    "keyPoints": ["Records for DTOs", "Pattern matching for type hierarchies", "Text blocks for readability"]
+    "keyPoints": [
+      "Records for DTOs",
+      "Pattern matching for type hierarchies",
+      "Text blocks for readability"
+    ]
   },
   {
     "id": "modern-records-3",
@@ -166,8 +237,68 @@
     "type": "PICK_INVALID",
     "difficulty": "easy",
     "question": "Which is NOT a terminal operation on a Stream?",
-    "choices": ["collect()", "filter()", "count()", "forEach()"],
+    "choices": [
+      "collect()",
+      "filter()",
+      "count()",
+      "forEach()"
+    ],
     "answer": "filter()",
     "explain": "filter() is an intermediate operation — it returns a new Stream. Terminal operations (collect, count, forEach) trigger execution of the pipeline."
+  },
+  {
+    "id": "ej-42",
+    "topic": "java-modern",
+    "subtopic": "java-streams",
+    "type": "PICK_INVALID",
+    "difficulty": "INTERMEDIATE",
+    "question": "According to Effective Java, which is NOT good practice with streams?",
+    "options": [
+      "Use streams for transforming collections",
+      "Use streams for searching/filtering",
+      "Use streams to mutate external state in forEach",
+      "Use streams for parallel computation on independent elements"
+    ],
+    "correctAnswer": "Use streams to mutate external state in forEach",
+    "explanation": "Item 46: Side-effect-free functions in streams. forEach should be used only to report results, not to perform computation. Mutating external state in forEach (e.g., adding to an external list) defeats the purpose of streams and can cause bugs in parallel streams. Use collectors instead."
+  },
+  {
+    "id": "ej-46",
+    "topic": "java-modern",
+    "subtopic": "java-streams",
+    "type": "FILL_BLANK",
+    "difficulty": "INTERMEDIATE",
+    "question": "The three most important Collectors are _____, _____, and _____ (grouping results).",
+    "blanks": [
+      "toList()",
+      "toMap()",
+      "groupingBy()"
+    ],
+    "explanation": "Effective Java Item 46. These cover 90% of stream terminal operations. toList() collects into a List, toMap() into a Map (watch for duplicate keys!), and groupingBy() partitions elements by a classifier function. Also important: joining(), counting(), toUnmodifiableList()."
+  },
+  {
+    "id": "ej-48",
+    "topic": "java-modern",
+    "subtopic": "java-streams",
+    "type": "ORAL_ANSWER",
+    "difficulty": "SENIOR",
+    "question": "When should you NOT use parallel streams? What are the dangers?",
+    "answer": "Don't use parallel streams when: 1) Source is Stream.iterate() or LinkedList (poor splitting). 2) Operations have side effects or shared mutable state. 3) Pipeline has limit(), findFirst(), or order-dependent operations. 4) Data size is small (<10K elements usually). 5) Per-element cost is tiny (overhead > benefit). Dangers: Incorrect results from race conditions, worse performance from thread overhead and poor data splitting, liveness failures. Best candidates: large ArrayList, arrays, IntRange with independent stateless operations (no autoboxing)."
+  },
+  {
+    "id": "ej-55",
+    "topic": "java-modern",
+    "subtopic": "java-optionals",
+    "type": "PICK_INVALID",
+    "difficulty": "INTERMEDIATE",
+    "question": "According to Effective Java, which is an ANTI-PATTERN with Optional?",
+    "options": [
+      "Return Optional from a method that might not have a result",
+      "Call orElseThrow() when absence is a bug",
+      "Use Optional as a method parameter",
+      "Chain with map() and flatMap()"
+    ],
+    "correctAnswer": "Use Optional as a method parameter",
+    "explanation": "Item 55: Never use Optional as a field, method parameter, or collection element. It's designed ONLY as a return type. As a parameter, it forces callers to create Optional objects and makes the API clunky. Use overloading or @Nullable instead."
   }
 ]

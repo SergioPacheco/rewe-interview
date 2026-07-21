@@ -198,6 +198,12 @@ export class TheoryComponent {
     this.practiceChecked.set(true);
     this.selectedPracticeIndex.set(result.index);
     this.lastResult.set(result.correct ? 'correct' : 'incorrect');
+    // Auto-reveal explanation after selection
+    this.showResult.set(true);
+    const q = this.currentQuestion() as any;
+    if (q) {
+      this.engine.submitAnswer(q.answer || '');
+    }
   }
 
   revealAnswer(): void {

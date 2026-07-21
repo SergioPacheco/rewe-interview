@@ -388,10 +388,10 @@
             <p class="question-card__hint">🎙️ Think about your answer, then reveal below.</p>
           }
 
-          <!-- REVEAL BUTTON -->
-          @if (!showResult()) {
+          <!-- REVEAL BUTTON (only for questions without choices) -->
+          @if (!showResult() && getChoices(q).length === 0) {
             <button class="btn btn--primary" (click)="revealAnswer()">Show Answer</button>
-          } @else {
+          } @else if (showResult()) {
             <!-- Answer -->
             @if (getField(q, 'answer')) {
               <details class="reveal-panel" open>

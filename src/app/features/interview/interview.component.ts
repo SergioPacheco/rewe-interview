@@ -44,7 +44,7 @@ export class InterviewComponent {
       if (topicId) {
         this.interviewService.loadForTopic(topicId);
       }
-    }, { allowSignalWrites: true });
+    });
   }
 
   selectQuestion(index: number): void {

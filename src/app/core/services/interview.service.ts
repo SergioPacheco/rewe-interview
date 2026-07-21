@@ -14,6 +14,7 @@ export class InterviewService {
   private readonly _loading = signal(false);
   private readonly _currentTopic = signal('');
   private readonly _selectedIndex = signal(0);
+  private readonly _loadedTopics = new Set<string>(); // Track already-attempted topics
 
   // Public signals
   readonly questions = this._questions.asReadonly();
@@ -39,24 +40,23 @@ export class InterviewService {
 
   /**
    * Load interview questions for a topic.
-   * No-op if already loaded for the same topic.
+   * No-op if already attempted (success or 404) for the same topic.
    */
   async loadForTopic(topicId: string): Promise<void> {
-    if (this._currentTopic() === topicId && this._questions().length > 0) {
-      this._loading.set(false);
-      return; // Already loaded
+    if (this._loadedTopics.has(topicId)) {
+      return; // Already attempted — don't refetch
     }
 
     this._loading.set(true);
     this._currentTopic.set(topicId);
     this._selectedIndex.set(0);
+    this._loadedTopics.add(topicId);
 
     try {
       const url = new URL(`data/interviews/${topicId}.json`, document.baseURI).href;
       const response = await fetch(url);
 
       if (!response.ok) {
-        // No interview data for this topic yet — that's fine
         this._questions.set([]);
         return;
       }
@@ -64,7 +64,6 @@ export class InterviewService {
       const data: InterviewQuestion[] = await response.json();
       this._questions.set(data);
     } catch {
-      // Graceful — no interview content available
       this._questions.set([]);
     } finally {
       this._loading.set(false);
@@ -100,5 +99,6 @@ export class InterviewService {
     this._questions.set([]);
     this._currentTopic.set('');
     this._selectedIndex.set(0);
+    this._loadedTopics.clear();
   }
 }

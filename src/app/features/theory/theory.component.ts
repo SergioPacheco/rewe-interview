@@ -225,7 +225,7 @@ export class TheoryComponent {
   }
 
   getChoices(q: any): any[] {
-    return q?.choices || q?.options || q?.snippets || [];
+    return q?.choices || q?.options || q?.snippets || q?.items || [];
   }
 
   choiceLabel(choice: unknown): string {

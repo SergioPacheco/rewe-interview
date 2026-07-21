@@ -374,8 +374,23 @@
             <pre class="question-card__code"><code [innerHTML]="getField(q, 'code') | syntaxHighlight"></code></pre>
           }
 
-          <!-- Choices: interactive reusable component -->
-          @if (getChoices(q).length > 0) {
+          <!-- ORDER_EXECUTION: show items as shuffled list (not clickable) -->
+          @if (q.type === 'ORDER_EXECUTION' || q.type === 'ORDER_STEPS') {
+            <div class="question-card__order-items">
+              @for (item of getChoices(q); track $index) {
+                <div class="question-card__order-item">
+                  <span class="question-card__order-num">{{ $index + 1 }}</span>
+                  <span>{{ item.label || item }}</span>
+                </div>
+              }
+            </div>
+            @if (!showResult()) {
+              <button class="btn btn--primary" (click)="revealAnswer()">Show Correct Order</button>
+            }
+          }
+
+          <!-- Choices: interactive reusable component (not for ORDER types) -->
+          @if (getChoices(q).length > 0 && q.type !== 'ORDER_EXECUTION' && q.type !== 'ORDER_STEPS') {
             <app-choice-list
               [choices]="getChoiceOptions(q)"
               [correctIndex]="getCorrectIndex(q)"

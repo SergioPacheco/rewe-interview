@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, input, output, signal, computed, Vi
 export interface ChoiceOption {
   label: string;
   description?: string;
+  code?: string;
 }
 
 export interface ChoiceResult {
@@ -42,7 +43,11 @@ export interface ChoiceResult {
         >
           <span class="choice-list__letter">{{ hasLetterPrefix(choice.label) ? '' : letter($index) }}</span>
           <span class="choice-list__text">
-            {{ choice.label }}
+            @if (choice.code) {
+              <pre class="choice-list__code"><code>{{ choice.code }}</code></pre>
+            } @else {
+              {{ choice.label }}
+            }
             @if (choice.description) {
               <small class="choice-list__desc">{{ choice.description }}</small>
             }
@@ -144,6 +149,18 @@ export interface ChoiceResult {
     .choice-list__desc {
       color: var(--color-gray-500, #6b7280);
       font-size: 0.75rem;
+    }
+
+    .choice-list__code {
+      margin: 0;
+      padding: 0.5rem;
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.75rem;
+      line-height: 1.5;
+      white-space: pre;
+      overflow-x: auto;
     }
 
     .choice-list__feedback {

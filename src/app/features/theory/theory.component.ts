@@ -225,14 +225,14 @@ export class TheoryComponent {
   }
 
   getChoices(q: any): any[] {
-    return q?.choices || q?.options || [];
+    return q?.choices || q?.options || q?.snippets || [];
   }
 
   choiceLabel(choice: unknown): string {
     if (typeof choice === 'string') return choice;
     if (choice && typeof choice === 'object') {
       const option = choice as Record<string, unknown>;
-      return String(option['label'] ?? option['text'] ?? option['code'] ?? '');
+      return String(option['label'] ?? option['text'] ?? '');
     }
     return String(choice ?? '');
   }
@@ -264,11 +264,16 @@ export class TheoryComponent {
   }
 
   /** Convert raw choices to ChoiceOption[] for the reusable component */
-  getChoiceOptions(q: any): Array<{ label: string; description?: string }> {
-    return this.getChoices(q).map((c: unknown) => ({
-      label: this.choiceLabel(c),
-      description: this.choiceDescription(c) || undefined
-    }));
+  getChoiceOptions(q: any): Array<{ label: string; description?: string; code?: string }> {
+    return this.getChoices(q).map((c: unknown) => {
+      if (typeof c === 'string') return { label: c };
+      const obj = c as Record<string, unknown>;
+      return {
+        label: String(obj['label'] ?? obj['text'] ?? ''),
+        description: (obj['description'] as string) || undefined,
+        code: (obj['code'] as string) || undefined
+      };
+    });
   }
 
   getField(q: any, field: string): string {

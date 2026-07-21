@@ -50,6 +50,8 @@ export class TheoryComponent {
   activeTab = signal<'learn' | 'practice' | 'interview'>('learn');
   showResult = signal(false);
   selectedAnswer = signal('');
+  selectedPracticeIndex = signal<number | null>(null);
+  practiceChecked = signal(false);
   lastResult = signal<'correct' | 'incorrect' | 'partial'>('incorrect');
   practiceReady = signal(false);
   private lastTopicId = '';
@@ -178,11 +180,21 @@ export class TheoryComponent {
 
     this.showResult.set(false);
     this.selectedAnswer.set('');
+    this.selectedPracticeIndex.set(null);
+    this.practiceChecked.set(false);
+  }
+
+  selectPracticeChoice(q: any, choice: unknown, index: number): void {
+    if (this.practiceChecked()) return; // already checked, don't allow re-selection
+    this.selectedPracticeIndex.set(index);
+    this.practiceChecked.set(true);
+    // Determine if correct
+    const correct = this.isCorrectChoice(q, choice, index);
+    this.lastResult.set(correct ? 'correct' : 'incorrect');
   }
 
   revealAnswer(): void {
     this.showResult.set(true);
-    this.lastResult.set('correct');
     const q = this.currentQuestion() as any;
     if (q) {
       this.engine.submitAnswer(q.answer || '');
@@ -193,6 +205,8 @@ export class TheoryComponent {
     this.engine.next();
     this.showResult.set(false);
     this.selectedAnswer.set('');
+    this.selectedPracticeIndex.set(null);
+    this.practiceChecked.set(false);
   }
 
   restartPractice(): void {

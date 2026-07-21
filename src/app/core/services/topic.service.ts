@@ -149,7 +149,6 @@ export class TopicService {
 
   private async loadAllTheory(): Promise<TheoryChapter[]> {
     const files = [
-      'data/topics/theory-learning-paths.json',
       'data/topics/theory-java-basics.json',
       'data/topics/theory-java-modern.json',
       'data/topics/theory-rewe.json',

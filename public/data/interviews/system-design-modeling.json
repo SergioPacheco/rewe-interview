@@ -24,6 +24,10 @@
       {
         "question": "How do you handle requirements that change mid-project?",
         "hint": "Impact analysis on existing design (which diagrams/components affected?), negotiate scope, update ADRs if architecture decision changes."
+      },
+      {
+        "question": "What artifacts do you produce at each stage and who reviews them?",
+        "hint": "Use case spec \u2192 reviewed by PO/stakeholders. Class diagram \u2192 reviewed by team. Sequence \u2192 reviewed by devs. ADR \u2192 reviewed by architect/tech lead."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
@@ -57,6 +61,10 @@
       {
         "question": "How would you handle a driver reassignment mid-delivery?",
         "hint": "Create ReassignmentEvent, update driver reference, keep history. Consider: do stops change? Does route need recalculation? State machine must allow transition."
+      },
+      {
+        "question": "How do you decide the level of detail in your diagrams?",
+        "hint": "Audience-driven: C4 Level 1 for executives, Level 2 for team alignment, Level 3 for implementation. More detail \u2260 better \u2014 show what decisions the diagram needs to support."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
@@ -90,6 +98,10 @@
       {
         "question": "What if two dispatchers try to assign the same driver simultaneously?",
         "hint": "Optimistic locking on driver status (version field), or pessimistic lock (SELECT FOR UPDATE). First one wins, second gets 409 Conflict."
+      },
+      {
+        "question": "How do you validate your model against real production behavior?",
+        "hint": "Structured walkthroughs with scenarios, prototype critical paths, load test assumptions about data volumes, compare with observability data from existing systems."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
@@ -123,6 +135,10 @@
       {
         "question": "What is the worst thing about microservices?",
         "hint": "Distributed transactions, debugging across services (tracing), data consistency (eventual), operational complexity (deploy/monitor N services), and the fallacy that services are independent (they share the business domain)."
+      },
+      {
+        "question": "When do you invest in formal modeling vs. just writing code?",
+        "hint": "Formal modeling pays off when: multiple teams coordinate, the cost of being wrong is high, or the domain is genuinely complex. Skip it for well-understood CRUD or spikes."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
@@ -156,6 +172,10 @@
       {
         "question": "How do you handle schema migrations in production?",
         "hint": "Flyway/Liquibase for versioned migrations. Backward-compatible changes (add column nullable, add table). Never rename/delete columns in one step \u2014 add new, migrate data, deprecate old, remove later."
+      },
+      {
+        "question": "How do you communicate technical tradeoffs to non-technical stakeholders?",
+        "hint": "Frame in business terms: cost, risk, time-to-market, user impact. Use analogies. Show options with consequences, not just the 'best' choice."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
@@ -189,6 +209,10 @@
       {
         "question": "How do you handle pushback from business on a technical decision?",
         "hint": "Translate to their language: cost, time, risk. Present alternatives with trade-offs in business terms. If they still disagree, document the risk and respect the decision \u2014 business owns priorities."
+      },
+      {
+        "question": "How do you evolve a design after initial deployment reveals unexpected patterns?",
+        "hint": "Observability first (metrics, traces), then iterate: ADR for the change, impact analysis on existing contracts, incremental migration rather than big-bang redesign."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",

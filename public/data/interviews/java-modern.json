@@ -6,7 +6,7 @@
     "difficulty": "INTERMEDIATE",
     "question": "What guarantees do Java records provide, and are record instances immutable?",
     "shortAnswer": "A record declares a transparent data carrier: the compiler provides final component fields, accessors, a canonical constructor, equals, hashCode, and toString based on those components. Its component references cannot be reassigned after construction, but that is only shallow immutability. A record containing a mutable list is mutable through that list unless it makes defensive copies.",
-    "detailedAnswer": "Records reduce ceremony for values whose API is fundamentally their state description. Components become private final fields with accessors, and generated equality and hashing use every component. A compact canonical constructor can validate or normalize inputs, but it must preserve the stated component model. Records are implicitly final and cannot extend another class, though they can implement interfaces.\n\nCalling records immutable is imprecise. Final prevents a component reference from being reassigned; it does not freeze the referenced object. For a value record with a List component, copy mutable input in the constructor—often with `List.copyOf`—and avoid exposing other mutable state. Also consider equality stability when a record is used as a map key. Records fit DTOs, messages, and value objects when transparent structural equality is desired; entities with identity, lifecycle proxies, or hidden mutable state may be a poor fit. Sealed types solve a different problem: constraining which types can implement or extend a hierarchy.",
+    "detailedAnswer": "Records reduce ceremony for values whose API is fundamentally their state description. Components become private final fields with accessors, and generated equality and hashing use every component. A compact canonical constructor can validate or normalize inputs, but it must preserve the stated component model. Records are implicitly final and cannot extend another class, though they can implement interfaces.\n\nCalling records immutable is imprecise. Final prevents a component reference from being reassigned; it does not freeze the referenced object. For a value record with a List component, copy mutable input in the constructor\u2014often with `List.copyOf`\u2014and avoid exposing other mutable state. Also consider equality stability when a record is used as a map key. Records fit DTOs, messages, and value objects when transparent structural equality is desired; entities with identity, lifecycle proxies, or hidden mutable state may be a poor fit. Sealed types solve a different problem: constraining which types can implement or extend a hierarchy.",
     "keyPoints": [
       "Records provide transparent state, accessors, and structural object methods",
       "Final component fields provide shallow, not deep, immutability",
@@ -147,7 +147,7 @@
     "subtopic": "modern-evolution",
     "difficulty": "SENIOR",
     "question": "How would you plan a production migration from Java 17 to Java 21?",
-    "shortAnswer": "I treat it as a runtime, build, library, and observability migration—not just a language upgrade. I inventory JDK internals and removed options, update the toolchain and dependencies, run unit and integration suites on Java 21, compare performance and GC behavior under representative load, then canary the runtime before adopting new language features. Preview features require explicit flags and should be a deliberate policy choice.",
+    "shortAnswer": "I treat it as a runtime, build, library, and observability migration\u2014not just a language upgrade. I inventory JDK internals and removed options, update the toolchain and dependencies, run unit and integration suites on Java 21, compare performance and GC behavior under representative load, then canary the runtime before adopting new language features. Preview features require explicit flags and should be a deliberate policy choice.",
     "detailedAnswer": "Begin with an inventory: build plugins, annotation processors, agents, native libraries, container base images, TLS providers, reflection, and dependencies that touch JDK internals. Compile and test with the target toolchain, but also test the deployed artifact in the real runtime image because startup, certificates, locale data, memory ergonomics, and monitoring agents can differ. Tools such as jdeprscan and runtime warnings help identify deprecated or internal APIs.\n\nSeparate runtime adoption from source-feature adoption to reduce the change surface. Establish baseline latency, throughput, allocation, GC pauses, startup, and memory, then compare under representative traffic. Roll out by canary with an explicit rollback path. Java 17 and 21 are both LTS releases from several vendors, but support policy and patch cadence come from the chosen distribution. Records and sealed classes are final in 17; Java 21 adds final record patterns, pattern switch, virtual threads, and sequenced collections. Preview features are not ordinary compatibility commitments and require `--enable-preview` at compile and runtime.",
     "keyPoints": [
       "Upgrade the entire toolchain and runtime ecosystem, not only source syntax",
@@ -179,15 +179,15 @@
   {
     "id": "interview-ej-modern-1",
     "topic": "java-modern",
-    "subtopic": "java-streams",
+    "subtopic": "modern-streams",
     "difficulty": "INTERMEDIATE",
     "question": "When should you NOT use Java streams? Give concrete examples where traditional loops are better.",
-    "shortAnswer": "Don't use streams when: 1) you need to mutate local variables (streams require effectively final), 2) you need break/continue/return from enclosing method, 3) the logic is inherently iterative (stateful operations between elements), 4) readability suffers (deeply nested stream chains are worse than a clear loop). Streams excel at: filtering, mapping, grouping, collecting — but are not a universal replacement for loops.",
-    "detailedAnswer": "**Effective Java Item 45 — Use streams judiciously:**\n\n**Streams are WORSE for:**\n```java\n// ❌ Modifying external state\nList<String> results = new ArrayList<>();\nstream.forEach(x -> results.add(transform(x))); // side effect!\n// ✅ Use collector\nList<String> results = stream.map(this::transform).collect(toList());\n\n// ❌ Need early termination with complex condition\n// Traditional loop with break is clearer\n\n// ❌ Multiple return values or exception handling\n// Streams can't throw checked exceptions\n```\n\n**Streams are BETTER for:**\n- Transform sequences: `map`, `flatMap`\n- Filter: `filter`, `takeWhile`\n- Combine: `reduce`, `collect`\n- Search: `findFirst`, `anyMatch`\n- Group: `groupingBy`, `partitioningBy`",
+    "shortAnswer": "Don't use streams when: 1) you need to mutate local variables (streams require effectively final), 2) you need break/continue/return from enclosing method, 3) the logic is inherently iterative (stateful operations between elements), 4) readability suffers (deeply nested stream chains are worse than a clear loop). Streams excel at: filtering, mapping, grouping, collecting \u2014 but are not a universal replacement for loops.",
+    "detailedAnswer": "**Effective Java Item 45 \u2014 Use streams judiciously:**\n\n**Streams are WORSE for:**\n```java\n// \u274c Modifying external state\nList<String> results = new ArrayList<>();\nstream.forEach(x -> results.add(transform(x))); // side effect!\n// \u2705 Use collector\nList<String> results = stream.map(this::transform).collect(toList());\n\n// \u274c Need early termination with complex condition\n// Traditional loop with break is clearer\n\n// \u274c Multiple return values or exception handling\n// Streams can't throw checked exceptions\n```\n\n**Streams are BETTER for:**\n- Transform sequences: `map`, `flatMap`\n- Filter: `filter`, `takeWhile`\n- Combine: `reduce`, `collect`\n- Search: `findFirst`, `anyMatch`\n- Group: `groupingBy`, `partitioningBy`",
     "keyPoints": [
       "Streams are for declarative data transformation",
       "Side effects in streams are a code smell",
-      "Readability trumps brevity — if stream is hard to read, use a loop",
+      "Readability trumps brevity \u2014 if stream is hard to read, use a loop",
       "parallel() only benefits large data with independent operations"
     ],
     "redFlags": [
@@ -202,7 +202,7 @@
       },
       {
         "question": "What happens if you use a stream with a checked exception?",
-        "hint": "Compilation error — functional interfaces don't declare checked exceptions. Options: wrap in unchecked, extract to method with try/catch, or use a library like vavr's Try."
+        "hint": "Compilation error \u2014 functional interfaces don't declare checked exceptions. Options: wrap in unchecked, extract to method with try/catch, or use a library like vavr's Try."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"

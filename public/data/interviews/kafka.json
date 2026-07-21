@@ -276,7 +276,7 @@
         "hint": "Under-replicated partitions metric (kafka.server:UnderReplicatedPartitions). Alert if > 0 for extended period. Also monitor ISR shrink/expand events."
       }
     ],
-    "experienceLevel": "STUDIED_INDEPENDENTLY",
+    "experienceLevel": "STUDIED_NOT_USED",
     "realExperience": {
       "title": "JMS replication comparison",
       "description": "In SGN3 with ActiveMQ Artemis, replication is handled via shared storage or live/backup pairs. Kafka's ISR model is more flexible \u2014 no shared storage needed, automatic leader election, configurable durability per topic."
@@ -313,7 +313,7 @@
         "hint": "Broker assigns ProducerID + epoch. Each message gets sequence number per partition. Broker rejects duplicates (same PID + sequence). Survives producer restarts via transactional.id."
       }
     ],
-    "experienceLevel": "STUDIED_INDEPENDENTLY",
+    "experienceLevel": "STUDIED_NOT_USED",
     "realExperience": {
       "title": "Reliable messaging in SGN3",
       "description": "Implemented reliable JMS producers with acknowledgment, retry, and DLQ patterns. Same principles: don't fire-and-forget critical events, handle failures explicitly, ensure idempotency at consumer."
@@ -350,6 +350,6 @@
         "hint": "KTable materializes a compacted topic into a local state store. Each update to the topic = update to the KTable. Compaction ensures the topic stays bounded."
       }
     ],
-    "experienceLevel": "STUDIED_INDEPENDENTLY"
+    "experienceLevel": "STUDIED_NOT_USED"
   }
 ]

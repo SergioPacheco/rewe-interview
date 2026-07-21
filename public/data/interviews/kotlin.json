@@ -2,94 +2,104 @@
   {
     "id": "interview-kotlin-1",
     "topic": "kotlin",
-    "subtopic": "kt-why",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Kotlin and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Kotlin]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Kotlin, with examples and production context]",
+    "subtopic": "kotlin-basics",
+    "difficulty": "INTERMEDIATE",
+    "question": "What advantages does Kotlin offer over Java for backend development?",
+    "shortAnswer": "Null safety (compiler-enforced, no NPEs at runtime), conciseness (data classes, extension functions, less boilerplate), coroutines (structured concurrency without callback hell), and full Java interop. For REWE: Kotlin is used in the backend — my Java background transfers directly, and null safety alone prevents an entire class of production bugs.",
+    "detailedAnswer": "Key Kotlin advantages:\n\n1. **Null safety**: Types are non-null by default. `String` cannot be null. `String?` can. Compiler catches null issues at compile time — eliminates 90% of NPEs.\n\n2. **Conciseness**: data class replaces POJO (equals, hashCode, copy auto-generated). Extension functions add behavior without inheritance. Scope functions (let, apply, also).\n\n3. **Coroutines**: Structured concurrency. suspend functions are sequential-looking but non-blocking. No CompletableFuture chains or callback hell.\n\n4. **Full Java interop**: Call any Java library. Gradual migration possible. Spring Boot supports Kotlin natively.\n\n5. **Smart casts**: After `if (x is String)`, x is automatically treated as String.\n\nWhat transfers from my Java experience:\n- All JVM concepts (threading, GC, class loading)\n- Spring Boot works identically in Kotlin\n- Design patterns apply the same way\n- JPA/Hibernate works (with some quirks — open classes needed)",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Null safety prevents entire class of runtime errors",
+      "data class = immutable DTO in one line",
+      "Coroutines = readable async without callbacks",
+      "Full Java interop — gradual migration possible",
+      "Spring Boot natively supports Kotlin"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "\"Kotlin is just better Java\" without specifics",
+      "Not knowing null safety system",
+      "Cannot explain coroutines vs threads",
+      "\"I don't know Kotlin\" (position requires it)"
     ],
     "followUps": [
       {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
+        "question": "How do Kotlin coroutines differ from Java Virtual Threads?",
+        "hint": "Coroutines: cooperative multitasking with structured concurrency. VTs: preemptive, simpler but less control."
       },
       {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
+        "question": "What challenges does Kotlin have with JPA/Hibernate?",
+        "hint": "All classes final by default (need allopen plugin). Data classes and no-arg constructor (need noarg plugin)."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "STUDIED_NOT_USED",
+    "realExperience": {
+      "title": "Studying Kotlin for REWE position",
+      "description": "Currently Java-focused. Studying Kotlin specifically for REWE: null safety, coroutines, Spring Boot integration. My 7 years of JVM experience (Hibernate, Spring patterns, concurrency) transfer directly. The language syntax is new; the concepts are not."
+    }
   },
   {
     "id": "interview-kotlin-2",
     "topic": "kotlin",
-    "subtopic": "kt-fundamentals",
-    "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Kotlin.",
-    "shortAnswer": "[Short answer about a real challenge involving Kotlin]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "subtopic": "kotlin-coroutines",
+    "difficulty": "SENIOR",
+    "question": "Explain Kotlin coroutines and structured concurrency.",
+    "shortAnswer": "Coroutines are lightweight concurrent units that can suspend without blocking a thread. Structured concurrency means every coroutine has a scope — if the parent scope is cancelled, all children are cancelled too. This prevents leaked background work (a common problem with unstructured threads/futures).",
+    "detailedAnswer": "Coroutines:\n- `suspend fun` can pause and resume without blocking a thread\n- Lighter than threads (can run millions concurrently)\n- Sequential-looking code that is actually non-blocking\n\nStructured concurrency:\n- Every coroutine must have a CoroutineScope\n- Parent cancellation cascades to children\n- Children failures can propagate to parent\n- No leaked background work (unlike fire-and-forget threads)\n\n```kotlin\ncoroutineScope {\n    val escola = async { escolaClient.get(id) }  // concurrent\n    val turmas = async { turmaClient.list(id) }  // concurrent\n    combine(escola.await(), turmas.await())       // wait both\n}  // If either fails, the other is cancelled\n```\n\nCompared to CompletableFuture:\n- More readable (no .thenCompose().thenApply() chains)\n- Automatic cancellation (no manual cancel propagation)\n- Exception handling is natural (try/catch works)",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "suspend functions pause without blocking thread",
+      "Structured: parent cancellation cascades to children",
+      "No leaked work — scope defines lifetime",
+      "Sequential-looking code, concurrent execution",
+      "Natural exception handling (try/catch)"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "Confusing coroutines with threads",
+      "Not knowing what 'structured' means in structured concurrency",
+      "\"It's just like async/await in JavaScript\" (ignores structured concurrency)",
+      "Cannot explain cancellation propagation"
     ],
     "followUps": [
       {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
+        "question": "What is the difference between launch and async?",
+        "hint": "launch: fire-and-forget (returns Job). async: returns Deferred with a result (await)."
       },
       {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
+        "question": "How do you handle timeouts in coroutines?",
+        "hint": "withTimeout(5000) { ... } — cancels the coroutine if exceeded."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
     "id": "interview-kotlin-3",
     "topic": "kotlin",
-    "subtopic": "kt-why",
-    "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Kotlin?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Kotlin]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "subtopic": "kotlin-basics",
+    "difficulty": "BEGINNER",
+    "question": "How does Kotlin null safety work?",
+    "shortAnswer": "Types are non-null by default. String cannot hold null — compiler error. String? is nullable — compiler forces you to handle null before using it (safe call ?., Elvis ?:, or explicit check). This eliminates NullPointerException at compile time instead of runtime.",
+    "detailedAnswer": "Kotlin null safety:\n\n```kotlin\nval name: String = \"Sergio\"     // Cannot be null — compiler enforces\nval name: String? = null         // Nullable — must handle before use\n\n// Safe call (returns null if name is null)\nval length = name?.length        // Int? — might be null\n\n// Elvis operator (default value)\nval length = name?.length ?: 0   // Int — guaranteed non-null\n\n// Smart cast (after null check, type narrows)\nif (name != null) {\n    println(name.length)  // Compiler knows it's non-null here\n}\n```\n\nIn Java, ANY reference can be null — you discover it at runtime (NPE in production). In Kotlin, the compiler tells you at write-time.\n\nThe `!!` operator forces a nullable to non-null (throws NPE if null) — using it defeats the purpose. Code reviews should flag `!!` usage.",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "Non-null by default — String cannot be null",
+      "? marks nullable types — compiler forces handling",
+      "Safe call (?.) and Elvis (?:) for null handling",
+      "Smart casts after null checks",
+      "!! defeats the purpose — avoid in production code"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "\"It's like Optional\" (not exactly — it's the type system, not a wrapper)",
+      "Using !! everywhere (defeats null safety)",
+      "Not understanding the compile-time vs runtime distinction",
+      "Cannot explain safe call vs Elvis"
     ],
     "followUps": [
       {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
+        "question": "How does Kotlin null safety interact with Java libraries?",
+        "hint": "Java types are 'platform types' (String!) — Kotlin doesn't know if nullable. Risk at Java boundaries."
       },
       {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
+        "question": "When would you use !! and when is it a code smell?",
+        "hint": "Acceptable in tests or when you've validated externally. Smell in business logic."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "STUDIED_NOT_USED"
   }
 ]

@@ -2,30 +2,32 @@
   {
     "id": "interview-portfolio-1",
     "topic": "portfolio",
-    "subtopic": "portfolio-overview",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Projects and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Projects]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Projects, with examples and production context]",
+    "subtopic": "portfolio-sgn",
+    "difficulty": "INTERMEDIATE",
+    "question": "Walk me through the architecture of a system you built.",
+    "shortAnswer": "SGN3: monolith with satellite. Core (Java/WildFly/Jakarta EE) handles all business logic with JSF UI. Satellite (senai-services) exposes REST APIs for external consumers (E-commerce, mobile app, student portal). Async via ActiveMQ Artemis. PostgreSQL for persistence across 8 schemas.",
+    "detailedAnswer": "SGN3 Architecture:\n\n```\n[JSF/PrimeFaces UI] → [WebBean] → [Service] → [Business] → [Repository] → [PostgreSQL]\n                                                    ↓\n                                              [JMS/Artemis]\n                                                    ↓\n                                               [MDB consumers]\n                                                    ↓\n                                    [External: Moodle, LDAP, Firebase, VTEX]\n\n[E-commerce] → [senai-services REST API] → [Same PostgreSQL]\n[Student Portal] ↗\n[Mobile App] ↗\n```\n\nKey decisions:\n- **Monolith**: Team is integrated, domain is coupled (enrollment↔scheduling↔financial). Transactions are local.\n- **Satellite for integrations**: senai-services isolates external-facing APIs and heavy integration processing.\n- **JMS for async**: 80 queues decouple time-sensitive UI from slow operations (Moodle, email, certification).\n- **Schemas as boundaries**: 8 schemas approximate bounded contexts without microservice overhead.\n\nTrade-offs:\n- Monolith: single deploy, shared DB (fast JOINs) but coupled deploy risk\n- JMS over sync: durability and retry, but more complexity",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Monolith + satellite (not microservices — justified for team/domain)",
+      "Layered: WebBean→Service→Business→Repository",
+      "JMS for async (80 queues, durability, retry)",
+      "Schemas as logical boundaries",
+      "REST API for external consumers via satellite"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "Cannot explain WHY monolith (just \"it's what we have\")",
+      "No mention of async/messaging strategy",
+      "Cannot draw the architecture from memory",
+      "No understanding of trade-offs in the decisions"
     ],
     "followUps": [
       {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
+        "question": "Why didn't you go with microservices?",
+        "hint": "Small team, coupled domain, shared transactions. Microservices would add distributed complexity without benefit."
       },
       {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
+        "question": "What would you change if starting from scratch today?",
+        "hint": "Honest answer — maybe Spring Boot for developer experience, but same monolith decision for the domain."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -33,30 +35,32 @@
   {
     "id": "interview-portfolio-2",
     "topic": "portfolio",
-    "subtopic": "portfolio-backend",
+    "subtopic": "portfolio-rewe",
     "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Projects.",
-    "shortAnswer": "[Short answer about a real challenge involving Projects]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "question": "Tell me about a project you built specifically to learn new technologies.",
+    "shortAnswer": "This REWE Interview Prep site. Angular 19, signals, standalone components, CDK, lazy loading — built specifically to demonstrate Angular skills for this position. It is not a toy: 21 topics, 700+ exercises, progressive learning structure, real architectural decisions. Every technique used is deliberate and can be explained.",
+    "detailedAnswer": "REWE Interview Prep (this project):\n\n**Why:**\n- Position requires Angular (my background is Java/Jakarta EE)\n- Decided to SHOW competence rather than just claim it\n- Built a real application, not a tutorial follow-along\n\n**Angular 19 techniques demonstrated:**\n- Signals for all state management (zero BehaviorSubject)\n- Standalone components (zero NgModules)\n- inject() function-based DI\n- @if/@for/@switch control flow\n- Lazy loading via loadComponent\n- OnPush change detection\n\n**Architecture:**\n- Feature-based (core/shared/features)\n- Each feature lazy-loaded\n- Services as single source of truth\n- Models as pure interfaces\n\n**Content:**\n- 21 topics, 700+ exercises\n- Learn/Practice/Interview tabs (clear separation of purpose)\n- Honest experience classification\n\nThis proves: I learn quickly, I build real things, and I make architectural decisions with intent.",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "Built to demonstrate skills, not just claim them",
+      "Real application with architectural decisions",
+      "Angular 19 signals, standalone, inject(), lazy loading",
+      "700+ exercises across 21 topics",
+      "Every technique deliberate and explainable"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "\"I followed a tutorial\" (not original work)",
+      "Cannot explain architectural decisions",
+      "No real complexity (just a todo app)",
+      "Technology choices cannot be justified"
     ],
     "followUps": [
       {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
+        "question": "What was the hardest part of learning Angular coming from Java?",
+        "hint": "Reactive thinking (signals/observables), template syntax, TypeScript quirks vs Java."
       },
       {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
+        "question": "What would you do differently if starting this project over?",
+        "hint": "Honest reflection — maybe different state management, better content strategy upfront."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -64,32 +68,38 @@
   {
     "id": "interview-portfolio-3",
     "topic": "portfolio",
-    "subtopic": "portfolio-overview",
+    "subtopic": "portfolio-sgn",
     "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Projects?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Projects]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "question": "What was the most complex integration you built?",
+    "shortAnswer": "The Moodle integration in SGN3. Bidirectional: SGN creates virtual classrooms when turmas start, syncs enrollments, and retrieves grades. Challenges: Moodle API is slow (60s timeouts), unreliable (needs retry), and stateful (operations must be idempotent). Built with MicroProfile RestClient + JMS for async processing.",
+    "detailedAnswer": "Moodle integration complexity:\n\n**What it does:**\n- Creates Moodle courses when a turma (class) starts\n- Enrolls students when matriculated\n- Retrieves grades for academic records\n- Syncs instructor assignments\n\n**Challenges:**\n1. Moodle API is SLOW (legitimate 60s responses for batch operations)\n2. Unreliable (occasional 502/503, needs retry)\n3. Must be idempotent (retry after timeout shouldn't duplicate)\n4. Cannot block the web request (user shouldn't wait 60s)\n\n**Architecture:**\n1. Web action triggers JMS message (immediate response to user)\n2. MDB processes asynchronously (Moodle calls happen here)\n3. Retry via Artemis redelivery (max-delivery-attempts=5)\n4. Idempotency: check if Moodle course already exists before creating\n5. DLQ for permanent failures (manual review)\n6. Timeout: 5s connect, 60s read (Moodle is legitimately slow)\n\n**Key learnings:**\n- Never call external APIs inside a database transaction (holds connection)\n- Always have a fallback for when the external system is down\n- Log business IDs for traceability (id_turma, id_matricula)",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "Async via JMS (user doesn't wait for Moodle)",
+      "Retry via Artemis redelivery (max 5 attempts)",
+      "Idempotent (check before create)",
+      "DLQ for permanent failures",
+      "60s timeout (Moodle is legitimately slow)"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "Synchronous call to slow external API in web request",
+      "No retry strategy",
+      "No idempotency (retries cause duplicates)",
+      "No timeout configured"
     ],
     "followUps": [
       {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
+        "question": "What happens when Moodle is down for an hour?",
+        "hint": "Messages accumulate in queue. When Moodle returns, they process. DLQ catches permanent errors."
       },
       {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
+        "question": "How do you handle partial failures (student enrolled in SGN but not in Moodle)?",
+        "hint": "Retry via JMS. If all retries fail → DLQ → manual reconciliation. SGN is source of truth."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 ↔ Moodle bidirectional integration",
+      "description": "Built and maintain full integration: course creation, enrollment sync, grade retrieval. MicroProfile RestClient + JMS async + retry + idempotency + DLQ. Handles Moodle's 60s response times and unreliability gracefully."
+    }
   }
 ]

@@ -2,30 +2,36 @@
   {
     "id": "interview-stories-1",
     "topic": "stories",
-    "subtopic": "story-performance",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in My Stories and why?",
-    "shortAnswer": "[Short answer about the foundational concept of My Stories]",
-    "detailedAnswer": "[Detailed explanation of the core concept in My Stories, with examples and production context]",
+    "subtopic": "stories-technical",
+    "difficulty": "SENIOR",
+    "question": "Tell me your most impressive technical achievement.",
+    "shortAnswer": "The 26,705 inscription optimization. System handling enrollment for all SENAI Santa Catarina schools was taking ~16 minutes per page load during peak enrollment. I identified ~48,000 queries (N+1 + cartesian product), restructured to ~10 optimized queries with LATERAL JOIN + pagination + DTO projections. Result: ~2 seconds. Zero functionality removed.",
+    "detailedAnswer": "Context:\n- SGN serves all SENAI schools in Santa Catarina state\n- Enrollment period: 2-week window, 26,705 inscriptions\n- System unusable during peak — ~16 minutes per page load\n\nDiagnosis (1 day):\n- Glowroot APM showed ~48,000 queries per request\n- Root cause: N+1 on matrícula→estudante→pessoa→colaborador chain\n- Cartesian product from multiple JOIN FETCHes\n- COUNT(*) repeating the entire complex query\n\nSolution (2 days):\n1. Separate COUNT query (simple, fast)\n2. Pagination with LIMIT/OFFSET + deterministic ORDER BY\n3. LATERAL JOIN for pessoa→colaborador (handles multiple active enrollments)\n4. DTO projections (only fields needed for listing)\n5. Batch loading for remaining relationships\n\nResult:\n- ~48,000 queries → ~10 queries\n- ~16 minutes → ~2 seconds\n- Same data, same functionality\n- Enrollment period completed successfully\n\nWhy it's impressive:\n- Under pressure (3-day deadline before enrollment closed)\n- Measured first (didn't guess — Glowroot showed the problem)\n- Clean solution (no hacks, no denormalization, no cache band-aid)",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "26,705 inscriptions — real production scale",
+      "~48,000 queries → ~10 (measured, not estimated)",
+      "~16 minutes → ~2 seconds",
+      "Under 3-day deadline pressure",
+      "Measured first with Glowroot, then fixed systematically"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "Vague numbers (\"it was slow, I made it fast\")",
+      "Cannot explain the root cause technically",
+      "Solution was \"add more servers\" not fix the query",
+      "Story doesn't hold up under follow-up questions"
     ],
     "followUps": [
       {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
+        "question": "Why specifically LATERAL JOIN?",
+        "hint": "Handles the case where one person has multiple active enrollments — takes only the most relevant one with LIMIT 1."
       },
       {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
+        "question": "Why not just add caching?",
+        "hint": "Caching hides the problem. 48k queries is a design issue. Caching 48k results wastes memory and still has cold-start problem."
+      },
+      {
+        "question": "How did you test the fix before deploying?",
+        "hint": "Cloned production data to test environment. Ran same queries with real 26k volume. Verified with EXPLAIN ANALYZE."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -33,30 +39,32 @@
   {
     "id": "interview-stories-2",
     "topic": "stories",
-    "subtopic": "story-n1",
+    "subtopic": "stories-technical",
     "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using My Stories.",
-    "shortAnswer": "[Short answer about a real challenge involving My Stories]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "question": "Describe a system you maintain and its complexity.",
+    "shortAnswer": "SGN3 — education management for SENAI Santa Catarina. Monolith with ~2,000 database tables across 8 schemas, 80 JMS queues, 128 MDB consumers, integrations with Moodle/LDAP/VTEX/Firebase. Handles enrollment, scheduling, grades, financial, certification for all schools in the state.",
+    "detailedAnswer": "SGN3 (Sistema de Gestão Nacional):\n\n**Scale:**\n- ~2,000 database tables (PostgreSQL)\n- 8 schemas (matricula, turma, recurso, financeiro, certificacao, senai, educacenso, questionario)\n- 80 JMS queues with 128 MDB consumers\n- Integrations: Moodle (virtual classrooms), LDAP (authentication), VTEX (e-commerce), Firebase (push), BRy (digital certificates)\n\n**Domain:**\n- Enrollment management (26,705 inscriptions/period)\n- Class scheduling and resource allocation\n- Grade management and academic diary\n- Financial (billing, payments)\n- Certification (digital certificates)\n- Census reporting (Educacenso)\n\n**Architecture:**\n- Monolith: Java 11, WildFly 26, Jakarta EE, JSF/PrimeFaces, Hibernate 5\n- Satellite: senai-services (REST API for E-commerce, mobile apps)\n- Async: ActiveMQ Artemis (JMS)\n- Containers: OKD (OpenShift)\n\nI am one of the primary developers responsible for performance, architecture decisions, and complex domain features.",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "~2,000 tables across 8 schemas",
+      "80 JMS queues, 128 MDB consumers",
+      "Multiple external integrations (Moodle, LDAP, VTEX, Firebase)",
+      "Education domain: enrollment, grades, scheduling, financial, certification",
+      "Monolith + satellite architecture serving multiple consumers"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "Cannot describe system complexity beyond surface level",
+      "No concrete numbers",
+      "\"I just work on my feature\" (no system-level understanding)",
+      "Cannot explain architectural decisions"
     ],
     "followUps": [
       {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
+        "question": "What is the biggest technical challenge in maintaining this system?",
+        "hint": "Performance at scale (enrollment peaks), legacy code evolution, PostgreSQL 10→18 migration."
       },
       {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
+        "question": "If you could redesign one thing, what would it be?",
+        "hint": "Honest answer about a real limitation. Shows critical thinking."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -64,32 +72,38 @@
   {
     "id": "interview-stories-3",
     "topic": "stories",
-    "subtopic": "story-performance",
-    "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with My Stories?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in My Stories]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "subtopic": "stories-teamwork",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you handle working with legacy code?",
+    "shortAnswer": "I treat legacy as a constraint, not an enemy. My approach: understand before changing (read the module map, trace the flow), make the smallest correct change, add tests for the behavior I'm changing (characterization tests), and leave the area slightly better than I found it. I don't rewrite without a concrete trigger.",
+    "detailedAnswer": "My legacy code philosophy:\n\n1. **Understand first**: Read existing code thoroughly. Trace data flow. Check who calls this code. Map dependencies.\n\n2. **Characterization tests**: Before changing behavior, write tests that document what the code CURRENTLY does. Even if it's wrong — first capture, then fix.\n\n3. **Smallest correct change**: Don't refactor 'while you're in there'. Fix the issue. Add the feature. Leave.\n\n4. **Boy Scout Rule**: If you must touch a file, leave it slightly better (extract a method, rename a variable, add a null check). But don't rewrite.\n\n5. **Never rewrite without trigger**: A working system that's ugly is better than a half-finished rewrite. Rewrite only when: performance is unacceptable, the module actively blocks new features, or maintenance cost exceeds rewrite cost.\n\nSGN3 is 7+ years old. Some modules are clean (recently refactored), others are legacy. I work in both comfortably.",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "Understand before changing (trace flow, map deps)",
+      "Characterization tests before modifying behavior",
+      "Smallest correct change (don't over-refactor)",
+      "Boy Scout Rule (small improvements, not rewrites)",
+      "Rewrite only with concrete trigger (not aesthetics)"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "\"Legacy code should be rewritten\" (naive, dangerous)",
+      "Afraid to touch legacy (never improves)",
+      "Making large changes without understanding the module",
+      "No testing strategy for untested legacy code"
     ],
     "followUps": [
       {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
+        "question": "When WOULD you advocate for a rewrite?",
+        "hint": "When maintenance cost exceeds rewrite cost, or it blocks critical features. With tests and incremental migration."
       },
       {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
+        "question": "How do you add tests to untested code?",
+        "hint": "Characterization tests first (document current behavior). Then refactor with safety net."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 legacy module maintenance",
+      "description": "7+ year old system. Some modules well-structured, others legacy. I apply: read first, test current behavior, make minimal change, leave better. Successfully maintained and improved modules without rewrites."
+    }
   }
 ]

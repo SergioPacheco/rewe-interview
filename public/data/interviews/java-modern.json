@@ -2,94 +2,90 @@
   {
     "id": "interview-java-modern-1",
     "topic": "java-modern",
-    "subtopic": "modern-records",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Modern Java and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Modern Java]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Modern Java, with examples and production context]",
+    "subtopic": "java-modern-records",
+    "difficulty": "INTERMEDIATE",
+    "question": "What are Java Records and when would you use them?",
+    "shortAnswer": "Records are immutable data carriers with auto-generated equals, hashCode, toString, and accessors. Use for DTOs, value objects, and method return types where you just need to carry data without behavior. Don't use for JPA entities (need mutability) or when you need inheritance.",
+    "detailedAnswer": "Java Records (Java 16+):\n\n```java\npublic record TurmaDTO(Long id, String nome, SituacaoTurma situacao) {}\n```\n\nAuto-generates: constructor, getters (id(), not getId()), equals, hashCode, toString.\n\nWhen to use:\n- DTOs (data transfer between layers)\n- Value objects (immutable by design)\n- Multiple return values (instead of Pair/Tuple)\n- Configuration objects\n- Event payloads\n\nWhen NOT to use:\n- JPA entities (need no-arg constructor, setters for Hibernate)\n- Objects that need inheritance (records are final)\n- When you need custom equals logic that changes over time\n\nIn SGN3 context: currently on Java 11 (no records), but the migration to Java 21 (project 1085011) will enable using records for DTOs. Currently we use traditional classes with Lombok-like patterns.",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Immutable data carriers with auto-generated methods",
+      "Perfect for DTOs and value objects",
+      "Cannot be used for JPA entities (final, no setters)",
+      "Replaces boilerplate POJO classes",
+      "Available from Java 16+"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "\"Records replace all classes\" (wrong — specific use case)",
+      "Using records for mutable state",
+      "Not knowing the limitations (final, no inheritance)",
+      "Cannot explain when a class is still better"
     ],
     "followUps": [
-      {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
-      },
-      {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
-      }
+      { "question": "Can you have a record with validation?", "hint": "Yes — compact constructor: public TurmaDTO { Objects.requireNonNull(nome); }" },
+      { "question": "How do records relate to immutability?", "hint": "Records are inherently immutable (final fields, no setters). Perfect for thread-safe value objects." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "STUDIED_NOT_USED",
+    "realExperience": {
+      "title": "SGN3 Java 21 migration planned",
+      "description": "Currently Java 11 (no records). Java 21 migration (project 1085011) will enable records for DTOs. Currently using traditional classes. I know the feature well from study and this Angular project (TypeScript interfaces serve the same purpose)."
+    }
   },
   {
     "id": "interview-java-modern-2",
     "topic": "java-modern",
-    "subtopic": "modern-patterns",
-    "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Modern Java.",
-    "shortAnswer": "[Short answer about a real challenge involving Modern Java]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "subtopic": "java-modern-sealed",
+    "difficulty": "SENIOR",
+    "question": "What problem do sealed classes solve?",
+    "shortAnswer": "Sealed classes restrict which classes can extend them — you define the complete set of subtypes. This enables exhaustive pattern matching (compiler knows all cases), better domain modeling (enrollment can ONLY be Active, Cancelled, or Suspended — no unexpected subtypes), and eliminates 'default' catch-all in switch.",
+    "detailedAnswer": "Sealed classes (Java 17+):\n\n```java\npublic sealed interface SituacaoMatricula \n    permits Ativa, Cancelada, Trancada, Concluida {}\n\npublic record Ativa(LocalDate inicio) implements SituacaoMatricula {}\npublic record Cancelada(LocalDate data, String motivo) implements SituacaoMatricula {}\n```\n\nWhat they solve:\n1. **Exhaustive checking**: switch over sealed type — compiler warns if case missing\n2. **Controlled hierarchy**: no unexpected subtypes appearing at runtime\n3. **Domain modeling**: type system enforces business rules\n4. **Pattern matching**: `case Ativa a -> a.inicio()` with data extraction\n\nBefore sealed classes:\n- Interface/abstract class — anyone can implement\n- No compile-time guarantee of completeness\n- Always need 'default' case (might hide bugs)\n\nRelates to algebraic data types (sum types) in functional programming.",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "Restricts who can extend/implement (closed set of subtypes)",
+      "Enables exhaustive pattern matching (no default needed)",
+      "Better domain modeling (type system = business rules)",
+      "Combines with records for algebraic data types",
+      "Compiler catches missing cases"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "Cannot explain the benefit over regular inheritance",
+      "\"It's just final with extra steps\" (misses pattern matching benefit)",
+      "Not connecting to domain modeling",
+      "No practical use case beyond textbook"
     ],
     "followUps": [
-      {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
-      },
-      {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
-      }
+      { "question": "How do sealed classes relate to pattern matching in switch?", "hint": "Sealed + switch = exhaustive. Compiler knows all cases. No default needed." },
+      { "question": "When would you NOT use sealed classes?", "hint": "When the set of subtypes should be extensible (plugins, strategy pattern with open extension)." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
     "id": "interview-java-modern-3",
     "topic": "java-modern",
-    "subtopic": "modern-records",
+    "subtopic": "java-modern-vthreads",
     "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Modern Java?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Modern Java]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "question": "What are Virtual Threads and how do they change application design?",
+    "shortAnswer": "Virtual Threads (Java 21) are lightweight threads managed by the JVM, not the OS. You can create millions without exhausting memory. They make blocking I/O scalable without async complexity (no CompletableFuture chains). For I/O-bound applications (most enterprise apps), they can replace thread pools. They don't help CPU-bound work.",
+    "detailedAnswer": "Virtual Threads (Project Loom, Java 21):\n\n**What they are:**\n- JVM-managed, not OS threads\n- ~1KB each (vs ~1MB for platform threads)\n- Can create millions concurrently\n- Blocking I/O releases the carrier thread automatically\n\n**What changes:**\n- Thread-per-request becomes viable again (no pool exhaustion)\n- Blocking code is efficient (no need for reactive/async)\n- Simpler programming model: write synchronous code, get async performance\n\n**What doesn't change:**\n- CPU-bound work still limited by cores\n- synchronized blocks pin the virtual thread (use ReentrantLock instead)\n- ThreadLocal becomes expensive with millions of threads\n- Still need bounded access to shared resources (DB connections)\n\n**For SGN3 (WildFly 39 migration):**\n- Currently uses thread pools + JMS for async\n- Virtual Threads could simplify integration calls (Moodle, LDAP)\n- But: still need to limit concurrent DB connections (pool is finite)",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "Lightweight (1KB vs 1MB) — millions possible",
+      "Blocking I/O is efficient (carrier thread released)",
+      "Simpler than reactive/async (write synchronous, get scale)",
+      "Don't help CPU-bound work (still limited by cores)",
+      "Still need bounded access to shared resources (DB pool)"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "\"Virtual Threads replace everything\" (wrong for CPU-bound)",
+      "Not knowing about pinning (synchronized blocks)",
+      "\"No more thread pools needed\" (still need bounded resources)",
+      "Confusing with coroutines (different model)"
     ],
     "followUps": [
-      {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
-      },
-      {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
-      }
+      { "question": "When would Virtual Threads NOT help?", "hint": "CPU-bound computation, code with long synchronized blocks (pinning)." },
+      { "question": "How do they affect connection pooling?", "hint": "Can create 100k VTs but only 50 DB connections. Pool becomes the bottleneck, not threads." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "STUDIED_NOT_USED",
+    "realExperience": {
+      "title": "SGN3 WildFly 39 + Java 21 migration planned",
+      "description": "Currently Java 11. Migration to Java 21 (project 1085011) will enable Virtual Threads. Most relevant for integration layer (Moodle/LDAP calls currently use CompletableFuture + ManagedExecutor). VTs could simplify to blocking calls without pool exhaustion."
+    }
   }
 ]

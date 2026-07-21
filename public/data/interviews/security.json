@@ -2,94 +2,113 @@
   {
     "id": "interview-security-1",
     "topic": "security",
-    "subtopic": "security-auth",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Security and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Security]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Security, with examples and production context]",
+    "subtopic": "security-web",
+    "difficulty": "INTERMEDIATE",
+    "question": "What is SQL injection and how do you prevent it?",
+    "shortAnswer": "SQL injection is when user input is concatenated into SQL, allowing attackers to modify the query. Prevention: ALWAYS use parameterized queries (named parameters in JPA/Hibernate). Never concatenate user input into SQL strings. In SGN3, all native queries use :namedParam — ArchUnit could enforce this.",
+    "detailedAnswer": "SQL injection:\n```sql\n-- Vulnerable (string concatenation)\nString sql = \"SELECT * FROM users WHERE name = '\" + userInput + \"'\";\n-- Attack: userInput = \"'; DROP TABLE users; --\"\n```\n\nPrevention (in order of preference):\n1. **Parameterized queries (best):**\n```java\n// JPA named parameter — safe\nquery.setParameter(\"name\", userInput);\n// JDBC PreparedStatement — safe\npstmt.setString(1, userInput);\n```\n\n2. **ORM methods** (find, persist, criteria API — inherently safe)\n\n3. **Input validation** (defense in depth, not primary defense):\n   - Whitelist allowed characters\n   - Limit length\n   - Type checking (expecting Long? Parse it first)\n\nIn SGN3:\n- All native queries use `:namedParam`\n- StringBuilder for dynamic WHERE clauses still uses parameters for values\n- Code review catches string concatenation in SQL\n- SQL injection is severity CRITICAL in code review",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Never concatenate user input into SQL",
+      "Parameterized queries (named params) prevent injection",
+      "ORM methods (find, persist) are inherently safe",
+      "Input validation is defense in depth, not primary defense",
+      "Severity CRITICAL in code review"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "\"I validate the input\" as primary defense (can be bypassed)",
+      "Not knowing what parameterized queries are",
+      "Building SQL with string concatenation",
+      "\"Our ORM protects us\" (native queries can still be vulnerable)"
     ],
     "followUps": [
       {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
+        "question": "Can SQL injection happen with an ORM like Hibernate?",
+        "hint": "Yes — native queries with string concatenation. JPQL is safe but native SQL needs parameters."
       },
       {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
+        "question": "What other injection types exist beyond SQL?",
+        "hint": "XSS (HTML/JS injection), LDAP injection, OS command injection, template injection."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 SQL parameterization standard",
+      "description": "All 2000+ queries in SGN3 use named parameters. Dynamic WHERE clauses (StringBuilder) append parameter placeholders, never values. Code review catches injection attempts. Zero known SQL injection vulnerabilities."
+    }
   },
   {
     "id": "interview-security-2",
     "topic": "security",
-    "subtopic": "security-spring",
+    "subtopic": "security-auth",
     "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Security.",
-    "shortAnswer": "[Short answer about a real challenge involving Security]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "question": "Explain authentication vs authorization. How do you implement both?",
+    "shortAnswer": "Authentication: WHO are you? (verify identity — login, token, certificate). Authorization: WHAT can you do? (verify permissions — roles, rules, policies). In SGN3: authentication via LDAP (identity), authorization via Apache Shiro with permission-based model (227 profiles × 1279 rules).",
+    "detailedAnswer": "Authentication (AuthN):\n- Verifies identity: \"prove you are who you claim\"\n- Mechanisms: password + LDAP, JWT token, OAuth2, certificate\n- Result: confirmed identity (user ID, session)\n\nAuthorization (AuthZ):\n- Verifies permission: \"are you allowed to do this?\"\n- Mechanisms: RBAC (roles), ABAC (attributes), ACL, permission-based\n- Result: allow or deny\n\nSGN3 implementation:\n- AuthN: LDAP authentication (username + password verified against directory)\n- AuthZ: Apache Shiro with custom model:\n  - 227 profiles (role groupings)\n  - 1,279 rules (atomic permissions)\n  - Each login has N profiles → each profile has N rules\n  - Check: `identity.hasPermission(module, rule)`\n  - Authorization in Business layer (not just UI hiding)\n\nKey principle: authorization MUST be enforced server-side. UI hiding (rendered=false) is UX, not security.",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "AuthN = who (identity). AuthZ = what (permissions).",
+      "Authorization enforced SERVER-SIDE (not UI hiding)",
+      "SGN3: LDAP for AuthN, Shiro rules for AuthZ",
+      "Permission-based > role-based (more granular)",
+      "Never rely on client-side checks for security"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "Confusing authentication with authorization",
+      "\"We hide the button\" as security (UI is not security)",
+      "Only client-side authorization",
+      "Not knowing where to enforce authorization (Business layer)"
     ],
     "followUps": [
       {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
+        "question": "Why enforce authorization in the Business layer, not just the UI?",
+        "hint": "API can be called directly (bypass UI). Business layer is the security boundary."
       },
       {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
+        "question": "What is the difference between RBAC and permission-based authorization?",
+        "hint": "RBAC: check role. Permission-based: check specific action. More granular, more flexible."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 Apache Shiro + LDAP",
+      "description": "Built and maintained permission system: 227 profiles, 1,279 rules, 144k user-profile assignments. LDAP for authentication. Shiro for authorization. Business layer enforces permissions — UI rendered attribute is UX convenience, not security."
+    }
   },
   {
     "id": "interview-security-3",
     "topic": "security",
-    "subtopic": "security-auth",
+    "subtopic": "security-data",
     "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Security?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Security]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "question": "How do you handle sensitive data (secrets, PII) in a production system?",
+    "shortAnswer": "Secrets (passwords, API keys): never in code or config files. Use environment variables, K8s Secrets, or Vault. PII (personal data): encrypt at rest, minimize collection, restrict access, audit who accessed what, implement data retention policies. In SGN3: DB credentials via env vars in OKD, PII access restricted by Shiro rules.",
+    "detailedAnswer": "Secrets management:\n1. **Never in source code** (not even 'temporarily')\n2. **Not in config files committed to Git**\n3. **Environment variables** (minimum — visible in process list)\n4. **K8s Secrets** (base64, not encrypted by default — enable encryption at rest)\n5. **Vault** (HashiCorp Vault — dynamic secrets, rotation, audit)\n\nPII protection:\n1. **Minimize collection** — don't store what you don't need\n2. **Encrypt at rest** — database-level or column-level encryption\n3. **Restrict access** — role-based, need-to-know\n4. **Audit** — log who accessed sensitive data (not the data itself!)\n5. **Retention** — delete when no longer needed (GDPR/LGPD)\n6. **Mask in logs** — never log CPF, password, credit card\n\nSGN3:\n- DB credentials: OKD environment variables (not in application.properties)\n- PII access: Shiro rules control who sees student data\n- Logs: never log CPF or personal identifiers in full\n- No secrets in Git history (ever)",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "Secrets: env vars minimum, Vault ideal. Never in code.",
+      "PII: minimize, encrypt, restrict, audit, retain/delete",
+      "Never log sensitive data (CPF, passwords, tokens)",
+      "Authorization controls who accesses PII",
+      "LGPD/GDPR: data retention and deletion policies"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "Secrets in application.properties committed to Git",
+      "Logging PII in plaintext",
+      "\"We trust our developers\" as security strategy",
+      "No data retention policy",
+      "No audit trail for sensitive data access"
     ],
     "followUps": [
       {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
+        "question": "What do you do if a secret is accidentally committed to Git?",
+        "hint": "Rotate immediately (assume compromised). Remove from history (git filter-branch). Audit access logs."
       },
       {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
+        "question": "How do you handle LGPD compliance?",
+        "hint": "Data minimization, consent tracking, right to deletion, access audit, DPO."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 secrets and PII management",
+      "description": "DB credentials via OKD env vars. Application properties have safe defaults only. PII (student data) protected by Shiro rules — only authorized profiles can view personal information. No CPF in application logs."
+    }
   }
 ]

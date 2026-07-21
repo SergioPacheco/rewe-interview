@@ -1,0 +1,294 @@
+[
+  {
+    "id": "interview-dsa-1",
+    "topic": "dsa",
+    "subtopic": "dsa-collections",
+    "difficulty": "INTERMEDIATE",
+    "question": "How does HashMap work internally, and when does it degrade?",
+    "shortAnswer": "HashMap uses an array of buckets. A key's hashCode determines the bucket index. Collisions are handled via linked lists (Java 7) or trees (Java 8+, when a bucket exceeds 8 entries). At load factor 0.75, it doubles capacity and rehashes all entries. It degrades when many keys collide to the same bucket — from O(1) to O(n) in Java 7, or O(log n) in Java 8+ due to tree conversion.",
+    "detailedAnswer": "**Internal structure:**\n1. Array of Node<K,V> (called `table`), initial capacity 16\n2. `put(key, value)`: compute `hash(key.hashCode())`, find bucket index `hash & (n-1)`\n3. If bucket empty: insert directly\n4. If bucket occupied: walk the chain, compare with `equals()`\n5. If chain length > 8 AND table size > 64: convert to red-black tree\n\n**Resize mechanism:**\n- Threshold = capacity × loadFactor (default 0.75)\n- When size > threshold: create new array (2× capacity), rehash all entries\n- This is O(n) but happens infrequently → amortized O(1) for put\n\n**Degradation scenarios:**\n1. Bad hashCode (constant) → all keys in one bucket → O(n) or O(log n)\n2. Hash flooding attack → intentional collisions → mitigated by tree conversion\n3. Frequent resize with growing data → spikes during rehash (consider initial capacity)\n\n**Production considerations:**\n- Not thread-safe. Concurrent put can corrupt internal structure (infinite loops in Java 7)\n- Use ConcurrentHashMap for shared state\n- Use initial capacity when size is known: `new HashMap<>(expectedSize / 0.75 + 1)`",
+    "keyPoints": [
+      "Array of buckets + linked list/tree for collisions",
+      "Load factor 0.75 triggers resize (double + rehash)",
+      "Java 8+: tree conversion at bucket depth > 8",
+      "hashCode distributes keys; equals resolves within bucket",
+      "Not thread-safe — use ConcurrentHashMap for concurrency"
+    ],
+    "redFlags": [
+      "Not knowing that HashMap is not thread-safe",
+      "Not mentioning the tree optimization in Java 8+",
+      "Confusing load factor with capacity",
+      "Not knowing that resize rehashes all entries"
+    ],
+    "followUps": [
+      {
+        "question": "Why is initial capacity relevant in a bulk data loading scenario?",
+        "hint": "Loading 100K entries into default capacity 16 triggers ~13 resizes. Setting initial capacity avoids all intermediate rehashes."
+      },
+      {
+        "question": "How does ConcurrentHashMap achieve thread safety without global locking?",
+        "hint": "Lock striping — each bucket (or segment in older versions) has its own lock. Multiple threads can write to different buckets simultaneously."
+      }
+    ],
+    "experienceLevel": "FRAMEWORK_KNOWLEDGE",
+    "realExperience": {
+      "title": "Cache implementation in SGN3",
+      "description": "Used ConcurrentHashMap with computeIfAbsent for thread-safe application caches. Understood the importance of initial capacity when caching configuration data for 300+ organizational units."
+    }
+  },
+  {
+    "id": "interview-dsa-2",
+    "topic": "dsa",
+    "subtopic": "dsa-big-o",
+    "difficulty": "SENIOR",
+    "question": "How do you identify and fix performance problems caused by wrong data structure choices in a Spring Boot application?",
+    "shortAnswer": "I start with observability (APM traces, flame graphs) to locate the hot path, then analyze the algorithmic complexity of the code in that path. Common culprits: List.contains() in loops (O(n²) → HashSet), loading all entities to filter in Java (should be DB query), N+1 queries, and unbounded collections in memory. I verify with profiling before and after the fix.",
+    "detailedAnswer": "**Systematic approach:**\n\n1. **Measure first:** APM (Glowroot, Datadog) identifies which endpoint/method is slow\n2. **Decompose latency:** Is it DB, external call, or CPU-bound computation?\n3. **For CPU-bound:** Profile with JFR/async-profiler to find hot loops\n4. **Analyze complexity:** Look for nested iterations, repeated lookups, unnecessary sorting\n\n**Common patterns I've fixed:**\n\n```java\n// Pattern 1: O(n²) hidden in stream\norders.stream()\n  .filter(o -> blacklist.contains(o.getCustomerId())) // List.contains = O(n)\n  .toList();\n// Fix: Set<String> blacklistSet = new HashSet<>(blacklist);\n\n// Pattern 2: Load-then-filter\nList<Delivery> all = repo.findAll(); // loads 100K rows\nall.stream().filter(d -> d.getStatus() == ACTIVE).toList();\n// Fix: repo.findByStatus(ACTIVE) — let DB index handle it\n\n// Pattern 3: Sorting in a loop\nfor (Route route : routes) {\n  route.getStops().sort(comparing(Stop::getSequence)); // O(k log k) per route\n}\n// Fix: ORDER BY in the query, or sort once and cache\n```\n\n5. **Verify:** Compare latency p95/p99 before and after with representative data volume\n6. **Prevent:** Code review for O(n²) patterns, load testing with production-like volume",
+    "keyPoints": [
+      "Always measure before optimizing — don't guess",
+      "List.contains() in loops is the #1 hidden O(n²)",
+      "Let the database do filtering/sorting when possible",
+      "Profile identifies the actual hot path, not the suspected one",
+      "Verify improvement with metrics, not assumptions"
+    ],
+    "redFlags": [
+      "Optimizing without profiling first",
+      "Not knowing the complexity of standard library methods",
+      "Suggesting premature micro-optimizations instead of algorithmic fixes",
+      "Ignoring database as a data structure (indexes = O(log n) lookup)"
+    ],
+    "followUps": [
+      {
+        "question": "How do you handle the case where the fix requires a different API contract?",
+        "hint": "Pagination, cursor-based iteration, or streaming response instead of loading everything into memory."
+      },
+      {
+        "question": "What's your approach when the slow code is in a library you can't modify?",
+        "hint": "Reduce input size before calling it, cache results, batch calls, or find an alternative library with better complexity."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 enrollment listing optimization",
+      "description": "Identified O(n²) pattern in enrollment processing: N+1 queries + List.contains() in validation loops. Reduced from ~48,000 queries to ~10 using batch loading and HashSet-based lookups. Latency dropped from 16 minutes to 2 seconds for 26,705 records."
+    }
+  },
+  {
+    "id": "interview-dsa-3",
+    "topic": "dsa",
+    "subtopic": "dsa-hashing",
+    "difficulty": "INTERMEDIATE",
+    "question": "What is the hashCode/equals contract and why does it matter for JPA entities?",
+    "shortAnswer": "If two objects are equal (equals returns true), they must have the same hashCode. JPA entities are tricky because the @Id may be null before persist — if you use @Id in hashCode, all unpersisted entities hash to the same bucket. Solutions: use a natural business key, or assign a UUID at construction time.",
+    "detailedAnswer": "**The contract:**\n1. `a.equals(b)` → `a.hashCode() == b.hashCode()` (MUST)\n2. Same hashCode does NOT imply equals (collisions are allowed)\n3. hashCode must be consistent within a JVM run\n4. Fields used in hashCode should be effectively immutable\n\n**Why JPA is problematic:**\n```java\n// @GeneratedValue means id=null until persist()\nDriver d1 = new Driver(); // id=null\nDriver d2 = new Driver(); // id=null\n\n// If equals uses id: d1.equals(d2) = true (both null)\n// After persist: d1.id=1, d2.id=2 — now they're different\n// But if d1 was already in a HashSet... it's in the WRONG bucket\n```\n\n**Solutions:**\n1. **Natural/business key:** Use a field that's set at creation and never changes (licenseNumber, trackingCode)\n2. **UUID at construction:** `private final UUID uuid = UUID.randomUUID()` — assigned before persist\n3. **Hibernate recommendation:** Use `getClass().hashCode()` (constant per type) for hashCode with id-based equals — trades O(1) lookup for correctness\n\n**Production rule:** Never use mutable fields or database-generated IDs in hashCode for entities that participate in Sets or Map keys before being persisted.",
+    "keyPoints": [
+      "equals implies same hashCode (not the reverse)",
+      "JPA @Id is null before persist — dangerous for hashCode",
+      "Business key or UUID assigned at construction solves it",
+      "Mutable fields in hashCode break HashMap silently",
+      "Hibernate proxy complicates instanceof checks — use getClass()"
+    ],
+    "redFlags": [
+      "Not knowing the contract exists",
+      "Using @GeneratedValue id in hashCode without considering pre-persist state",
+      "Using mutable fields in hashCode",
+      "Not considering Hibernate proxy behavior with instanceof"
+    ],
+    "followUps": [
+      {
+        "question": "What happens if you put an entity in a HashSet, then merge() it in a new session?",
+        "hint": "merge() returns a NEW instance. The original is still in the Set with old hashCode. The merged copy is not in the Set."
+      },
+      {
+        "question": "How does Lombok @EqualsAndHashCode interact with JPA entities?",
+        "hint": "Default @EqualsAndHashCode uses all fields including @Id — problematic. Use @EqualsAndHashCode(of = \"businessKey\") or exclude id."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Entity equality in SGN3 collections",
+      "description": "SGN3 entities use SenaiEntity base class with id-based equals. Understood the implications when entities participate in Sets during batch processing before being flushed."
+    }
+  },
+  {
+    "id": "interview-dsa-4",
+    "topic": "dsa",
+    "subtopic": "dsa-queues",
+    "difficulty": "SENIOR",
+    "question": "How does the concept of a queue scale from in-memory to Kafka? What changes and what stays the same?",
+    "shortAnswer": "The FIFO contract stays the same: produce → consume in order. What changes: persistence (survives restart), distribution (multiple consumers), partitioning (parallel processing with per-partition ordering), and failure semantics (at-least-once delivery, offset management, dead letter queues). The mental model is the same — the operational complexity is different.",
+    "detailedAnswer": "**Same concept, different scale:**\n\n| Aspect | ArrayDeque | BlockingQueue | Kafka |\n|--------|-----------|---------------|-------|\n| Ordering | FIFO | FIFO | Per-partition FIFO |\n| Persistence | None (memory) | None (memory) | Disk (configurable retention) |\n| Consumers | Single thread | Multiple threads, one JVM | Multiple pods, multiple DCs |\n| Failure | Lost on crash | Lost on crash | Replayable from any offset |\n| Backpressure | OutOfMemory | Blocks on full | Consumer lag (producer unaffected) |\n\n**What a senior needs to reason about:**\n\n1. **Ordering:** Kafka guarantees order ONLY within a partition. If you need global order for an entity, route by entity ID as key.\n\n2. **Exactly-once:** Queue semantics are at-least-once. Idempotency in the consumer is required — same as handling JMS redelivery.\n\n3. **Backpressure:** In-memory queue blocks the producer. Kafka decouples — producer doesn't know if consumer is slow. Monitor consumer lag.\n\n4. **Scaling:** In-memory = add threads. Kafka = add partitions + consumers (up to partition count).\n\n5. **Dead letters:** In-memory = exception loses message. Kafka = dead letter topic after N retries.\n\n**Spring Boot connection:**\n```java\n// Same pattern, different implementation\n// In-memory:\n@Async\npublic void process(Event event) { /* runs in thread pool queue */ }\n\n// Kafka:\n@KafkaListener(topics = \"events\")\npublic void process(Event event) { /* runs from partition consumer */ }\n```",
+    "keyPoints": [
+      "FIFO contract is universal — implementation varies",
+      "Kafka = persistent, distributed, partitioned queue",
+      "Ordering guarantee is per-partition, not global",
+      "Consumer must be idempotent (at-least-once semantics)",
+      "Scaling = more partitions, not more threads on same partition"
+    ],
+    "redFlags": [
+      "Assuming Kafka guarantees global ordering across partitions",
+      "Not mentioning idempotency requirement",
+      "Treating Kafka as just a faster queue without understanding partition semantics",
+      "Not knowing how consumer groups enable horizontal scaling"
+    ],
+    "followUps": [
+      {
+        "question": "How do you handle poison messages in Kafka?",
+        "hint": "Dead letter topic after configurable retries. Consumer must not block the partition on one bad message."
+      },
+      {
+        "question": "When would you use an in-memory queue instead of Kafka in a Spring Boot app?",
+        "hint": "When message loss on pod restart is acceptable, latency requirements are sub-millisecond, or the system is single-instance."
+      }
+    ],
+    "experienceLevel": "STUDIED_INDEPENDENTLY",
+    "realExperience": {
+      "title": "JMS queues in SGN3 (Artemis)",
+      "description": "Managed 80+ JMS queues with 128 MDB consumers. Applied same concepts: FIFO ordering, redelivery (retry), DLQ for poison messages, idempotency via INSERT ON CONFLICT. Kafka extends these patterns to distributed scale."
+    }
+  },
+  {
+    "id": "interview-dsa-5",
+    "topic": "dsa",
+    "subtopic": "dsa-trees",
+    "difficulty": "INTERMEDIATE",
+    "question": "How does a B-Tree index work and why does composite index column order matter?",
+    "shortAnswer": "A B-Tree is a balanced tree where each node contains multiple keys and pointers, designed for disk-based access. It has high branching factor (100-500) so depth is small (3-4 for millions of rows). Composite index order matters because the tree is sorted left-to-right: the leftmost column determines the first level of branching. A query can only use the index efficiently if it provides predicates from left to right without gaps.",
+    "detailedAnswer": "**B-Tree structure:**\n- Each node = one disk page (typically 8KB in PostgreSQL)\n- Branching factor ~100-500 (depends on key size)\n- For 10M rows: depth ≈ log₂₀₀(10M) ≈ 3-4 levels\n- Finding a row = 3-4 disk page reads (vs potentially 100K+ for full scan)\n\n**Composite index (a, b, c) works like a phone book:**\n- Sorted by: last name → first name → city\n- You CAN look up: (Smith), (Smith, John), (Smith, John, Berlin)\n- You CANNOT skip: (?, John, ?) — must know last name first!\n\n**Practical rules:**\n```sql\nCREATE INDEX idx ON delivery(status, driver_id, scheduled_at);\n\n-- ✅ Uses index (left prefix):\nWHERE status = 'ACTIVE'\nWHERE status = 'ACTIVE' AND driver_id = 42\nWHERE status = 'ACTIVE' AND driver_id = 42 ORDER BY scheduled_at\n\n-- ⚠️ Partial use:\nWHERE driver_id = 42  -- skips leftmost column, less efficient\n\n-- ❌ Cannot use effectively:\nWHERE scheduled_at > '2024-01-01'  -- only rightmost column\n```\n\n**Column ordering strategy:**\n1. Equality predicates first (highest selectivity)\n2. Range predicates / ORDER BY last\n3. Consider covering index (all SELECT columns included) to avoid table lookup",
+    "keyPoints": [
+      "B-Tree: balanced, high branching factor, 3-4 levels for millions of rows",
+      "Each level = one disk page read → O(log n) with very small constant",
+      "Composite index: leftmost prefix rule determines usability",
+      "Equality columns first, range/sort columns last",
+      "A query without the leftmost column gets limited benefit from the index"
+    ],
+    "redFlags": [
+      "Not knowing leftmost prefix rule",
+      "Thinking any column in the index can be queried independently",
+      "Confusing index selectivity with column order",
+      "Not mentioning disk I/O as the reason B-Trees use high branching factor"
+    ],
+    "followUps": [
+      {
+        "question": "When would you choose a hash index over a B-Tree?",
+        "hint": "Only for exact equality lookups. Hash can't support range queries, ORDER BY, or partial key matches. B-Tree is the default for good reason."
+      },
+      {
+        "question": "What's a covering index and when is it worth the extra storage?",
+        "hint": "Index that includes all columns needed by the query (via INCLUDE). Avoids heap fetch. Worth it for frequently-run queries on hot tables."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Index optimization in SGN3 PostgreSQL",
+      "description": "Designed composite indexes for enrollment queries using EXPLAIN ANALYZE. Applied leftmost prefix rule to support multiple query patterns with fewer indexes. Reduced query time from seconds to milliseconds on tables with millions of rows."
+    }
+  },
+  {
+    "id": "interview-dsa-6",
+    "topic": "dsa",
+    "subtopic": "dsa-big-o",
+    "difficulty": "SENIOR",
+    "question": "You have a Spring Boot endpoint that works fine with 100 records but becomes unusable at 10,000. How do you diagnose and fix it?",
+    "shortAnswer": "The symptom suggests O(n²) or worse complexity that's hidden at small scale. I'd profile to find the hot loop, check for: N+1 queries, List.contains() in iteration, sorting inside loops, loading all data then filtering in Java. Fix usually involves: batch queries, HashSet for lookups, pagination, or pushing logic to the database.",
+    "detailedAnswer": "**Diagnosis workflow:**\n\n1. **Reproduce with timing:** Hit endpoint with 100 vs 10,000 records, measure\n2. **Check query count:** If queries grow linearly with data → N+1 problem\n3. **Profile CPU:** If single query but slow processing → algorithmic issue\n4. **Check memory:** If GC spikes → loading too much into heap\n\n**Common causes (in order of frequency):**\n\n```java\n// Cause 1: N+1 queries (most common)\nfor (Delivery d : deliveries) {\n    Driver driver = driverRepo.findById(d.getDriverId()); // 1 query per delivery!\n}\n// Fix: JOIN FETCH or batch IN query\n\n// Cause 2: O(n²) collection operations\nfor (Delivery d : deliveries) {\n    if (excludedIds.contains(d.getId())) { ... } // List.contains = O(n)\n}\n// Fix: Set<Long> excludedSet = new HashSet<>(excludedIds);\n\n// Cause 3: Loading all, filtering in Java\nList<Delivery> all = repo.findAll(); // 10K entities in memory\nreturn all.stream().filter(predicate).toList();\n// Fix: repo.findByCondition() with indexed WHERE\n\n// Cause 4: Eager fetching\n@OneToMany(fetch = EAGER) // loads ALL related entities for ALL deliveries\nprivate List<Stop> stops;\n// Fix: LAZY + explicit fetch when needed\n```\n\n5. **Verify:** Compare p95 latency before/after at production volume\n6. **Prevent:** Add load test with realistic volume to CI pipeline",
+    "keyPoints": [
+      "Linear degradation at scale = hidden quadratic or N+1",
+      "Profile first — don't guess the cause",
+      "N+1 queries are the #1 Spring Boot performance killer",
+      "List.contains() in loops is the #1 algorithmic performance killer",
+      "Solution is usually: batch, index, paginate, or push to database"
+    ],
+    "redFlags": [
+      "Suggesting to add more memory or threads instead of fixing complexity",
+      "Not checking query count as first step",
+      "Premature optimization of the wrong code path",
+      "Not verifying the fix with production-like volume"
+    ],
+    "followUps": [
+      {
+        "question": "How do you prevent this from happening again?",
+        "hint": "Load testing in CI with realistic data volume, APM alerting on latency thresholds, code review checklist for N+1 and collection complexity."
+      },
+      {
+        "question": "The fix requires pagination but the frontend needs all data for a report. What do you do?",
+        "hint": "Server-side export (stream to file/S3), background job with progress notification, or cursor-based streaming response."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 report optimization",
+      "description": "Diagnosed report endpoint that degraded from 2s to 16min when enrollment data grew. Root cause: N+1 queries × List.contains() in validation. Applied batch loading (IN clause), HashSet for lookups, and database-side filtering. Result: 2 seconds regardless of volume."
+    }
+  },
+  {
+    "id": "interview-dsa-7",
+    "topic": "dsa",
+    "subtopic": "dsa-recursion",
+    "difficulty": "INTERMEDIATE",
+    "question": "When is recursion appropriate in production code, and when should you avoid it?",
+    "shortAnswer": "Recursion is appropriate for naturally recursive structures (trees, nested JSON, hierarchies) where depth is bounded and small. Avoid it for linear processing (use iteration), unbounded depth (StackOverflow risk), and when tail-call optimization isn't available (Java doesn't support it). In production, always consider: maximum depth, stack size, and whether an iterative approach with an explicit stack is safer.",
+    "detailedAnswer": "**Good uses of recursion in production:**\n\n1. **Tree traversal** (category hierarchies, org charts): depth bounded by business rules\n2. **Divide and conquer** (merge sort, binary search): O(log n) depth\n3. **Nested structure parsing** (JSON, XML, config): depth bounded by schema\n4. **Backtracking with pruning** (route optimization, constraint solving): with depth limit\n\n**When to avoid:**\n\n1. **Linear processing:** Processing a list of 100K items recursively → StackOverflow\n2. **Unbounded depth:** User-generated tree with no depth limit\n3. **Performance-critical hot path:** Recursion has call overhead (frame allocation)\n4. **When iteration is equally readable:** Don't use recursion for cleverness\n\n**Safe recursion checklist:**\n```java\n// ✅ Bounded depth + fail-safe\npublic List<Category> getDescendants(Category root, int maxDepth) {\n    if (maxDepth <= 0) return List.of(root); // safety limit\n    List<Category> result = new ArrayList<>();\n    result.add(root);\n    for (Category child : root.getChildren()) {\n        result.addAll(getDescendants(child, maxDepth - 1));\n    }\n    return result;\n}\n\n// ✅ Convert to iterative when depth is risky\npublic List<Category> getDescendantsIterative(Category root) {\n    Deque<Category> stack = new ArrayDeque<>();\n    List<Category> result = new ArrayList<>();\n    stack.push(root);\n    while (!stack.isEmpty()) {\n        Category current = stack.pop();\n        result.add(current);\n        current.getChildren().forEach(stack::push);\n    }\n    return result;\n}\n```",
+    "keyPoints": [
+      "Use for naturally recursive structures with bounded depth",
+      "Java has no tail-call optimization — deep recursion risks StackOverflow",
+      "Always have a depth limit or convert to iterative with explicit stack",
+      "Memoization transforms exponential recursion to linear",
+      "Iteration is usually preferred in Java for linear processing"
+    ],
+    "redFlags": [
+      "Using recursion for simple iteration (processing a flat list)",
+      "No depth limit on potentially unbounded structures",
+      "Not considering StackOverflow risk",
+      "Claiming Java supports tail-call optimization"
+    ],
+    "followUps": [
+      {
+        "question": "How would you handle a tree traversal where depth could be 10,000?",
+        "hint": "Convert to iterative with explicit Deque as stack. Or use trampoline pattern (lazy recursion). Never actual recursion at that depth in Java."
+      },
+      {
+        "question": "How does memoization relate to Spring's @Cacheable?",
+        "hint": "Same principle: store computed results keyed by input. @Cacheable = production memoization with TTL, eviction, and distribution."
+      }
+    ],
+    "experienceLevel": "FRAMEWORK_KNOWLEDGE"
+  },
+  {
+    "id": "interview-dsa-8",
+    "topic": "dsa",
+    "subtopic": "dsa-collections",
+    "difficulty": "SENIOR",
+    "question": "How do you choose between different Map implementations for a specific use case in a Spring Boot service?",
+    "shortAnswer": "The choice depends on: thread safety requirements (single-threaded → HashMap, concurrent → ConcurrentHashMap), ordering needs (insertion order → LinkedHashMap, sorted → TreeMap), null handling (HashMap allows null key, ConcurrentHashMap doesn't), and performance profile (HashMap O(1), TreeMap O(log n)). For Spring beans (@Service, @Component), any shared mutable map must be concurrent since requests are parallel.",
+    "detailedAnswer": "**Decision matrix for production Spring Boot:**\n\n| Use case | Implementation | Why |\n|----------|---------------|-----|\n| Local variable in method | HashMap | Single thread, fastest |\n| Shared cache in @Service | ConcurrentHashMap | Requests are parallel |\n| LRU cache with size limit | LinkedHashMap + removeEldestEntry | Insertion order + bounded |\n| Sorted range queries | TreeMap (or ConcurrentSkipListMap) | O(log n) range operations |\n| Configuration loaded at startup | Map.of() / Collections.unmodifiableMap | Immutable, no sync needed |\n| Expiring entries | Caffeine Cache | TTL, max size, async refresh |\n\n**Common mistakes I've seen:**\n\n```java\n// ❌ HashMap in @Service field (concurrent modification)\n@Service\npublic class RateService {\n    private Map<String, BigDecimal> rates = new HashMap<>(); // UNSAFE!\n}\n\n// ❌ synchronizedMap (single global lock = bottleneck)\nprivate Map<String, Data> cache = Collections.synchronizedMap(new HashMap<>());\n\n// ❌ ConcurrentHashMap with compound operations\nif (!map.containsKey(key)) {  // check\n    map.put(key, compute());   // put — race between check and put!\n}\n// ✅ Atomic compound operation\nmap.computeIfAbsent(key, k -> compute());\n```\n\n**Spring-specific consideration:**\nIf the map is populated once at startup and never modified, `Map.of()` or `@PostConstruct` initialization with unmodifiable wrapper is ideal — no synchronization overhead on reads.",
+    "keyPoints": [
+      "HashMap for local/single-threaded, ConcurrentHashMap for shared state",
+      "Spring services are singletons serving concurrent requests — always consider thread safety",
+      "Use atomic operations (computeIfAbsent, merge) not check-then-act",
+      "Immutable maps need no synchronization",
+      "TreeMap/ConcurrentSkipListMap when sorted access or range queries needed"
+    ],
+    "redFlags": [
+      "Using HashMap in a Spring service field without acknowledging thread safety",
+      "Using synchronizedMap instead of ConcurrentHashMap",
+      "Non-atomic check-then-act on concurrent maps",
+      "Not considering that Spring beans are singletons by default"
+    ],
+    "followUps": [
+      {
+        "question": "When would you use Caffeine instead of ConcurrentHashMap?",
+        "hint": "When you need: TTL (expiration), max size with eviction policy, statistics (hit rate), async refresh. ConcurrentHashMap is unbounded and never expires."
+      },
+      {
+        "question": "How do you implement a thread-safe counter per key in Spring Boot?",
+        "hint": "ConcurrentHashMap<String, LongAdder> with computeIfAbsent. LongAdder is better than AtomicLong under high contention."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Thread-safe caching in SGN3",
+      "description": "Implemented ConcurrentHashMap-based caches with TTL for configuration and organizational unit data. Used computeIfAbsent for lazy initialization. Understood contention tradeoffs in multi-pod deployment."
+    }
+  }
+]

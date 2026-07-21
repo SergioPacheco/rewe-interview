@@ -1,0 +1,126 @@
+[
+  {
+    "id": "theory-dsa-big-o",
+    "title": "Big-O in Practice — What Java Developers Actually Need",
+    "sections": [
+      {
+        "heading": "Why it matters in interviews",
+        "content": "Senior engineers aren't asked to prove O(n log n) for mergesort. They're asked:\n• \"Why is this endpoint slow?\"\n• \"Will this scale when we have 10x users?\"\n• \"What's the cost of this loop inside a loop?\"\n\nThe answer always comes back to understanding which operations are O(1), O(log n), O(n), or O(n²) in the code you write daily."
+      },
+      {
+        "heading": "Java Collections — operation costs",
+        "content": "<pre><code>// HashMap — O(1) average for get/put/containsKey\nMap&lt;String, Delivery&gt; cache = new HashMap&lt;&gt;();\ncache.get(\"D-42\");           // O(1) — hash + equals\ncache.put(\"D-43\", delivery); // O(1) amortized\n\n// TreeMap — O(log n) for get/put (sorted)\nTreeMap&lt;Instant, Event&gt; timeline = new TreeMap&lt;&gt;();\ntimeline.subMap(from, to);   // O(log n + k) — k = results\n\n// ArrayList — O(1) random access, O(n) search\nList&lt;Driver&gt; drivers = new ArrayList&lt;&gt;();\ndrivers.get(5);              // O(1) — array index\ndrivers.contains(driver);    // O(n) — linear scan!\ndrivers.add(driver);         // O(1) amortized, O(n) worst (resize)\n\n// LinkedList — O(1) add/remove at ends, O(n) random access\nDeque&lt;Task&gt; queue = new LinkedList&lt;&gt;();\nqueue.addFirst(task);        // O(1)\nqueue.get(50);               // O(n) — must traverse!</code></pre>\n\n<strong>Senior insight:</strong> Knowing these costs helps you spot performance bugs instantly. If you see <code>.contains()</code> inside a loop on an ArrayList — that's O(n²). Switch to a HashSet."
+      },
+      {
+        "heading": "Common complexity traps in Spring Boot",
+        "content": "<pre><code>// ❌ O(n²) — contains() inside loop\npublic List&lt;Delivery&gt; filterActive(List&lt;Delivery&gt; all, List&lt;String&gt; activeIds) {\n    return all.stream()\n        .filter(d -> activeIds.contains(d.getId())) // O(n) per element!\n        .toList();\n}\n// With 10K deliveries × 5K activeIds = 50M comparisons\n\n// ✅ O(n) — HashSet lookup\npublic List&lt;Delivery&gt; filterActive(List&lt;Delivery&gt; all, List&lt;String&gt; activeIds) {\n    Set&lt;String&gt; idSet = new HashSet&lt;&gt;(activeIds); // O(n) once\n    return all.stream()\n        .filter(d -> idSet.contains(d.getId()))    // O(1) per element\n        .toList();\n}</code></pre>\n\n<pre><code>// ❌ O(n) per request — loading all entities then filtering\n@GetMapping(\"/deliveries\")\npublic List&lt;DeliveryDTO&gt; getByStatus(@RequestParam String status) {\n    return repo.findAll().stream()   // loads ALL from DB\n        .filter(d -> d.getStatus().equals(status))\n        .map(this::toDto).toList();\n}\n\n// ✅ O(log n) — let the database do the filtering\n@GetMapping(\"/deliveries\")\npublic List&lt;DeliveryDTO&gt; getByStatus(@RequestParam String status) {\n    return repo.findByStatus(status).stream() // indexed query\n        .map(this::toDto).toList();\n}</code></pre>"
+      },
+      {
+        "heading": "Amortized complexity — why ArrayList.add is O(1)",
+        "content": "ArrayList doubles its internal array when full. One expensive O(n) copy happens, but the next n adds are O(1). Averaged out = O(1) amortized.\n\nSame principle applies to:\n• HashMap rehashing (at load factor 0.75)\n• StringBuilder internal buffer expansion\n• Kafka producer batch accumulation\n\n<strong>Interview tip:</strong> When asked \"Is ArrayList.add O(1) or O(n)?\" — the correct answer is \"O(1) amortized, O(n) worst case during resize.\""
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-big-o"
+  },
+  {
+    "id": "theory-dsa-collections",
+    "title": "Collections Deep Dive — Choosing the Right Structure",
+    "sections": [
+      {
+        "heading": "Decision matrix",
+        "content": "<strong>When to use what:</strong>\n\n| Need | Structure | Why |\n|------|-----------|-----|\n| Fast lookup by key | HashMap | O(1) get/put |\n| Sorted iteration | TreeMap | O(log n), natural order |\n| Unique elements | HashSet | O(1) contains |\n| Insertion order preserved | LinkedHashMap | O(1) + order |\n| FIFO processing | ArrayDeque | O(1) add/poll, no sync overhead |\n| Thread-safe map | ConcurrentHashMap | Lock striping, no global lock |\n| Thread-safe queue | BlockingQueue | Producer-consumer pattern |\n| Immutable snapshot | List.of() / Map.of() | No defensive copy needed |"
+      },
+      {
+        "heading": "HashMap internals (interview favorite)",
+        "content": "<pre><code>// How HashMap works:\n// 1. hashCode() → bucket index\n// 2. If collision → linked list in bucket\n// 3. Java 8+: if bucket > 8 entries → tree (O(log n) instead of O(n))\n\n// Why hashCode + equals contract matters:\npublic class DriverKey {\n    private final String id;\n    private final String region;\n\n    @Override\n    public int hashCode() {\n        return Objects.hash(id, region); // MUST use same fields as equals\n    }\n\n    @Override\n    public boolean equals(Object o) {\n        if (this == o) return true;\n        if (!(o instanceof DriverKey dk)) return false;\n        return id.equals(dk.id) && region.equals(dk.region);\n    }\n}\n\n// ❌ BROKEN: mutable field used in hashCode\npublic class MutableKey {\n    private String name; // can change after put!\n    public int hashCode() { return name.hashCode(); }\n    // If name changes → object is in wrong bucket → lost forever\n}</code></pre>\n\n<strong>Load factor 0.75:</strong> When 75% of buckets are filled, HashMap doubles and rehashes everything. That's why initial capacity matters for known-size maps:\n<pre><code>// Avoid multiple rehashes for 1000 entries\nMap&lt;String, Driver&gt; map = new HashMap&lt;&gt;(1400); // 1000/0.75 ≈ 1334</code></pre>"
+      },
+      {
+        "heading": "ConcurrentHashMap — Spring Boot multi-threaded context",
+        "content": "<pre><code>// Spring Boot runs requests in parallel → shared state needs safety\n\n// ❌ Race condition\nprivate Map&lt;String, AtomicInteger&gt; counters = new HashMap&lt;&gt;();\npublic void increment(String key) {\n    counters.computeIfAbsent(key, k -> new AtomicInteger()).incrementAndGet();\n    // HashMap.computeIfAbsent is NOT thread-safe!\n}\n\n// ✅ Thread-safe\nprivate ConcurrentHashMap&lt;String, AtomicInteger&gt; counters = new ConcurrentHashMap&lt;&gt;();\npublic void increment(String key) {\n    counters.computeIfAbsent(key, k -> new AtomicInteger()).incrementAndGet();\n    // ConcurrentHashMap.computeIfAbsent IS atomic for the key\n}</code></pre>\n\n<strong>Key insight:</strong> ConcurrentHashMap uses lock striping (segments), not a single global lock. Multiple threads can write to different segments simultaneously."
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-collections"
+  },
+  {
+    "id": "theory-dsa-recursion",
+    "title": "Recursion & Memoization — From Theory to Production",
+    "sections": [
+      {
+        "heading": "The pattern",
+        "content": "Every recursive solution has:\n1. <strong>Base case</strong> — when to stop\n2. <strong>Recursive case</strong> — break problem into smaller subproblems\n3. <strong>Memoization</strong> (optional) — cache repeated subproblems\n\n<pre><code>// Classic: Fibonacci\n// ❌ O(2^n) — exponential without memoization\npublic int fib(int n) {\n    if (n <= 1) return n;\n    return fib(n - 1) + fib(n - 2); // same subproblems recalculated!\n}\n\n// ✅ O(n) — with memoization\npublic int fib(int n, int[] memo) {\n    if (n <= 1) return n;\n    if (memo[n] != 0) return memo[n];  // already computed\n    memo[n] = fib(n - 1, memo) + fib(n - 2, memo);\n    return memo[n];\n}</code></pre>"
+      },
+      {
+        "heading": "Recursion in production code",
+        "content": "You won't write Fibonacci at REWE. But recursion appears in:\n\n<pre><code>// 1. Tree traversal (category hierarchies)\n@Entity\npublic class Category {\n    @ManyToOne\n    private Category parent;\n    @OneToMany(mappedBy = \"parent\")\n    private List&lt;Category&gt; children;\n}\n\npublic List&lt;Category&gt; getAllDescendants(Category root) {\n    List&lt;Category&gt; result = new ArrayList&lt;&gt;();\n    result.add(root);\n    for (Category child : root.getChildren()) {\n        result.addAll(getAllDescendants(child)); // recursive\n    }\n    return result;\n}\n\n// 2. Route optimization (backtracking)\npublic Route findOptimalRoute(List&lt;Stop&gt; remaining, Stop current, Route partial) {\n    if (remaining.isEmpty()) return partial;\n    Route best = null;\n    for (Stop next : remaining) {\n        Route candidate = findOptimalRoute(\n            without(remaining, next), next, partial.add(next));\n        if (best == null || candidate.cost() < best.cost())\n            best = candidate;\n    }\n    return best;\n}\n\n// 3. JSON/Config parsing (nested structures)\npublic Map&lt;String, Object&gt; flatten(Map&lt;String, Object&gt; nested, String prefix) {\n    Map&lt;String, Object&gt; flat = new HashMap&lt;&gt;();\n    for (var entry : nested.entrySet()) {\n        String key = prefix.isEmpty() ? entry.getKey() : prefix + \".\" + entry.getKey();\n        if (entry.getValue() instanceof Map m) {\n            flat.putAll(flatten(m, key)); // recurse into nested maps\n        } else {\n            flat.put(key, entry.getValue());\n        }\n    }\n    return flat;\n}</code></pre>"
+      },
+      {
+        "heading": "Memoization → Caching (same concept, production scale)",
+        "content": "Memoization IS caching applied to function results:\n\n<pre><code>// Academic: memo array\nint[] memo = new int[n + 1];\n\n// Production: Spring Cache (same principle!)\n@Cacheable(\"route-costs\")\npublic BigDecimal calculateRouteCost(String routeId) {\n    // expensive computation — only runs once per routeId\n    return routeService.computeCost(routeId);\n}\n\n// Production: ConcurrentHashMap as local cache\nprivate final Map&lt;String, DriverStats&gt; statsCache = new ConcurrentHashMap&lt;&gt;();\n\npublic DriverStats getStats(String driverId) {\n    return statsCache.computeIfAbsent(driverId,\n        id -> heavyStatsCalculation(id)); // computed once\n}</code></pre>\n\n<strong>Connection to interview:</strong> When asked about recursion, show you understand the bridge to production caching: same problem (repeated computation), same solution (store and reuse)."
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-recursion"
+  },
+  {
+    "id": "theory-dsa-trees",
+    "title": "Trees in Real Systems — B-Tree, Trie, and Why It Matters",
+    "sections": [
+      {
+        "heading": "B-Tree — every database index",
+        "content": "When you create a PostgreSQL/MySQL index, it's a <strong>B-Tree</strong>:\n\n<pre><code>CREATE INDEX idx_delivery_status ON delivery(status, scheduled_at);\n\n-- What happens internally:\n-- B-Tree with branching factor ~100-500\n-- Each node = one disk page (8KB)\n-- Depth = log₁₀₀(rows) ≈ 3-4 levels for millions of rows\n-- → Finding a row = 3-4 disk reads!\n\n-- That's why indexed lookup is O(log n)\n-- And full table scan is O(n) — must read ALL pages</code></pre>\n\n<strong>Senior connection:</strong>\n• Composite index order matters (leftmost prefix rule) because B-Tree is sorted left-to-right\n• Range queries (BETWEEN, >, <) only benefit the LAST column in composite index\n• That's why you put equality columns first, range/sort columns last"
+      },
+      {
+        "heading": "TreeMap — sorted data in Java",
+        "content": "<pre><code>// TreeMap = Red-Black Tree (self-balancing BST)\n// Use when you need sorted access or range queries IN MEMORY\n\n// Use case: time-windowed event store\nTreeMap&lt;Instant, DeliveryEvent&gt; events = new TreeMap&lt;&gt;();\n\n// Get all events in last hour — O(log n + k)\nInstant oneHourAgo = Instant.now().minus(Duration.ofHours(1));\nSortedMap&lt;Instant, DeliveryEvent&gt; recent = events.tailMap(oneHourAgo);\n\n// Get first/last — O(log n)\nDeliveryEvent earliest = events.firstEntry().getValue();\nDeliveryEvent latest = events.lastEntry().getValue();\n\n// vs HashMap: these operations would require sorting all entries</code></pre>\n\n<strong>When TreeMap over HashMap:</strong>\n• Need sorted iteration\n• Need range queries (subMap, headMap, tailMap)\n• Need floor/ceiling (nearest key)\n\n<strong>When HashMap over TreeMap:</strong>\n• Only need get/put by exact key (O(1) vs O(log n))\n• No ordering requirement"
+      },
+      {
+        "heading": "Trie — autocomplete and routing",
+        "content": "<pre><code>// Trie (prefix tree) — O(m) lookup where m = key length\n// Used in: autocomplete, IP routing, URL matching\n\n// Spring Boot URL routing uses a similar structure internally:\n// /api/deliveries/{id}\n// /api/deliveries/{id}/status\n// /api/drivers/{id}\n// → tree-like dispatch: /api → deliveries|drivers → {id} → status\n\n// Autocomplete example:\npublic class AutocompleteService {\n    private final TrieNode root = new TrieNode();\n\n    public void index(String word) {\n        TrieNode node = root;\n        for (char c : word.toCharArray()) {\n            node = node.children.computeIfAbsent(c, k -> new TrieNode());\n        }\n        node.isWord = true;\n    }\n\n    public List&lt;String&gt; suggest(String prefix, int limit) {\n        TrieNode node = root;\n        for (char c : prefix.toCharArray()) {\n            node = node.children.get(c);\n            if (node == null) return List.of(); // no match\n        }\n        return collectWords(node, prefix, limit);\n    }\n}</code></pre>"
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-trees"
+  },
+  {
+    "id": "theory-dsa-queues",
+    "title": "Queues & Stacks in Architecture",
+    "sections": [
+      {
+        "heading": "Queue — from data structure to Kafka",
+        "content": "A queue is FIFO. That same concept scales from in-memory to distributed:\n\n<pre><code>// Level 1: In-memory queue (single JVM)\nQueue&lt;Task&gt; tasks = new ArrayDeque&lt;&gt;();\ntasks.offer(new Task(\"process-delivery\"));\nTask next = tasks.poll(); // FIFO\n\n// Level 2: BlockingQueue (producer-consumer in same JVM)\nBlockingQueue&lt;DeliveryEvent&gt; queue = new LinkedBlockingQueue&lt;&gt;(1000);\n// Producer thread:\nqueue.put(event); // blocks if full\n// Consumer thread:\nDeliveryEvent e = queue.take(); // blocks if empty\n\n// Level 3: Kafka (distributed queue across services)\n// Same FIFO concept, but:\n// - Persistent (survives restarts)\n// - Partitioned (parallel consumers)\n// - Replayable (consumer can re-read)\n@KafkaListener(topics = \"delivery-events\")\npublic void handle(DeliveryEvent event) {\n    // same consumer logic, different scale\n}</code></pre>"
+      },
+      {
+        "heading": "Stack — call stack, undo, and parsing",
+        "content": "<pre><code>// The JVM call stack IS a stack data structure:\n// main() → deliveryService.create() → validator.validate() → ...\n// StackOverflowError = recursion too deep (stack exhausted)\n\n// Practical use: undo operations\nDeque&lt;Command&gt; undoStack = new ArrayDeque&lt;&gt;();\n\npublic void execute(Command cmd) {\n    cmd.execute();\n    undoStack.push(cmd); // LIFO\n}\n\npublic void undo() {\n    if (!undoStack.isEmpty()) {\n        Command last = undoStack.pop();\n        last.undo();\n    }\n}\n\n// Practical use: DFS traversal (explicit stack instead of recursion)\npublic List&lt;Category&gt; dfs(Category root) {\n    Deque&lt;Category&gt; stack = new ArrayDeque&lt;&gt;();\n    List&lt;Category&gt; visited = new ArrayList&lt;&gt;();\n    stack.push(root);\n    while (!stack.isEmpty()) {\n        Category current = stack.pop();\n        visited.add(current);\n        current.getChildren().forEach(stack::push);\n    }\n    return visited;\n}</code></pre>"
+      },
+      {
+        "heading": "Priority Queue — task scheduling",
+        "content": "<pre><code>// PriorityQueue = heap data structure = O(log n) insert/poll\n// Use case: process deliveries by priority\n\nPriorityQueue&lt;Delivery&gt; priorityQueue = new PriorityQueue&lt;&gt;(\n    Comparator.comparing(Delivery::getPriority)\n             .thenComparing(Delivery::getScheduledAt)\n);\n\npriorityQueue.offer(expressDelivery);   // O(log n)\npriorityQueue.offer(standardDelivery);  // O(log n)\n\nDelivery next = priorityQueue.poll();   // always highest priority, O(log n)\n// → expressDelivery comes first regardless of insertion order\n\n// Same concept in distributed systems:\n// Kafka: partition by priority level\n// Spring @Async: PriorityBlockingQueue as thread pool queue</code></pre>"
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-queues"
+  },
+  {
+    "id": "theory-dsa-hashing",
+    "title": "Hashing & Equality — From hashCode to Kafka Partitioning",
+    "sections": [
+      {
+        "heading": "hashCode/equals contract",
+        "content": "<pre><code>// THE RULES:\n// 1. If a.equals(b) → a.hashCode() == b.hashCode()  (MUST)\n// 2. If a.hashCode() == b.hashCode() → a.equals(b) is NOT guaranteed (collisions exist)\n// 3. hashCode must be consistent within same JVM run\n// 4. Only use IMMUTABLE fields in hashCode\n\n// ✅ Correct: Java record (auto-generates correct hashCode/equals)\npublic record DeliveryId(String region, Long sequence) {}\n// Records generate: equals on all fields, hashCode on all fields\n\n// ✅ Correct: manual implementation\n@Entity\npublic class Driver {\n    @Id private Long id;\n    private String licenseNumber;\n\n    @Override\n    public boolean equals(Object o) {\n        if (this == o) return true;\n        if (!(o instanceof Driver d)) return false;\n        return Objects.equals(id, d.id); // use business key or PK\n    }\n\n    @Override\n    public int hashCode() {\n        return Objects.hash(id); // same field as equals!\n    }\n}\n\n// ❌ BROKEN: uses mutable field\npublic int hashCode() {\n    return Objects.hash(status); // status changes → object lost in HashMap!\n}</code></pre>"
+      },
+      {
+        "heading": "Consistent hashing — Kafka partition assignment",
+        "content": "Kafka decides which partition gets a message using hashing:\n\n<pre><code>// Kafka's default partitioner:\npartition = hash(key) % numPartitions\n\n// Same driver's events always go to same partition → ordered!\nkafkaTemplate.send(\"driver-events\", driverId, event);\n// driverId = key → hash(driverId) % 6 = always partition 3\n// All events for this driver arrive in order\n\n// Why this matters:\n// - Ordering guarantee is PER PARTITION\n// - If you need events for entity X in order → use X's ID as key\n// - If you don't need order → use round-robin (null key)</code></pre>\n\n<strong>Consistent hashing in caching (Redis Cluster):</strong>\nWhen you add/remove a Redis node, consistent hashing ensures only ~1/n keys need to move, not all keys. Same principle as Kafka partition rebalancing."
+      },
+      {
+        "heading": "Equals in JPA — the entity identity trap",
+        "content": "<pre><code>// JPA entities: equals/hashCode is TRICKY\n// Problem: ID is null before persist!\n\n// ❌ Using @Id before persist\n@Entity\npublic class Delivery {\n    @Id @GeneratedValue private Long id;\n\n    public boolean equals(Object o) {\n        if (!(o instanceof Delivery d)) return false;\n        return Objects.equals(id, d.id); // both null before persist → all equal!\n    }\n}\n\n// ✅ Option 1: Natural/business key\npublic boolean equals(Object o) {\n    if (!(o instanceof Delivery d)) return false;\n    return Objects.equals(trackingNumber, d.trackingNumber);\n}\n\n// ✅ Option 2: UUID assigned at construction\n@Entity\npublic class Delivery {\n    @Id @GeneratedValue private Long id;\n    @Column(unique = true)\n    private final UUID uuid = UUID.randomUUID(); // set at creation!\n\n    public boolean equals(Object o) {\n        if (!(o instanceof Delivery d)) return false;\n        return uuid.equals(d.uuid);\n    }\n    public int hashCode() { return uuid.hashCode(); }\n}</code></pre>\n\n<strong>Interview tip:</strong> This is a frequently asked question for Java senior roles. Show you understand WHY the default Object.equals breaks with JPA detachment/merge cycles."
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-hashing"
+  }
+]

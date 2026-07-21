@@ -219,6 +219,10 @@ export class TheoryComponent {
     return String(choice ?? '');
   }
 
+  choiceLetter(index: number): string {
+    return String.fromCharCode(65 + index);
+  }
+
   choiceDescription(choice: unknown): string {
     if (choice && typeof choice === 'object') {
       return String((choice as Record<string, unknown>)['description'] ?? '');

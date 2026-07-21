@@ -374,6 +374,20 @@
             <pre class="question-card__code"><code [innerHTML]="getField(q, 'code') | syntaxHighlight"></code></pre>
           }
 
+          <!-- Choices visible before answer (no correct indicator) -->
+          @if (getChoices(q).length > 0 && !showResult()) {
+            <div class="question-card__choices">
+              @for (choice of getChoices(q); track $index) {
+                <div class="choice-item">
+                  <span>{{ choiceLetter($index) }}) {{ choiceLabel(choice) }}</span>
+                  @if (choiceDescription(choice)) {
+                    <small>{{ choiceDescription(choice) }}</small>
+                  }
+                </div>
+              }
+            </div>
+          }
+
           <!-- Hint -->
           <p class="question-card__hint">🎙️ Think about your answer, then reveal below.</p>
 
@@ -421,9 +435,9 @@
               </details>
             }
 
-            <!-- Choices as reference -->
+            <!-- Choices with correct answer revealed -->
             @if (getChoices(q).length > 0) {
-              <details class="reveal-panel">
+              <details class="reveal-panel" open>
                 <summary>📋 All Options</summary>
                 <div class="reveal-panel__choices">
                   @for (choice of getChoices(q); track $index) {

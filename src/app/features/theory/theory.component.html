@@ -375,7 +375,7 @@
           }
 
           <!-- Choices: interactive reusable component -->
-          @if (getChoices(q).length > 0 && !showResult()) {
+          @if (getChoices(q).length > 0) {
             <app-choice-list
               [choices]="getChoiceOptions(q)"
               [correctIndex]="getCorrectIndex(q)"
@@ -432,22 +432,7 @@
               </details>
             }
 
-            <!-- Choices with correct answer revealed -->
-            @if (getChoices(q).length > 0) {
-              <details class="reveal-panel" open>
-                <summary>📋 All Options</summary>
-                <div class="reveal-panel__choices">
-                  @for (choice of getChoices(q); track $index) {
-                    <div class="choice-item" [class.choice-item--correct]="isCorrectChoice(q, choice, $index)">
-                      <span>{{ isCorrectChoice(q, choice, $index) ? '✅' : '○' }} {{ choiceLabel(choice) }}</span>
-                      @if (choiceDescription(choice)) {
-                        <small>{{ choiceDescription(choice) }}</small>
-                      }
-                    </div>
-                  }
-                </div>
-              </details>
-            }
+            <!-- Choices already shown via app-choice-list above -->
 
             <!-- Key points -->
             @if (getFieldArray(q, 'keyPoints').length > 0) {

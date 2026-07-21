@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, signal, computed } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal, computed, effect } from '@angular/core';
 
 export interface ChoiceOption {
   label: string;
@@ -15,6 +15,7 @@ export interface ChoiceResult {
  *
  * Displays options, handles selection, shows instant feedback.
  * Parent provides choices and the correct answer index/value.
+ * Automatically resets when choices change (new question).
  *
  * Usage:
  * <app-choice-list
@@ -30,6 +31,7 @@ export interface ChoiceResult {
     <div class="choice-list">
       @for (choice of choices(); track $index) {
         <button
+          type="button"
           class="choice-list__item"
           [class.choice-list__item--correct]="checked() && $index === correctIndex()"
           [class.choice-list__item--wrong]="checked() && selectedIndex() === $index && $index !== correctIndex()"
@@ -37,7 +39,7 @@ export interface ChoiceResult {
           [disabled]="checked()"
           (click)="select($index)"
         >
-          <span class="choice-list__letter">{{ letter($index) }}</span>
+          <span class="choice-list__letter">{{ hasLetterPrefix(choice.label) ? '' : letter($index) }}</span>
           <span class="choice-list__text">
             {{ choice.label }}
             @if (choice.description) {
@@ -177,8 +179,21 @@ export class ChoiceListComponent {
 
   isCorrect = computed(() => this.selectedIndex() === this.correctIndex());
 
+  constructor() {
+    // Reset when choices change (new question)
+    effect(() => {
+      this.choices(); // track dependency
+      this.selectedIndex.set(null);
+      this.checked.set(false);
+    }, { allowSignalWrites: true });
+  }
+
   letter(index: number): string {
     return String.fromCharCode(65 + index);
+  }
+
+  hasLetterPrefix(label: string): boolean {
+    return /^[A-Za-z]\)/.test(label);
   }
 
   select(index: number): void {

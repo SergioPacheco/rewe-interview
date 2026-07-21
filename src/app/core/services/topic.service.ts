@@ -151,7 +151,6 @@ export class TopicService {
 
   private async loadAllTheory(): Promise<TheoryChapter[]> {
     const files = [
-      'data/topics/theory-learning-paths.json',
       'data/topics/theory-java-basics.json',
       'data/topics/theory-java-modern.json',
       'data/topics/theory-rewe.json',
@@ -180,8 +179,6 @@ export class TopicService {
       ,'data/topics/theory-software-architecture-day-to-day.json'
       ,'data/topics/theory-architecture-pack-link.json'
       ,'data/topics/theory-software-architecture.json'
-      ,'data/topics/theory-learning-depth.json'
-      ,'data/topics/theory-asd-summary.json'
       ,'data/topics/theory-dsa.json'
       ,'data/topics/theory-system-design-modeling.json'
     ];

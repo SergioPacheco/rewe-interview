@@ -4,92 +4,92 @@
     "topic": "docker",
     "subtopic": "docker-basics",
     "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Docker and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Docker]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Docker, with examples and production context]",
+    "question": "Explain the difference between a Docker image and a container.",
+    "shortAnswer": "An image is a read-only template (filesystem layers + metadata). A container is a running instance of an image — it adds a writable layer on top. You can run multiple containers from the same image, each with its own state. Analogy: image is the class, container is the instance.",
+    "detailedAnswer": "Image:\n- Read-only filesystem layers (each Dockerfile instruction = layer)\n- Immutable — building always produces the same result\n- Stored in registries (Docker Hub, private registry)\n- Shared across containers (layer deduplication)\n\nContainer:\n- Running process with its own writable layer on top of the image\n- Has its own network, PID namespace, filesystem view\n- Ephemeral — when removed, writable layer is lost\n- Multiple containers from same image run independently\n\nIn SGN3 context:\n- WildFly image: base OS + JDK + WildFly + SGN3 WAR deployed\n- Each pod in OKD runs a container from that image\n- Image built once in CI → deployed to multiple environments\n- Container state (logs, temp files) is ephemeral — persistent data in external DB",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Image = read-only template (layers), Container = running instance",
+      "Multiple containers from one image (independent)",
+      "Containers are ephemeral — writable layer lost on removal",
+      "Images are immutable — reproducible builds",
+      "Layer caching speeds up builds"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "Confusing image with container",
+      "\"Container is a lightweight VM\" (oversimplification)",
+      "Not knowing that containers are ephemeral",
+      "Cannot explain layers"
     ],
     "followUps": [
-      {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
-      },
-      {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
-      }
+      { "question": "What happens to data written inside a container when it stops?", "hint": "Lost (writable layer removed). Use volumes for persistent data." },
+      { "question": "How do layers affect build performance?", "hint": "Unchanged layers are cached. Order Dockerfile instructions from least to most changing." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 containerized deployment",
+      "description": "SGN3 runs as containerized WildFly in OKD (OpenShift). Image built in CI pipeline, deployed across HML/Prod. Multiple pods (containers) from same image for horizontal scaling."
+    }
   },
   {
     "id": "interview-docker-2",
     "topic": "docker",
-    "subtopic": "docker-compose",
+    "subtopic": "docker-basics",
     "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Docker.",
-    "shortAnswer": "[Short answer about a real challenge involving Docker]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "question": "How do you write an efficient Dockerfile? What are common mistakes?",
+    "shortAnswer": "Key principles: multi-stage builds (build in one stage, copy artifacts to slim runtime), order instructions from least to most changing (dependencies before code), minimize layers, use .dockerignore, don't run as root. Common mistakes: copying entire project before dependency resolution (cache invalidation), using :latest tag, running as root.",
+    "detailedAnswer": "Efficient Dockerfile:\n\n1. **Multi-stage build** — separate build from runtime:\n```dockerfile\n# Build stage\nFROM maven:3.9 AS build\nCOPY pom.xml .\nRUN mvn dependency:resolve  # Cached unless pom changes\nCOPY src ./src\nRUN mvn package -DskipTests\n\n# Runtime stage (smaller image)\nFROM eclipse-temurin:21-jre\nCOPY --from=build target/app.jar /app.jar\nUSER 1001\nENTRYPOINT [\"java\", \"-jar\", \"/app.jar\"]\n```\n\n2. **Layer ordering** — least changing first:\n   - OS packages → dependencies → compiled code → config\n   - Changing code doesn't invalidate dependency cache\n\n3. **Security:**\n   - Non-root user (USER 1001)\n   - Minimal base image (distroless or slim)\n   - No secrets in image (use env vars or mounted secrets)\n\nCommon mistakes:\n- `COPY . .` before `mvn dependency:resolve` (entire cache invalidated on any code change)\n- Using :latest (non-reproducible builds)\n- Running as root (security risk)\n- Installing dev tools in production image",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "Multi-stage: build in one stage, run in slim stage",
+      "Order: least-changing instructions first (cache efficiency)",
+      "Non-root user for security",
+      "Copy dependencies before code (cache layer reuse)",
+      ".dockerignore to exclude unnecessary files"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "Single-stage Dockerfile with build tools in production image",
+      "COPY . . as first instruction (cache always invalidated)",
+      "Running as root in production",
+      "Using :latest tag (not reproducible)"
     ],
     "followUps": [
-      {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
-      },
-      {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
-      }
+      { "question": "What is a multi-stage build and why use it?", "hint": "Build tools (Maven, npm) only in build stage. Production image is minimal (only runtime)." },
+      { "question": "How do you handle secrets that the build needs?", "hint": "Docker BuildKit --mount=type=secret. Never COPY secrets into a layer." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 Docker build pipeline",
+      "description": "Multi-stage Dockerfile: Maven build stage → WildFly runtime stage with deployed WAR. Layer caching for dependencies (pom.xml changes infrequently). Non-root execution in OKD."
+    }
   },
   {
     "id": "interview-docker-3",
     "topic": "docker",
-    "subtopic": "docker-basics",
-    "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Docker?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Docker]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "subtopic": "docker-compose",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you use Docker Compose for local development?",
+    "shortAnswer": "Docker Compose defines the entire local environment: PostgreSQL, ActiveMQ Artemis, WildFly (or app), all with consistent ports and configurations. One command (docker compose up) gives every developer the same environment. I use it to run SGN3 dependencies locally without installing each service manually.",
+    "detailedAnswer": "Docker Compose for local dev:\n\n```yaml\nservices:\n  postgres:\n    image: postgres:10\n    ports: [\"5434:5432\"]\n    volumes: [pgdata:/var/lib/postgresql/data]\n    environment:\n      POSTGRES_DB: senai\n      POSTGRES_USER: ...\n\n  artemis:\n    image: apache/activemq-artemis\n    ports: [\"8161:8161\", \"61616:61616\"]\n\n  wildfly:\n    build: .\n    ports: [\"8080:8080\", \"9990:9990\"]\n    depends_on: [postgres, artemis]\n```\n\nBenefits:\n- Reproducible: every developer gets the same environment\n- Isolated: doesn't conflict with other projects\n- Disposable: `docker compose down -v` for clean state\n- Fast onboarding: new developer runs one command\n\nIn SGN3: PostgreSQL + Artemis + Glowroot run via Compose. WildFly runs locally in IDE (hot reload) connecting to Compose services.",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "One command for entire local environment",
+      "Reproducible across all developers",
+      "Dependencies (DB, queue) in containers, app in IDE for hot reload",
+      "Volumes for persistent data, disposable for clean state",
+      "depends_on for service ordering"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "\"I install PostgreSQL directly on my machine\"",
+      "Not knowing docker compose up/down",
+      "Cannot explain volumes (data lost on container removal)",
+      "No local development strategy at all"
     ],
     "followUps": [
-      {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
-      },
-      {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
-      }
+      { "question": "What is the difference between docker compose up and docker compose run?", "hint": "up starts all services. run starts one service for a one-off command." },
+      { "question": "How do you handle database migrations in Docker Compose?", "hint": "Init scripts in volumes, or Flyway/Liquibase on startup." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 local dev with Docker Compose",
+      "description": "PostgreSQL 10 + ActiveMQ Artemis in Docker Compose. WildFly runs in IDE (IntelliJ) for hot deploy. Glowroot embedded for local performance analysis. One docker compose up and the dev environment is ready."
+    }
   }
 ]

@@ -2,94 +2,94 @@
   {
     "id": "interview-angular-1",
     "topic": "angular",
-    "subtopic": "ng-basics",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Angular and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Angular]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Angular, with examples and production context]",
+    "subtopic": "ng-signals",
+    "difficulty": "INTERMEDIATE",
+    "question": "What are Angular Signals and how do they improve over RxJS for component state?",
+    "shortAnswer": "Signals are synchronous, fine-grained reactive primitives. Unlike BehaviorSubject, they don't need subscription management (no memory leaks), are synchronously readable (no async pipe), and integrate with Angular's change detection (OnPush-friendly). I use them for component/service state. RxJS remains for async streams (HTTP, WebSocket, complex event composition).",
+    "detailedAnswer": "Angular Signals (introduced in Angular 16+):\n\n**What they are:**\n- `signal(value)` — writable reactive value\n- `computed(() => ...)` — derived value (lazy, cached)\n- `effect(() => ...)` — side effect when signals change\n\n**Advantages over RxJS for state:**\n- Synchronous read: `mySignal()` — no subscribe, no async pipe\n- No memory leaks: no subscription to forget cleaning up\n- Fine-grained: Angular re-renders only components that read changed signals\n- Simpler mental model for state management\n\n**When to still use RxJS:**\n- HTTP calls (Observable-based HttpClient)\n- WebSocket streams\n- Complex async composition (debounce, switchMap, merge)\n- Event streams from DOM or external sources\n\n**In this project (REWE Interview Prep):**\nAll services use signals for state (TopicService, QuizEngineService, InterviewService). RxJS only for route params (toSignal() bridge). Zero BehaviorSubjects.",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Signals: synchronous, no subscription management, no leaks",
+      "computed(): lazy, cached derived values",
+      "RxJS still needed for async streams (HTTP, WebSocket, complex composition)",
+      "Signals + OnPush = optimal change detection",
+      "toSignal() bridges RxJS observables to signals"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "\"Signals replace RxJS entirely\" (wrong — async streams still need RxJS)",
+      "Not knowing when to use which",
+      "\"I don't know what signals are\" (Angular 19 position!)",
+      "Using BehaviorSubject for simple component state"
     ],
     "followUps": [
-      {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
-      },
-      {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
-      }
+      { "question": "When would you still use BehaviorSubject over a signal?", "hint": "Interop with libraries expecting Observable, or complex async pipelines." },
+      { "question": "What is the difference between computed() and effect()?", "hint": "computed: derives a VALUE (pure, cached). effect: performs SIDE EFFECT (imperative, for DOM, logging)." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "This project: 100% signals for state management",
+      "description": "Built REWE Interview Prep with Angular 19 signals throughout: TopicService (topics, questions, theory), QuizEngineService (session state), InterviewService (lazy loading per topic). Zero BehaviorSubjects. RxJS only for route params via toSignal()."
+    }
   },
   {
     "id": "interview-angular-2",
     "topic": "angular",
-    "subtopic": "ng-services",
+    "subtopic": "ng-basics",
     "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Angular.",
-    "shortAnswer": "[Short answer about a real challenge involving Angular]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "question": "How do standalone components work and why are NgModules no longer needed?",
+    "shortAnswer": "Standalone components declare their own imports directly (what they use: other components, pipes, directives). No NgModule needed to declare/export them. Benefits: simpler mental model, tree-shakeable, easier lazy loading (loadComponent instead of loadChildren with module). In Angular 19, standalone is the default.",
+    "detailedAnswer": "Before standalone (NgModules era):\n- Every component must be declared in exactly ONE NgModule\n- NgModule imports other NgModules to get their components\n- Circular dependency issues, unclear ownership\n- Lazy loading requires a separate NgModule (route → loadChildren → module)\n\nWith standalone components:\n- Component declares its own dependencies: `imports: [CommonModule, RouterLink, MyPipe]`\n- No NgModule needed — component is self-contained\n- Lazy loading is direct: `loadComponent: () => import('./my.component')`\n- Tree-shaking: unused components not bundled\n\nIn practice (this project):\n```typescript\n@Component({\n  selector: 'app-interview',\n  standalone: true,\n  imports: [MarkdownPipe],\n  template: '...'\n})\nexport class InterviewComponent { }\n```\n\nRoutes:\n```typescript\n{ path: 'topic/:id', loadComponent: () => import('./theory.component').then(m => m.TheoryComponent) }\n```\n\nNo app.module.ts exists. Zero NgModules in the entire project.",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "standalone: true — component declares its own imports",
+      "No NgModule declaration/export ceremony",
+      "loadComponent for lazy loading (simpler than loadChildren + module)",
+      "Tree-shakeable — unused code not bundled",
+      "Angular 19: standalone is the default"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "Still creating NgModules for everything in Angular 19",
+      "Not knowing what standalone means",
+      "Cannot explain the migration path from NgModules",
+      "\"I always use SharedModule\" (often unnecessary with standalone)"
     ],
     "followUps": [
-      {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
-      },
-      {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
-      }
+      { "question": "How do you share components across features without NgModule?", "hint": "Import the component directly where needed. Barrel exports (index.ts) for organization." },
+      { "question": "When might you still want an NgModule?", "hint": "Third-party libraries that haven't migrated yet. Legacy code. Almost never for new code." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "This project: zero NgModules",
+      "description": "REWE Interview Prep has zero NgModules. Every component is standalone with explicit imports. Lazy loading via loadComponent in routes. app.config.ts replaces app.module.ts for providers."
+    }
   },
   {
     "id": "interview-angular-3",
     "topic": "angular",
-    "subtopic": "ng-basics",
+    "subtopic": "ng-services",
     "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Angular?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Angular]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "question": "How do you structure a medium-to-large Angular application?",
+    "shortAnswer": "Feature-based structure: core/ (singletons), shared/ (reusable components), features/ (lazy-loaded by route). Each feature is self-contained — imports only from shared/ and core/, never between features. Services in core/ manage global state. Communication between features via services, not direct imports.",
+    "detailedAnswer": "Structure:\n```\nsrc/app/\n├── core/        ← Singletons (services, guards, interceptors)\n├── shared/      ← Reusable (components, pipes, directives)\n├── features/    ← Lazy-loaded per route\n│   ├── dashboard/\n│   ├── theory/\n│   ├── interview/\n│   └── quiz/\n└── models/      ← Pure interfaces (zero runtime)\n```\n\nRules:\n1. **Features never import from other features** — communication via core services\n2. **Core services are singletons** — providedIn: 'root'\n3. **Shared components are stateless** — inputs/outputs, no global state\n4. **Models are pure TypeScript** — no Angular dependencies\n5. **Each feature lazy-loaded** — only loads when route is accessed\n\nThis scales because:\n- Adding a feature doesn't affect existing code\n- Each feature can be developed independently\n- Bundle size stays controlled (lazy loading)\n- Testing is easy (features are self-contained)",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "core/ (global singletons), shared/ (reusable), features/ (lazy-loaded)",
+      "Features never import between each other",
+      "Communication via core services (global state)",
+      "Lazy loading per route (code splitting)",
+      "Models are pure interfaces (zero runtime cost)"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "Everything in one big module",
+      "Features importing directly from other features",
+      "No lazy loading strategy",
+      "Services with state in shared/ (should be in core/)"
     ],
     "followUps": [
-      {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
-      },
-      {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
-      }
+      { "question": "How do you handle state that multiple features need?", "hint": "Core service with signals. Features read via inject(). Single source of truth." },
+      { "question": "When would you use a monorepo with Nx?", "hint": "Multiple apps sharing code, or very large teams needing build boundaries." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "This project: feature-based architecture",
+      "description": "core/services/ (TopicService, QuizEngine, Interview, Progress), shared/ (MarkdownPipe, CodeBlock), features/ (dashboard, theory, interview, quiz, resume). Each feature lazy-loaded. Zero cross-feature imports."
+    }
   }
 ]

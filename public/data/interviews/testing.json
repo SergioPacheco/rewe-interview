@@ -3,93 +3,89 @@
     "id": "interview-testing-1",
     "topic": "testing",
     "subtopic": "test-pyramid",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Testing and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Testing]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Testing, with examples and production context]",
+    "difficulty": "INTERMEDIATE",
+    "question": "Describe your testing strategy. What is the testing pyramid?",
+    "shortAnswer": "Testing pyramid: many fast unit tests (business logic, validation), fewer integration tests (DB, API), minimal E2E. In SGN3: 900+ unit tests with Mockito for Business layer, Weld-JUnit for CDI context, real PostgreSQL for native query tests. I test behavior, not implementation — verify outcomes, not internal method calls.",
+    "detailedAnswer": "Testing pyramid in practice:\n\n**Unit tests (70%)** — fast, isolated, no infrastructure:\n- Business logic: given these inputs, expect this output/exception\n- Validation rules: each rule tested independently\n- Mock repositories, mock external services\n- Run in milliseconds, can run 900+ in seconds\n\n**Integration tests (25%)** — verify wiring:\n- Repository tests with real PostgreSQL (native queries especially)\n- API endpoint tests (verifying HTTP status, response shape)\n- CDI context tests (Weld-JUnit) for injection graph\n\n**E2E tests (5%)** — critical paths only:\n- Full request flow from UI to DB\n- Only for high-value scenarios (enrollment, certification)\n\nKey principles:\n- Test behavior, not implementation (what it does, not how)\n- Each test verifies ONE scenario\n- Fast feedback: unit tests first, integration on CI\n- Test data: builders with defaults, not random data\n- No test should depend on another test's state",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Pyramid: many unit, fewer integration, minimal E2E",
+      "Unit tests: mock dependencies, verify business logic",
+      "Integration: real database for query correctness",
+      "Test behavior (outcomes), not implementation (calls)",
+      "Each test independent — no shared mutable state"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "\"I only write integration tests\" (slow, brittle)",
+      "\"We test in production\" (no safety net)",
+      "Testing implementation details (verify every mock call)",
+      "No strategy — random tests without purpose"
     ],
     "followUps": [
-      {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
-      },
-      {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
-      }
+      { "question": "When do you use a real database vs mocking the repository?", "hint": "Mock for business logic tests. Real DB for native queries, complex JOINs, PG-specific syntax." },
+      { "question": "How do you handle test data setup?", "hint": "Builder pattern with defaults. Each test creates what it needs. No shared fixtures." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3: 900+ unit tests, JUnit 5 + Mockito",
+      "description": "Business layer tested with @InjectMocks + @Mock. Validation logic tested as pure functions. Native queries tested against real PostgreSQL. Weld-JUnit for CDI integration tests. ArchUnit for architectural rules (enforced at build time)."
+    }
   },
   {
     "id": "interview-testing-2",
     "topic": "testing",
     "subtopic": "test-junit",
     "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Testing.",
-    "shortAnswer": "[Short answer about a real challenge involving Testing]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "question": "How do you structure a good unit test?",
+    "shortAnswer": "AAA pattern: Arrange (set up data and mocks), Act (call the method under test), Assert (verify the outcome). One scenario per test, descriptive name (should_X_when_Y), @Nested for grouping. I verify the observable outcome — not internal implementation details.",
+    "detailedAnswer": "Structure (AAA):\n```java\n@Test\n@DisplayName(\"should reject enrollment when turma is full\")\nvoid shouldRejectEnrollment_whenTurmaIsFull() {\n    // Arrange\n    var turma = TurmaBuilder.umaTurma().comVagas(0).build();\n    when(repository.find(anyLong())).thenReturn(turma);\n\n    // Act & Assert\n    var ex = assertThrows(SenaiException.class, \n        () -> business.matricular(dto));\n    assertEquals(\"turma.sem.vagas\", ex.getMensagem().getChave());\n}\n```\n\nPrinciples:\n1. **One scenario per test** — if it fails, you know exactly what broke\n2. **Descriptive name** — reads like a spec: should_behavior_when_condition\n3. **@Nested for grouping** — all tests for one method together\n4. **Mock only external dependencies** — not the class under test\n5. **Verify outcomes, not interactions** (unless the interaction IS the outcome)\n6. **Test data builders** — readable, reusable, with sensible defaults",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "AAA: Arrange, Act, Assert — clear separation",
+      "One scenario per test (descriptive name)",
+      "@Nested for method grouping, @DisplayName for readability",
+      "Verify outcomes over interactions",
+      "Builders for test data (readable, maintainable)"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "Tests that verify every mock interaction (brittle)",
+      "Multiple scenarios in one test (which assertion failed?)",
+      "Shared mutable state between tests (@BeforeAll with state)",
+      "No assertions (test that passes by existing)"
     ],
     "followUps": [
-      {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
-      },
-      {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
-      }
+      { "question": "When IS it appropriate to verify interactions (verify calls)?", "hint": "When the interaction IS the behavior: 'should send email when enrollment confirmed.'" },
+      { "question": "How do you test private methods?", "hint": "You don't — test through the public API. If a private method needs direct testing, it should be extracted." }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
     "id": "interview-testing-3",
     "topic": "testing",
-    "subtopic": "test-pyramid",
+    "subtopic": "test-integration",
     "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Testing?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Testing]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "question": "How do you test code that depends on external systems (database, APIs)?",
+    "shortAnswer": "For database: real PostgreSQL (Testcontainers or shared test instance) — H2 misses PG-specific behavior. For external APIs: mock the HTTP client interface in unit tests, use WireMock or contract tests for integration. Never call real external services in tests — they're flaky, slow, and can have side effects.",
+    "detailedAnswer": "Strategy per dependency:\n\n**Database:**\n- Unit tests: mock Repository interface (test Business logic)\n- Integration tests: real PostgreSQL (catches SQL dialect issues, native queries)\n- In SGN3: H2 for simple JPQL, real PG for native queries (LATERAL JOIN, DISTINCT ON won't work in H2)\n\n**External APIs (Moodle, LDAP, VTEX):**\n- Unit tests: mock the RestClient interface (test Business logic around the call)\n- Integration tests: WireMock or recorded responses (verify serialization, error handling)\n- NEVER call real external services in CI (flaky, slow, side effects)\n\n**Message queues (JMS):**\n- Unit tests: mock JMS producer, verify message content\n- Integration tests: embedded broker or verify message structure\n\n**Key principle:** test YOUR code, not the external system. Mock at the boundary (interface), not deep inside.",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "Real PostgreSQL for native queries (H2 misses PG features)",
+      "Mock at the boundary interface (not deep internals)",
+      "Never call real external services in CI",
+      "WireMock for HTTP integration tests",
+      "Test YOUR logic around the dependency, not the dependency itself"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "\"I use H2 for everything\" (misses PG-specific failures)",
+      "\"We call the real API in tests\" (flaky, slow)",
+      "Not testing error paths (timeout, 500, malformed response)",
+      "No distinction between unit and integration strategies"
     ],
     "followUps": [
-      {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
-      },
-      {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
-      }
+      { "question": "What do you do when H2 and PostgreSQL behave differently?", "hint": "Use real PG for that test. H2 doesn't support schemas, LATERAL, DISTINCT ON, JSONB." },
+      { "question": "How do you test timeout handling?", "hint": "WireMock with delay: verify the code handles SocketTimeoutException correctly." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 testing strategy for external dependencies",
+      "description": "Mock RestClient interfaces in unit tests. Real PostgreSQL for native queries (H2 fails on schemas, LATERAL JOIN). Never call Moodle/LDAP in CI. ArchUnit enforces that Repositories are the only DB access point (testable boundary)."
+    }
   }
 ]

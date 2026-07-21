@@ -2,62 +2,54 @@
   {
     "id": "interview-behavioral-1",
     "topic": "behavioral",
-    "subtopic": "beh-adaptability",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Behavioral and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Behavioral]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Behavioral, with examples and production context]",
+    "subtopic": "beh-pressure",
+    "difficulty": "INTERMEDIATE",
+    "question": "Tell me about a time you had to deliver under pressure with a tight deadline.",
+    "shortAnswer": "The enrollment period at SENAI is time-boxed — 26,705 inscriptions had to work within a 2-week window. When the system was taking 16 minutes per page load, I had 3 days to fix it before the enrollment closed. I analyzed with Glowroot, identified the root cause (N+1 + cartesian product), and delivered the fix in 2 days. Tested with real production data before deploying.",
+    "detailedAnswer": "Situation: SENAI enrollment period is fixed (2 weeks). System was unusable — 16-minute page loads.\n\nTask: Fix it before enrollment closes. ~3 days available.\n\nAction:\n1. Day 1: Instrumented with Glowroot. Found 48,000 queries. Identified root cause: N+1 + cartesian product in matrícula→estudante→pessoa chain.\n2. Day 1-2: Implemented fix: separate COUNT, pagination, LATERAL JOIN, DTO projections.\n3. Day 2: Tested with production data clone. Verified ~2 seconds.\n4. Day 3: Deployed. Monitored. Confirmed fix held under real load.\n\nResult: 16 minutes → 2 seconds. Zero data loss. Enrollment period completed successfully.\n\nKey lesson: under pressure, measure FIRST (1 hour of Glowroot analysis saved days of guessing). Don't optimize blindly.",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Specific timeline and constraint (3 days, enrollment closing)",
+      "Measured before optimizing (Glowroot analysis first)",
+      "Systematic approach even under pressure",
+      "Tested with production-scale data before deploying",
+      "Concrete result with numbers (16min → 2s)"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "Vague story without numbers or timeline",
+      "\"I worked overtime\" (effort, not strategy)",
+      "No mention of how you prioritized under pressure",
+      "Story where pressure led to cutting quality"
     ],
     "followUps": [
-      {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
-      },
-      {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
-      }
+      { "question": "What would you have done if the fix didn't work in time?", "hint": "Contingency: temporary workaround (export CSV, limit results), communicate to stakeholders." },
+      { "question": "How did you test under production-like conditions?", "hint": "Cloned production data to test environment. Ran the same queries with real volume." }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
     "id": "interview-behavioral-2",
     "topic": "behavioral",
-    "subtopic": "beh-conflict",
-    "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Behavioral.",
-    "shortAnswer": "[Short answer about a real challenge involving Behavioral]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "subtopic": "beh-leadership",
+    "difficulty": "SENIOR",
+    "question": "How do you influence technical decisions when you are not the decision maker?",
+    "shortAnswer": "Data, not authority. I present evidence: benchmarks, prototypes, production metrics. I ask questions that expose trade-offs rather than stating opinions. When I disagreed on caching approach, I measured both options and presented results. Data ended the debate without hierarchy.",
+    "detailedAnswer": "My approach to influencing without authority:\n\n1. **Lead with questions, not opinions:**\n   - \"What happens when we have 10x more users?\" (exposes scalability gap)\n   - \"How would we test this?\" (exposes testability issues)\n   - \"What is the rollback plan?\" (exposes risk)\n\n2. **Build evidence:**\n   - Quick prototype or benchmark (2-4 hours)\n   - Production metrics showing the current problem\n   - Example from another module where it worked/failed\n\n3. **Present trade-offs, not conclusions:**\n   - \"Option A gives us X but costs Y. Option B gives us Z but risks W.\"\n   - Let the decision maker choose with full information\n\n4. **Know when to commit:**\n   - Voice concerns clearly and once\n   - If overruled with good reasons, commit fully\n   - Document the decision and rationale (not to blame later, but to revisit if needed)\n\nThis works because it's collaborative, not adversarial.",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "Data over opinions — prototype and measure",
+      "Questions that expose trade-offs (not criticisms)",
+      "Present options with honest trade-offs",
+      "Commit once the decision is made",
+      "Document decisions for future reference"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "\"I just do what they say\" — no technical ownership",
+      "\"I always fight for my opinion\" — adversarial",
+      "Escalating disagreements instead of resolving them",
+      "Passive-aggressive compliance (doing it \"their way\" badly)"
     ],
     "followUps": [
-      {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
-      },
-      {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
-      }
+      { "question": "Tell me about a time you were overruled and it turned out they were right.", "hint": "Shows humility and learning from disagreement." },
+      { "question": "How do you handle a decision you disagree with that affects quality?", "hint": "Voice concern, propose mitigation, document risk, commit if overruled." }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
@@ -65,31 +57,31 @@
     "id": "interview-behavioral-3",
     "topic": "behavioral",
     "subtopic": "beh-adaptability",
-    "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Behavioral?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Behavioral]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "difficulty": "INTERMEDIATE",
+    "question": "Describe a situation where you had to learn a new technology quickly.",
+    "shortAnswer": "When we needed to integrate SGN3 with Moodle's REST API, I had 1 week to learn MicroProfile RestClient, configure timeouts, handle authentication, and build the integration layer. I started with the documentation, built a minimal working call in 2 hours, then incrementally added error handling, retry, and timeout configuration. Delivered on time with proper resilience.",
+    "detailedAnswer": "Situation: SGN3 needed Moodle integration for virtual classrooms. No one on the team had experience with MicroProfile RestClient or Moodle's API.\n\nApproach:\n1. **Day 1**: Read MicroProfile RestClient spec (2 hours). Built minimal GET call to Moodle (working in 2 hours). Understood the pattern.\n2. **Day 2-3**: Implemented full CRUD operations. Added authentication (token-based).\n3. **Day 4-5**: Added resilience: connect timeout (5s), read timeout (60s — Moodle is slow), proper exception handling, logging.\n4. **Day 5-6**: Integration tests against Moodle sandbox.\n5. **Day 7**: Code review, deployed to HML, validated.\n\nKey learning strategy:\n- Start with smallest working example (not theory-first)\n- Incrementally add complexity (not big-bang)\n- Read source/spec when something doesn't work (not only Stack Overflow)\n- Ask in the team chat if blocked for >30 minutes",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "Start with minimal working example (not theory overload)",
+      "Incrementally add complexity",
+      "Specific timeline with daily milestones",
+      "Delivered with quality (resilience, tests, not just 'works')",
+      "Honest about what was hard and how you unblocked"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "\"I watched YouTube tutorials for a week\" (no hands-on)",
+      "Vague about timeline and deliverable",
+      "Learned technology but delivered nothing",
+      "No mention of quality/resilience in the result"
     ],
     "followUps": [
-      {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
-      },
-      {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
-      }
+      { "question": "What was the hardest part of learning it?", "hint": "Be specific — a particular API quirk, an unclear spec, a silent failure mode." },
+      { "question": "How would you approach learning Kafka for our team?", "hint": "Same pattern: minimal consumer/producer first, then add complexity (partitions, exactly-once, DLQ)." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 Moodle integration via MicroProfile RestClient",
+      "description": "Learned MicroProfile RestClient in 1 week. Delivered full Moodle integration: room creation, enrollment sync, grade retrieval. With timeouts (5s connect, 60s read), retry, and proper error handling."
+    }
   }
 ]

@@ -185,15 +185,6 @@ export class TheoryComponent {
     this.practiceChecked.set(false);
   }
 
-  selectPracticeChoice(q: any, choice: unknown, index: number): void {
-    if (this.practiceChecked()) return; // already checked, don't allow re-selection
-    this.selectedPracticeIndex.set(index);
-    this.practiceChecked.set(true);
-    // Determine if correct
-    const correct = this.isCorrectChoice(q, choice, index);
-    this.lastResult.set(correct ? 'correct' : 'incorrect');
-  }
-
   onChoiceAnswered(result: ChoiceResult): void {
     this.practiceChecked.set(true);
     this.selectedPracticeIndex.set(result.index);
@@ -244,10 +235,6 @@ export class TheoryComponent {
       return String(option['label'] ?? option['text'] ?? option['code'] ?? '');
     }
     return String(choice ?? '');
-  }
-
-  choiceLetter(index: number): string {
-    return String.fromCharCode(65 + index);
   }
 
   choiceDescription(choice: unknown): string {

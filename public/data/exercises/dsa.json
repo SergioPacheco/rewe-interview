@@ -13,7 +13,7 @@
       "ConcurrentModificationException"
     ],
     "answer": "null",
-    "explain": "After mutating the key, its hashCode changes. HashMap looks in the new bucket (based on new hash), but the entry is stored in the OLD bucket (based on original hash). The entry is effectively lost — it still exists in the map but can never be found. This is why keys should be immutable.",
+    "explain": "After mutating the key, its hashCode changes. HashMap looks in the new bucket (based on new hash), but the entry is stored in the OLD bucket (based on original hash). The entry is effectively lost \u2014 it still exists in the map but can never be found. This is why keys should be immutable.",
     "topic": "dsa"
   },
   {
@@ -26,11 +26,11 @@
     "choices": [
       "O(n)",
       "O(m)",
-      "O(n × m)",
+      "O(n \u00d7 m)",
       "O(n + m)"
     ],
-    "answer": "O(n × m)",
-    "explain": "List.contains() is O(m) because it scans linearly. Called n times → O(n × m). Fix: convert ids to a HashSet first → O(1) contains → total becomes O(n + m).",
+    "answer": "O(n \u00d7 m)",
+    "explain": "List.contains() is O(m) because it scans linearly. Called n times \u2192 O(n \u00d7 m). Fix: convert ids to a HashSet first \u2192 O(1) contains \u2192 total becomes O(n + m).",
     "topic": "dsa"
   },
   {
@@ -100,16 +100,22 @@
     "interviewerIntent": "Tests understanding of hash tables, collision resolution, and performance characteristics",
     "keyPoints": [
       "Array of buckets, index = hash(key) % capacity",
-      "Collision → linked list → tree (Java 8+ when bucket > 8)",
+      "Collision \u2192 linked list \u2192 tree (Java 8+ when bucket > 8)",
       "Load factor 0.75 triggers resize: double capacity + rehash all entries",
       "Rehashing is O(n) but amortized O(1) over all puts",
-      "Good hashCode distributes keys evenly → fewer collisions"
+      "Good hashCode distributes keys evenly \u2192 fewer collisions"
     ],
     "followUps": [
-      {"question": "When does HashMap degrade from O(1) to O(n)?", "answerHint": "Pathological hashCode returning same value for all keys → all entries in one bucket as linked list. Java 8 mitigates to O(log n) via tree."},
-      {"question": "Why is initial capacity useful?", "answerHint": "If you know you'll insert 1000 entries, initialCapacity=1334 (1000/0.75) avoids multiple rehashes during population."}
+      {
+        "question": "When does HashMap degrade from O(1) to O(n)?",
+        "answerHint": "Pathological hashCode returning same value for all keys \u2192 all entries in one bucket as linked list. Java 8 mitigates to O(log n) via tree."
+      },
+      {
+        "question": "Why is initial capacity useful?",
+        "answerHint": "If you know you'll insert 1000 entries, initialCapacity=1334 (1000/0.75) avoids multiple rehashes during population."
+      }
     ],
-    "explanation": "HashMap uses an array of buckets. Key's hashCode determines bucket index. Collisions are resolved with linked lists (or trees in Java 8+). At 75% capacity, it doubles and rehashes — O(n) operation that happens infrequently, giving amortized O(1).",
+    "explanation": "HashMap uses an array of buckets. Key's hashCode determines bucket index. Collisions are resolved with linked lists (or trees in Java 8+). At 75% capacity, it doubles and rehashes \u2014 O(n) operation that happens infrequently, giving amortized O(1).",
     "topic": "dsa"
   },
   {
@@ -126,8 +132,14 @@
       "Consider external: Redis with TTL for multi-instance dedup"
     ],
     "followUps": [
-      {"question": "What if you have multiple pod instances?", "answerHint": "Local map won't work. Need Redis/distributed cache with TTL."},
-      {"question": "Memory impact of 250K entries (50K × 5min)?", "answerHint": "UUID key (36 bytes) + overhead ≈ 100 bytes/entry × 250K ≈ 25MB. Acceptable for in-memory."}
+      {
+        "question": "What if you have multiple pod instances?",
+        "answerHint": "Local map won't work. Need Redis/distributed cache with TTL."
+      },
+      {
+        "question": "Memory impact of 250K entries (50K \u00d7 5min)?",
+        "answerHint": "UUID key (36 bytes) + overhead \u2248 100 bytes/entry \u00d7 250K \u2248 25MB. Acceptable for in-memory."
+      }
     ],
     "explanation": "For time-windowed dedup: ConcurrentHashMap<String, Instant> with periodic cleanup (remove entries older than 5min). O(1) contains check per event. For multi-pod: Redis SET with TTL=300s.",
     "topic": "dsa"
@@ -138,9 +150,9 @@
     "difficulty": "senior",
     "subtopic": "dsa-big-o",
     "question": "What's the time complexity of your typical Spring Boot REST endpoint? Decompose it.",
-    "interviewerIntent": "Tests systems thinking — understanding that endpoint latency is sum of operations, dominated by slowest",
+    "interviewerIntent": "Tests systems thinking \u2014 understanding that endpoint latency is sum of operations, dominated by slowest",
     "keyPoints": [
-      "Controller: O(1) — just dispatching",
+      "Controller: O(1) \u2014 just dispatching",
       "Validation: O(n) where n = fields/items to validate",
       "Service logic: depends on algorithm",
       "Database query: O(log n) with index, O(n) without",
@@ -148,10 +160,16 @@
       "Total dominated by database access in most cases"
     ],
     "followUps": [
-      {"question": "How does N+1 change this analysis?", "answerHint": "Without N+1: O(1 query). With N+1: O(n queries) where n=results. Each query has network RTT."},
-      {"question": "When does the service layer become the bottleneck?", "answerHint": "When processing collections in-memory: sorting O(n log n), nested loops O(n²), or external API calls O(n × latency)."}
+      {
+        "question": "How does N+1 change this analysis?",
+        "answerHint": "Without N+1: O(1 query). With N+1: O(n queries) where n=results. Each query has network RTT."
+      },
+      {
+        "question": "When does the service layer become the bottleneck?",
+        "answerHint": "When processing collections in-memory: sorting O(n log n), nested loops O(n\u00b2), or external API calls O(n \u00d7 latency)."
+      }
     ],
-    "explanation": "A typical endpoint is O(log n) dominated by indexed DB query. But common mistakes introduce hidden O(n²): contains() on list inside loop, N+1 queries, loading all entities to filter in Java.",
+    "explanation": "A typical endpoint is O(log n) dominated by indexed DB query. But common mistakes introduce hidden O(n\u00b2): contains() on list inside loop, N+1 queries, loading all entities to filter in Java.",
     "topic": "dsa"
   },
   {
@@ -165,11 +183,18 @@
       "Compute bucket index: hash % capacity",
       "Check if key already exists in bucket (using equals())",
       "If exists: replace value. If not: add new entry to bucket",
-      "Check if size > capacity × loadFactor",
+      "Check if size > capacity \u00d7 loadFactor",
       "If threshold exceeded: resize array and rehash all entries"
     ],
-    "correctOrder": [0, 1, 2, 3, 4, 5],
-    "explanation": "HashMap.put follows this exact sequence: hash → bucket → find/insert → check load. Resize (step 6) only happens when the threshold is exceeded after insertion.",
+    "correctOrder": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "explanation": "HashMap.put follows this exact sequence: hash \u2192 bucket \u2192 find/insert \u2192 check load. Resize (step 6) only happens when the threshold is exceeded after insertion.",
     "topic": "dsa"
   },
   {
@@ -187,8 +212,16 @@
       "If target > array[mid]: set low = mid + 1",
       "Repeat while low <= high"
     ],
-    "correctOrder": [0, 1, 2, 3, 4, 5, 6],
-    "explanation": "Binary search halves the search space each iteration → O(log n). Same principle used in B-Tree index lookups, Collections.binarySearch(), and bisect algorithms.",
+    "correctOrder": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "explanation": "Binary search halves the search space each iteration \u2192 O(log n). Same principle used in B-Tree index lookups, Collections.binarySearch(), and bisect algorithms.",
     "topic": "dsa"
   },
   {
@@ -217,14 +250,20 @@
     "interviewerIntent": "Connects data structure knowledge (hashing) to distributed systems (Kafka partitioning)",
     "keyPoints": [
       "DefaultPartitioner: murmur2(key) % numPartitions",
-      "Same key → same partition → ordering guarantee",
-      "Null key → round-robin (no ordering)",
-      "Adding partitions breaks the hash → existing keys may go to different partition",
+      "Same key \u2192 same partition \u2192 ordering guarantee",
+      "Null key \u2192 round-robin (no ordering)",
+      "Adding partitions breaks the hash \u2192 existing keys may go to different partition",
       "Consistent hashing (used in Kafka Connect) reduces redistribution"
     ],
     "followUps": [
-      {"question": "What happens if one key has 10x more events than others?", "answerHint": "Hot partition — one consumer overloaded. Solution: compound key (driverId + date) or custom partitioner."},
-      {"question": "Why not just use partition = key.hashCode() % n?", "answerHint": "Object.hashCode() is not consistent across JVM restarts. Kafka uses murmur2 which is deterministic regardless of JVM."}
+      {
+        "question": "What happens if one key has 10x more events than others?",
+        "answerHint": "Hot partition \u2014 one consumer overloaded. Solution: compound key (driverId + date) or custom partitioner."
+      },
+      {
+        "question": "Why not just use partition = key.hashCode() % n?",
+        "answerHint": "Object.hashCode() is not consistent across JVM restarts. Kafka uses murmur2 which is deterministic regardless of JVM."
+      }
     ],
     "explanation": "Kafka uses murmur2 hash of the message key modulo partition count. This gives: (1) deterministic routing, (2) per-key ordering, (3) even distribution with good keys. Same concept as HashMap bucket assignment, scaled to distributed system.",
     "topic": "dsa"
@@ -243,7 +282,7 @@
       "1, 3, 5 (odd numbers first)"
     ],
     "answer": "1, 2, 3 (sorted ascending)",
-    "explain": "PriorityQueue is a min-heap by default. poll() always returns the smallest element. Internal order is NOT fully sorted — only the head is guaranteed to be minimum. O(log n) per poll.",
+    "explain": "PriorityQueue is a min-heap by default. poll() always returns the smallest element. Internal order is NOT fully sorted \u2014 only the head is guaranteed to be minimum. O(log n) per poll.",
     "topic": "dsa"
   },
   {
@@ -254,8 +293,13 @@
     "question": "ArrayList.get(index) is O(___) because it accesses the internal array directly by index.",
     "blank": "___",
     "answer": "1",
-    "choices": ["1", "n", "log n", "n²"],
-    "explanation": "ArrayList stores elements in a contiguous array. Accessing by index is a simple pointer arithmetic operation: base + index × elementSize = O(1). This is why ArrayList is preferred for random access.",
+    "choices": [
+      "1",
+      "n",
+      "log n",
+      "n\u00b2"
+    ],
+    "explanation": "ArrayList stores elements in a contiguous array. Accessing by index is a simple pointer arithmetic operation: base + index \u00d7 elementSize = O(1). This is why ArrayList is preferred for random access.",
     "topic": "dsa"
   },
   {
@@ -273,10 +317,332 @@
       "Both have invalidation problem: when does cached value become stale?"
     ],
     "followUps": [
-      {"question": "When should you NOT cache?", "answerHint": "When data changes frequently, when different users must see different data, when cache invalidation is too complex to get right."},
-      {"question": "How do you handle cache stampede?", "answerHint": "Lock on cache miss (singleflight pattern), probabilistic early expiration, or warm-up on startup."}
+      {
+        "question": "When should you NOT cache?",
+        "answerHint": "When data changes frequently, when different users must see different data, when cache invalidation is too complex to get right."
+      },
+      {
+        "question": "How do you handle cache stampede?",
+        "answerHint": "Lock on cache miss (singleflight pattern), probabilistic early expiration, or warm-up on startup."
+      }
     ],
     "explanation": "Memoization = local cache of function results. @Cacheable = same concept at service level with production features (TTL, eviction, distribution). Both convert O(expensive) repeated computation to O(1) lookup after first call.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-bigo-sorting-01",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "dsa-big-o",
+    "mission": "You call Collections.sort() on a list of 1 million deliveries. What is the time complexity?",
+    "choices": [
+      "O(n)",
+      "O(n log n)",
+      "O(n\u00b2)",
+      "O(log n)"
+    ],
+    "answer": "O(n log n)",
+    "explain": "Java's Collections.sort() uses TimSort (merge sort variant). Best case O(n) for nearly sorted data, worst/average case O(n log n). For 1M elements: ~20M comparisons (1M \u00d7 log\u2082(1M) \u2248 1M \u00d7 20). Fast enough for in-memory sorting.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-bigo-search-02",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "dsa-big-o",
+    "mission": "Sorted array of 1 billion elements. How many comparisons does binary search need in the worst case?",
+    "choices": [
+      "1,000,000,000",
+      "30",
+      "500,000,000",
+      "100"
+    ],
+    "answer": "30",
+    "explain": "Binary search is O(log\u2082 n). log\u2082(1,000,000,000) \u2248 30. Each comparison halves the search space. This is why database B-Tree indexes (which use the same principle) can find any row in ~3-4 disk reads even with billions of records.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-bigo-nested-03",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "dsa-big-o",
+    "mission": "What is the complexity of this nested loop?",
+    "code": "for (int i = 0; i < n; i++) {\n    for (int j = i; j < n; j++) {\n        process(i, j);\n    }\n}",
+    "choices": [
+      "O(n)",
+      "O(n log n)",
+      "O(n\u00b2)",
+      "O(n\u00b3)"
+    ],
+    "answer": "O(n\u00b2)",
+    "explain": "Inner loop runs n + (n-1) + (n-2) + ... + 1 = n(n+1)/2 times total. That's O(n\u00b2/2) = O(n\u00b2). The fact that j starts at i (not 0) halves the constant but doesn't change the order of growth. Same complexity as a full nested loop.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-collections-stream-04",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "dsa-collections",
+    "mission": "What is the complexity of this Stream pipeline?",
+    "code": "List<Delivery> result = deliveries.stream()  // n items\n    .filter(d -> d.isActive())               // ?\n    .sorted(comparing(Delivery::date))       // ?\n    .limit(10)                               // ?\n    .toList();",
+    "choices": [
+      "O(n)",
+      "O(n log n)",
+      "O(10)",
+      "O(n + n log n)"
+    ],
+    "answer": "O(n log n)",
+    "explain": "filter is O(n) \u2014 scans all items. sorted is O(n log n) \u2014 sorts ALL matching items even though we only need top 10. limit(10) is O(1) after sort. Total: O(n log n) dominated by sort. Optimization: use a min-heap (PriorityQueue of size 10) for O(n log 10) = O(n).",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-recursion-stackoverflow-05",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "dsa-recursion",
+    "mission": "This recursive method is called with n=100000. What happens?",
+    "code": "public int sum(int n) {\n    if (n == 0) return 0;\n    return n + sum(n - 1);\n}",
+    "choices": [
+      "Returns 5000050000",
+      "StackOverflowError",
+      "Returns 0 (integer overflow)",
+      "OutOfMemoryError"
+    ],
+    "answer": "StackOverflowError",
+    "explain": "Each recursive call adds a frame to the call stack. Default Java stack size is ~512KB-1MB, fitting ~10K-20K frames. With n=100000, it exceeds the stack. Solution: use iterative approach (for loop) or increase stack size (-Xss). Java has no tail-call optimization.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-recursion-dp-06",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "dsa-recursion",
+    "mission": "Without memoization, how many times is fib(3) called when computing fib(6)?",
+    "code": "int fib(int n) {\n    if (n <= 1) return n;\n    return fib(n-1) + fib(n-2);\n}\n// Call: fib(6)",
+    "choices": [
+      "1",
+      "3",
+      "4",
+      "5"
+    ],
+    "answer": "4",
+    "explain": "Without memoization, the recursion tree repeats subproblems exponentially. fib(6) calls fib(5)+fib(4). fib(5) calls fib(4)+fib(3). fib(4) appears 2x, fib(3) appears 3-4x. Total calls grow as O(2^n). With memoization: each fib(k) computed once = O(n).",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-trees-bst-07",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "dsa-trees",
+    "mission": "You insert keys [5, 3, 7, 1, 4, 6, 8] into an empty BST (no balancing). What is the tree height?",
+    "choices": [
+      "2",
+      "3",
+      "4",
+      "7"
+    ],
+    "answer": "2",
+    "explain": "5 becomes root. 3 goes left, 7 goes right. Then 1,4 go under 3 and 6,8 go under 7. Height = 2 (root to any leaf = 2 edges). This is a balanced insertion because the first key (5) is the median. If we inserted [1,3,4,5,6,7,8] instead, height would be 6 (degenerate to linked list).",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-trees-complexity-08",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "dsa-trees",
+    "mission": "You have a balanced BST with 1 million nodes. What is the maximum number of comparisons to find any key?",
+    "choices": [
+      "1,000,000",
+      "20",
+      "500,000",
+      "1000"
+    ],
+    "answer": "20",
+    "explain": "Balanced BST has height O(log\u2082 n). log\u2082(1,000,000) \u2248 20. Each level requires one comparison. This is identical to binary search on a sorted array. Red-Black trees and AVL trees guarantee O(log n) height by self-balancing after insertions.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-queues-bfs-09",
+    "type": "ORDER_EXECUTION",
+    "difficulty": "inter",
+    "subtopic": "dsa-queues",
+    "mission": "Order the steps of BFS (Breadth-First Search) to find shortest path in unweighted graph:",
+    "items": [
+      {
+        "id": "init",
+        "label": "Create queue, enqueue start node, mark as visited"
+      },
+      {
+        "id": "dequeue",
+        "label": "Dequeue front node from queue"
+      },
+      {
+        "id": "check",
+        "label": "If dequeued node is target \u2192 return path (found!)"
+      },
+      {
+        "id": "neighbors",
+        "label": "Get all unvisited neighbors of dequeued node"
+      },
+      {
+        "id": "enqueue",
+        "label": "Mark neighbors as visited, enqueue them"
+      },
+      {
+        "id": "repeat",
+        "label": "Repeat from step 2 while queue is not empty"
+      }
+    ],
+    "correctOrder": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "explanation": "BFS explores level by level (breadth-first). The queue ensures FIFO order \u2014 nodes closer to start are processed first. This guarantees the first time we reach the target, it's via the shortest path (in unweighted graphs). Used in: dependency resolution, shortest route (unweighted), social network distance.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-queues-stack-10",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "dsa-queues",
+    "mission": "What does this code print?",
+    "code": "Deque<String> stack = new ArrayDeque<>();\nstack.push(\"A\");\nstack.push(\"B\");\nstack.push(\"C\");\nSystem.out.println(stack.pop());\nSystem.out.println(stack.pop());",
+    "choices": [
+      "A, B",
+      "C, B",
+      "C, A",
+      "B, C"
+    ],
+    "answer": "C, B",
+    "explain": "Stack is LIFO (Last In, First Out). push() adds to top: [A, B, C] (C on top). pop() removes from top: first pop=C, second pop=B. ArrayDeque is preferred over Stack class in Java (Stack extends Vector which is synchronized \u2014 unnecessary overhead).",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-hashing-collision-11",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "dsa-hashing",
+    "mission": "HashMap capacity=16. Two keys have hashCode() returning 17 and 33. Do they collide?",
+    "choices": [
+      "No \u2014 different hash codes mean different buckets",
+      "Yes \u2014 both map to bucket index 1 (hash % 16)",
+      "Yes \u2014 both map to bucket index 0",
+      "Depends on equals() implementation"
+    ],
+    "answer": "Yes \u2014 both map to bucket index 1 (hash % 16)",
+    "explain": "Bucket index = hash & (capacity - 1) = hash % 16 for power-of-2 capacity. 17 % 16 = 1. 33 % 16 = 1. Both go to bucket 1 \u2014 collision! They'll be stored as linked list (or tree if >8 entries) in the same bucket. This is why hashCode should distribute values evenly.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-hashing-immutable-12",
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "dsa-hashing",
+    "question": "Why does Java recommend using immutable objects as HashMap keys? What happens if you use a mutable key?",
+    "interviewerIntent": "Tests understanding of hash table invariants and defensive programming",
+    "keyPoints": [
+      "hashCode determines bucket placement at put() time",
+      "If key mutates after put(), hashCode changes but entry stays in OLD bucket",
+      "get() with mutated key looks in WRONG bucket \u2192 entry not found (memory leak)",
+      "String, Integer, enum are immutable \u2014 safe keys by design",
+      "If custom key needed: make fields final, no setters"
+    ],
+    "followUps": [
+      {
+        "question": "How does this relate to JPA entity identity?",
+        "answerHint": "JPA entities with @GeneratedValue have null ID before persist. If used as Map key before persist, hashCode changes after persist \u2192 lost entry. Use business key or UUID assigned at construction."
+      },
+      {
+        "question": "Is it safe to use a record as HashMap key?",
+        "answerHint": "Yes! Java records are immutable by design \u2014 all fields are final. Auto-generated hashCode uses all components. Perfect for composite keys."
+      }
+    ],
+    "explanation": "HashMap assumes key.hashCode() never changes after insertion. Mutable keys violate this assumption silently \u2014 no exception, just entries that can never be found. The entry still exists in memory (leak) but is inaccessible. Always use immutable keys.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-bigo-amortized-13",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "dsa-big-o",
+    "question": "Explain amortized analysis. Why is ArrayList.add() O(1) amortized despite occasional O(n) resizes?",
+    "interviewerIntent": "Tests understanding of amortized complexity beyond simple worst-case",
+    "keyPoints": [
+      "Amortized = average cost over a SEQUENCE of operations (not single operation)",
+      "ArrayList doubles capacity when full: resize costs O(n) but happens after n adds",
+      "Cost of n adds: n (regular) + n (one resize copy) = 2n = O(n) total = O(1) per add",
+      "Same principle: HashMap rehash, StringBuilder expansion, dynamic array in any language",
+      "NOT the same as average-case (amortized is worst-case over sequence)"
+    ],
+    "followUps": [
+      {
+        "question": "When does amortized O(1) matter in practice?",
+        "answerHint": "When building a list in a loop. If add were O(n) worst case without amortization, building a list of n items would be O(n\u00b2). Amortized O(1) means the loop is O(n) total."
+      },
+      {
+        "question": "What is the banker's method for amortized analysis?",
+        "answerHint": "Assign each cheap operation extra 'credit'. When expensive operation happens, pay with accumulated credits. If credits never go negative, the amortized cost is the per-operation charge."
+      }
+    ],
+    "explanation": "Amortized analysis shows that expensive operations (resize) are rare enough that their cost is 'spread' across many cheap operations. Key insight from CLRS: amortized cost \u2260 average case. It's a GUARANTEE that n operations cost at most f(n) total, regardless of the specific sequence.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-collections-when-14",
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "dsa-collections",
+    "question": "When would you use LinkedList instead of ArrayList in Java? Is there ever a good reason?",
+    "interviewerIntent": "Tests nuanced understanding beyond textbook answers",
+    "keyPoints": [
+      "Almost never in practice \u2014 ArrayList wins in nearly all real-world scenarios",
+      "LinkedList has O(1) add/remove at head, but ArrayList has better cache locality",
+      "CPU cache lines (64 bytes) favor contiguous memory \u2014 ArrayList iterates 10-100x faster",
+      "Only valid use: large list with frequent insert/remove at known iterator position (rare)",
+      "Deque operations (addFirst/removeLast): use ArrayDeque instead (faster, less memory)"
+    ],
+    "followUps": [
+      {
+        "question": "What about Queue/Deque usage?",
+        "answerHint": "ArrayDeque is faster than LinkedList for queue/deque operations. LinkedList allocates a Node object per element (GC pressure). ArrayDeque uses a circular array."
+      },
+      {
+        "question": "When is the textbook answer 'use LinkedList for frequent insertions' wrong?",
+        "answerHint": "You need to FIND the insertion point first (O(n) traversal). Combined with cache misses during traversal, LinkedList insertion is slower in practice than ArrayList.copyOf() for lists under ~10K elements."
+      }
+    ],
+    "explanation": "CLRS teaches LinkedList for O(1) insert/delete at a pointer. In practice on modern hardware, CPU cache dominates. ArrayList's contiguous memory means prefetching works. LinkedList's scattered nodes cause cache misses. Joshua Bloch (Java architect): 'Does anyone actually use LinkedList? I wrote it and I never use it.'",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-trees-why-balanced-15",
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "dsa-trees",
+    "question": "Why do balanced trees (Red-Black, AVL) exist? What problem do they solve that a plain BST doesn't?",
+    "interviewerIntent": "Tests understanding of why self-balancing matters for guarantees",
+    "keyPoints": [
+      "Plain BST: worst case O(n) if insertions are sorted (degenerates to linked list)",
+      "Balanced BST: guarantees O(log n) height regardless of insertion order",
+      "Red-Black tree (Java TreeMap): max height 2*log(n) \u2014 slightly relaxed but faster insert",
+      "AVL tree: strictly balanced (height diff \u2264 1) \u2014 faster lookup, slower insert",
+      "Real-world: TreeMap for sorted access, HashMap for O(1) when order not needed"
+    ],
+    "followUps": [
+      {
+        "question": "Where are Red-Black trees used in Java?",
+        "answerHint": "TreeMap, TreeSet, and inside HashMap (when bucket chain > 8 entries, converted to RB-tree for O(log n) instead of O(n) linear search)."
+      },
+      {
+        "question": "Why does the database use B-Tree instead of Red-Black tree?",
+        "answerHint": "B-Tree has high branching factor (100-500 children per node). Each node = one disk page. Fewer levels = fewer disk I/O operations. Red-Black tree is binary (2 children) = too deep for disk-based access."
+      }
+    ],
+    "explanation": "CLRS proves that unbalanced BST has \u0398(n) worst case (sorted input). Self-balancing trees guarantee O(log n) by performing rotations on insert/delete to maintain height invariant. The trade-off is slightly more complex insert (rotations) for guaranteed fast lookup.",
     "topic": "dsa"
   }
 ]

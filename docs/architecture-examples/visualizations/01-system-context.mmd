@@ -1,0 +1,12 @@
+flowchart LR
+  customer[Person: Customer / Driver] -->|Creates and tracks deliveries| parcelFlow[Software system: ParcelFlow]
+  support[Person: Support agent] -->|Resolves delivery issues| parcelFlow
+  parcelFlow -->|Requests labels and receives status| carrier[External system: Carrier API]
+  parcelFlow -->|Authorises payment| payment[External system: Payment provider]
+
+  classDef person fill:#fff8e8,stroke:#b7791f,color:#3f2d00
+  classDef system fill:#eaf7f4,stroke:#167b6a,color:#093d35
+  classDef external fill:#eef5ff,stroke:#2369a6,color:#102e4a
+  class customer,support person
+  class parcelFlow system
+  class carrier,payment external

@@ -78,6 +78,38 @@ describe('QuizEngineService', () => {
       // Assert
       expect(service.totalInSession()).toBe(2);
     });
+
+    it('should include oral architecture scenarios in architecture practice', () => {
+      topicService.questions.set([{
+        id: 'architecture-oral',
+        type: 'ORAL_ANSWER',
+        topic: 'software-architecture',
+        difficulty: 'senior',
+        mission: 'Describe the trade-off.',
+        answer: 'A reasoned answer'
+      }] as Question[]);
+
+      service.start('software-architecture');
+
+      expect(service.totalInSession()).toBe(1);
+      expect(service.currentQuestion()?.type).toBe('ORAL_ANSWER');
+    });
+
+    it('should include oral portfolio prompts in portfolio practice', () => {
+      topicService.questions.set([{
+        id: 'portfolio-oral',
+        type: 'ORAL_ANSWER',
+        topic: 'portfolio',
+        difficulty: 'senior',
+        mission: 'Explain a project decision.',
+        modelAnswer: 'A clear and honest explanation'
+      }] as Question[]);
+
+      service.start('portfolio');
+
+      expect(service.totalInSession()).toBe(1);
+      expect(service.currentQuestion()?.type).toBe('ORAL_ANSWER');
+    });
   });
 
   describe('submitAnswer', () => {
@@ -102,6 +134,22 @@ describe('QuizEngineService', () => {
 
       // Assert
       expect(result).toBe('incorrect');
+    });
+
+    it('should accept answer as the correct field for single-choice exercises', () => {
+      topicService.questions.set([{
+        id: 'single-choice-answer-field',
+        type: 'SINGLE_CHOICE',
+        topic: 'test-topic',
+        difficulty: 'easy',
+        mission: 'Choose the correct option.',
+        options: ['Incorrect', 'Correct'],
+        answer: 1
+      }] as Question[]);
+      service.start('test-topic');
+
+      expect(service.submitAnswer(1)).toBe('correct');
+      expect(service.submitAnswer(0)).toBe('incorrect');
     });
 
     it('should increment combo on correct answers', () => {

@@ -68,8 +68,8 @@ export interface Question {
   code?: string;
 
   // Answer fields (varies by type)
-  choices?: string[];
-  options?: string[];
+  choices?: Array<string | ChoiceOption>;
+  options?: Array<string | ChoiceOption>;
   answer?: string | number | string[];
   correct?: unknown;
   blank?: string;
@@ -96,11 +96,38 @@ export interface Question {
   [key: string]: unknown;
 }
 
+/** An authored answer option can be plain text or a richer labelled choice. */
+export interface ChoiceOption {
+  id?: string | number;
+  label?: string;
+  text?: string;
+  description?: string;
+  code?: string;
+  [key: string]: unknown;
+}
+
 // ===== THEORY =====
 
 export interface TheorySection {
   heading: string;
   content: string;
+}
+
+/** Optional teaching visual displayed before a Learn chapter's text. */
+export interface TheoryVisual {
+  src: string;
+  alt: string;
+  caption: string;
+  attribution?: string;
+  attributionUrl?: string;
+  license?: string;
+}
+
+/** The learning contract for a chapter: why it matters and what to produce. */
+export interface TheoryLesson {
+  goal: string;
+  outcome: string;
+  challenge?: string;
 }
 
 export interface TheoryChapter {
@@ -109,6 +136,9 @@ export interface TheoryChapter {
   subtopic?: string;
   title: string;
   sections: TheorySection[];
+  visual?: TheoryVisual;
+  visuals?: TheoryVisual[];
+  lesson?: TheoryLesson;
 }
 
 // ===== PROGRESS =====

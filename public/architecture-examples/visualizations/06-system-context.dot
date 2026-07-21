@@ -1,0 +1,15 @@
+digraph ParcelFlowContext {
+  graph [bgcolor="transparent", rankdir=LR, pad="0.25", nodesep="0.45", ranksep="0.75"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=13, margin="0.18,0.12", color="#167b6a", fillcolor="#eaf7f4", fontcolor="#093d35"];
+  edge [color="#557a78", penwidth=1.5, arrowsize=0.7, fontname="Arial", fontsize=10, fontcolor="#45615e"];
+  customer [label="Customer / Driver", fillcolor="#fff8e8", color="#b7791f", fontcolor="#3f2d00"];
+  web [label="Web or Mobile Client"];
+  api [label="ParcelFlow API"];
+  carrier [label="Carrier API", fillcolor="#eef5ff", color="#2369a6", fontcolor="#102e4a"];
+  payment [label="Payment Provider", fillcolor="#eef5ff", color="#2369a6", fontcolor="#102e4a"];
+  support [label="Support Team", fillcolor="#fff8e8", color="#b7791f", fontcolor="#3f2d00"];
+  customer -> web -> api;
+  api -> carrier [label=" status / labels"];
+  api -> payment [label=" payment"];
+  support -> api [label=" support tools"];
+}

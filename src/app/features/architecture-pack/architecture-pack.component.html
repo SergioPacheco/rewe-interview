@@ -1,0 +1,38 @@
+<main class="architecture-pack">
+  <header class="architecture-pack__hero">
+    <span>SOFTWARE ARCHITECTURE · REFERENCE PACK</span>
+    <h1>ParcelFlow: a fictional C4 architecture reference pack</h1>
+    <p>Illustrative C4 diagrams and supporting artefacts for discussing system boundaries, containers, components, runtime flows, operations, and evolution. They are examples — not a production architecture.</p>
+  </header>
+
+  <section class="architecture-pack__visuals" aria-label="Architecture visualisations">
+    @for (diagram of diagrams; track diagram.src) {
+      <figure [class.architecture-pack__visual--wide]="diagram.wide">
+        <img [src]="diagram.src" [alt]="diagram.title" loading="lazy" />
+        <figcaption><small>{{ diagram.level }}</small><strong>{{ diagram.title }}</strong><span>{{ diagram.text }}</span></figcaption>
+      </figure>
+    }
+  </section>
+
+  <section class="architecture-pack__workspace">
+    <aside class="architecture-pack__catalogue" aria-label="Architecture artefacts">
+      @for (group of ['Discover', 'Design', 'Decide', 'Operate', 'Evolve']; track group) {
+        <section>
+          <h2>{{ group }}</h2>
+          @for (document of grouped(group); track document.id) {
+            <button [class.is-selected]="selected().id === document.id" (click)="open(document)">
+              <strong>{{ document.title }}</strong><span>{{ document.summary }}</span>
+            </button>
+          }
+        </section>
+      }
+    </aside>
+
+    <article class="architecture-pack__document">
+      <header><span>{{ selected().group }}</span><h2>{{ selected().title }}</h2><p>{{ selected().summary }}</p></header>
+      @if (loading()) { <p class="architecture-pack__loading">Loading artefact…</p> }
+      @if (error()) { <p class="architecture-pack__error">{{ error() }}</p> }
+      @if (!loading() && !error()) { <div class="architecture-pack__markdown" [innerHTML]="content() | markdown"></div> }
+    </article>
+  </section>
+</main>

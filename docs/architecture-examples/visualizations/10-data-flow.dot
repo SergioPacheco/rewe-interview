@@ -1,0 +1,18 @@
+digraph DataFlow {
+  graph [bgcolor="transparent", rankdir=LR, pad="0.25", nodesep="0.4", ranksep="0.65"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=12, margin="0.18,0.12", color="#167b6a", fillcolor="#eaf7f4", fontcolor="#093d35"];
+  edge [color="#557a78", penwidth=1.4, arrowsize=0.7, fontname="Arial", fontsize=10];
+  client [label="Customer client\nidentity + delivery details", fillcolor="#fff8e8", color="#b7791f", fontcolor="#3f2d00"];
+  api [label="Order API\nauthorise + minimise data"];
+  db [label="Order database\nsource of truth", shape=cylinder, fillcolor="#eef5ff", color="#2369a6", fontcolor="#102e4a"];
+  broker [label="Event broker\nminimal event payload", shape=hexagon, fillcolor="#fff1f3", color="#cc071e", fontcolor="#7d0012"];
+  billing [label="Billing\nfinancial data"];
+  notify [label="Notification\ncontact details"];
+  archive [label="Retention / archive\npolicy controlled", fillcolor="#f0edfb", color="#6846a5", fontcolor="#342055"];
+  client -> api [label=" TLS"];
+  api -> db [label=" encrypted at rest"];
+  db -> broker [label=" outbox"];
+  broker -> billing;
+  broker -> notify;
+  db -> archive [label=" retention"];
+}

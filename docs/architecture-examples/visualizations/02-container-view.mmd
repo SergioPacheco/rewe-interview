@@ -1,0 +1,12 @@
+flowchart LR
+  customer[Person: Customer / Driver] --> web[Container: Web application\nAngular]
+  subgraph ParcelFlow[Software system: ParcelFlow]
+    web -->|HTTPS/JSON| api[Container: Delivery API\nJava / Spring Boot]
+    api --> db[(Container: Delivery database\nPostgreSQL)]
+    db --> relay[Container: Outbox relay\nJava worker]
+    relay --> broker{{Container: Event broker\nKafka}}
+    broker --> billing[Container: Billing worker\nJava worker]
+    broker --> notification[Container: Notification worker\nJava worker]
+  end
+  api --> carrier[External system: Carrier API]
+  api --> payment[External system: Payment provider]

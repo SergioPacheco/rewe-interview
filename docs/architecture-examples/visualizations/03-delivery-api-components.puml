@@ -1,0 +1,35 @@
+@startuml
+!include c4-lib/C4_Component.puml
+LAYOUT_TOP_DOWN()
+title ParcelFlow — Delivery API Component Diagram
+
+Container(web, "Web application", "Angular", "Customer-facing client")
+ContainerDb(db, "Delivery database", "PostgreSQL", "Deliveries and transactional outbox")
+ContainerQueue(broker, "Event broker", "Kafka", "OrderCreated events")
+System_Ext(carrier, "Carrier API", "Labels and delivery status")
+System_Ext(payment, "Payment provider", "Payment authorisation")
+
+Container_Boundary(api, "Delivery API — Java / Spring Boot") {
+  Component(controller, "Delivery controller", "Spring MVC", "Accepts HTTP requests and returns delivery resources")
+  Component(useCase, "Create delivery use case", "Application service", "Coordinates validation, payment and persistence")
+  Component(policy, "Delivery policy", "Domain service", "Applies business invariants and pricing rules")
+  Component(paymentClient, "Payment client", "HTTP adapter", "Authorises the payment")
+  Component(carrierClient, "Carrier client", "HTTP adapter", "Requests a shipping label")
+  Component(repository, "Delivery repository", "Spring Data JPA", "Persists delivery state")
+  Component(outbox, "Outbox writer", "JPA adapter", "Persists OrderCreated in the same transaction")
+}
+
+Rel(web, controller, "POST /deliveries", "JSON/HTTPS")
+Rel(controller, useCase, "Invokes")
+Rel(useCase, policy, "Validates")
+Rel(useCase, paymentClient, "Authorises payment")
+Rel(useCase, carrierClient, "Requests label")
+Rel(useCase, repository, "Stores delivery")
+Rel(useCase, outbox, "Stores OrderCreated")
+Rel(repository, db, "Reads and writes")
+Rel(outbox, db, "Writes outbox record")
+Rel(paymentClient, payment, "HTTPS")
+Rel(carrierClient, carrier, "HTTPS")
+Rel(outbox, broker, "Published later by relay")
+SHOW_LEGEND()
+@enduml

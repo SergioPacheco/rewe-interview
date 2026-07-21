@@ -1,0 +1,42 @@
+@startuml
+!include c4-lib/C4_Deployment.puml
+LAYOUT_TOP_DOWN()
+title ParcelFlow — Deployment Diagram
+
+Person(customer, "Customer / Driver")
+System_Ext(carrier, "Carrier API")
+System_Ext(payment, "Payment provider")
+System_Ext(observability, "Observability platform")
+
+Deployment_Node(edge, "Public edge", "CDN / WAF / load balancer") {
+  Container(spa, "Web application", "Angular static files", "Serves the client application")
+}
+Deployment_Node(cluster, "Primary region", "Kubernetes cluster") {
+  Deployment_Node(apiPods, "Delivery API deployment", "Kubernetes pods") {
+    Container(api, "Delivery API", "Java, Spring Boot")
+  }
+  Deployment_Node(workerPods, "Worker deployments", "Kubernetes pods") {
+    Container(relay, "Outbox relay", "Java worker")
+    Container(billing, "Billing worker", "Java worker")
+    Container(notification, "Notification worker", "Java worker")
+  }
+}
+Deployment_Node(data, "Managed data services", "Regional managed services") {
+  ContainerDb(db, "Delivery database", "PostgreSQL")
+  ContainerQueue(broker, "Event broker", "Kafka")
+}
+
+Rel(customer, spa, "Uses", "HTTPS")
+Rel(spa, api, "Calls", "JSON/HTTPS")
+Rel(api, db, "Reads and writes")
+Rel(api, carrier, "Calls", "HTTPS")
+Rel(api, payment, "Calls", "HTTPS")
+Rel(db, relay, "Provides outbox records")
+Rel(relay, broker, "Publishes events")
+Rel(broker, billing, "Delivers events")
+Rel(broker, notification, "Delivers events")
+Rel(api, observability, "Sends telemetry")
+Rel(billing, observability, "Sends telemetry")
+Rel(notification, observability, "Sends telemetry")
+SHOW_LEGEND()
+@enduml

@@ -1,0 +1,17 @@
+digraph Deployment {
+  graph [bgcolor="transparent", rankdir=TB, pad="0.25", nodesep="0.45", ranksep="0.6"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=12, margin="0.18,0.12", color="#167b6a", fillcolor="#eaf7f4", fontcolor="#093d35"];
+  edge [color="#557a78", penwidth=1.4, arrowsize=0.7];
+  internet [label="Internet"];
+  cdn [label="CDN / WAF / Load Balancer", fillcolor="#eef5ff", color="#2369a6", fontcolor="#102e4a"];
+  ingress [label="API Gateway / Ingress"];
+  subgraph cluster { label="Kubernetes cluster / primary region"; color="#c9e4df"; style="rounded"; order [label="Order API pods"]; relay [label="Outbox relay"]; workers [label="Billing + notification workers"]; }
+  data [label="Managed PostgreSQL\nbackup + replica", shape=cylinder, fillcolor="#eef5ff", color="#2369a6", fontcolor="#102e4a"];
+  broker [label="Kafka cluster", shape=hexagon, fillcolor="#fff1f3", color="#cc071e", fontcolor="#7d0012"];
+  observability [label="Telemetry + alerting", fillcolor="#f0edfb", color="#6846a5", fontcolor="#342055"];
+  internet -> cdn -> ingress -> order;
+  order -> data;
+  data -> relay -> broker -> workers;
+  order -> observability [style=dashed];
+  workers -> observability [style=dashed];
+}

@@ -1,0 +1,17 @@
+@startuml
+!include c4-lib/C4_Context.puml
+LAYOUT_LEFT_RIGHT()
+title ParcelFlow — System Context
+
+Person(customer, "Customer / Driver", "Creates and tracks delivery requests")
+Person(support, "Support agent", "Investigates delivery issues")
+System(parcelFlow, "ParcelFlow", "Creates deliveries and coordinates fulfilment")
+System_Ext(carrier, "Carrier API", "Provides labels and delivery status")
+System_Ext(payment, "Payment provider", "Authorises customer payments")
+
+Rel(customer, parcelFlow, "Creates and tracks deliveries", "HTTPS")
+Rel(support, parcelFlow, "Investigates customer issues", "HTTPS")
+Rel(parcelFlow, carrier, "Requests labels; receives status", "HTTPS")
+Rel(parcelFlow, payment, "Authorises payments", "HTTPS")
+SHOW_LEGEND()
+@enduml

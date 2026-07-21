@@ -39,6 +39,12 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
+    path: 'architecture-examples',
+    loadComponent: () => import('./features/architecture-pack/architecture-pack.component')
+      .then(m => m.ArchitecturePackComponent),
+    title: 'Architecture Example Pack'
+  },
+  {
     path: 'topic/:topicId',
     loadComponent: () => import('./features/theory/theory.component')
       .then(m => m.TheoryComponent),

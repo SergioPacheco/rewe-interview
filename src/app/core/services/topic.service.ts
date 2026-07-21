@@ -120,6 +120,8 @@ export class TopicService {
       'data/exercises/stories.json',
       'data/exercises/mindset.json',
       'data/exercises/senior-questions.json'
+      ,'data/exercises/software-architecture.json'
+      ,'data/exercises/practice-coverage.json'
     ];
 
     const results = await Promise.allSettled(
@@ -148,11 +150,13 @@ export class TopicService {
 
   private async loadAllTheory(): Promise<TheoryChapter[]> {
     const files = [
+      'data/topics/theory-learning-paths.json',
       'data/topics/theory-java-basics.json',
       'data/topics/theory-java-modern.json',
       'data/topics/theory-rewe.json',
       'data/topics/theory-portfolio.json',
       'data/topics/theory-spring-boot.json',
+      'data/topics/theory-spring-senior-projects.json',
       'data/topics/theory-kafka.json',
       'data/topics/theory-rest.json',
       'data/topics/theory-sql.json',
@@ -172,7 +176,12 @@ export class TopicService {
       'data/topics/theory-behavioral.json',
       'data/topics/theory-stories.json',
       'data/topics/theory-mindset.json',
-      'data/topics/theory-software-architecture.json'
+      'data/topics/theory-software-architecture-journey.json'
+      ,'data/topics/theory-software-architecture-day-to-day.json'
+      ,'data/topics/theory-architecture-pack-link.json'
+      ,'data/topics/theory-software-architecture.json'
+      ,'data/topics/theory-learning-depth.json'
+      ,'data/topics/theory-asd-summary.json'
     ];
 
     const results = await Promise.allSettled(

@@ -8,8 +8,8 @@ import hljs from 'highlight.js/lib/common';
  * - **bold** → <strong>
  * - `inline code` → <code>
  * - ```code blocks``` → <pre><code> with syntax highlighting
- * - - bullet lists → <ul><li>
- * - Headings ## → <h4>
+ * - Ordered and unordered lists → <ol>/<ul><li>
+ * - Headings #, ##, ### → <h3>, <h4>, <h5>
  * - Line breaks
  */
 @Pipe({
@@ -42,14 +42,17 @@ export class MarkdownPipe implements PipeTransform {
       return this.enhanceCodeBlocks(this.formatMixedHtml(html));
     }
 
+    // Protect fenced code before interpreting headings or list markers.
+    // Otherwise a line such as "- item" inside a code sample becomes a list.
+    const codeBlocks: string[] = [];
+    html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_match, _lang, code) => {
+      const token = `@@MARKDOWN_CODE_BLOCK_${codeBlocks.length}@@`;
+      codeBlocks.push(`<pre class="reveal-code"><code>${this.highlightCode(code.trim())}</code></pre>`);
+      return token;
+    });
+
     // Markdown tables: | col | col |
     html = this.convertMarkdownTables(html);
-
-    // Fenced code blocks: ```...```
-    html = html.replace(/```(\w*)\n?([\s\S]*?)```/g, (_match, _lang, code) => {
-      const highlighted = this.highlightCode(code.trim());
-      return `<pre class="reveal-code"><code>${highlighted}</code></pre>`;
-    });
 
     // Inline code: `...`
     html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
@@ -60,17 +63,11 @@ export class MarkdownPipe implements PipeTransform {
     // Italic: *...*
     html = html.replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>');
 
-    // Headings: ## ... (at start of line)
-    html = html.replace(/^###\s+(.+)$/gm, '<h5>$1</h5>');
-    html = html.replace(/^##\s+(.+)$/gm, '<h4>$1</h4>');
+    html = this.renderHeadings(html);
+    html = this.convertUnorderedLists(html);
+    html = this.convertOrderedLists(html);
 
-    // Bullet lists: lines starting with - or •
-    html = html.replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>');
-    // Wrap consecutive <li> in <ul>
-    html = html.replace(/((?:<li>.*<\/li>\n?)+)/g, '<ul>$1</ul>');
-
-    // Numbered lists: lines starting with 1. 2. etc
-    html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+    html = html.replace(/@@MARKDOWN_CODE_BLOCK_(\d+)@@/g, (_match, index) => codeBlocks[Number(index)] ?? '');
 
     // Format prose fragments independently. Protecting lists is essential:
     // adding <br> between <li> elements produces the large empty gaps seen
@@ -165,9 +162,9 @@ export class MarkdownPipe implements PipeTransform {
 
     html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     html = html.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
-    html = html.replace(/^[-•]\s+(.+)$/gm, '<li>$1</li>');
-    html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
-    html = html.replace(/((?:<li>.*<\/li>\s*)+)/g, '<ul>$1</ul>');
+    html = this.renderHeadings(html);
+    html = this.convertUnorderedLists(html);
+    html = this.convertOrderedLists(html);
 
     const listPattern = /(<ul>[\s\S]*?<\/ul>)/g;
     return html
@@ -183,6 +180,35 @@ export class MarkdownPipe implements PipeTransform {
           .join('');
       })
       .join('');
+  }
+
+  private renderHeadings(html: string): string {
+    return html
+      .replace(/^###\s+(.+)$/gm, '<h5>$1</h5>')
+      .replace(/^##\s+(.+)$/gm, '<h4>$1</h4>')
+      .replace(/^#\s+(.+)$/gm, '<h3>$1</h3>');
+  }
+
+  private convertUnorderedLists(html: string): string {
+    return html.replace(/(^|\n)((?:[-•*]\s+[^\n]+(?:\n|$))+)/gm, (_match, prefix, block) => {
+      const items = block.trim().split('\n')
+        .map((line: string) => line.replace(/^[-•*]\s+/, '').trim())
+        .filter(Boolean)
+        .map((item: string) => `<li>${item}</li>`)
+        .join('');
+      return `${prefix}<ul>${items}</ul>`;
+    });
+  }
+
+  private convertOrderedLists(html: string): string {
+    return html.replace(/(^|\n)((?:\d+\.\s+[^\n]+(?:\n|$))+)/gm, (_match, prefix, block) => {
+      const items = block.trim().split('\n')
+        .map((line: string) => line.replace(/^\d+\.\s+/, '').trim())
+        .filter(Boolean)
+        .map((item: string) => `<li>${item}</li>`)
+        .join('');
+      return `${prefix}<ol>${items}</ol>`;
+    });
   }
 
   /** Gives authored Learn-tab <pre><code> snippets the same IDE shell as app-code-block. */

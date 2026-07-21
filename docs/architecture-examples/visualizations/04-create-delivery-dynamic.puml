@@ -1,0 +1,20 @@
+@startuml
+!include c4-lib/C4_Dynamic.puml
+LAYOUT_TOP_DOWN()
+title ParcelFlow — Dynamic View: Create Delivery
+
+Person(customer, "Customer / Driver")
+Container(web, "Web application", "Angular")
+Container(api, "Delivery API", "Java, Spring Boot")
+ContainerDb(db, "Delivery database", "PostgreSQL")
+System_Ext(payment, "Payment provider")
+System_Ext(carrier, "Carrier API")
+
+RelIndex(1, customer, web, "Submits delivery request", "HTTPS")
+RelIndex(2, web, api, "POST /deliveries", "JSON/HTTPS")
+RelIndex(3, api, payment, "Authorises payment", "HTTPS")
+RelIndex(4, api, carrier, "Requests label", "HTTPS")
+RelIndex(5, api, db, "Commits delivery and OrderCreated outbox record", "SQL transaction")
+RelIndex(6, api, web, "Returns created delivery", "JSON/HTTPS")
+SHOW_LEGEND()
+@enduml

@@ -99,7 +99,10 @@ export class TheoryComponent {
     if (!sub) return all;
 
     // Deterministic: filter by explicit subtopic field
-    return all.filter(ch => ch.subtopic === sub);
+    // Topic-wide learning maps are intentionally shown before every subtopic.
+    // They provide a stable practical context instead of making each page feel
+    // like an isolated list of definitions.
+    return all.filter(ch => !ch.subtopic || ch.subtopic === sub);
   });
 
   constructor() {
@@ -203,12 +206,34 @@ export class TheoryComponent {
     return q?.mission || q?.question || q?.prompt || '';
   }
 
-  getChoices(q: any): string[] {
+  getChoices(q: any): any[] {
     return q?.choices || q?.options || [];
   }
 
-  isCorrectChoice(q: any, choice: string): boolean {
-    return q?.answer === choice;
+  choiceLabel(choice: unknown): string {
+    if (typeof choice === 'string') return choice;
+    if (choice && typeof choice === 'object') {
+      const option = choice as Record<string, unknown>;
+      return String(option['label'] ?? option['text'] ?? option['code'] ?? '');
+    }
+    return String(choice ?? '');
+  }
+
+  choiceDescription(choice: unknown): string {
+    if (choice && typeof choice === 'object') {
+      return String((choice as Record<string, unknown>)['description'] ?? '');
+    }
+    return '';
+  }
+
+  isCorrectChoice(q: any, choice: unknown, index: number): boolean {
+    const correct = q?.answer ?? q?.correct ?? q?.bestOption;
+    if (typeof correct === 'number') return correct === index;
+
+    const value = choice && typeof choice === 'object'
+      ? (choice as Record<string, unknown>)['id'] ?? this.choiceLabel(choice)
+      : choice;
+    return correct === value || correct === this.choiceLabel(choice);
   }
 
   getField(q: any, field: string): string {

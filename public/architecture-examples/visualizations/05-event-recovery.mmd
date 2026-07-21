@@ -1,0 +1,15 @@
+stateDiagram-v2
+  [*] --> Committed: Delivery + outbox commit
+  Committed --> Published: Relay publishes event
+  Published --> Processing: Consumer receives event
+  Processing --> Completed: Effect persisted
+  Processing --> Retried: Transient failure
+  Retried --> Processing: Backoff retry
+  Processing --> DLQ: Repeated or invalid failure
+  DLQ --> Processing: Corrected replay
+  Completed --> [*]
+
+  note right of Processing
+    At-least-once delivery:
+    deduplicate by eventId
+  end note

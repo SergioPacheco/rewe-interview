@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { filter } from 'rxjs';
 import { TopicService } from './core/services/topic.service';
 import { ProgressService } from './core/services/progress.service';
-import { Topic, TopicGroup } from './models';
+import { Subtopic, Topic, TopicGroup } from './models';
 
 interface Breadcrumb {
   label: string;
@@ -14,6 +14,11 @@ interface Breadcrumb {
 interface SidebarGroup {
   group: TopicGroup;
   label: string;
+}
+
+interface SidebarSubtopicGroup {
+  label: string;
+  items: Subtopic[];
 }
 
 @Component({
@@ -87,6 +92,20 @@ export class AppComponent implements OnInit {
     );
   }
 
+  /**
+   * Menu phases make a topic read as a learning sequence rather than a flat
+   * list of terms. Labels are topic-specific; items retain stable IDs/routes.
+   */
+  getSubtopicGroups(topic: Topic): SidebarSubtopicGroup[] {
+    const labels = TOPIC_PHASES[topic.id] ?? ['Learning sequence'];
+    const items = topic.subtopics ?? [];
+    const size = Math.ceil(items.length / labels.length);
+
+    return labels
+      .map((label, index) => ({ label, items: items.slice(index * size, (index + 1) * size) }))
+      .filter(group => group.items.length > 0);
+  }
+
   hasExercises(topicId: string, subtopicId?: string): boolean {
     if (!subtopicId) {
       return this.topicService.getQuestions(topicId).length > 0;
@@ -150,3 +169,30 @@ export class AppComponent implements OnInit {
     }
   }
 }
+
+const TOPIC_PHASES: Record<string, string[]> = {
+  mindset: ['Frame your answer', 'Reason under constraints', 'Perform and reflect'],
+  rewe: ['Understand the role', 'Model the logistics domain', 'Prepare the conversation'],
+  oop: ['Protect state and intent', 'Model variation'],
+  solid: ['Separate responsibilities', 'Manage extension and substitution', 'Invert dependencies'],
+  collections: ['Language essentials', 'Flow and structure', 'Objects and standard APIs'],
+  'java-modern': ['Express intent safely', 'Transform data', 'Modern concurrency and evolution'],
+  sql: ['Query data correctly', 'Protect consistency', 'Diagnose performance'],
+  'system-design': ['Shape the flow', 'Protect data and scale', 'Operate the system'],
+  'software-architecture': ['Start with decisions', 'Shape boundaries and communication', 'Operate, evolve, and document'],
+  behavioral: ['Adapt and collaborate', 'Lead under pressure', 'Show motivation and judgement'],
+  stories: ['Business impact', 'Technical decisions', 'Personal narrative'],
+  portfolio: ['Product context', 'Architecture and delivery', 'Interview evidence'],
+  spring: ['Build the application core', 'Expose and persist behaviour', 'Configure, test, and operate'],
+  rest: ['HTTP fundamentals', 'Design for consumers', 'Evolve contracts safely'],
+  security: ['Identity and authorization', 'Protect web and APIs', 'Protect data and operate controls'],
+  kafka: ['Core messaging model', 'Design producers and consumers', 'Operate and evolve events'],
+  jpa: ['Map the domain', 'Query and transact', 'Tune and evolve persistence'],
+  concurrency: ['Execution foundations', 'Coordinate shared work', 'Compose and diagnose async flows'],
+  patterns: ['Encapsulate variation', 'Compose behaviour', 'Choose by trade-off'],
+  testing: ['Testing strategy', 'Unit and integration confidence', 'Production feedback'],
+  docker: ['Package predictably', 'Configure and persist safely', 'Deliver and diagnose'],
+  k8s: ['Run workloads', 'Expose and protect services', 'Scale and observe'],
+  kotlin: ['Language foundations', 'Model data safely', 'Compose asynchronous behaviour'],
+  angular: ['Build components and state', 'Connect data and forms', 'Navigate and secure journeys']
+};

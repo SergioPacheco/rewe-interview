@@ -1,0 +1,21 @@
+@startuml
+!include c4-lib/C4_Dynamic.puml
+LAYOUT_TOP_DOWN()
+title ParcelFlow — Dynamic View: Event Recovery
+
+ContainerDb(db, "Delivery database", "PostgreSQL")
+Container(relay, "Outbox relay", "Java worker")
+ContainerQueue(broker, "Event broker", "Kafka")
+Container(worker, "Billing worker", "Java worker")
+ContainerQueue(dlq, "Dead-letter topic", "Kafka")
+Person(operator, "Operations engineer", "Investigates and replays failed messages")
+
+RelIndex(1, db, relay, "Reads committed outbox record")
+RelIndex(2, relay, broker, "Publishes OrderCreated")
+RelIndex(3, broker, worker, "Delivers event")
+RelIndex(4, worker, broker, "Retries transient failure with backoff")
+RelIndex(5, worker, dlq, "Sends repeated or invalid failure")
+RelIndex(6, operator, dlq, "Investigates and corrects")
+RelIndex(7, operator, broker, "Replays corrected event")
+SHOW_LEGEND()
+@enduml

@@ -63,9 +63,11 @@ export class QuizEngineService {
       allQuestions = this.topicService.getQuestions(topicId);
     }
 
-    // P3: Exclude ORAL_ANSWER and Schema V2 from Practice (they belong in Interview tab)
+    // Architecture and portfolio practice deliberately include oral answers:
+    // both are best rehearsed as concise explanations of decisions and trade-offs.
+    // Other topics keep oral prompts in the Interview tab.
     const practiceQuestions = allQuestions.filter(q =>
-      q.type !== 'ORAL_ANSWER' &&
+      (q.type !== 'ORAL_ANSWER' || ['software-architecture', 'portfolio'].includes(topicId)) &&
       q.type !== 'SYSTEM_DESIGN' &&
       (q as any).schemaVersion !== 2
     );
@@ -181,7 +183,7 @@ export class QuizEngineService {
 
     switch (q.type) {
       case 'SINGLE_CHOICE':
-        return userAnswer === q.correct ? 'correct' : 'incorrect';
+        return userAnswer === (q.correct ?? q.answer ?? q.bestOption) ? 'correct' : 'incorrect';
 
       case 'MULTIPLE_CHOICE': {
         const selected = userAnswer as number[];

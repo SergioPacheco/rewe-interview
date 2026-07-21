@@ -1,0 +1,178 @@
+[
+  {
+    "id": "theory-spring-senior-roadmap",
+    "topic": "spring",
+    "subtopic": "spring-di",
+    "title": "Senior Spring Boot — Learn Through One Evolving Production Project",
+    "lesson": {
+      "goal": "Learn Spring Boot as a system you can change and operate, not as a list of annotations.",
+      "outcome": "A portfolio roadmap with design, tests, operational evidence and documented trade-offs.",
+      "challenge": "For every Spring feature, explain the failure it prevents and the cost it introduces."
+    },
+    "sections": [
+      {
+        "heading": "The project: Order Fulfilment Platform",
+        "content": "Build one application in deliberate slices instead of many CRUD tutorials. The project accepts orders, reserves local stock, requests payment, publishes integration events and exposes an order-status API. Each slice teaches a senior concern.\n\n<table><tr><th>Slice</th><th>What you must prove</th><th>Artifact</th></tr><tr><td>Modular order API</td><td>Where business rules, adapters and HTTP code belong</td><td>Package diagram and dependency rule</td></tr><tr><td>Order workflow</td><td>What one database transaction protects</td><td>Sequence diagram and failure tests</td></tr><tr><td>Search API</td><td>How query shape, indexes and pagination behave</td><td>SQL plan and query-count test</td></tr><tr><td>Public contract</td><td>How clients retry safely and understand errors</td><td>OpenAPI and contract tests</td></tr><tr><td>Deployment</td><td>How configuration, secrets and migrations are controlled</td><td>Configuration matrix and runbook</td></tr><tr><td>Operations</td><td>How a team detects and recovers from failure</td><td>Dashboard, alerts and incident drill</td></tr></table>\n\nThis is the standard: a senior developer can explain why a boundary exists, demonstrate it with a test or metric, and describe what happens when a dependency fails."
+      },
+      {
+        "heading": "The decide → prove → operate loop",
+        "content": "Before choosing a framework feature, state the business invariant and quality target. Then identify the boundary, make the smallest proof, and make the result observable.\n\nExample: do not say “I used <code>@Transactional</code>.” Say: “Creating an order and reserving local stock must either both succeed or both fail, so the use case owns one local transaction. Publishing the event is not part of that database transaction; I use an outbox and monitor unpublished events.”\n\nUseful official references: <a href=\"https://docs.spring.io/spring-boot/reference/testing/\" target=\"_blank\" rel=\"noopener\">testing</a>, <a href=\"https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html\" target=\"_blank\" rel=\"noopener\">transactions</a>, and <a href=\"https://docs.spring.io/spring-boot/reference/actuator/metrics.html\" target=\"_blank\" rel=\"noopener\">metrics</a>."
+      }
+    ]
+  },
+  {
+    "id": "theory-spring-di-senior-boundaries",
+    "topic": "spring",
+    "subtopic": "spring-di",
+    "title": "Project 1 — Use DI to Enforce Boundaries, Not to Hide Dependencies",
+    "lesson": {
+      "goal": "Create a module that is plain Java at its core and Spring-wired at its edges.",
+      "outcome": "A testable PlaceOrder use case with replaceable payment and persistence adapters.",
+      "challenge": "Add a second payment provider without changing the order use case."
+    },
+    "sections": [
+      {
+        "heading": "A useful module shape",
+        "content": "Organize by business capability, not one application-wide <code>controller</code>, <code>service</code> and <code>repository</code> package.\n\n<pre><code>order/\n├── api/          // HTTP DTOs and controller\n├── application/  // PlaceOrder, CancelOrder\n├── domain/       // Order, policies, domain events\n└── adapter/      // JPA, payment client, event publisher\n</code></pre>\n\nThe application layer depends on small interfaces such as <code>OrderRepository</code> and <code>PaymentGateway</code>. An adapter implements each interface. A Spring configuration or component scan wires them. This makes the use case easy to test with fakes and prevents controllers from reaching directly into persistence."
+      },
+      {
+        "heading": "Bean mechanics that matter in production",
+        "content": "Know the path: component scanning discovers candidates; conditions decide whether auto-configuration contributes a bean; dependency resolution picks an implementation; post-processors can wrap it in a proxy. This explains failures that annotations alone do not solve.\n\n• Two implementations: choose intentionally with <code>@Qualifier</code>, <code>@Primary</code>, or a collection of strategies.\n• Missing bean: inspect the condition report and active configuration before adding annotations randomly.\n• Circular dependency: normally a design signal; extract an orchestration use case or invert a dependency.\n• Mutable state in a singleton: a concurrency bug. Keep singleton services stateless and pass request state as arguments.\n\nUse constructor injection for required dependencies. It makes the object immutable after construction, fails early and exposes a large constructor as a useful warning that a class has too many responsibilities."
+      },
+      {
+        "heading": "Senior proof of understanding",
+        "content": "Implement sandbox and production payment adapters. Select the environment composition with deployment configuration, then select the provider with a typed property. Validate required credentials on startup. Document the trade-off: profiles are coarse deployment modes; they are not a general feature-flag system. Add a test that starts the context with each valid combination and fails for an ambiguous or incomplete one."
+      }
+    ]
+  },
+  {
+    "id": "theory-spring-transactions-senior-workflow",
+    "topic": "spring",
+    "subtopic": "spring-transactions",
+    "title": "Project 2 — Make the Order Workflow Correct When Dependencies Fail",
+    "lesson": {
+      "goal": "Understand the real boundary of a local Spring transaction.",
+      "outcome": "A durable order plus outbox workflow, with a tested recovery path.",
+      "challenge": "Simulate a broker outage after the database commits."
+    },
+    "sections": [
+      {
+        "heading": "Draw the transaction before writing the annotation",
+        "content": "For <code>placeOrder</code>, decide which facts must change together: order status, lines and local inventory reservation. Put those writes in one local transaction. Do not hold a database transaction open while calling payment, sending email or waiting for a broker: remote calls are slow, have partial failure and consume scarce database connections.\n\nA transaction protects an invariant; it is not a decoration for every service method. State the invariant in review: “An order cannot be CONFIRMED without persisted lines and a local reservation.”"
+      },
+      {
+        "heading": "The outbox project teaches the important trade-off",
+        "content": "Write the order and an <code>outbox_event</code> row in the same database transaction. A publisher later sends new events and records its result. Consumers must be idempotent because a publish may succeed before the publisher records success.\n\n<pre><code>BEGIN\n  insert into orders (...);\n  insert into outbox_event(id, type, payload, status) values (...);\nCOMMIT\n\n// Publisher sends NEW events. Consumer deduplicates by event id.\n</code></pre>\n\nThis gives durable handoff, not magic “exactly once” business behavior. Add replay, duplicate handling, a metric for the oldest unpublished event and an operator-owned recovery runbook."
+      },
+      {
+        "heading": "Proxy and rollback details that a senior must know",
+        "content": "Default declarative transactions use AOP proxies. A call through <code>this.someTransactionalMethod()</code> does not cross that proxy, so the annotation is not applied in normal proxy mode. Prefer extracting another use-case bean instead of self-injection.\n\nUse <code>REQUIRED</code> by default. Choose <code>REQUIRES_NEW</code> only for a true independent commit because it changes failure semantics and adds connection pressure. Spring rolls back unchecked exceptions by default; decide checked-exception rollback rules from the business outcome. A blanket <code>rollbackFor = Exception.class</code> is not a best practice. Test both rollback and commit paths."
+      }
+    ]
+  },
+  {
+    "id": "theory-spring-data-senior-query-project",
+    "topic": "spring",
+    "subtopic": "spring-data",
+    "title": "Project 3 — Keep Control of SQL, Loading and Concurrency",
+    "lesson": {
+      "goal": "Use Spring Data JPA without treating generated queries as magic.",
+      "outcome": "A stable order search with measured query count, pagination and conflict behavior.",
+      "challenge": "Load 100 orders with associations and prove serialization does not create N+1 queries."
+    },
+    "sections": [
+      {
+        "heading": "Repository methods are not an architecture",
+        "content": "Spring Data removes boilerplate; Hibernate still decides when SQL runs. Keep derived methods short and obvious. For important reads, make the shape explicit with a DTO projection or focused JPQL query. Do not return JPA entities directly from controllers: lazy relations, internal fields and persistence behavior then leak into your public API.\n\nReturn only the fields a screen needs. Capture generated SQL and query count in a PostgreSQL Testcontainers test. Verify the execution plan and index against the actual filter and sort order."
+      },
+      {
+        "heading": "Pagination, fetching and locking",
+        "content": "Offset pagination is easy but slow for deep pages and unstable when rows change. Cursor/keyset pagination is usually better for a large ordered feed when a stable sort key exists. A collection fetch join with a pageable query is a warning sign because it can multiply rows and corrupt page behavior. Use a two-step query, projection or batch loading after measuring.\n\nAdd <code>@Version</code> when concurrent updates could silently overwrite a business decision. A version conflict also needs an API decision: what does the client receive, can it retry, and what does the user see? Use pessimistic locking only when its wait, deadlock and throughput costs are justified."
+      }
+    ]
+  },
+  {
+    "id": "theory-spring-rest-senior-contract-project",
+    "topic": "spring",
+    "subtopic": "spring-rest",
+    "title": "Project 4 — Publish a Contract That Clients Can Safely Retry",
+    "lesson": {
+      "goal": "Separate HTTP translation from business rules and make error behavior stable.",
+      "outcome": "A documented order API with validation, ProblemDetail and idempotent commands.",
+      "challenge": "Handle a duplicate POST after a client timeout without creating two orders."
+    },
+    "sections": [
+      {
+        "heading": "Controller responsibilities",
+        "content": "A controller parses and validates HTTP input, calls a use case and translates the outcome into HTTP. It should not contain transaction rules, repository queries or business decisions. Use request and response DTOs as a compatibility boundary.\n\nFor <code>POST /orders</code>, define success status and <code>Location</code>, validation failures, business conflicts, authentication failures and unexpected errors. Use <code>ProblemDetail</code> or one consistent error schema. Include a stable error code and correlation ID; never return stack traces or database details."
+      },
+      {
+        "heading": "Idempotency is more than a header",
+        "content": "Accept an <code>Idempotency-Key</code> for a retryable command. Store the key, request fingerprint, state and result in the same transaction as the command. The same key and request returns the original result; the same key with different content is rejected. Define expiry and cleanup ownership.\n\nDocument pagination, sorting, filtering, time format, error schema and deprecation in OpenAPI. Test the observable contract with MockMvc or HTTP-level tests, including invalid JSON and retry paths."
+      }
+    ]
+  },
+  {
+    "id": "theory-spring-config-and-testing-senior-delivery",
+    "topic": "spring",
+    "subtopic": "spring-config",
+    "title": "Project 5 — Deploy the Same Artifact Safely",
+    "lesson": {
+      "goal": "Treat configuration as validated runtime input, not as scattered string values.",
+      "outcome": "A service that fails fast on invalid setup and never logs secrets.",
+      "challenge": "Run the same artifact locally, in CI and in production without rebuilding it."
+    },
+    "sections": [
+      {
+        "heading": "Configuration belongs to a delivery design",
+        "content": "Group related values in <code>@ConfigurationProperties</code> and validate them at startup. Map the source and precedence of each critical value: defaults in version control, environment-specific non-secrets, secrets from the approved secret store, and deployment-time overrides. Profiles select a configuration group; they are not a secret store and should not encode every business-feature combination.\n\nCreate a matrix: local uses Docker Compose; tests use Testcontainers; production receives endpoints and secrets from the platform. Add startup tests for missing values and log-masking tests for passwords, tokens and authorization headers."
+      },
+      {
+        "heading": "Testing is the delivery gate",
+        "content": "For the same project, use plain unit tests for business rules; <code>@WebMvcTest</code> for HTTP mapping and errors; <code>@DataJpaTest</code> with PostgreSQL Testcontainers for repository behavior; and a small number of <code>@SpringBootTest</code> tests for a complete flow. Choose the smallest test that catches the risk.\n\nA senior suite also tests migrations, configuration validation, authorization boundaries and regression cases from real failures. Mock remote boundaries, not your own domain until the test becomes meaningless."
+      }
+    ]
+  },
+  {
+    "id": "theory-spring-testing-senior-confidence",
+    "topic": "spring",
+    "subtopic": "spring-testing",
+    "title": "Project 5B — Build Confidence Without Starting Spring for Every Test",
+    "lesson": {
+      "goal": "Use tests to prove a specific risk at the lowest useful cost.",
+      "outcome": "A fast test suite with clear unit, slice, integration and contract responsibilities.",
+      "challenge": "Make a migration failure and an API-contract break reproducible in CI."
+    },
+    "sections": [
+      {
+        "heading": "Test layers and the failure each catches",
+        "content": "<strong>Plain unit tests</strong> protect policies, calculations and state transitions. They should run with no Spring context. <strong>Slice tests</strong> protect a narrow framework boundary: <code>@WebMvcTest</code> for validation and HTTP errors; <code>@DataJpaTest</code> for query mapping. <strong>Integration tests</strong> start the needed context and real dependencies through Testcontainers. <strong>Contract tests</strong> protect APIs or events used by another component.\n\nDo not select a test because an annotation sounds senior. Start with the question: “What realistic failure would this test catch that a cheaper test cannot?”"
+      },
+      {
+        "heading": "Minimum credible suite for the order project",
+        "content": "Keep unit tests for pricing and order-state rules. Test the search projection against PostgreSQL through Testcontainers. Test invalid JSON, validation and ProblemDetail with MockMvc. Test that order and outbox record commit together. Keep one or two full-flow tests, not hundreds.\n\nAdd a regression test when you fix a production-like failure. Control time, IDs and remote boundaries so tests are deterministic. The <a href=\"https://docs.spring.io/spring-boot/reference/testing/\" target=\"_blank\" rel=\"noopener\">official Spring Boot testing reference</a> is the source for test slices and supported utilities."
+      }
+    ]
+  },
+  {
+    "id": "theory-spring-actuator-senior-operations",
+    "topic": "spring",
+    "subtopic": "spring-actuator",
+    "title": "Project 6 — Make the Service Operable at 03:00",
+    "lesson": {
+      "goal": "Design health, metrics, logs and shutdown around operational decisions.",
+      "outcome": "A dashboard and runbook that tell an operator what is wrong and what to do.",
+      "challenge": "Simulate a slow dependency and decide whether traffic should stop, degrade or continue."
+    },
+    "sections": [
+      {
+        "heading": "Health signals answer different questions",
+        "content": "Liveness asks whether a stuck process should restart. Readiness asks whether this instance should receive traffic. They are not generic “everything is green” endpoints. A temporary optional dependency failure may be a warning, while a required database outage can make a write service unready. Define this policy from user impact.\n\nFor every API track request rate, error rate and duration. For asynchronous work add consumer lag, oldest message age, retries and dead-letter counts. Add business metrics such as orders placed and orders stuck in pending payment. Avoid unbounded metric labels such as order IDs or user IDs."
+      },
+      {
+        "heading": "Operational acceptance criteria",
+        "content": "A project is not complete until you can demonstrate: correlation IDs in logs; a trace across HTTP, database and outbound work; latency and error metrics; tested readiness policy; graceful shutdown that stops new work and finishes in-flight work within a deadline; and a runbook for an outbox backlog. Restrict Actuator access and authorize sensitive endpoint details.\n\nThis is the shift from “I enabled Actuator” to “I can explain how the team will operate this service.”"
+      }
+    ]
+  }
+]

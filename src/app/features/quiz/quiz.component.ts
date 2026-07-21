@@ -5,6 +5,7 @@ import { map } from 'rxjs';
 import { QuizEngineService } from '../../core/services/quiz-engine.service';
 import { TopicService } from '../../core/services/topic.service';
 import { SyntaxHighlightPipe } from '../../shared/pipes/syntax-highlight.pipe';
+import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 import { CodeBlockComponent } from '../../shared/components/code-block/code-block.component';
 import { AnswerResult } from '../../models';
 
@@ -15,7 +16,7 @@ import { AnswerResult } from '../../models';
 @Component({
   selector: 'app-quiz',
   standalone: true,
-  imports: [RouterLink, SyntaxHighlightPipe, CodeBlockComponent],
+  imports: [RouterLink, SyntaxHighlightPipe, MarkdownPipe, CodeBlockComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="quiz">
@@ -26,6 +27,11 @@ import { AnswerResult } from '../../models';
           <span class="quiz__topic">{{ t.icon }} {{ t.name }}</span>
         } @else if (engine.isActive()) {
           <span class="quiz__topic">🎯 Mixed practice</span>
+        }
+        @if (engine.isActive() && !engine.isComplete() && showResult()) {
+          <button class="quiz__next-btn quiz__next-btn--top" (click)="nextQuestion()">
+            NEXT <span aria-hidden="true">→</span>
+          </button>
         }
       </nav>
 
@@ -71,25 +77,28 @@ import { AnswerResult } from '../../models';
 
       <!-- Active quiz -->
       @if (engine.isActive() && !engine.isComplete()) {
-        <div class="quiz__active">
-          <!-- Progress bar -->
-          <div class="quiz__progress">
-            <div
-              class="quiz__progress-bar"
-              [style.transform]="'scaleX(' + progressFraction() + ')'"
-              role="progressbar"
-              [attr.aria-valuenow]="engine.questionNumber()"
-              [attr.aria-valuemax]="engine.totalInSession()"
-            ></div>
-            <span class="quiz__progress-text">
-              {{ engine.questionNumber() }} / {{ engine.totalInSession() }}
-            </span>
+        <div
+          class="quiz__active"
+          [class.quiz__active--answered]="showResult()"
+          [class.quiz__active--self-review]="selfReview()"
+        >
+          <div class="quiz__session-header">
+            <div class="quiz__session-meta">
+              <span class="quiz__progress-text quiz__progress-text--static">
+                Question {{ engine.questionNumber() }} of {{ engine.totalInSession() }}
+              </span>
+              @if (engine.combo() > 1) {
+                <span class="quiz__combo">🔥 {{ engine.combo() }}x combo!</span>
+              }
+            </div>
           </div>
 
-          <!-- Combo indicator -->
-          @if (engine.combo() > 1) {
-            <div class="quiz__combo">
-              🔥 {{ engine.combo() }}x combo!
+          @if (showResult() && (!selfReview() || selfAssessment())) {
+            <div class="quiz__result-banner" [attr.data-result]="selfAssessment() || lastResult()">
+              <span class="quiz__result-banner-icon">{{ (selfAssessment() || lastResult()) === 'correct' ? '✓' : '✗' }}</span>
+              <span>
+                {{ (selfAssessment() || lastResult()) === 'correct' ? 'Correct answer' : 'Review this answer' }}
+              </span>
             </div>
           }
 
@@ -243,6 +252,10 @@ import { AnswerResult } from '../../models';
             <!-- Actions -->
             <div class="quiz__actions">
               @if (!showResult()) {
+                <div class="quiz__suggested-placeholder">
+                  <span>Suggested Answer</span>
+                  <p>Reveal your answer first, then compare it with the reference.</p>
+                </div>
                 @if (isSelfReview(q)) {
                   <button class="quiz__check-btn" (click)="revealSuggestedAnswer()">REVEAL SUGGESTED ANSWER</button>
                 } @else {
@@ -255,36 +268,45 @@ import { AnswerResult } from '../../models';
                   </button>
                 }
               } @else {
-                <!-- Feedback -->
-                <div class="quiz__feedback" [attr.data-result]="lastResult()">
-                  <span class="quiz__feedback-icon">
-                    {{ lastResult() === 'correct' ? '✓' : '✗' }}
-                  </span>
-                  <span class="quiz__feedback-text">
-                    {{ selfReview() ? 'Suggested answer' : (lastResult() === 'correct' ? 'Correct!' : 'Incorrect') }}
-                  </span>
-                </div>
-
                 @if (getAnswerText(q)) {
-                  <details class="quiz__details quiz__details--open" open>
+                  <details class="quiz__details quiz__details--suggested" open>
                     <summary>📝 Suggested Answer</summary>
-                    <div class="quiz__rich-content">{{ getAnswerText(q) }}</div>
+                    <div class="quiz__rich-content" [innerHTML]="getAnswerText(q) | markdown"></div>
                   </details>
                 }
 
                 <!-- Explanation -->
                 @if (q.explanation || getField(q, 'explain')) {
                   <div class="quiz__explanation-box">
-                    <p class="quiz__explanation">{{ q.explanation || getField(q, 'explain') }}</p>
+                    <span class="quiz__explanation-label">Why this answer</span>
+                    <div
+                      class="quiz__rich-content quiz__rich-content--explanation"
+                      [innerHTML]="(q.explanation || getField(q, 'explain')) | markdown"
+                    ></div>
                   </div>
                 }
 
-                <!-- Rich content: Model Answer (for ORAL/interview questions) -->
-                @if (getField(q, 'modelAnswer')) {
-                  <details class="quiz__details">
-                    <summary>📝 Model Answer (STAR)</summary>
-                    <div class="quiz__rich-content" [innerHTML]="getField(q, 'modelAnswer')"></div>
-                  </details>
+                @if (selfReview()) {
+                  <section class="quiz__self-assessment" [attr.data-result]="selfAssessment()">
+                    <span>Self-assessment</span>
+                    <p>This is an open-ended prompt, so compare your response with the reference answer.</p>
+                    <div class="quiz__self-assessment-actions">
+                      <button
+                        type="button"
+                        [class.is-selected]="selfAssessment() === 'correct'"
+                        (click)="setSelfAssessment('correct')"
+                      >
+                        ✓ I covered the key points
+                      </button>
+                      <button
+                        type="button"
+                        [class.is-selected]="selfAssessment() === 'incorrect'"
+                        (click)="setSelfAssessment('incorrect')"
+                      >
+                        ↺ I need to review it
+                      </button>
+                    </div>
+                  </section>
                 }
 
                 <!-- Key Points -->
@@ -448,10 +470,6 @@ import { AnswerResult } from '../../models';
                     </details>
                   }
                 }
-
-                <button class="quiz__next-btn" (click)="nextQuestion()">
-                  NEXT →
-                </button>
               }
             </div>
           }
@@ -506,6 +524,7 @@ export class QuizComponent {
   showResult = signal(false);
   lastResult = signal<AnswerResult>('incorrect');
   selfReview = signal(false);
+  selfAssessment = signal<AnswerResult | null>(null);
   selectedTopicId = signal('mixed');
   selectedQuestionCount = signal(15);
 
@@ -537,12 +556,20 @@ export class QuizComponent {
   ];
 
   constructor() {
-    // Auto-start quiz when topicId is available (for /quiz/:topicId routes)
-    // For /practice route, the guard already starts the engine
+    // The router reuses this component while navigating from /quiz/:topicId
+    // to another topic. Start a new session whenever that route identity
+    // changes; otherwise the previous topic remains visible under a new URL.
     effect(() => {
       const id = this.topicId();
-      if (id && !this.engine.isActive() && !this.engine.isComplete()) {
-        this.engine.start(id, this.subtopicId());
+      const subtopicId = this.subtopicId();
+      const session = this.engine.session();
+      const routeDiffersFromSession = !session
+        || session.topicId !== id
+        || session.subtopicId !== subtopicId;
+
+      if (id && routeDiffersFromSession) {
+        this.engine.start(id, subtopicId);
+        this.resetLocal();
       }
     }, { allowSignalWrites: true });
   }
@@ -597,6 +624,13 @@ export class QuizComponent {
 
   /** Select a choice by index (for choices array) */
   selectChoice(index: number): void {
+    const q = this.engine.currentQuestion() as any;
+    if (q?.type === 'MULTIPLE_CHOICE') {
+      this.selectedOptions.update(selected =>
+        selected.includes(index) ? selected.filter(value => value !== index) : [...selected, index]
+      );
+      return;
+    }
     this.selectedOptions.set([index]);
   }
 
@@ -605,6 +639,12 @@ export class QuizComponent {
     const item = q as any;
     const correct = item.answer ?? item.correct ?? item.bestOption;
     if (typeof correct === 'number') return correct === index;
+    if (Array.isArray(correct)) {
+      const option = this.getOptions(q)[index];
+      const value = this.optionValue(option, index);
+      const label = this.optionLabel(option);
+      return correct.includes(index) || correct.includes(value) || correct.includes(label);
+    }
     const option = this.getOptions(q)[index];
     return this.optionValue(option, index) === correct || this.optionLabel(option) === correct;
   }
@@ -666,6 +706,10 @@ export class QuizComponent {
     this.showResult.set(true);
   }
 
+  setSelfAssessment(result: AnswerResult): void {
+    this.selfAssessment.set(result);
+  }
+
   nextQuestion(): void {
     this.engine.next();
     this.resetLocal();
@@ -677,6 +721,7 @@ export class QuizComponent {
     this.showResult.set(false);
     this.lastResult.set('incorrect');
     this.selfReview.set(false);
+    this.selfAssessment.set(null);
   }
 
   /** Access dynamic fields from rich exercise data */
@@ -714,25 +759,48 @@ export class QuizComponent {
 
   getAnswerText(q: unknown): string {
     const item = q as Record<string, unknown>;
-    const answer = item['modelAnswer'] ?? item['shortAnswer'] ?? item['answer'];
+    const authoredAnswer = item['modelAnswer'] ?? item['shortAnswer'];
+    if (typeof authoredAnswer === 'string') return authoredAnswer;
+
+    const refactoredCode = item['refactoredCode'];
+    if (typeof refactoredCode === 'string') return `\`\`\`java\n${refactoredCode}\n\`\`\``;
+
+    const answer = item['answer'] ?? item['correct'] ?? item['bestOption'];
     if (typeof answer === 'string') return answer;
+    if (typeof answer === 'number') {
+      const option = this.getOptions(q)[answer];
+      return option === undefined ? String(answer) : this.optionLabel(option);
+    }
     if (Array.isArray(answer)) {
       const labels = new Map(
         this.getFieldArray(q, 'items').map((entry: any) => [entry.id, entry.label])
       );
       return answer.map(value => labels.get(value) ?? String(value)).join(' → ');
     }
-    return this.getField(q, 'explain') || this.getField(q, 'explanation');
+    return '';
   }
 
   isSelfReview(q: unknown): boolean {
     const item = q as Record<string, unknown>;
-    if (this.getOptions(q).length || this.getFieldArray(q, 'snippets').length) return false;
-    return ['DESIGN_DECISION', 'CODE_REFACTOR', 'ORDER_EXECUTION', 'COMPARE_CONCEPTS', 'SCENARIO', 'REAL_EXPERIENCE'].includes(String(item['type']));
+    const type = String(item['type']);
+    if (['ORAL_ANSWER', 'CODE_REFACTOR', 'ORDER_EXECUTION', 'COMPARE_CONCEPTS', 'SCENARIO', 'REAL_EXPERIENCE'].includes(type)) {
+      return true;
+    }
+
+    // Options without an authored correct answer are discussion prompts. They
+    // should reveal their rationale for self-review instead of showing a false
+    // green result or leaving every option unmarked.
+    const hasOptions = this.getOptions(q).length > 0 || this.getFieldArray(q, 'snippets').length > 0;
+    const hasCorrectAnswer = item['answer'] !== undefined
+      || item['correct'] !== undefined
+      || item['bestOption'] !== undefined;
+    return hasOptions && !hasCorrectAnswer;
   }
 
   private isPracticeQuestion(q: any): boolean {
-    return q.type !== 'ORAL_ANSWER' && q.type !== 'SYSTEM_DESIGN' && q.schemaVersion !== 2;
+    return (q.type !== 'ORAL_ANSWER' || ['software-architecture', 'portfolio'].includes(q.topic))
+      && q.type !== 'SYSTEM_DESIGN'
+      && q.schemaVersion !== 2;
   }
 
   getFieldObj(q: unknown, field: string): any {

@@ -1,0 +1,15 @@
+flowchart LR
+  ingress[API Gateway / Ingress] --> pods[Order API Pods]
+  pods --> db[(PostgreSQL)]
+  relay[Outbox Relay] --> broker{{Broker}}
+  db --> relay
+  broker --> consumers[Billing + Notification Consumers]
+
+  pods --> collector[OpenTelemetry Collector]
+  relay --> collector
+  consumers --> collector
+  collector --> traces[Trace store]
+  collector --> metrics[Metrics store]
+  collector --> logs[Log store]
+  metrics --> alert[Burn-rate and lag alerts]
+  alert --> oncall[On-call runbook]

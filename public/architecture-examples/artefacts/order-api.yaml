@@ -1,0 +1,37 @@
+openapi: 3.1.0
+info:
+  title: ParcelFlow Order API
+  version: 1.0.0
+paths:
+  /deliveries:
+    post:
+      summary: Create a delivery request
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDeliveryRequest'
+      responses:
+        '201':
+          description: Delivery created
+        '202':
+          description: Request is accepted; final result can be queried
+        '409':
+          description: Invalid state transition or duplicate business key
+        '422':
+          description: Validation failed
+components:
+  schemas:
+    CreateDeliveryRequest:
+      type: object
+      required: [customerId, pickup, destination]
+      properties:
+        customerId: { type: string }
+        pickup: { type: string }
+        destination: { type: string }

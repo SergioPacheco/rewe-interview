@@ -184,27 +184,32 @@
                         🎯 Practice All
                       </a>
                     }
-                    @for (sub of topic.subtopics; track sub.id) {
-                      <div class="sidebar__sub-row">
-                        <a
-                          class="sidebar__subitem"
-                          [routerLink]="['/topic', topic.id]"
-                          [fragment]="sub.id"
-                          (click)="closeSidebarOnMobile()"
-                        >
-                          {{ sub.label }}
-                        </a>
-                        @if (hasExercises(topic.id, sub.id)) {
-                          <a
-                            class="sidebar__sub-practice"
-                            [routerLink]="['/quiz', topic.id, getExerciseSubtopicKey(topic.id, sub.id)]"
-                            (click)="closeSidebarOnMobile()"
-                            title="Practice {{ sub.label }}"
-                          >
-                            🎯
-                          </a>
+                    @for (phase of getSubtopicGroups(topic); track phase.label) {
+                      <section class="sidebar__phase">
+                        <p class="sidebar__phase-label">{{ phase.label }}</p>
+                        @for (sub of phase.items; track sub.id) {
+                          <div class="sidebar__sub-row">
+                            <a
+                              class="sidebar__subitem"
+                              [routerLink]="['/topic', topic.id]"
+                              [fragment]="sub.id"
+                              (click)="closeSidebarOnMobile()"
+                            >
+                              {{ sub.label }}
+                            </a>
+                            @if (hasExercises(topic.id, sub.id)) {
+                              <a
+                                class="sidebar__sub-practice"
+                                [routerLink]="['/quiz', topic.id, getExerciseSubtopicKey(topic.id, sub.id)]"
+                                (click)="closeSidebarOnMobile()"
+                                title="Practice {{ sub.label }}"
+                              >
+                                🎯
+                              </a>
+                            }
+                          </div>
                         }
-                      </div>
+                      </section>
                     }
                   </div>
                 }

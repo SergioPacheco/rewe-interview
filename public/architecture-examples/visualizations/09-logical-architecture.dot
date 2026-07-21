@@ -1,0 +1,13 @@
+digraph LogicalArchitecture {
+  graph [bgcolor="transparent", rankdir=TB, pad="0.25", nodesep="0.45", ranksep="0.6"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=12, margin="0.18,0.12", color="#167b6a", fillcolor="#eaf7f4", fontcolor="#093d35"];
+  edge [color="#557a78", penwidth=1.4, arrowsize=0.7];
+  channels [label="Channels\nweb · mobile · partner API", fillcolor="#eef5ff", color="#2369a6", fontcolor="#102e4a"];
+  application [label="Application\nuse cases · policies · orchestration"];
+  domain [label="Domain\ndelivery request · shipment · invoice\nevents · invariants", fillcolor="#fff8e8", color="#b7791f", fontcolor="#3f2d00"];
+  adapters [label="Adapters\nREST · messaging · persistence · external clients"];
+  platform [label="Cross-cutting platform\nsecurity · observability · configuration", fillcolor="#f0edfb", color="#6846a5", fontcolor="#342055"];
+  channels -> application -> domain -> adapters;
+  platform -> application [style=dashed];
+  platform -> adapters [style=dashed];
+}

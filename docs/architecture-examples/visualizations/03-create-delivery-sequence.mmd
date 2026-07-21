@@ -1,0 +1,19 @@
+sequenceDiagram
+  actor Customer
+  participant API as Order API
+  participant DB as PostgreSQL
+  participant Relay as Outbox Relay
+  participant Broker as Event Broker
+  participant Billing
+
+  Customer->>API: POST /deliveries + Idempotency-Key
+  API->>DB: Begin transaction
+  API->>DB: Insert delivery request
+  API->>DB: Insert OrderCreated outbox record
+  DB-->>API: Commit
+  API-->>Customer: 201 Created
+  Relay->>DB: Read unpublished outbox record
+  Relay->>Broker: Publish OrderCreated
+  Broker->>Billing: Deliver event
+  Billing->>Billing: Deduplicate by eventId
+  Billing->>DB: Create invoice

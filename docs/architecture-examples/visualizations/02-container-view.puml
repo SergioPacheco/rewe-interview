@@ -1,0 +1,30 @@
+@startuml
+!include c4-lib/C4_Container.puml
+LAYOUT_TOP_DOWN()
+title ParcelFlow — Container Diagram
+
+Person(customer, "Customer / Driver", "Creates and tracks deliveries")
+System_Ext(carrier, "Carrier API", "Labels and delivery status")
+System_Ext(payment, "Payment provider", "Payment authorisation")
+
+System_Boundary(parcelFlow, "ParcelFlow") {
+  Container(web, "Web application", "Angular", "Lets customers create and track deliveries")
+  Container(api, "Delivery API", "Java, Spring Boot", "Validates requests and coordinates delivery creation")
+  ContainerDb(db, "Delivery database", "PostgreSQL", "Stores deliveries and the transactional outbox")
+  Container(relay, "Outbox relay", "Java worker", "Publishes committed integration events")
+  ContainerQueue(broker, "Event broker", "Kafka", "Delivers OrderCreated events")
+  Container(billing, "Billing worker", "Java worker", "Creates invoices idempotently")
+  Container(notification, "Notification worker", "Java worker", "Sends delivery notifications")
+}
+
+Rel(customer, web, "Uses", "HTTPS")
+Rel(web, api, "Creates delivery", "JSON/HTTPS")
+Rel(api, db, "Reads and writes")
+Rel(api, carrier, "Requests labels", "HTTPS")
+Rel(api, payment, "Authorises payment", "HTTPS")
+Rel(db, relay, "Provides outbox records")
+Rel(relay, broker, "Publishes OrderCreated")
+Rel(broker, billing, "Delivers event")
+Rel(broker, notification, "Delivers event")
+SHOW_LEGEND()
+@enduml

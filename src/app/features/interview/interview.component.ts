@@ -1,7 +1,6 @@
 import { Component, computed, inject, input, effect, signal } from '@angular/core';
 import { InterviewService } from '../../core/services/interview.service';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
-import { SyntaxHighlightPipe } from '../../shared/pipes/syntax-highlight.pipe';
 import { CodeBlockComponent } from '../../shared/components/code-block/code-block.component';
 
 /**
@@ -12,7 +11,7 @@ import { CodeBlockComponent } from '../../shared/components/code-block/code-bloc
 @Component({
   selector: 'app-interview',
   standalone: true,
-  imports: [MarkdownPipe, SyntaxHighlightPipe, CodeBlockComponent],
+  imports: [MarkdownPipe, CodeBlockComponent],
   templateUrl: './interview.component.html',
   styleUrl: './interview.component.scss'
 })

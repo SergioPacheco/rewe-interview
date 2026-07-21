@@ -1,0 +1,27 @@
+digraph ParcelFlowContainers {
+  graph [bgcolor="transparent", rankdir=TB, pad="0.35", nodesep="0.45", ranksep="0.7", labelloc="t", label="Runtime Containers", fontname="Arial", fontsize=16, fontcolor="#183b36"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=11, margin="0.2,0.14", color="#167b6a", fillcolor="#eaf7f4", fontcolor="#093d35"];
+  edge [color="#557a78", penwidth=1.4, arrowsize=0.7, fontname="Arial", fontsize=9, fontcolor="#45615e"];
+  customer [label="Person: Customer / Driver", fillcolor="#fff8e8", color="#b7791f", fontcolor="#3f2d00"];
+  carrier [label="External system: Carrier API", fillcolor="#eef5ff", color="#2369a6", fontcolor="#102e4a"];
+  payment [label="External system: Payment provider", fillcolor="#eef5ff", color="#2369a6", fontcolor="#102e4a"];
+  subgraph cluster_parcelflow {
+    label="Software system: ParcelFlow"; color="#8bcbbf"; penwidth=1.5; style="rounded"; fontname="Arial"; fontsize=12; fontcolor="#0b5b4f";
+    web [label="Container: Web application\n[Angular]\nLets customers create and track deliveries"];
+    api [label="Container: Delivery API\n[Java / Spring Boot]\nValidates requests and coordinates delivery creation"];
+    db [label="Container: Delivery database\n[PostgreSQL]\nStores deliveries and the transactional outbox", shape=cylinder, fillcolor="#eef5ff", color="#2369a6", fontcolor="#102e4a"];
+    relay [label="Container: Outbox relay\n[Java worker]\nPublishes committed integration events"];
+    broker [label="Container: Event broker\n[Kafka]\nDelivers OrderCreated events", shape=hexagon, fillcolor="#fff1f3", color="#cc071e", fontcolor="#7d0012"];
+    billing [label="Container: Billing worker\n[Java worker]\nCreates invoices idempotently"];
+    notification [label="Container: Notification worker\n[Java worker]\nSends delivery notifications"];
+  }
+  customer -> web [label="uses"];
+  web -> api [label="HTTPS/JSON"];
+  api -> db [label="reads and writes"];
+  api -> carrier [label="HTTPS"];
+  api -> payment [label="HTTPS"];
+  db -> relay [label="outbox records"];
+  relay -> broker [label="publishes OrderCreated"];
+  broker -> billing [label="consumes"];
+  broker -> notification [label="consumes"];
+}

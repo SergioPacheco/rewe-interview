@@ -18,6 +18,45 @@
               <span class="chapter__eyebrow">Learning guide</span>
               <h2 class="chapter__title">{{ chapter.title }}</h2>
             </header>
+            @if (chapter.lesson; as lesson) {
+              <aside class="chapter__lesson" aria-label="Lesson guide">
+                <div>
+                  <span>WHY THIS LESSON</span>
+                  <p>{{ lesson.goal }}</p>
+                </div>
+                <div>
+                  <span>YOU WILL PRODUCE</span>
+                  <p>{{ lesson.outcome }}</p>
+                </div>
+                @if (lesson.challenge) {
+                  <div class="chapter__lesson-challenge">
+                    <span>TRY IT</span>
+                    <p>{{ lesson.challenge }}</p>
+                  </div>
+                }
+              </aside>
+            }
+            @if (chapter.visual; as visual) {
+              <figure class="chapter__visual">
+                <img [src]="visual.src" [alt]="visual.alt" loading="lazy" />
+                <figcaption>
+                  <strong>{{ visual.caption }}</strong>
+                  @if (visual.attribution && visual.attributionUrl) {
+                    <span>Illustration by <a [href]="visual.attributionUrl" target="_blank" rel="noopener">{{ visual.attribution }}</a>@if (visual.license) { · {{ visual.license }} }</span>
+                  }
+                </figcaption>
+              </figure>
+            }
+            @if (chapter.visuals?.length) {
+              <div class="chapter__visuals">
+                @for (visual of chapter.visuals; track visual.src) {
+                  <figure class="chapter__visual">
+                    <img [src]="visual.src" [alt]="visual.alt" loading="lazy" />
+                    <figcaption><strong>{{ visual.caption }}</strong></figcaption>
+                  </figure>
+                }
+              </div>
+            }
             @for (section of chapter.sections; track section.heading) {
               <section class="chapter__section">
                 <h3 class="chapter__heading">{{ section.heading }}</h3>
@@ -388,8 +427,11 @@
                 <summary>📋 All Options</summary>
                 <div class="reveal-panel__choices">
                   @for (choice of getChoices(q); track $index) {
-                    <div class="choice-item" [class.choice-item--correct]="isCorrectChoice(q, choice)">
-                      {{ isCorrectChoice(q, choice) ? '✅' : '○' }} {{ choice }}
+                    <div class="choice-item" [class.choice-item--correct]="isCorrectChoice(q, choice, $index)">
+                      <span>{{ isCorrectChoice(q, choice, $index) ? '✅' : '○' }} {{ choiceLabel(choice) }}</span>
+                      @if (choiceDescription(choice)) {
+                        <small>{{ choiceDescription(choice) }}</small>
+                      }
                     </div>
                   }
                 </div>

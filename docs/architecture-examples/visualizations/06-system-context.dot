@@ -1,0 +1,14 @@
+digraph ParcelFlowSystemContext {
+  graph [bgcolor="transparent", rankdir=LR, pad="0.35", nodesep="0.55", ranksep="0.85", labelloc="t", label="System Context", fontname="Arial", fontsize=16, fontcolor="#183b36"];
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=12, margin="0.22,0.15", color="#167b6a", fillcolor="#eaf7f4", fontcolor="#093d35"];
+  edge [color="#557a78", penwidth=1.5, arrowsize=0.7, fontname="Arial", fontsize=9, fontcolor="#45615e"];
+  customer [label="Person: Customer / Driver\nCreates and tracks deliveries", fillcolor="#fff8e8", color="#b7791f", fontcolor="#3f2d00"];
+  support [label="Person: Support agent\nResolves delivery issues", fillcolor="#fff8e8", color="#b7791f", fontcolor="#3f2d00"];
+  parcelFlow [label="Software system: ParcelFlow\nCreates deliveries and coordinates fulfilment", penwidth=2.2, fillcolor="#d8f0eb"];
+  carrier [label="External system: Carrier API\nProvides labels and delivery status", fillcolor="#eef5ff", color="#2369a6", fontcolor="#102e4a"];
+  payment [label="External system: Payment provider\nAuthorises customer payments", fillcolor="#eef5ff", color="#2369a6", fontcolor="#102e4a"];
+  customer -> parcelFlow [label="creates and tracks deliveries"];
+  support -> parcelFlow [label="investigates customer issues"];
+  parcelFlow -> carrier [label="requests labels; receives status"];
+  parcelFlow -> payment [label="authorises payment"];
+}

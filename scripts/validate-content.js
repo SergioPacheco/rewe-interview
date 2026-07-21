@@ -15,6 +15,29 @@ const path = require('path');
 const dataDir = path.resolve(__dirname, '../public/data');
 const topicsDir = path.join(dataDir, 'topics');
 const exercisesDir = path.join(dataDir, 'exercises');
+const topicServicePath = path.resolve(__dirname, '../src/app/core/services/topic.service.ts');
+
+/**
+ * Practice content is authored with descriptive subtopic names, while routing
+ * uses stable IDs. The application normalizes them with SUBTOPIC_MAP before
+ * displaying a topic. Read that same source of truth here so strict coverage
+ * reports what a user can actually open in the Practice tab.
+ */
+const loadSubtopicMap = () => {
+  const source = fs.readFileSync(topicServicePath, 'utf-8');
+  const mapStart = source.indexOf('const SUBTOPIC_MAP');
+  if (mapStart < 0) throw new Error('Could not find SUBTOPIC_MAP in TopicService');
+
+  const expression = source
+    .slice(mapStart)
+    .replace(/^const SUBTOPIC_MAP: Record<string, Record<string, string>> = /, '')
+    .replace(/;\s*$/, '');
+
+  return Function(`return (${expression})`)();
+};
+
+const subtopicMap = loadSubtopicMap();
+const normalizeSubtopic = (topic, subtopic) => subtopicMap[topic]?.[subtopic] ?? subtopic;
 
 // ═══════════════════════════════════════════════════
 // Validation helpers
@@ -123,7 +146,10 @@ const allExercises = [];
 for (const file of exerciseFiles) {
   const exercises = JSON.parse(fs.readFileSync(path.join(exercisesDir, file), 'utf-8'));
   if (Array.isArray(exercises)) {
-    allExercises.push(...exercises);
+    allExercises.push(...exercises.map(exercise => ({
+      ...exercise,
+      subtopic: normalizeSubtopic(exercise.topic, exercise.subtopic)
+    })));
   }
 }
 

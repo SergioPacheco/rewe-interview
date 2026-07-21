@@ -249,5 +249,21 @@
       "title": "Focused Angular tests in this project",
       "description": "The repository includes tests for application behavior, signal-based services and a shared pipe; coverage is useful but not presented as comprehensive."
     }
+  },
+  {
+    "id": "interview-angular-performance-1",
+    "topic": "angular",
+    "subtopic": "ng-signals",
+    "difficulty": "SENIOR",
+    "question": "How would you investigate and improve a slow Angular screen without prematurely rewriting it around signals?",
+    "shortAnswer": "I first profile the user interaction and identify whether time is spent in network, JavaScript, rendering or change detection. I reduce unnecessary work with stable list tracking, smaller component boundaries, appropriate OnPush usage and targeted derived state. Signals can make dependencies explicit, but they do not fix expensive templates, large DOMs, repeated allocations or slow APIs by themselves.",
+    "detailedAnswer": "Start from a reproducible interaction and browser/Angular profiling evidence. A slow list may need server pagination or virtualization rather than a different state primitive. In templates, avoid calling expensive methods or creating new arrays/objects on every check; move deterministic derivation to computed state and keep it cheap. Use a stable `track` identity for repeated items so Angular can preserve DOM nodes.\n\nComponent boundaries and OnPush reduce the area that needs checking when inputs are immutable and updates are explicit. Signals are valuable for local reactive state and computed dependencies, while RxJS remains appropriate for asynchronous streams and cancellation. Interoperability should be deliberate so subscriptions and effects are cleaned up and side effects do not create feedback loops.\n\nAfter each change, re-profile the same scenario and protect the result with a focused test or performance budget where feasible. The aim is measured user-perceived improvement, not maximizing use of a particular Angular feature.",
+    "keyPoints": ["Profile before choosing an optimization", "Large data and DOM problems may need pagination or virtualization", "Use stable tracking and cheap derived template state", "Signals clarify dependencies but do not remove all rendering cost"],
+    "redFlags": ["Replacing every Observable with a signal without a data-flow reason", "Using index tracking for a mutable/reordered business list", "Claiming OnPush prevents every render or change-detection cost"],
+    "followUps": [
+      { "question": "Why is a stable track key important when list items are reordered?", "hint": "It lets Angular retain the correct DOM/component instance rather than treating each position as a new identity." },
+      { "question": "When would virtualization be more valuable than optimizing change detection?", "hint": "When the primary cost is rendering and maintaining a very large number of DOM nodes." }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   }
 ]

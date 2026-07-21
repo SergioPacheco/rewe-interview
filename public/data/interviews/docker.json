@@ -109,5 +109,30 @@
       "title": "SGN3 local dependencies with Compose",
       "description": "PostgreSQL and ActiveMQ Artemis run as local Compose dependencies while WildFly can run from the IDE for a faster edit/deploy loop. Persistent and disposable data lifecycles are treated explicitly."
     }
+  },
+  {
+    "id": "interview-docker-runtime-1",
+    "topic": "docker",
+    "subtopic": "docker-basics",
+    "difficulty": "INTERMEDIATE",
+    "question": "A container starts locally but exits immediately in CI. What is your debugging approach?",
+    "shortAnswer": "I inspect the container's exit code, logs, effective command and environment before changing the image. I compare the immutable image digest and runtime configuration across environments, then check entrypoint/command semantics, filesystem permissions, required configuration, architecture and resource limits. I avoid turning the container into an interactive snowflake; the fix belongs in the image or declared runtime configuration.",
+    "detailedAnswer": "A container exits when its main process exits, so `docker ps -a`, `docker logs`, inspect output and the exit code provide the initial evidence. Common causes include an incorrect entrypoint or shell-form command, a missing environment variable, a process that daemonizes, a non-root user unable to write a directory, a bind mount masking files from the image, an incompatible CPU architecture, or an out-of-memory kill. CI may also inject different command, working directory, secret or network settings than local Compose.\n\nI reproduce using the same image digest and as much of the CI runtime configuration as possible. An overridden entrypoint can help inspect a filesystem briefly, but it is a diagnostic step, not the fix. Add a clear startup validation and structured failure log for required configuration; do not print secrets. If readiness is the problem rather than immediate exit, distinguish process liveness from a service being ready to accept work.\n\nThe final change should make behavior deterministic: explicit command, correct ownership in the image, documented environment contract and an automated smoke test that starts the production image.",
+    "keyPoints": [
+      "A container lifecycle follows its main process and exit code",
+      "Compare image digest and declared runtime configuration, not just source code",
+      "Check commands, permissions, mounts, configuration and resource limits systematically",
+      "Make the correction reproducible in the image or deployment definition"
+    ],
+    "redFlags": [
+      "Assuming a stopped container means Docker itself failed",
+      "Debugging by permanently adding an interactive shell or root user to production",
+      "Comparing only source branches while CI runs a different image digest"
+    ],
+    "followUps": [
+      { "question": "What does exit code 137 often suggest, and how would you confirm it?", "hint": "It commonly indicates SIGKILL, often due to an OOM condition; inspect runtime state/events and configured memory limits." },
+      { "question": "How can a bind mount make a working image fail locally?", "hint": "It can hide a directory or file that was present in the image beneath the mounted host path." }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   }
 ]

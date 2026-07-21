@@ -4,8 +4,7 @@ import { TopicService } from '../services/topic.service';
 import { QuizEngineService } from '../services/quiz-engine.service';
 
 /**
- * Practice guard — starts a random quiz session immediately.
- * Picks a topic with exercises and starts the engine before component loads.
+ * Practice guard — waits for the catalogue before displaying the practice setup.
  */
 export const practiceRedirectGuard: CanActivateFn = async () => {
   const topicService = inject(TopicService);
@@ -22,18 +21,9 @@ export const practiceRedirectGuard: CanActivateFn = async () => {
     });
   }
 
-  // Get all topics that have exercises
-  const topics = topicService.topics().filter(t =>
-    topicService.getQuestions(t.id).length > 0
-  );
+  // A visit to /practice always starts at setup, never in a stale session.
+  engine.end();
 
-  if (topics.length === 0) return true;
-
-  // Pick a random topic
-  const randomTopic = topics[Math.floor(Math.random() * topics.length)];
-
-  // Start the engine with all questions across all topics (mixed practice)
-  engine.startMixed();
-
+  // The component lets the user choose mixed practice or a specific topic.
   return true;
 };

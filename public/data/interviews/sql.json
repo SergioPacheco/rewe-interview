@@ -147,5 +147,21 @@
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-sql-plan-1",
+    "topic": "sql",
+    "subtopic": "sql-performance",
+    "difficulty": "SENIOR",
+    "question": "A query is fast with test data but times out in production. How do you use an execution plan to make a safe improvement?",
+    "shortAnswer": "I capture the real query shape, parameters and production-like statistics, then read the actual execution plan rather than guessing an index. I compare estimated with actual row counts, look for expensive scans, joins, sorts and spills, and verify selectivity and indexes. I change one cause at a time, measure under realistic load, and account for write cost and plan regressions.",
+    "detailedAnswer": "An execution plan is evidence about how the optimizer executed a particular query with particular statistics and parameters. `EXPLAIN ANALYZE`-style output reveals actual rows, timing and loops; a large estimate-versus-actual gap often points to stale statistics, correlated predicates or a skewed parameter distribution. A sequential scan is not automatically wrong: it can be cheaper when a query returns much of a small table.\n\nI check predicate and join selectivity, index order, whether a function or cast prevents index use, sort/hash memory, and whether the query fetches unnecessary columns or rows. A composite index must match the query's access path; adding every possible index slows writes and increases storage/maintenance. If a parameter-sensitive plan is involved, test representative values rather than optimizing one happy-path literal.\n\nBefore rollout I use a production-like dataset or safe replay, compare latency distribution and resource use, and make the schema/index migration reversible where practical. Monitor after release because data distribution changes over time.",
+    "keyPoints": ["Use actual plans and representative parameters", "Compare estimated and actual cardinality", "Optimize the access path, not an assumed index", "Balance read gains against write and maintenance cost"],
+    "redFlags": ["Adding indexes without inspecting the plan", "Calling every sequential scan a defect", "Testing only a tiny uniform dataset"],
+    "followUps": [
+      { "question": "Why can an index still be ignored by the optimizer?", "hint": "It may be less selective or more expensive than a scan, unusable for the predicate, or based on misleading statistics." },
+      { "question": "What does a large estimate-versus-actual row difference tell you?", "hint": "The optimizer's cardinality assumptions are inaccurate, so inspect statistics, skew and predicate correlation." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

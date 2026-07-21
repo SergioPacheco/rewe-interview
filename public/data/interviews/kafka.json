@@ -213,5 +213,21 @@
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kafka-schema-1",
+    "topic": "kafka",
+    "subtopic": "kafka-producer",
+    "difficulty": "SENIOR",
+    "question": "How do you evolve an event schema when producers and consumers deploy independently?",
+    "shortAnswer": "I treat the event as a versioned public contract. I prefer backward-compatible, additive evolution, keep a stable event identity and semantics, validate compatibility in CI through a schema registry or contract tests, and plan consumer migration before removing fields. A topic is not a license to change meaning silently.",
+    "detailedAnswer": "Independent deployment means old consumers can read new messages and new consumers may encounter retained old messages. Additive optional fields with defaults are usually safer than removal, type changes or repurposing a field's meaning. Compatibility direction matters: backward compatibility lets new consumers read old data; forward compatibility lets old consumers tolerate new data; the chosen policy must fit rollout and retention.\n\nUse an explicit schema format and registry where appropriate, or enforce JSON/event contracts with tests and versioned documentation. Include event type/version metadata if multiple shapes are valid, but do not rely on a version number as the only migration strategy. For breaking semantic changes, publish a distinct event type/topic or run a deliberate dual-publish migration with clear ownership, deduplication and sunset criteria. Consumers must ignore unknown fields where their format supports it and handle missing optional fields intentionally.\n\nTest replay from retained historical events, not only messages built by today's producer. Monitor deserialization failures and lag during rollout; a schema change is incomplete until consumers and operational recovery are safe.",
+    "keyPoints": ["Events are durable contracts across independent deployments", "Additive changes are safer than changing meaning or type", "Compatibility direction must match rollout and retention", "Replay historical messages during migration testing"],
+    "redFlags": ["Changing a field's business meaning without a new contract", "Assuming all consumers deploy at the same time", "Testing only messages emitted by the new producer"],
+    "followUps": [
+      { "question": "When is a new event type safer than another schema version?", "hint": "When the business meaning or processing semantics genuinely differ, not just the representation." },
+      { "question": "Why can a new consumer still need to read old schema versions?", "hint": "Retained topics, retries and replays can deliver historical events long after deployment." }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
   }
 ]

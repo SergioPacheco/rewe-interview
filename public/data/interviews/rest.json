@@ -118,5 +118,34 @@
       "title": "senai-services API versions",
       "description": "Maintained path-versioned endpoints that shared stable business behavior while isolating incompatible transport contracts and keeping older consumers operational during migration."
     }
+  },
+  {
+    "id": "interview-rest-errors-1",
+    "topic": "rest",
+    "subtopic": "rest-design",
+    "difficulty": "SENIOR",
+    "question": "How would you design API error responses that are useful to clients without leaking implementation details?",
+    "clarifyingQuestions": [
+      "Is this a public API, an internal API, or both?",
+      "Which errors can a client correct, retry, or safely show to an end user?"
+    ],
+    "shortAnswer": "I use HTTP status codes for the broad outcome and a stable, documented problem format for machine-readable details. Validation errors identify invalid fields; domain conflicts describe the violated business rule; unexpected failures expose a correlation identifier, never stack traces or internal topology. I make retryability explicit and keep the error contract versioned and tested.",
+    "detailedAnswer": "An error response is part of the API contract, not a log excerpt. A format such as RFC 9457 Problem Details can carry a stable type URI/code, title, status, detail, instance/correlation ID and carefully chosen extensions. For example, an invalid request may return 400 with field violations; an authenticated caller without permission receives 403; a state conflict may return 409; and an optimistic-concurrency precondition failure is commonly 412. The exact mapping must be documented consistently.\n\nI separate information by audience. Clients need a stable code, a safe message, invalid-field metadata where appropriate, and whether retrying can help. Operators need structured logs, traces and the underlying exception connected through the correlation ID. The response must not reveal SQL, class names, credentials, authorization policy details, or whether a protected resource exists when that would aid enumeration. A generic 500 response is appropriate for unexpected faults, while observability retains the diagnostic detail.\n\nFinally, test errors as contracts: status, content type, stable code, validation shape, localization policy and absence of sensitive data. Do not force clients to parse prose, and do not claim that every 5xx is safe to retry; retry safety depends on the operation and idempotency design.",
+    "keyPoints": [
+      "Use a stable machine-readable error contract alongside HTTP status codes",
+      "Separate safe client guidance from operational diagnostic detail",
+      "Represent validation, authorization, conflict and unexpected failures differently",
+      "Test error responses as a compatibility-sensitive API contract"
+    ],
+    "redFlags": [
+      "Returning stack traces, SQL messages or framework exception names to clients",
+      "Making clients parse a human sentence to decide what to do",
+      "Treating every server error as automatically retryable"
+    ],
+    "followUps": [
+      { "question": "When would you return 409 versus 412 for a failed update?", "hint": "Discuss a domain-state conflict versus failure of an explicit request precondition such as If-Match." },
+      { "question": "How can an API return a correlation ID without making it predictable or sensitive?", "hint": "Generate a request-scoped opaque identifier and keep the full diagnostic context only in protected telemetry." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

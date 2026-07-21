@@ -1,7 +1,38 @@
 /* Quiz — REWE-inspired clean, card-based design */
 
 .quiz {
-  max-width: var(--content-max-width);
+  /* Bridge the legacy quiz styles to the current REWE design tokens. */
+  --content-max-width: 70rem;
+  --space-1: var(--sp-1);
+  --space-2: var(--sp-2);
+  --space-3: var(--sp-3);
+  --space-4: var(--sp-4);
+  --space-5: var(--sp-5);
+  --space-6: var(--sp-6);
+  --space-7: var(--sp-7);
+  --space-8: var(--sp-8);
+  --space-10: var(--sp-10);
+  --space-16: var(--sp-8);
+  --color-surface: var(--color-white);
+  --color-surface-2: var(--color-gray-100);
+  --color-bg: var(--color-gray-50);
+  --color-text-secondary: var(--color-gray-600);
+  --color-text-muted: var(--color-gray-400);
+  --color-text-inverse: var(--color-white);
+  --color-primary-light: var(--color-red-light);
+  --text-xs: var(--fs-xs);
+  --text-sm: var(--fs-small);
+  --text-base: var(--fs-body);
+  --text-md: 1.125rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --weight-medium: var(--fw-medium);
+  --weight-semibold: var(--fw-semibold);
+  --weight-bold: var(--fw-bold);
+  --radius-full: var(--radius-pill);
+  --transition-fast: var(--duration-fast) var(--ease);
+  --transition-slow: var(--duration-base) var(--ease);
+  --shadow-md: var(--shadow-elevated);
   margin: 0 auto;
 
   &__nav {
@@ -48,7 +79,7 @@
   align-items: center;
   gap: var(--space-2);
   padding: var(--space-3) var(--space-6);
-  background: var(--color-primary);
+  background: var(--color-red);
   color: var(--color-text-inverse);
   border: none;
   border-radius: var(--radius-full);
@@ -57,6 +88,7 @@
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 
   &:hover {
+    background: var(--color-red-hover);
     transform: scale(1.03);
     box-shadow: var(--shadow-md);
   }
@@ -64,6 +96,76 @@
   &:active {
     transform: scale(0.98);
   }
+}
+
+/* Global Practice setup */
+.quiz__setup {
+  max-width: 54rem;
+  margin: var(--sp-4) auto;
+  padding: var(--sp-5);
+  background: var(--color-white);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-card);
+
+  h1 {
+    margin: var(--space-2) 0;
+    font-size: var(--fs-display);
+  }
+
+  > p {
+    max-width: 40rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+}
+
+.quiz__eyebrow {
+  color: var(--color-primary);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: .08em;
+}
+
+.quiz__setup-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  margin: var(--sp-3) 0 var(--sp-2);
+}
+
+.quiz__field {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+
+  select {
+    width: 100%;
+    padding: var(--space-3);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+  }
+}
+
+.quiz__setup-note {
+  display: grid;
+  gap: var(--space-1);
+  margin-bottom: var(--sp-3);
+  padding: var(--sp-2);
+  border-left: 3px solid var(--color-red);
+  background: var(--color-red-light);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+
+  span { color: var(--color-text-secondary); font-size: var(--text-sm); }
+}
+
+@media (max-width: 40rem) {
+  .quiz__setup { padding: var(--sp-3); }
+  .quiz__setup-grid { grid-template-columns: 1fr; }
 }
 
 /* Active quiz */
@@ -338,7 +440,7 @@
 
 .quiz__check-btn {
   padding: var(--space-3) var(--space-8);
-  background: var(--color-primary);
+  background: var(--color-red);
   color: var(--color-text-inverse);
   border: none;
   border-radius: var(--radius-full);
@@ -348,6 +450,7 @@
   transition: transform var(--transition-fast), opacity var(--transition-fast);
 
   &:hover:not(:disabled) {
+    background: var(--color-red-hover);
     transform: scale(1.03);
   }
 
@@ -359,7 +462,7 @@
 
 .quiz__next-btn {
   @extend .quiz__check-btn;
-  background: var(--color-text);
+  background: var(--color-red);
 }
 
 /* Feedback */

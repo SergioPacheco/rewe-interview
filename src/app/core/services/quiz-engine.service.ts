@@ -202,14 +202,14 @@ export class QuizEngineService {
       // FILL_BLANK: user selects from choices
       case 'FILL_BLANK':
       case 'FILL_THE_BLANK': {
-        const answer = (userAnswer as string).trim().toLowerCase();
+        const answer = this.resolveOptionValue(q, userAnswer).trim().toLowerCase();
         const correct = (q.answer || '').trim().toLowerCase();
         return answer === correct ? 'correct' : 'incorrect';
       }
 
       // PICK_INVALID: user picks the wrong one (answer is the invalid id)
       case 'PICK_INVALID': {
-        return userAnswer === q.answer ? 'correct' : 'incorrect';
+        return this.resolveOptionValue(q, userAnswer) === q.answer ? 'correct' : 'incorrect';
       }
 
       // ORAL_ANSWER: self-evaluation — always "correct" (no wrong answer)
@@ -258,8 +258,10 @@ export class QuizEngineService {
 
       default:
         // For unknown types, check if answer matches
-        if (q.answer !== undefined) {
-          return userAnswer === q.answer ? 'correct' : 'incorrect';
+        const correct = q.answer ?? q.correct ?? q.bestOption;
+        if (correct !== undefined) {
+          if (typeof correct === 'number') return userAnswer === correct ? 'correct' : 'incorrect';
+          return this.resolveOptionValue(q, userAnswer) === correct ? 'correct' : 'incorrect';
         }
         return 'correct'; // Self-evaluation types
     }
@@ -273,5 +275,17 @@ export class QuizEngineService {
       [array[i], array[j]] = [array[j], array[i]];
     }
     return array;
+  }
+
+  /** Resolve an option index to its authored value, label or id. */
+  private resolveOptionValue(question: any, userAnswer: unknown): string {
+    if (typeof userAnswer !== 'number') return String(userAnswer ?? '');
+    const options = question.choices ?? question.options;
+    const option = Array.isArray(options) ? options[userAnswer] : undefined;
+    if (typeof option === 'string') return option;
+    if (option && typeof option === 'object') {
+      return String(option.id ?? option.text ?? option.label ?? '');
+    }
+    return String(userAnswer);
   }
 }

@@ -14,11 +14,14 @@
       @if (visibleChapters().length > 0) {
         @for (chapter of visibleChapters(); track chapter.id) {
           <article class="chapter">
-            <h2 class="chapter__title">{{ chapter.title }}</h2>
+            <header class="chapter__header">
+              <span class="chapter__eyebrow">Learning guide</span>
+              <h2 class="chapter__title">{{ chapter.title }}</h2>
+            </header>
             @for (section of chapter.sections; track section.heading) {
               <section class="chapter__section">
                 <h3 class="chapter__heading">{{ section.heading }}</h3>
-                <div class="chapter__body" [innerHTML]="section.content"></div>
+                <div class="chapter__body" [innerHTML]="section.content | markdown"></div>
               </section>
             }
           </article>

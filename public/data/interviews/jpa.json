@@ -118,5 +118,30 @@
       "title": "SGN3 JPQL and PostgreSQL-specific SQL",
       "description": "Used JPQL for entity-oriented operations and native PostgreSQL queries for reporting and features such as LATERAL joins, UNION-based result sets and bulk read models, with values consistently parameterized."
     }
+  },
+  {
+    "id": "interview-jpa-fetching-1",
+    "topic": "jpa",
+    "subtopic": "jpa-relations",
+    "difficulty": "SENIOR",
+    "question": "A list endpoint becomes slow after adding an association to a JPA entity. How do you diagnose and fix it without blindly changing everything to eager fetching?",
+    "shortAnswer": "I measure the actual queries and request shape first. Lazy associations can cause N+1 queries when traversed per row, while eager mappings can overfetch and create other queries or joins in unrelated use cases. I keep mappings conservative and choose fetching per use case with a fetch join, entity graph, batch fetching, or a DTO projection, then verify query count, cardinality, pagination behavior and memory use.",
+    "detailedAnswer": "The first step is evidence: enable SQL and parameter logging safely in a non-production-like environment, inspect traces/metrics, and reproduce with representative cardinality. An N+1 pattern often appears as one query for a page of parents followed by one query per parent or collection. Changing a relation to EAGER is not a general cure: it changes every loading path, can fetch data nobody needs, and may still issue secondary selects.\n\nFor a specific read use case, select the data intentionally. A JPQL fetch join or entity graph can load a to-one relation efficiently. For a to-many relation, consider batch fetching or a separate bounded query; joining a collection with pagination can multiply rows and make page semantics unreliable. If the endpoint is read-oriented, a DTO projection frequently avoids managed-entity overhead and accidental lazy traversal. Make sure indexes support the predicates and joins, and distinguish database time from serialization or mapping time.\n\nThe interview-quality answer includes a regression test or query-count assertion where useful, plus production observation. The goal is not the fewest SQL statements at any cost; it is predictable data access for the requested representation.",
+    "keyPoints": [
+      "Confirm the query pattern and cardinality before changing mappings",
+      "EAGER is a global mapping choice, not a universal N+1 fix",
+      "Choose fetch joins, entity graphs, batching or projections per read use case",
+      "Treat collection fetch joins and pagination with special care"
+    ],
+    "redFlags": [
+      "Setting every association to EAGER to silence LazyInitializationException",
+      "Fetching a collection join with pagination without checking duplicated rows and counts",
+      "Diagnosing N+1 from source code alone without observing executed queries"
+    ],
+    "followUps": [
+      { "question": "Why can a fetch join over a one-to-many relation break a paged endpoint?", "hint": "Each parent can appear once per child in the SQL result, so row-level limit/offset no longer corresponds cleanly to parents." },
+      { "question": "When is a DTO projection preferable to returning a managed entity?", "hint": "When the endpoint has a specific read shape and does not need entity lifecycle or change tracking." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

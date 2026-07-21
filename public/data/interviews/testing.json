@@ -110,5 +110,30 @@
       "title": "Production integration tests plus project Testcontainers",
       "description": "Production work covers mocked integration boundaries and PostgreSQL-specific tests. The SinapiPRO project provides hands-on Testcontainers and migration evidence; that project usage should not be presented as company-production Testcontainers experience."
     }
+  },
+  {
+    "id": "interview-testing-regression-1",
+    "topic": "testing",
+    "subtopic": "test-pyramid",
+    "difficulty": "SENIOR",
+    "question": "A production defect escaped despite high coverage. How would you turn it into a useful regression test and improve the test strategy?",
+    "shortAnswer": "I first reproduce the customer-visible failure with the smallest realistic test at the boundary where the faulty assumption lives. I add a regression test that would have failed before the fix, then ask which risk was missing: input combinations, integration behavior, authorization, timing, data migration, or observability. High line coverage may have executed the code without asserting the broken behavior.",
+    "detailedAnswer": "Start with the incident facts rather than the proposed code fix: input, state, configuration, dependency response, timing and expected business outcome. Preserve a minimized fixture that is safe and deterministic. If a pure business rule was wrong, a unit test is often the best regression guard. If the failure came from SQL dialect, serialization, security wiring, a migration or broker behavior, use an integration or contract test that includes that real boundary.\n\nThen perform a small learning review. Was the requirement ambiguous? Did tests assert implementation calls rather than outcomes? Did generated fixtures omit an important state? Did an end-to-end path lack a health signal? Add the narrowest durable control, not a slow end-to-end test for every defect. Property-based or parameterized tests can help where a family of boundary values was missed; mutation testing can reveal weak assertions in selected critical modules.\n\nA healthy team records the regression test with the incident, removes obsolete tests if behavior changed intentionally, and watches whether similar issues recur. The purpose is confidence and learning, not using the incident to inflate coverage numbers.",
+    "keyPoints": [
+      "Create a test that demonstrably fails against the pre-fix behavior",
+      "Place the regression guard at the boundary that actually failed",
+      "Use the defect to identify a missing risk model, not merely a missing line",
+      "Prefer the narrowest deterministic test that gives durable confidence"
+    ],
+    "redFlags": [
+      "Adding only a manual checklist after a reproducible defect",
+      "Adding a slow end-to-end test without understanding the failure boundary",
+      "Treating high coverage as evidence that the relevant behavior was asserted"
+    ],
+    "followUps": [
+      { "question": "When would property-based testing be a better regression guard than one example?", "hint": "When an invariant should hold across many generated inputs and the escaped defect suggests an entire class of cases." },
+      { "question": "What should a regression test prove before the production fix is merged?", "hint": "It should fail for the faulty behavior and pass only once the intended correction exists." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

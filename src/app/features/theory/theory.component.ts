@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
@@ -15,7 +15,10 @@ import { InterviewComponent } from '../interview/interview.component';
   standalone: true,
   imports: [MarkdownPipe, SyntaxHighlightPipe, InterviewComponent],
   templateUrl: './theory.component.html',
-  styleUrl: './theory.component.scss'
+  styleUrl: './theory.component.scss',
+  // Learn chapters render trusted authored HTML through [innerHTML]. Disabling
+  // emulated encapsulation lets the chapter typography reach those dynamic nodes.
+  encapsulation: ViewEncapsulation.None
 })
 export class TheoryComponent {
   private route = inject(ActivatedRoute);
@@ -29,10 +32,19 @@ export class TheoryComponent {
     { initialValue: '' }
   );
 
-  readonly selectedSubtopic = toSignal(
+  /** Raw URL fragment: can name either a subtopic or a tab. */
+  readonly fragment = toSignal(
     this.route.fragment.pipe(map(f => f ?? null)),
     { initialValue: null as string | null }
   );
+
+  /** Tab fragments must not be used as a subtopic filter. */
+  readonly selectedSubtopic = computed(() => {
+    const fragment = this.fragment();
+    return fragment === 'learn' || fragment === 'practice' || fragment === 'interview'
+      ? null
+      : fragment;
+  });
 
   // State
   activeTab = signal<'learn' | 'practice' | 'interview'>('learn');
@@ -42,6 +54,7 @@ export class TheoryComponent {
   practiceReady = signal(false);
   private lastTopicId = '';
   private lastSubtopic: string | null = '';
+  private lastFragment: string | null = '';
 
   // Computed
   readonly topic = computed(() => this.topicService.getTopic(this.topicId()));
@@ -94,23 +107,37 @@ export class TheoryComponent {
     effect(() => {
       const topicId = this.topicId();
       const subtopic = this.selectedSubtopic();
+      const requestedTab = this.fragment();
       const isLoading = this.loading();
 
       if (isLoading || !topicId) return;
 
       // Only reset tab when the route actually changes (not on re-renders)
-      const routeChanged = topicId !== this.lastTopicId || subtopic !== this.lastSubtopic;
+      const routeChanged = topicId !== this.lastTopicId ||
+        subtopic !== this.lastSubtopic || requestedTab !== this.lastFragment;
       this.lastTopicId = topicId;
       this.lastSubtopic = subtopic;
+      this.lastFragment = requestedTab;
 
       if (!routeChanged) return;
+
+      // A route change invalidates any previous quiz session. End it before
+      // starting a requested Practice session below.
+      if (this.engine.isActive()) {
+        this.engine.end();
+      }
 
       // Reset tab state when navigation changes
       const hasTheory = this.visibleChapters().length > 0;
       const hasExercises = this.exerciseCount() > 0;
       const topicData = this.topic();
 
-      if (!hasTheory && hasExercises) {
+      if (requestedTab === 'interview') {
+        this.activeTab.set('interview');
+      } else if (requestedTab === 'practice' && hasExercises) {
+        this.activeTab.set('practice');
+        this.startEngine();
+      } else if (!hasTheory && hasExercises) {
         this.activeTab.set('practice');
         this.startEngine();
       } else if (!hasTheory && !hasExercises && topicData?.mode === 'interview') {
@@ -118,11 +145,6 @@ export class TheoryComponent {
         this.activeTab.set('interview');
       } else {
         this.activeTab.set('learn');
-      }
-
-      // Stop any running practice session when navigating
-      if (this.engine.isActive()) {
-        this.engine.end();
       }
 
       this.practiceReady.set(true);

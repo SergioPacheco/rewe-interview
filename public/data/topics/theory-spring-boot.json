@@ -128,6 +128,78 @@
     "subtopic": "spring-actuator"
   },
   {
+    "id": "theory-spring-data-production-thinking",
+    "title": "Spring Data JPA — Production Thinking Without Pretending Experience",
+    "sections": [
+      {
+        "heading": "What transfers directly from Java EE",
+        "content": "You do not need Spring production experience to reason well about persistence risks. The underlying ORM concerns are the same ones you already know from JPA/Hibernate: transaction boundaries, lazy loading, query volume, indexes, pagination, locking and data consistency. Spring Data removes repository boilerplate; it does not remove those responsibilities.\n\n<strong>Safe interview framing:</strong> \"I have used JPA/Hibernate in production in Java EE. I have studied how Spring Data JPA wraps the same persistence model. I would inspect generated SQL, define transaction boundaries in the service layer, and validate the framework-specific configuration with the team before changing a production path.\""
+      },
+      {
+        "heading": "A practical investigation checklist",
+        "content": "When an endpoint is slow, do not begin by changing annotations. Identify the request, inspect its SQL and measure the query count. An N+1 issue usually means a list query loads entities and then triggers extra queries while serializing or mapping associations.\n\n<strong>Questions to ask:</strong> • Is the response returning more fields than the caller needs? Use a DTO or projection. • Is an association really needed for this screen? Choose a fetch strategy deliberately. • Does a fetch join still work with pagination? A collection fetch join can distort page results. • Is the database index aligned with the filter and sort order?\n\nDo not say you tuned Spring Data JPA in production. Say that you know this diagnostic process from production JPA work and would apply it with Spring-specific observability and review."
+      },
+      {
+        "heading": "Concurrency and consistency",
+        "content": "Optimistic locking is a design option when concurrent updates must not silently overwrite each other. An entity carries a version field; an update succeeds only if the version still matches. The important interview point is not the annotation: use a lock only when concurrent updates can violate a business invariant, define how the caller handles conflict, and test that path. This reasoning transfers directly from enterprise Java experience."
+      }
+    ],
+    "topic": "spring",
+    "subtopic": "spring-data"
+  },
+  {
+    "id": "theory-spring-rest-safe-api-thinking",
+    "title": "Spring MVC — Safe API Reasoning and an Honest Interview Answer",
+    "sections": [
+      {
+        "heading": "The framework changes; the API contract does not",
+        "content": "A Spring controller should remain thin: parse HTTP input, validate it, call a use case, and translate the result into an HTTP response. That is the same separation you already know from JAX-RS. Business rules belong in the service or domain layer; persistence stays behind a repository boundary.\n\n<strong>Safe wording:</strong> \"My production REST experience is with JAX-RS. In Spring MVC the annotations and test tools differ, but I would keep the same API discipline: DTOs at the boundary, validation at input, consistent errors, and business logic outside the controller.\""
+      },
+      {
+        "heading": "Error handling and security questions",
+        "content": "A useful error response lets a client act without exposing stack traces or internal implementation. Decide the error code, message, field violations and correlation identifier together, then centralize the mapping in <code>@RestControllerAdvice</code>. This is the Spring equivalent of the centralized exception translation pattern you already know.\n\nBefore proposing Spring Security configuration, clarify the identity provider, token format, authorization model, public endpoints, service-to-service calls and audit requirements. A safe answer is: \"I understand the common Spring Security model, but I would validate the organisation's identity and gateway standards before configuring it for production.\""
+      }
+    ],
+    "topic": "spring",
+    "subtopic": "spring-rest"
+  },
+  {
+    "id": "theory-spring-config-safe-delivery",
+    "title": "Configuration & Delivery — What You Can Explain Honestly",
+    "sections": [
+      {
+        "heading": "Configuration is input, not source code",
+        "content": "The principle transfers from Java EE and MicroProfile Config: environment-specific values must be externalized, typed where possible, validated on startup, and never committed as secrets. In Spring Boot, <code>@ConfigurationProperties</code> groups related settings into a typed object; profiles select environment-specific configuration.\n\n<strong>Important distinction:</strong> a profile is not a secret-management solution. Passwords, tokens and certificates should come from the organisation's approved secret store or runtime environment, not from a committed <code>application-prod.yml</code> file."
+      },
+      {
+        "heading": "A safe production conversation",
+        "content": "You can discuss a deployment checklist without presenting it as Spring production history: confirm which profile and configuration source are active; validate required values at startup; ensure logs never print credentials; make a configuration change observable and reversible; and confirm ownership of database, messaging and external-service settings with the platform team.\n\n<strong>Interview wording:</strong> \"I have handled externalized configuration in enterprise Java. For Spring Boot, I have studied profiles and typed configuration properties. I would follow the team's deployment and secret-management standards rather than inventing a configuration scheme alone.\""
+      }
+    ],
+    "topic": "spring",
+    "subtopic": "spring-config"
+  },
+  {
+    "id": "theory-spring-actuator-honest-operations",
+    "title": "Actuator & Operations — Fluent, Precise, and Honest",
+    "sections": [
+      {
+        "heading": "What you can safely demonstrate",
+        "content": "You can explain why health, metrics and logs matter without saying that you operated Spring Boot in production. Actuator exposes framework hooks for these concerns; the operational decision is still human: decide what proves the service is alive, what proves it can receive traffic, and which failures should alert a team.\n\n<strong>Transferable production experience:</strong> latency diagnosis, log correlation, query analysis, queue monitoring and incident investigation are operational skills. The Spring-specific piece to learn is how Actuator and Micrometer expose signals to the platform."
+      },
+      {
+        "heading": "Readiness is not the same as liveness",
+        "content": "A live process is not always ready to serve traffic. For example, an application may have started but still be unable to use a required database or message broker. A readiness signal protects callers from that state; a liveness signal helps the platform decide whether a process is stuck and needs restarting.\n\nDo not turn every dependency hiccup into a restart loop. The correct health policy depends on whether the service can degrade safely, whether a dependency is essential for each request, and how the platform handles retries. Those are the questions to bring to a design review."
+      },
+      {
+        "heading": "Interview answer: studied Spring, real operational foundations",
+        "content": "<strong>Use this answer:</strong> \"I have not operated Spring Boot services in production yet. My production experience is with enterprise Java systems, where I investigated latency, logs, database behaviour and asynchronous processing. I understand that in Spring Boot, Actuator and metrics provide the hooks for health and observability. I would first learn the team's dashboards, alert rules and probe policy, then use the same diagnostic discipline I already apply in production.\"\n\nThis is stronger than claiming familiarity you cannot defend: it names the gap, connects it to real evidence, and shows how you would become effective responsibly."
+      }
+    ],
+    "topic": "spring",
+    "subtopic": "spring-actuator"
+  },
+  {
     "id": "theory-spring-transactions",
     "title": "Spring Transactions & Proxies",
     "sections": [

@@ -175,5 +175,21 @@
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-concurrency-cancellation-1",
+    "topic": "concurrency",
+    "subtopic": "conc-completable",
+    "difficulty": "SENIOR",
+    "question": "How do you design cancellation, timeouts and resource cleanup in an asynchronous Java workflow?",
+    "shortAnswer": "A timeout must be part of the end-to-end budget and cancellation must reach work that can actually stop. I propagate deadlines, make blocking I/O and task code interruption-aware where supported, release resources in finally/structured scopes, and distinguish abandoning a caller's wait from cancelling the underlying side effect. Retries and compensation need explicit idempotency semantics.",
+    "detailedAnswer": "`CompletableFuture.orTimeout` can complete a future exceptionally, but it does not magically stop a remote request or arbitrary underlying task. I define a request deadline and split it intentionally across downstream calls instead of granting every dependency a full independent timeout. For code I own, check interruption at blocking points and loops, restore interrupt status when catching `InterruptedException` unless deliberately translating it, and close resources deterministically. HTTP/database clients need their own connection/read/query timeout configuration.\n\nCancellation is a business decision as well as a thread mechanism. If an order command was already accepted by a remote system, cancelling the local future cannot undo it; use an idempotency key, status lookup or compensating action. Ensure late completions cannot mutate discarded request state, and observe timeout/cancellation counts separately from dependency failures.\n\nThe candidate should avoid both extremes: never timing out leads to resource exhaustion; indiscriminately interrupting shared tasks can corrupt ownership assumptions. Define who owns the work and its cleanup.",
+    "keyPoints": ["Timeout a total deadline, not only a local wait", "Future timeout does not necessarily cancel underlying I/O", "Make cleanup and task ownership explicit", "Treat externally visible side effects with idempotency or compensation"],
+    "redFlags": ["Assuming cancellation undoes a completed remote side effect", "Swallowing InterruptedException", "Giving every downstream call the entire request timeout budget"],
+    "followUps": [
+      { "question": "Why might cancelling a CompletableFuture not stop database work?", "hint": "The future and the driver's execution/cancellation mechanism may be separate; configure and invoke the driver's supported controls." },
+      { "question": "What should happen when a client disconnects after a payment command was sent?", "hint": "Do not assume reversal; reconcile using an idempotency key or operation status and make the result recoverable." }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
   }
 ]

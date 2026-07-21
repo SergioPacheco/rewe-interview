@@ -126,5 +126,69 @@
         "content": "I track Java evolution pragmatically. Records and sealed classes improve domain modeling today. Virtual threads eliminate the reactive vs imperative debate for I/O-bound services. I adopt features that reduce complexity without creating migration risk for the team."
       }
     ]
+  },
+  {
+    "id": "theory-modern-records-deep",
+    "topic": "java-modern",
+    "subtopic": "modern-records",
+    "title": "Records in Production — Immutability, Equality and Boundaries",
+    "sections": [
+      {
+        "heading": "A record is shallowly immutable",
+        "content": "Record components are final references; they do not make a referenced collection or object immutable. Copy mutable inputs at the boundary, especially when the record is a message, cache key or value object.\n\n<pre><code>public record RoutePlan(String id, List&lt;String&gt; stops) {\n    public RoutePlan {\n        stops = List.copyOf(stops);\n    }\n}</code></pre>\n\nWithout the copy, a caller can change the list after construction. That can also change equality and hashing, which is dangerous when the record is placed in a Set or Map."
+      },
+      {
+        "heading": "Choosing the right boundary",
+        "content": "Records work well for request/response DTOs, events and small value objects with transparent structural equality. They are not a universal entity replacement: persistence identity, lazy proxies, lifecycle mutation and hidden invariants often make ordinary classes a better fit.\n\nAsk whether the public meaning of the type is exactly its declared components. If yes, a record makes that contract explicit. If no, use a class whose API communicates behavior and lifecycle."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-patterns-deep",
+    "topic": "java-modern",
+    "subtopic": "modern-patterns",
+    "title": "Pattern Matching — Exhaustiveness and Safe Branching",
+    "sections": [
+      {
+        "heading": "Scope, dominance and null",
+        "content": "A pattern variable exists only where Java can prove the match succeeded. Pattern-switch case order matters: a broad <code>case Object value</code> dominates later non-null cases and is rejected.\n\nHandle <code>null</code> deliberately with <code>case null</code> when it is valid input; it is not automatically handled by <code>default</code>. Use pattern matching to make branching over data shapes clearer, not to replace cohesive behavior with one growing central switch."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-streams-deep",
+    "topic": "java-modern",
+    "subtopic": "modern-streams",
+    "title": "Streams in Production — Lifecycle and Performance",
+    "sections": [
+      {
+        "heading": "Pipelines are single-use and lazy",
+        "content": "Intermediate operations build a pipeline; a terminal operation triggers it. A stream is not a collection and cannot be reused after a terminal operation. Keep side effects out of <code>peek</code>, and close streams backed by I/O or database resources with try-with-resources.\n\nParallel streams use the common ForkJoinPool by default. They are rarely a sound way to add blocking service concurrency: capacity, request context and downstream limits become harder to control. Prefer a loop when early exit or mutation is clearer."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-threads-deep",
+    "topic": "java-modern",
+    "subtopic": "modern-threads",
+    "title": "Virtual Threads — Capacity Is Still a Design Problem",
+    "sections": [
+      {
+        "heading": "Protect scarce dependencies",
+        "content": "Virtual threads make blocking I/O scale, but they do not make a database, remote API or connection pool unlimited. Create a virtual thread per task, then separately bound scarce resources with a connection pool, semaphore, rate limit and end-to-end timeout.\n\nObserve latency percentiles, downstream saturation, carrier utilization and pinning with the JDK you actually deploy. Modern JDKs removed the old general monitor-pinning problem, but native and foreign calls can still pin. Measure rather than applying outdated blanket rules."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-evolution-deep",
+    "topic": "java-modern",
+    "subtopic": "modern-evolution",
+    "title": "Upgrading Java Safely — Runtime, Tooling and Rollout",
+    "sections": [
+      {
+        "heading": "Treat an upgrade as an operational change",
+        "content": "Inventory build plugins, annotation processors, agents, native libraries, container images and dependencies that use JDK internals. Test the deployable image on the target JDK, not only local compilation.\n\nBaseline startup, memory, GC, throughput and latency; then use a canary with rollback criteria. Separate runtime adoption from language-feature refactoring so a regression has a clear cause. Preview features require <code>--enable-preview</code> at compile and runtime and should be an explicit team policy."
+      }
+    ]
   }
 ]

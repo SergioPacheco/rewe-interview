@@ -39,11 +39,6 @@ export const routes: Routes = [
     pathMatch: 'full'
   },
   {
-    path: 'topic/java-modern',
-    redirectTo: 'topic/collections',
-    pathMatch: 'full'
-  },
-  {
     path: 'topic/:topicId',
     loadComponent: () => import('./features/theory/theory.component')
       .then(m => m.TheoryComponent),

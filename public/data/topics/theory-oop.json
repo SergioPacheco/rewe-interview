@@ -5,11 +5,11 @@
     "sections": [
       {
         "heading": "Object-Oriented Programming in Java",
-        "content": "OOP organizes code around <strong>objects</strong> that combine state (fields) and behavior (methods). Java is fundamentally OOP — everything lives inside classes.\n\nThe four pillars (interview staple):\n\n<strong>1. Encapsulation</strong> — Protect internal state. Control access through methods.\n<strong>2. Abstraction</strong> — Hide complexity. Expose only what matters.\n<strong>3. Inheritance</strong> — Share behavior through type hierarchies.\n<strong>4. Polymorphism</strong> — Same interface, different implementations.\n\n<strong>Interview tip:</strong> They will NOT ask \"define the four pillars.\" They will ask \"where did you USE polymorphism?\" Always answer with a real example, not a definition."
+        "content": "OOP organizes code around <strong>objects</strong> that combine state (fields) and behavior (methods). In Java, classes define those objects and their contracts.\n\nThe four pillars work together:\n\n• <strong>Encapsulation</strong> — protects internal state and business rules through a controlled API\n• <strong>Abstraction</strong> — exposes a useful contract while hiding incidental complexity\n• <strong>Inheritance</strong> — models stable type hierarchies with a genuine is-a relationship\n• <strong>Polymorphism</strong> — lets different implementations satisfy the same contract\n\nA useful design does not apply every pillar mechanically. The goal is to keep business rules close to the state they protect and to make change local and understandable."
       },
       {
-        "heading": "What interviewers REALLY want to hear",
-        "content": "Don't say: \"Encapsulation is making fields private.\"\n<strong>Say:</strong> \"Encapsulation protects business invariants — a Delivery entity controls its own state transitions through domain methods like dispatch() and complete(), preventing invalid states.\"\n\nDon't say: \"Polymorphism is calling the same method on different objects.\"\n<strong>Say:</strong> \"We had a notification flow where each channel implemented a common interface. Adding a new channel meant one new class, zero changes to existing code.\"\n\nDon't say: \"Inheritance is code reuse.\"\n<strong>Say:</strong> \"I use inheritance for stable is-a relationships. For code reuse, I prefer composition — injecting collaborators rather than inheriting a base class.\"\n\n<strong>The pattern:</strong> Concept → Real example → Benefit → Trade-off"
+        "heading": "From concepts to design decisions",
+        "content": "A pillar is useful only when it solves a concrete design problem.\n\n• <strong>Encapsulation:</strong> a Delivery exposes <code>dispatch()</code> and <code>complete()</code>, rather than a public <code>setStatus()</code>, so invalid transitions are rejected at the object boundary.\n• <strong>Polymorphism:</strong> notification channels share a contract, while each channel owns its provider-specific behavior. Adding a channel does not require editing existing handlers.\n• <strong>Inheritance:</strong> an exception hierarchy can express a stable is-a relationship; it is not a shortcut for injecting common dependencies into unrelated services.\n\nEvaluate each decision through the same lens: what changes independently, what rule must remain true, and what coupling does this introduce?"
       }
     ],
     "topic": "oop"
@@ -23,8 +23,8 @@
         "content": "Encapsulation is NOT just making fields private. It is about <strong>protecting the valid state</strong> of an object.\n\n<strong>Weak encapsulation</strong> (just data hiding):\n<pre><code>class Delivery {\n    private DeliveryStatus status;\n    public void setStatus(DeliveryStatus s) { this.status = s; }\n    // Anyone can set ANY status at ANY time!\n}</code></pre>\n\n<strong>Real encapsulation</strong> (protecting invariants):\n<pre><code>class Delivery {\n    private DeliveryStatus status = DeliveryStatus.PLANNED;\n\n    public void dispatch() {\n        if (status != DeliveryStatus.PLANNED)\n            throw new IllegalStateException(\"Only planned deliveries can be dispatched\");\n        this.status = DeliveryStatus.DISPATCHED;\n    }\n\n    public void complete() {\n        if (status != DeliveryStatus.DISPATCHED)\n            throw new IllegalStateException(\"Only dispatched deliveries can be completed\");\n        this.status = DeliveryStatus.COMPLETED;\n    }\n}</code></pre>\n\nThe object <strong>controls which transitions are valid</strong>. Invalid states become impossible."
       },
       {
-        "heading": "30-second interview answer",
-        "content": "<strong>\"What is encapsulation?\"</strong>\n\n\"For me, encapsulation is not only about making fields private. It is about protecting the valid state of an object. Instead of exposing setters, I expose domain operations like <code>dispatch()</code> and <code>complete()</code>. These methods validate whether the transition is allowed and prevent invalid objects from existing.\n\nIn our logistics system, a delivery entity controlled its own status transitions — preventing impossible states like completing a delivery that was never dispatched.\""
+        "heading": "Applied example",
+        "content": "A delivery begins as <code>PLANNED</code>, can be dispatched once, and can only be completed after dispatch. Those transitions belong to the entity because it owns the status.\n\nThis design makes invalid states harder to create, gives one place to enforce the rule, and prevents callers from depending on the internal representation of status."
       }
     ],
     "topic": "oop",
@@ -40,7 +40,7 @@
       },
       {
         "heading": "When NOT to abstract",
-        "content": "Not every class needs an interface. Create abstractions at <strong>meaningful boundaries</strong>:\n\n<strong>✅ Abstract when:</strong>\n• Infrastructure boundary (DB, messaging, external APIs)\n• Multiple implementations exist or are realistic\n• Test isolation requires it (mock the interface)\n• Different teams own different sides\n\n<strong>❌ Don't abstract when:</strong>\n• Only one implementation will ever exist\n• Internal helper classes\n• It adds a file without adding a design decision\n• YAGNI — You Aren't Gonna Need It\n\n<strong>Interview answer:</strong> \"I don't create interfaces for every class. I introduce abstractions where they represent a real boundary — between business logic and infrastructure, where I need test isolation, or where multiple implementations are realistic.\""
+        "content": "Not every class needs an interface. Create abstractions at <strong>meaningful boundaries</strong>:\n\n<strong>Abstract when:</strong>\n• a dependency is external infrastructure (database, messaging or third-party API)\n• multiple implementations exist or are a credible product need\n• the contract is owned by a different module or team\n• a stable test seam represents a real capability\n\n<strong>Avoid abstraction when:</strong>\n• it merely mirrors one concrete helper class\n• it adds a file without expressing a decision\n• the variation is speculative (YAGNI)\n\nStart with concrete code when the concept is unclear. Extract the smallest contract when its stable responsibility becomes visible."
       }
     ],
     "topic": "oop",
@@ -59,8 +59,8 @@
         "content": "<strong>Anti-pattern: BaseService for code reuse</strong>\n<pre><code>// ❌ Inheritance for CONVENIENCE, not is-a\nabstract class BaseLogisticsService {\n    @Inject protected EntityManager em;\n    @Inject protected KafkaTemplate kafka;\n    @Inject protected NotificationService notifier;\n    @Inject protected AuditLogger audit;\n    @Inject protected MetricsService metrics;\n}\n\nclass DeliveryService extends BaseLogisticsService { ... }\nclass RouteService extends BaseLogisticsService { ... }\n// 40+ services inherit 5 dependencies they may not all need</code></pre>\n\n<strong>Problems:</strong>\n• All subclasses get ALL dependencies (even unused)\n• Changes to base class affect all 40+ subclasses (fragile base class)\n• Testing requires setting up all inherited dependencies\n• Not a real is-a relationship (DeliveryService is NOT a BaseLogisticsService)\n\n<strong>Fix: Composition</strong>\n<pre><code>// ✅ Each service declares ONLY what it needs\n@Service\nclass DeliveryService {\n    private final DeliveryRepository repo;\n    private final LogisticsEventPublisher events;\n    // Only 2 dependencies, not 5\n}</code></pre>"
       },
       {
-        "heading": "30-second interview answer",
-        "content": "<strong>\"When is inheritance appropriate?\"</strong>\n\n\"I use inheritance when there is a genuine and stable is-a relationship — the subtype can safely replace the parent everywhere. Exception hierarchies and JPA mapped superclasses for shared audit fields are good examples.\n\nI avoid using inheritance just to reuse code. A base service with 5 protected dependencies creates tight coupling. I prefer composition — inject only what you need. The key question is: will this hierarchy be stable for years, or will it become a maintenance burden?\""
+        "heading": "Decision checklist",
+        "content": "Before adding a superclass, ask:\n\n• Can every subtype honor the parent contract without exceptions?\n• Is the relationship semantic (is-a), rather than only shared implementation?\n• Is the hierarchy likely to remain shallow and stable?\n• Would injected collaborators make the dependencies more explicit?\n\nIf the answer to these questions is uncertain, composition is generally the safer default."
       }
     ],
     "topic": "oop",
@@ -79,8 +79,8 @@
         "content": "<strong>Don't use polymorphism when:</strong>\n• Only 2 simple cases with trivial logic → switch is clearer\n• Cases are stable and unlikely to grow\n• Each \"implementation\" is 1-2 lines\n• The indirection makes code harder to follow\n\n<strong>Use polymorphism when:</strong>\n• 3+ cases with independent, complex logic\n• New cases are added regularly\n• Each case has different dependencies\n• Cases need independent testing\n• You want Open/Closed (new behavior without modifying existing code)\n\n<pre><code>// ✅ Switch is FINE for this:\nString label = switch (status) {\n    case PLANNED -> \"Waiting\";\n    case DISPATCHED -> \"On the way\";\n    case DELIVERED -> \"Done\";\n};\n\n// ✅ Polymorphism is BETTER for this:\n// 6+ notification channels, each with complex logic,\n// different dependencies, growing every quarter</code></pre>"
       },
       {
-        "heading": "30-second interview answer",
-        "content": "<strong>\"Where did you use polymorphism?\"</strong>\n\n\"In our system, we had a notification flow where different channels — email, SMS, push, webhook — each implemented a common NotificationHandler interface. The dispatcher selected the correct handler at runtime based on the channel type.\n\nAdding a new channel meant creating one class implementing the interface. No modification to the dispatcher or existing handlers. Each handler was independently testable.\n\nThe trade-off is more classes and indirection. For only 2-3 simple cases, a switch would be simpler. In our case with 6+ channels that evolved independently, polymorphism was clearly justified.\""
+        "heading": "Design trade-off",
+        "content": "Polymorphism is valuable when behavior varies independently and each implementation has meaningful logic or dependencies. It keeps the dispatcher focused on orchestration while handlers own their behavior.\n\nFor a closed, small and stable set of simple cases, an exhaustive <code>switch</code> is often clearer. Choose the smallest structure that makes future variation local."
       }
     ],
     "topic": "oop",
@@ -99,8 +99,8 @@
         "content": "<table>\n<tr><th></th><th>Inheritance</th><th>Composition</th></tr>\n<tr><td>Coupling</td><td>Strong — base change breaks all</td><td>Loose — components independent</td></tr>\n<tr><td>Dependencies</td><td>Inherits ALL (even unused)</td><td>Declares ONLY what needed</td></tr>\n<tr><td>Testing</td><td>Must setup entire hierarchy</td><td>Mock only real dependencies</td></tr>\n<tr><td>Flexibility</td><td>Single hierarchy (Java)</td><td>Compose from many sources</td></tr>\n<tr><td>Readability</td><td>Hidden inherited behavior</td><td>Explicit constructor dependencies</td></tr>\n<tr><td>When to use</td><td>Stable is-a relationships</td><td>Has-a / uses-a relationships</td></tr>\n</table>\n\n<strong>Connection to DI:</strong> Dependency Injection is the MECHANISM that enables composition. CDI (@Inject) or Spring (constructor injection) provides the components. The PRINCIPLE is composition; the TECHNIQUE is DI."
       },
       {
-        "heading": "30-second interview answer",
-        "content": "<strong>\"Why composition over inheritance?\"</strong>\n\n\"I prefer composition because dependencies are explicit — visible in the constructor. Each component is independently replaceable and testable. The service declares ONLY what it needs.\n\nIn our systems, we moved away from a BaseService pattern that inherited 5 dependencies into every service. Now each service composes exactly what it needs via constructor injection. Testing went from 'mock everything' to 'mock only the 2 things this service actually uses.'\n\nThe trade-off is more classes. But explicitness and testability outweigh the file count.\""
+        "heading": "Design trade-off",
+        "content": "Composition makes dependencies visible in the constructor and allows each collaborator to be replaced or tested independently. It is especially effective when services combine capabilities that change at different rates.\n\nIts cost is a larger object graph and more wiring. Keep cohesive behavior together; introduce a collaborator when it owns a distinct responsibility, not merely to reduce the size of a class."
       }
     ],
     "topic": "oop",
@@ -132,7 +132,7 @@
       },
       {
         "heading": "Senior Perspective",
-        "content": "Senior engineers use OOP as a tool for managing complexity — not as a religion.\n\nKey distinctions:\n• Polymorphism is the most powerful OOP concept for interview scenarios — it enables extensibility without modification\n• Inheritance creates coupling — prefer composition unless there's a genuine 'is-a' relationship\n• Encapsulation is about protecting invariants, not just making fields private\n• The best OO designs have high cohesion (class does one thing well) and low coupling (few dependencies)\n• Design patterns are named solutions to OOP problems — learn them as vocabulary, not as mandatory architecture"
+        "content": "Senior engineers use OOP as a tool for managing complexity — not as a religion.\n\nKey distinctions:\n• Polymorphism enables extensibility when behavior varies behind a stable contract\n• Inheritance creates coupling — prefer composition unless there is a genuine is-a relationship\n• Encapsulation is about protecting invariants, not just making fields private\n• The best OO designs have high cohesion (a class does one thing well) and low coupling (few dependencies)\n• Design patterns are named solutions to OOP problems — useful vocabulary, not mandatory architecture"
       },
       {
         "heading": "REWE Perspective",

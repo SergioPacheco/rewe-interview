@@ -128,9 +128,6 @@ export class TheoryComponent {
     if (tab === 'practice') {
       this.startEngine();
     }
-    if (tab === 'interview') {
-      this.interviewService.loadForTopic(this.topicId());
-    }
   }
 
   startEngine(): void {

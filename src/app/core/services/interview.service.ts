@@ -43,6 +43,7 @@ export class InterviewService {
    */
   async loadForTopic(topicId: string): Promise<void> {
     if (this._currentTopic() === topicId && this._questions().length > 0) {
+      this._loading.set(false);
       return; // Already loaded
     }
 

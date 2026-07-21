@@ -115,8 +115,8 @@
         "answerHint": "If you know you'll insert 1000 entries, initialCapacity=1334 (1000/0.75) avoids multiple rehashes during population."
       }
     ],
-    "explanation": "HashMap uses an array of buckets. Key's hashCode determines bucket index. Collisions are resolved with linked lists (or trees in Java 8+). At 75% capacity, it doubles and rehashes \u2014 O(n) operation that happens infrequently, giving amortized O(1).",
-    "topic": "dsa"
+    "topic": "dsa",
+    "explain": "HashMap uses an array of buckets. Key's hashCode determines bucket index. Collisions are resolved with linked lists (or trees in Java 8+). At 75% capacity, it doubles and rehashes \u2014 O(n) operation that happens infrequently, giving amortized O(1)."
   },
   {
     "id": "dsa-oral-choose-structure-07",
@@ -141,8 +141,8 @@
         "answerHint": "UUID key (36 bytes) + overhead \u2248 100 bytes/entry \u00d7 250K \u2248 25MB. Acceptable for in-memory."
       }
     ],
-    "explanation": "For time-windowed dedup: ConcurrentHashMap<String, Instant> with periodic cleanup (remove entries older than 5min). O(1) contains check per event. For multi-pod: Redis SET with TTL=300s.",
-    "topic": "dsa"
+    "topic": "dsa",
+    "explain": "For time-windowed dedup: ConcurrentHashMap<String, Instant> with periodic cleanup (remove entries older than 5min). O(1) contains check per event. For multi-pod: Redis SET with TTL=300s."
   },
   {
     "id": "dsa-oral-bigo-endpoint-08",
@@ -169,8 +169,8 @@
         "answerHint": "When processing collections in-memory: sorting O(n log n), nested loops O(n\u00b2), or external API calls O(n \u00d7 latency)."
       }
     ],
-    "explanation": "A typical endpoint is O(log n) dominated by indexed DB query. But common mistakes introduce hidden O(n\u00b2): contains() on list inside loop, N+1 queries, loading all entities to filter in Java.",
-    "topic": "dsa"
+    "topic": "dsa",
+    "explain": "A typical endpoint is O(log n) dominated by indexed DB query. But common mistakes introduce hidden O(n\u00b2): contains() on list inside loop, N+1 queries, loading all entities to filter in Java."
   },
   {
     "id": "dsa-order-steps-09",
@@ -265,8 +265,8 @@
         "answerHint": "Object.hashCode() is not consistent across JVM restarts. Kafka uses murmur2 which is deterministic regardless of JVM."
       }
     ],
-    "explanation": "Kafka uses murmur2 hash of the message key modulo partition count. This gives: (1) deterministic routing, (2) per-key ordering, (3) even distribution with good keys. Same concept as HashMap bucket assignment, scaled to distributed system.",
-    "topic": "dsa"
+    "topic": "dsa",
+    "explain": "Kafka uses murmur2 hash of the message key modulo partition count. This gives: (1) deterministic routing, (2) per-key ordering, (3) even distribution with good keys. Same concept as HashMap bucket assignment, scaled to distributed system."
   },
   {
     "id": "dsa-predict-priority-13",
@@ -299,8 +299,8 @@
       "log n",
       "n\u00b2"
     ],
-    "explanation": "ArrayList stores elements in a contiguous array. Accessing by index is a simple pointer arithmetic operation: base + index \u00d7 elementSize = O(1). This is why ArrayList is preferred for random access.",
-    "topic": "dsa"
+    "topic": "dsa",
+    "explain": "ArrayList stores elements in a contiguous array. Accessing by index is a simple pointer arithmetic operation: base + index \u00d7 elementSize = O(1). This is why ArrayList is preferred for random access."
   },
   {
     "id": "dsa-oral-spring-cache-15",
@@ -326,8 +326,8 @@
         "answerHint": "Lock on cache miss (singleflight pattern), probabilistic early expiration, or warm-up on startup."
       }
     ],
-    "explanation": "Memoization = local cache of function results. @Cacheable = same concept at service level with production features (TTL, eviction, distribution). Both convert O(expensive) repeated computation to O(1) lookup after first call.",
-    "topic": "dsa"
+    "topic": "dsa",
+    "explain": "Memoization = local cache of function results. @Cacheable = same concept at service level with production features (TTL, eviction, distribution). Both convert O(expensive) repeated computation to O(1) lookup after first call."
   },
   {
     "id": "dsa-bigo-sorting-01",
@@ -493,16 +493,9 @@
         "label": "Repeat from step 2 while queue is not empty"
       }
     ],
-    "correctOrder": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5
-    ],
-    "explanation": "BFS explores level by level (breadth-first). The queue ensures FIFO order \u2014 nodes closer to start are processed first. This guarantees the first time we reach the target, it's via the shortest path (in unweighted graphs). Used in: dependency resolution, shortest route (unweighted), social network distance.",
-    "topic": "dsa"
+    "topic": "dsa",
+    "explain": "BFS explores level by level (breadth-first). The queue ensures FIFO order \u2014 nodes closer to start are processed first. This guarantees the first time we reach the target, it's via the shortest path (in unweighted graphs). Used in: dependency resolution, shortest route (unweighted), social network distance.",
+    "answer": "[0, 1, 2, 3, 4, 5]"
   },
   {
     "id": "dsa-queues-stack-10",
@@ -561,8 +554,8 @@
         "answerHint": "Yes! Java records are immutable by design \u2014 all fields are final. Auto-generated hashCode uses all components. Perfect for composite keys."
       }
     ],
-    "explanation": "HashMap assumes key.hashCode() never changes after insertion. Mutable keys violate this assumption silently \u2014 no exception, just entries that can never be found. The entry still exists in memory (leak) but is inaccessible. Always use immutable keys.",
-    "topic": "dsa"
+    "topic": "dsa",
+    "explain": "HashMap assumes key.hashCode() never changes after insertion. Mutable keys violate this assumption silently \u2014 no exception, just entries that can never be found. The entry still exists in memory (leak) but is inaccessible. Always use immutable keys."
   },
   {
     "id": "dsa-bigo-amortized-13",
@@ -588,8 +581,8 @@
         "answerHint": "Assign each cheap operation extra 'credit'. When expensive operation happens, pay with accumulated credits. If credits never go negative, the amortized cost is the per-operation charge."
       }
     ],
-    "explanation": "Amortized analysis shows that expensive operations (resize) are rare enough that their cost is 'spread' across many cheap operations. Key insight from CLRS: amortized cost \u2260 average case. It's a GUARANTEE that n operations cost at most f(n) total, regardless of the specific sequence.",
-    "topic": "dsa"
+    "topic": "dsa",
+    "explain": "Amortized analysis shows that expensive operations (resize) are rare enough that their cost is 'spread' across many cheap operations. Key insight from CLRS: amortized cost \u2260 average case. It's a GUARANTEE that n operations cost at most f(n) total, regardless of the specific sequence."
   },
   {
     "id": "dsa-collections-when-14",
@@ -615,8 +608,8 @@
         "answerHint": "You need to FIND the insertion point first (O(n) traversal). Combined with cache misses during traversal, LinkedList insertion is slower in practice than ArrayList.copyOf() for lists under ~10K elements."
       }
     ],
-    "explanation": "CLRS teaches LinkedList for O(1) insert/delete at a pointer. In practice on modern hardware, CPU cache dominates. ArrayList's contiguous memory means prefetching works. LinkedList's scattered nodes cause cache misses. Joshua Bloch (Java architect): 'Does anyone actually use LinkedList? I wrote it and I never use it.'",
-    "topic": "dsa"
+    "topic": "dsa",
+    "explain": "CLRS teaches LinkedList for O(1) insert/delete at a pointer. In practice on modern hardware, CPU cache dominates. ArrayList's contiguous memory means prefetching works. LinkedList's scattered nodes cause cache misses. Joshua Bloch (Java architect): 'Does anyone actually use LinkedList? I wrote it and I never use it.'"
   },
   {
     "id": "dsa-trees-why-balanced-15",
@@ -642,7 +635,7 @@
         "answerHint": "B-Tree has high branching factor (100-500 children per node). Each node = one disk page. Fewer levels = fewer disk I/O operations. Red-Black tree is binary (2 children) = too deep for disk-based access."
       }
     ],
-    "explanation": "CLRS proves that unbalanced BST has \u0398(n) worst case (sorted input). Self-balancing trees guarantee O(log n) by performing rotations on insert/delete to maintain height invariant. The trade-off is slightly more complex insert (rotations) for guaranteed fast lookup.",
-    "topic": "dsa"
+    "topic": "dsa",
+    "explain": "CLRS proves that unbalanced BST has \u0398(n) worst case (sorted input). Self-balancing trees guarantee O(log n) by performing rotations on insert/delete to maintain height invariant. The trade-off is slightly more complex insert (rotations) for guaranteed fast lookup."
   }
 ]

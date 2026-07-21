@@ -382,6 +382,9 @@ const SUBTOPIC_MAP: Record<string, Record<string, string>> = {
     'Testing Kafka': 'kafka-delivery',
     'Topic Design': 'kafka-architecture',
     'When to use Kafka': 'kafka-fundamentals',
+    'Replication & ISR': 'kafka-replication',
+    'Reliable Delivery': 'kafka-reliability',
+    'Broker Internals': 'kafka-internals',
   },
   'oop': {
     'Abstraction': 'oop-abstraction',

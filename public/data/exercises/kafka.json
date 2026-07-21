@@ -205,7 +205,6 @@
         "desc": "Events distributed evenly across partitions for maximum throughput."
       }
     ],
-    "bestChoice": "a",
     "explanation": {
       "a": {
         "pros": [
@@ -244,7 +243,8 @@
       }
     },
     "nuance": "Partition key = ordering guarantee. Same key \u2192 same partition \u2192 ordered. In logistics, delivery lifecycle events MUST be ordered per delivery. In my JMS experience, we guaranteed ordering with single-consumer queues. In Kafka, we guarantee it with partition keys.",
-    "topic": "kafka"
+    "topic": "kafka",
+    "bestOption": "a"
   },
   {
     "id": "kafka-design-02",
@@ -269,7 +269,6 @@
         "desc": "Log the error, commit the offset and move to next message."
       }
     ],
-    "bestChoice": "b",
     "explanation": {
       "a": {
         "pros": [
@@ -308,7 +307,8 @@
       }
     },
     "nuance": "This is identical to what I configured with JMS/Artemis: max-delivery-attempts with backoff, then dead-letter queue. Kafka equivalent: Spring Kafka DefaultErrorHandler with BackOff + DeadLetterPublishingRecoverer. The pattern is the same, the API differs.",
-    "topic": "kafka"
+    "topic": "kafka",
+    "bestOption": "b"
   },
   {
     "id": "kafka-refactor-01",
@@ -503,7 +503,6 @@
         "desc": "Change the event structure. All consumers must deploy the new version before producers."
       }
     ],
-    "bestChoice": "a",
     "explanation": {
       "a": {
         "pros": [
@@ -543,7 +542,8 @@
       }
     },
     "nuance": "Same principle as REST API versioning: add optional fields without breaking existing consumers. Schema Registry (Avro/Protobuf) enforces compatibility rules automatically. My REST versioning experience transfers \u2014 the same backward-compatibility discipline applies to events.",
-    "topic": "kafka"
+    "topic": "kafka",
+    "bestOption": "a"
   },
   {
     "id": "kafka-followup-01",
@@ -782,15 +782,6 @@
     "subtopic": "Consumer Implementation",
     "question": "What problems do you see in this Kafka consumer?",
     "code": "@KafkaListener(topics = \"delivery-events\", groupId = \"billing\")\npublic void handle(String message) {\n    DeliveryEvent event = objectMapper.readValue(message, DeliveryEvent.class);\n\n    if (event.getType().equals(\"COMPLETED\")) {\n        Invoice invoice = new Invoice();\n        invoice.setDeliveryId(event.getDeliveryId());\n        invoice.setAmount(calculatePrice(event));\n        invoiceRepository.save(invoice);\n\n        emailService.sendInvoice(invoice);\n        analyticsService.recordRevenue(invoice);\n    }\n}",
-    "problems": [
-      "No idempotency \u2014 reprocessing creates duplicate invoices",
-      "No error handling \u2014 any exception kills the consumer (offset not committed)",
-      "Deserialization inline \u2014 failure on bad message blocks the partition",
-      "Too many responsibilities \u2014 invoice creation + email + analytics in one consumer",
-      "Synchronous email/analytics \u2014 slows consumption, couples to their availability",
-      "String payload \u2014 loses Avro/Schema Registry benefits, no schema validation"
-    ],
-    "refactored": "@KafkaListener(topics = \"delivery-events\", groupId = \"billing\")\npublic void handle(@Payload DeliveryEvent event,\n                   @Header(KafkaHeaders.RECEIVED_KEY) String key) {\n\n    if (!\"COMPLETED\".equals(event.getType())) return;\n\n    // Idempotent: INSERT ... ON CONFLICT DO NOTHING\n    int created = invoiceRepo.createIfAbsent(event.getDeliveryId(), calculatePrice(event));\n    if (created == 0) {\n        log.info(\"Invoice already exists for delivery {}, skipping\", event.getDeliveryId());\n        return;\n    }\n\n    // Publish event for downstream (email + analytics consume independently)\n    eventPublisher.publish(new InvoiceCreated(event.getDeliveryId()));\n    log.info(\"Invoice created for delivery {}\", event.getDeliveryId());\n}",
     "tags": [
       "consumer",
       "idempotency",
@@ -798,7 +789,16 @@
     ],
     "topic": "kafka",
     "id": "kafka-consumer-implementation-22",
-    "answer": "**Refactored:**\n```java\n@KafkaListener(topics = \"delivery-events\", groupId = \"billing\")\npublic void handle(@Payload DeliveryEvent event,\n                   @Header(KafkaHeaders.RECEIVED_KEY) String key) {\n\n    if (!\"COMPLETED\".equals(event.getType())) return;\n\n    // Idempotent: INSERT ... ON CONFLICT DO NOTHING\n    int created = invoiceRepo.createIfAbsent(event.getDeliveryId(), calculatePrice(event));\n    if (created == 0) {\n        log.info(\"Invoice already exists for delivery {}, skipping\", event.getDeliveryId());\n        return;\n    }\n\n    // Publish event for downstream (email + analytics consume independently)\n    eventPublisher.publish(new InvoiceCreated(event.getDeliveryId()));\n    log.info(\"Invoice created for delivery {}\", event.getDeliveryId());\n}\n```\n\n**Problems:** No idempotency \u2014 reprocessing creates duplicate invoices; No error handling \u2014 any exception kills the consumer (offset not committed); Deserialization inline \u2014 failure on bad message blocks the partition; Too many responsibilities \u2014 invoice creation + email + analytics in one consumer; Synchronous email/analytics \u2014 slows consumption, couples to their availability; String payload \u2014 loses Avro/Schema Registry benefits, no schema validation"
+    "answer": "**Refactored:**\n```java\n@KafkaListener(topics = \"delivery-events\", groupId = \"billing\")\npublic void handle(@Payload DeliveryEvent event,\n                   @Header(KafkaHeaders.RECEIVED_KEY) String key) {\n\n    if (!\"COMPLETED\".equals(event.getType())) return;\n\n    // Idempotent: INSERT ... ON CONFLICT DO NOTHING\n    int created = invoiceRepo.createIfAbsent(event.getDeliveryId(), calculatePrice(event));\n    if (created == 0) {\n        log.info(\"Invoice already exists for delivery {}, skipping\", event.getDeliveryId());\n        return;\n    }\n\n    // Publish event for downstream (email + analytics consume independently)\n    eventPublisher.publish(new InvoiceCreated(event.getDeliveryId()));\n    log.info(\"Invoice created for delivery {}\", event.getDeliveryId());\n}\n```\n\n**Problems:** No idempotency \u2014 reprocessing creates duplicate invoices; No error handling \u2014 any exception kills the consumer (offset not committed); Deserialization inline \u2014 failure on bad message blocks the partition; Too many responsibilities \u2014 invoice creation + email + analytics in one consumer; Synchronous email/analytics \u2014 slows consumption, couples to their availability; String payload \u2014 loses Avro/Schema Registry benefits, no schema validation",
+    "refactoredCode": "@KafkaListener(topics = \"delivery-events\", groupId = \"billing\")\npublic void handle(@Payload DeliveryEvent event,\n                   @Header(KafkaHeaders.RECEIVED_KEY) String key) {\n\n    if (!\"COMPLETED\".equals(event.getType())) return;\n\n    // Idempotent: INSERT ... ON CONFLICT DO NOTHING\n    int created = invoiceRepo.createIfAbsent(event.getDeliveryId(), calculatePrice(event));\n    if (created == 0) {\n        log.info(\"Invoice already exists for delivery {}, skipping\", event.getDeliveryId());\n        return;\n    }\n\n    // Publish event for downstream (email + analytics consume independently)\n    eventPublisher.publish(new InvoiceCreated(event.getDeliveryId()));\n    log.info(\"Invoice created for delivery {}\", event.getDeliveryId());\n}",
+    "problemsToIdentify": [
+      "No idempotency \u2014 reprocessing creates duplicate invoices",
+      "No error handling \u2014 any exception kills the consumer (offset not committed)",
+      "Deserialization inline \u2014 failure on bad message blocks the partition",
+      "Too many responsibilities \u2014 invoice creation + email + analytics in one consumer",
+      "Synchronous email/analytics \u2014 slows consumption, couples to their availability",
+      "String payload \u2014 loses Avro/Schema Registry benefits, no schema validation"
+    ]
   },
   {
     "type": "ORAL_ANSWER",
@@ -1154,8 +1154,8 @@
         "answerHint": "When writing to external systems (databases, APIs) that dont support Kafka transactions. Most real-world cases."
       }
     ],
-    "explanation": "True exactly-once requires: (1) Idempotent producer (no duplicates), (2) Transactions for atomic multi-partition writes, (3) Consumer with read_committed + idempotent sink. In practice, most systems use at-least-once + idempotent consumer (INSERT ON CONFLICT) because it is simpler and works with external systems.",
-    "topic": "kafka"
+    "topic": "kafka",
+    "explain": "True exactly-once requires: (1) Idempotent producer (no duplicates), (2) Transactions for atomic multi-partition writes, (3) Consumer with read_committed + idempotent sink. In practice, most systems use at-least-once + idempotent consumer (INSERT ON CONFLICT) because it is simpler and works with external systems."
   },
   {
     "id": "kafka-internals-01",
@@ -1189,16 +1189,9 @@
         "label": "Recovered broker replicates missed messages from new leaders"
       }
     ],
-    "correctOrder": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5
-    ],
-    "explanation": "The controller handles all leader elections. Clients experience a brief timeout (~ms to seconds) then transparently connect to new leaders. The recovered broker catches up by replicating from current leaders before rejoining the ISR.",
-    "topic": "kafka"
+    "topic": "kafka",
+    "explain": "The controller handles all leader elections. Clients experience a brief timeout (~ms to seconds) then transparently connect to new leaders. The recovered broker catches up by replicating from current leaders before rejoining the ISR.",
+    "answer": "[0, 1, 2, 3, 4, 5]"
   },
   {
     "id": "kafka-internals-02",
@@ -1224,8 +1217,8 @@
         "answerHint": "Yes: cleanup.policy=compact,delete. Compact keeps latest per key, delete removes segments older than retention period."
       }
     ],
-    "explanation": "Log compaction transforms a topic from \"complete history\" to \"latest state per key\". Like a changelog where only the most recent entry per entity survives. Used for driver-status topics, configuration propagation, and CDC replication.",
-    "topic": "kafka"
+    "topic": "kafka",
+    "explain": "Log compaction transforms a topic from \"complete history\" to \"latest state per key\". Like a changelog where only the most recent entry per entity survives. Used for driver-status topics, configuration propagation, and CDC replication."
   },
   {
     "id": "kafka-replication-03",
@@ -1347,8 +1340,8 @@
         "answerHint": "If processing a batch takes longer than max.poll.interval, consumer is kicked. Causes rebalance which assigns same partitions to another consumer. Can create duplicate processing."
       }
     ],
-    "explanation": "Rebalances are Kafka's mechanism for redistributing partitions. They pause consumption. Minimize by: using cooperative protocol, setting appropriate timeouts, using static membership for stable consumers, and ensuring processing time < max.poll.interval.ms.",
-    "topic": "kafka"
+    "topic": "kafka",
+    "explain": "Rebalances are Kafka's mechanism for redistributing partitions. They pause consumption. Minimize by: using cooperative protocol, setting appropriate timeouts, using static membership for stable consumers, and ensuring processing time < max.poll.interval.ms."
   },
   {
     "id": "kafka-fundamentals-02",

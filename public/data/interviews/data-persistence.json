@@ -334,7 +334,7 @@
     "id": "interview-dp-sql-fundamentals",
     "topic": "data-persistence",
     "subtopic": "dp-sql-fundamentals",
-    "difficulty": "BASIC",
+    "difficulty": "BEGINNER",
     "question": "What are the most important SQL concepts a backend developer must master, and how do you decide between writing raw SQL vs using an ORM?",
     "shortAnswer": "Core SQL: SELECT with JOINs, GROUP BY, window functions, subqueries/CTEs, transactions, and EXPLAIN. Use ORM for CRUD and domain mapping; use raw SQL when you need full control over complex queries, performance-critical paths, or database-specific features the ORM can't express cleanly.",
     "detailedAnswer": "**Must-master SQL:**\n1. JOINs (INNER, LEFT, self-join, LATERAL)\n2. Aggregation (GROUP BY, HAVING, window functions)\n3. Subqueries and CTEs\n4. Transaction isolation and locking\n5. EXPLAIN ANALYZE for performance\n\n**ORM vs raw SQL decision:**\n- ORM: standard CRUD, entity relationships, type safety, migrations\n- Raw SQL: reports, analytics, bulk operations, database-specific features (JSONB, partitioning), performance-critical queries where ORM generates suboptimal SQL\n\n**In practice:** 80% ORM + 20% native queries. The key is knowing WHEN the ORM is hurting you (N+1, unnecessary joins, missing index hints).",
@@ -348,13 +348,22 @@
         "hint": "Window functions, recursive CTEs, LATERAL joins, INSERT ON CONFLICT, partial indexes, JSONB operators, DISTINCT ON."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "keyPoints": [
+      "JOINs, GROUP BY, window functions, CTEs, transactions are core SQL skills",
+      "ORM for CRUD (80%), raw SQL for complex queries and performance (20%)",
+      "Always know when your ORM generates suboptimal SQL \u2014 use EXPLAIN ANALYZE"
+    ],
+    "redFlags": [
+      "Cannot explain the difference between INNER and LEFT JOIN",
+      "Never uses raw SQL \u2014 blindly trusts ORM for all queries"
+    ]
   },
   {
     "id": "interview-dp-isolation-mvcc",
     "topic": "data-persistence",
     "subtopic": "dp-isolation-mvcc",
-    "difficulty": "ADVANCED",
+    "difficulty": "SENIOR",
     "question": "Explain how PostgreSQL implements Snapshot Isolation (MVCC) and what anomalies it doesn't prevent.",
     "shortAnswer": "PostgreSQL uses Multi-Version Concurrency Control: each row has created_by and deleted_by transaction IDs. Readers see a consistent snapshot (never block writers). Snapshot isolation prevents dirty reads and non-repeatable reads but does NOT prevent write skew or phantoms \u2014 those require SERIALIZABLE (SSI in PostgreSQL).",
     "detailedAnswer": "**MVCC mechanics:**\n- Each transaction gets a unique txid\n- UPDATE = mark old row deleted + insert new row with new txid\n- Visibility rules: only see rows committed before my snapshot\n- Readers never block writers, writers never block readers\n\n**What REPEATABLE READ (snapshot) doesn't prevent:**\n- Write skew: two transactions read overlapping data, make decisions, write different rows \u2192 invariant violated\n- Example: two doctors both check 'am I the only one on call?' \u2192 both leave \u2192 nobody on call\n\n**PostgreSQL SERIALIZABLE (SSI):**\n- Optimistic: transactions run without blocking\n- At commit: detect conflicts, abort one\n- Application MUST retry aborted transactions",
@@ -368,7 +377,16 @@
         "hint": "SERIALIZABLE when: multiple rows involved (can't lock them all), don't know which rows will conflict, or the access pattern is complex. FOR UPDATE when: specific known row to protect, simple read-modify-write."
       }
     ],
-    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "keyPoints": [
+      "MVCC: readers never block writers via row versioning (created_by/deleted_by txid)",
+      "Snapshot isolation prevents dirty reads but NOT write skew or phantoms",
+      "PostgreSQL SERIALIZABLE uses SSI (optimistic) \u2014 application must retry aborted transactions"
+    ],
+    "redFlags": [
+      "Confuses isolation levels or thinks REPEATABLE READ prevents all anomalies",
+      "Does not know what write skew is or how to prevent it"
+    ]
   },
   {
     "id": "interview-dp-hibernate-perf",
@@ -388,13 +406,22 @@
         "hint": "Native queries returning scalars/Tuples bypass L1 cache. Native queries mapped to entities DO populate L1. Mixing can cause stale reads if you modify via native then read via JPQL."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "keyPoints": [
+      "N+1 is #1 problem \u2014 fix with JOIN FETCH, @EntityGraph, or @BatchSize",
+      "DTO projections for read-only queries avoid loading unnecessary columns",
+      "Keep transactions short \u2014 separate read phase from write phase"
+    ],
+    "redFlags": [
+      "Cannot explain what N+1 is or how to detect it",
+      "Uses eager fetching everywhere as a blanket solution"
+    ]
   },
   {
     "id": "interview-dp-storage-engines",
     "topic": "data-persistence",
     "subtopic": "dp-storage-engines",
-    "difficulty": "ADVANCED",
+    "difficulty": "SENIOR",
     "question": "Compare B-Tree and LSM-Tree storage engines. When would you choose each for a delivery tracking system?",
     "shortAnswer": "B-Trees (PostgreSQL): optimized for reads, predictable latency, strong transactions \u2014 use for the main OLTP database (orders, drivers). LSM-Trees (Cassandra, RocksDB): optimized for writes, sequential I/O, better compression \u2014 use for event streams (GPS pings, delivery events, telemetry).",
     "detailedAnswer": "**B-Tree (PostgreSQL, MySQL InnoDB):**\n- Fixed-size pages, in-place updates\n- O(log n) reads, good range scans\n- Write amplification (WAL + page write)\n- Predictable latency\n\n**LSM-Tree (Cassandra, RocksDB, LevelDB):**\n- Append-only memtable \u2192 flush to sorted SSTables\n- Sequential writes only (10-100x faster writes)\n- Reads check multiple SSTables (slower)\n- Background compaction can spike latency\n\n**For REWE delivery system:**\n- Orders/routes/drivers: PostgreSQL (B-Tree) \u2014 strong consistency, complex queries\n- GPS telemetry: Cassandra (LSM) \u2014 millions of writes/sec, eventual consistency OK\n- Search: Elasticsearch (inverted index + LSM segments)",
@@ -408,7 +435,16 @@
         "hint": "Dead tuples (old versions from MVCC) accumulate. VACUUM marks space reusable. Without it: table bloat, index bloat, transaction ID wraparound. autovacuum handles this but can fall behind under heavy update workloads."
       }
     ],
-    "experienceLevel": "STUDIED_NOT_USED"
+    "experienceLevel": "STUDIED_NOT_USED",
+    "keyPoints": [
+      "B-Trees: read-optimized, predictable latency, in-place updates (PostgreSQL)",
+      "LSM-Trees: write-optimized, sequential I/O, compaction (Cassandra, RocksDB)",
+      "Choice depends on read/write ratio \u2014 most systems use both for different data"
+    ],
+    "redFlags": [
+      "Cannot articulate any difference between storage engine types",
+      "Assumes one database is best for all workloads"
+    ]
   },
   {
     "id": "interview-dp-replication",
@@ -428,7 +464,16 @@
         "hint": "Promote a follower to leader. Risk: async followers may have missed recent writes (data loss). Solutions: synchronous replication for one follower (semi-sync), or accept some data loss and reconcile later."
       }
     ],
-    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "keyPoints": [
+      "Leader-follower: writes to leader only, followers apply replication stream",
+      "Three lag problems: read-your-writes, monotonic reads, consistent prefix",
+      "Solutions: route sensitive reads to leader, session affinity, accept eventual consistency"
+    ],
+    "redFlags": [
+      "Does not understand that replication lag causes observable anomalies",
+      "Thinks replicas are always instantly consistent with the leader"
+    ]
   },
   {
     "id": "interview-dp-partitioning",
@@ -448,6 +493,15 @@
         "hint": "Prefix the partition key with a salt/hash to spread writes. Or split the hot partition further. For time-series: today's partition is always hot \u2014 ensure it fits in memory and has appropriate indexes."
       }
     ],
-    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "keyPoints": [
+      "Partition when table > 100GB and queries naturally filter by partition key",
+      "Range (time-series) vs hash (even distribution) partitioning strategies",
+      "Trade-off: fast per-partition queries but cross-partition queries are expensive"
+    ],
+    "redFlags": [
+      "Confuses partitioning (single DB) with sharding (multiple nodes)",
+      "Cannot name a concrete scenario where partitioning helps"
+    ]
   }
 ]

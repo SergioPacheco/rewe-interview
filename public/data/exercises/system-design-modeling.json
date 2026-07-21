@@ -18,8 +18,8 @@
         "answerHint": "Complex integrations, regulatory requirements, outsourced development (need detailed spec), systems with many exception paths."
       }
     ],
-    "explanation": "Use case = comprehensive behavior description. User story = placeholder for a conversation. Use cases from Dennis/Wixom describe full actor-system interaction; user stories from XP are intentionally brief to encourage collaboration.",
-    "topic": "system-design-modeling"
+    "topic": "system-design-modeling",
+    "explain": "Use case = comprehensive behavior description. User story = placeholder for a conversation. Use cases from Dennis/Wixom describe full actor-system interaction; user stories from XP are intentionally brief to encourage collaboration."
   },
   {
     "id": "sdm-uc-02",
@@ -73,8 +73,8 @@
         "answerHint": "Deep hierarchies where changing base class broke multiple subclasses. Or 'diamond problem' in multiple inheritance. In Java, solved with interfaces + default methods."
       }
     ],
-    "explanation": "Dennis/Wixom: inheritance for stable taxonomies, composition for flexible behavior. GoF: 'Favor composition over inheritance.' In practice: use inheritance for identity (what it IS), composition for behavior (what it DOES).",
-    "topic": "system-design-modeling"
+    "topic": "system-design-modeling",
+    "explain": "Dennis/Wixom: inheritance for stable taxonomies, composition for flexible behavior. GoF: 'Favor composition over inheritance.' In practice: use inheritance for identity (what it IS), composition for behavior (what it DOES)."
   },
   {
     "id": "sdm-seq-01",
@@ -108,16 +108,9 @@
         "label": "Controller serializes response, returns HTTP status"
       }
     ],
-    "correctOrder": [
-      0,
-      1,
-      2,
-      3,
-      4,
-      5
-    ],
-    "explanation": "This is the standard layered sequence in Spring Boot. Each layer has a single responsibility. A sequence diagram makes this flow explicit and helps identify where to add cross-cutting concerns (logging, caching, retry).",
-    "topic": "system-design-modeling"
+    "topic": "system-design-modeling",
+    "explain": "This is the standard layered sequence in Spring Boot. Each layer has a single responsibility. A sequence diagram makes this flow explicit and helps identify where to add cross-cutting concerns (logging, caching, retry).",
+    "answer": "[0, 1, 2, 3, 4, 5]"
   },
   {
     "id": "sdm-arch-01",
@@ -139,8 +132,8 @@
         "answerHint": "A decision easily reversed: library choice, internal API design. Decide fast, adjust later. One-way door: database choice, public API contract, messaging platform. Invest more time upfront."
       }
     ],
-    "explanation": "Senior engineers don't just pick the 'best' technology \u2014 they make decisions in context, document rationale (ADR), and distinguish reversible from irreversible choices. Dennis/Wixom: architecture design is about constraints and trade-offs, not ideal solutions.",
-    "topic": "system-design-modeling"
+    "topic": "system-design-modeling",
+    "explain": "Senior engineers don't just pick the 'best' technology \u2014 they make decisions in context, document rationale (ADR), and distinguish reversible from irreversible choices. Dennis/Wixom: architecture design is about constraints and trade-offs, not ideal solutions."
   },
   {
     "id": "sdm-data-01",
@@ -178,8 +171,8 @@
         "answerHint": "Event-driven updates (CDC), materialized views with refresh, application-level sync on write, or accept eventual consistency with defined SLA."
       }
     ],
-    "explanation": "Dennis/Wixom: normalize by default (3NF), denormalize with justification. Senior approach: measure first, denormalize specific read paths, keep normalized source as truth.",
-    "topic": "system-design-modeling"
+    "topic": "system-design-modeling",
+    "explain": "Dennis/Wixom: normalize by default (3NF), denormalize with justification. Senior approach: measure first, denormalize specific read paths, keep normalized source as truth."
   },
   {
     "id": "sdm-comm-01",
@@ -201,8 +194,8 @@
         "answerHint": "State your assumption explicitly: 'I'm assuming X because... If that's wrong, the design would change by...' Shows intellectual honesty and adaptability."
       }
     ],
-    "explanation": "The C4 model provides natural zoom levels. Start broad (system context), zoom in when asked. Always clarify before designing \u2014 jumping to solution without understanding requirements is the #1 red flag.",
-    "topic": "system-design-modeling"
+    "topic": "system-design-modeling",
+    "explain": "The C4 model provides natural zoom levels. Start broad (system context), zoom in when asked. Always clarify before designing \u2014 jumping to solution without understanding requirements is the #1 red flag."
   },
   {
     "id": "sdm-comm-02",

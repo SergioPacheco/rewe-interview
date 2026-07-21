@@ -2,7 +2,7 @@
   {
     "id": "core-collections-01",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Collections — List",
+    "subtopic": "Collections \u2014 List",
     "difficulty": "basic",
     "mission": "What does this print? Think about <strong>ArrayList insertion order</strong>.",
     "code": "List<String> stops = new ArrayList<>();\nstops.add(\"Warehouse\");\nstops.add(\"Store A\");\nstops.add(\"Store B\");\nstops.add(1, \"Priority Store\");\nSystem.out.println(stops);",
@@ -19,7 +19,7 @@
   {
     "id": "core-collections-02",
     "type": "FILL_BLANK",
-    "subtopic": "Collections — Map",
+    "subtopic": "Collections \u2014 Map",
     "difficulty": "basic",
     "mission": "Complete the code to <strong>count deliveries per driver</strong>.",
     "code": "Map<String, Integer> counts = new HashMap<>();\nfor (Delivery d : deliveries) {\n    counts._____(d.getDriverName(), counts.getOrDefault(d.getDriverName(), 0) + 1);\n}",
@@ -37,23 +37,23 @@
   {
     "id": "core-collections-03",
     "type": "PICK_INVALID",
-    "subtopic": "Collections — Choosing",
+    "subtopic": "Collections \u2014 Choosing",
     "difficulty": "intermediate",
     "mission": "Which collection choice is <strong>wrong</strong> for the use case?",
     "snippets": [
       {
         "id": "a",
-        "code": "// Need fast lookup by delivery ID\nMap<Long, Delivery> cache = new HashMap<>();\n// O(1) get by key ✓",
+        "code": "// Need fast lookup by delivery ID\nMap<Long, Delivery> cache = new HashMap<>();\n// O(1) get by key \u2713",
         "valid": true
       },
       {
         "id": "b",
-        "code": "// Need unique warehouse codes, no duplicates\nSet<String> codes = new HashSet<>();\n// add() ignores duplicates ✓",
+        "code": "// Need unique warehouse codes, no duplicates\nSet<String> codes = new HashSet<>();\n// add() ignores duplicates \u2713",
         "valid": true
       },
       {
         "id": "c",
-        "code": "// Need deliveries sorted by time\n// and fast random access by index\nTreeSet<Delivery> timeline = new TreeSet<>();\n// timeline.get(5) — access by index",
+        "code": "// Need deliveries sorted by time\n// and fast random access by index\nTreeSet<Delivery> timeline = new TreeSet<>();\n// timeline.get(5) \u2014 access by index",
         "valid": false
       }
     ],
@@ -64,10 +64,10 @@
   {
     "id": "core-collections-04",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Collections — HashMap",
+    "subtopic": "Collections \u2014 HashMap",
     "difficulty": "intermediate",
     "mission": "What is the map size? Think about <strong>equals/hashCode</strong>.",
-    "code": "Map<String, String> routes = new HashMap<>();\nroutes.put(\"ROUTE-A\", \"Warehouse → Store 1\");\nroutes.put(\"ROUTE-B\", \"Warehouse → Store 2\");\nroutes.put(\"ROUTE-A\", \"Warehouse → Store 3\");\nSystem.out.println(routes.size());",
+    "code": "Map<String, String> routes = new HashMap<>();\nroutes.put(\"ROUTE-A\", \"Warehouse \u2192 Store 1\");\nroutes.put(\"ROUTE-B\", \"Warehouse \u2192 Store 2\");\nroutes.put(\"ROUTE-A\", \"Warehouse \u2192 Store 3\");\nSystem.out.println(routes.size());",
     "choices": [
       "3",
       "2",
@@ -75,24 +75,24 @@
       "Exception"
     ],
     "answer": "2",
-    "explain": "Same key (\"ROUTE-A\") = value is REPLACED, not added. Map size stays 2. HashMap uses hashCode() to find the bucket, then equals() to find the exact key. Same key = overwrite. This is why HashMap is O(1) for get/put — it computes an array index directly from the hash.",
+    "explain": "Same key (\"ROUTE-A\") = value is REPLACED, not added. Map size stays 2. HashMap uses hashCode() to find the bucket, then equals() to find the exact key. Same key = overwrite. This is why HashMap is O(1) for get/put \u2014 it computes an array index directly from the hash.",
     "topic": "collections"
   },
   {
     "id": "core-collections-05",
     "type": "ORAL_ANSWER",
-    "subtopic": "Collections — HashMap Internals",
+    "subtopic": "Collections \u2014 HashMap Internals",
     "difficulty": "senior",
     "question": "Why is HashMap O(1) for get and put?",
     "interviewerIntent": "Test understanding of hash table internals, not just API usage.",
-    "shortAnswer": "HashMap computes hashCode() of the key, uses it as an array index (bucket), and stores the entry there. Lookup is direct array access — no searching. Collisions degrade to O(n) linked list, but Java 8+ converts to O(log n) red-black tree at 8 entries per bucket.",
-    "modelAnswer": "How it works:\n1. Call key.hashCode() → integer hash\n2. Compute bucket index: hash & (array.length - 1)\n3. If bucket empty → store directly (O(1))\n4. If bucket occupied → collision: walk linked list, compare equals()\n5. Java 8+: if chain length > 8, convert to red-black tree (O(log n))\n\nWhy O(1) on average:\n- With a good hash function, entries distribute evenly across buckets\n- Most buckets have 0 or 1 entry → direct access\n- Load factor 0.75 triggers resize to maintain low collision rate\n\nWhen it degrades:\n- Bad hashCode() (all objects in same bucket) → O(n)\n- Many collisions without resize → long chains\n- This is why equals/hashCode contract matters so much\n\nReal-world: In our systems, we used HashMap for caching entity lookups by ID. With Long as key (great hash distribution), it is effectively O(1) for millions of entries.",
-    "senaiExample": "SGN3 uses Maps extensively for caching — entity lookups, configuration caches, strategy pattern dispatch maps. All rely on good hashCode distribution.",
+    "shortAnswer": "HashMap computes hashCode() of the key, uses it as an array index (bucket), and stores the entry there. Lookup is direct array access \u2014 no searching. Collisions degrade to O(n) linked list, but Java 8+ converts to O(log n) red-black tree at 8 entries per bucket.",
+    "modelAnswer": "How it works:\n1. Call key.hashCode() \u2192 integer hash\n2. Compute bucket index: hash & (array.length - 1)\n3. If bucket empty \u2192 store directly (O(1))\n4. If bucket occupied \u2192 collision: walk linked list, compare equals()\n5. Java 8+: if chain length > 8, convert to red-black tree (O(log n))\n\nWhy O(1) on average:\n- With a good hash function, entries distribute evenly across buckets\n- Most buckets have 0 or 1 entry \u2192 direct access\n- Load factor 0.75 triggers resize to maintain low collision rate\n\nWhen it degrades:\n- Bad hashCode() (all objects in same bucket) \u2192 O(n)\n- Many collisions without resize \u2192 long chains\n- This is why equals/hashCode contract matters so much\n\nReal-world: In our systems, we used HashMap for caching entity lookups by ID. With Long as key (great hash distribution), it is effectively O(1) for millions of entries.",
+    "senaiExample": "SGN3 uses Maps extensively for caching \u2014 entity lookups, configuration caches, strategy pattern dispatch maps. All rely on good hashCode distribution.",
     "reweExample": "A delivery route cache: Map<RouteId, RouteDetails> with O(1) lookup when a driver requests their route. Millions of lookups per day.",
     "keyPoints": [
-      "hashCode() → array index (direct access)",
-      "Collisions: linked list → tree (Java 8+)",
-      "Load factor 0.75 → resize",
+      "hashCode() \u2192 array index (direct access)",
+      "Collisions: linked list \u2192 tree (Java 8+)",
+      "Load factor 0.75 \u2192 resize",
       "Good hashCode = even distribution = O(1)",
       "Bad hashCode = all in one bucket = O(n)"
     ],
@@ -119,17 +119,17 @@
       },
       {
         "term": "load factor",
-        "meaning": "proporção de ocupação que dispara resize",
-        "example": "At 0.75 load factor, a 16-bucket HashMap resizes when it has 12 entries — doubling to 32 buckets."
+        "meaning": "propor\u00e7\u00e3o de ocupa\u00e7\u00e3o que dispara resize",
+        "example": "At 0.75 load factor, a 16-bucket HashMap resizes when it has 12 entries \u2014 doubling to 32 buckets."
       }
     ],
     "selfEvaluation": [
       {
-        "criterion": "I explained the hash → bucket index mechanism",
+        "criterion": "I explained the hash \u2192 bucket index mechanism",
         "weight": 3
       },
       {
-        "criterion": "I mentioned collision handling (list → tree)",
+        "criterion": "I mentioned collision handling (list \u2192 tree)",
         "weight": 3
       },
       {
@@ -146,7 +146,7 @@
   {
     "id": "core-collections-06",
     "type": "FILL_BLANK",
-    "subtopic": "Collections — Set",
+    "subtopic": "Collections \u2014 Set",
     "difficulty": "basic",
     "mission": "Ensure <strong>no duplicate warehouse codes</strong> in the collection.",
     "code": "_____ <String> uniqueCodes = new HashSet<>(allCodes);\n// Duplicates automatically removed",
@@ -158,13 +158,13 @@
       "Collection"
     ],
     "answer": "Set",
-    "explain": "Set guarantees uniqueness — adding a duplicate is silently ignored. Passing a List to HashSet constructor removes all duplicates. Use Set when the business rule IS uniqueness (unique stops, unique drivers assigned).",
+    "explain": "Set guarantees uniqueness \u2014 adding a duplicate is silently ignored. Passing a List to HashSet constructor removes all duplicates. Use Set when the business rule IS uniqueness (unique stops, unique drivers assigned).",
     "topic": "collections"
   },
   {
     "id": "core-collections-07",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Collections — Immutability",
+    "subtopic": "Collections \u2014 Immutability",
     "difficulty": "intermediate",
     "mission": "What happens when you try to <strong>add to an immutable list</strong>?",
     "code": "List<String> stops = List.of(\"A\", \"B\", \"C\");\nstops.add(\"D\");\nSystem.out.println(stops);",
@@ -175,13 +175,13 @@
       "[A, B, C]"
     ],
     "answer": "UnsupportedOperationException",
-    "explain": "List.of() (Java 9+) creates an IMMUTABLE list. Any modification throws UnsupportedOperationException at runtime. To modify, wrap it: new ArrayList<>(List.of(\"A\", \"B\", \"C\")). Know this for interviews — Java has multiple ways to create unmodifiable collections.",
+    "explain": "List.of() (Java 9+) creates an IMMUTABLE list. Any modification throws UnsupportedOperationException at runtime. To modify, wrap it: new ArrayList<>(List.of(\"A\", \"B\", \"C\")). Know this for interviews \u2014 Java has multiple ways to create unmodifiable collections.",
     "topic": "collections"
   },
   {
     "id": "core-collections-08",
     "type": "ORDER_EXECUTION",
-    "subtopic": "Collections — HashMap",
+    "subtopic": "Collections \u2014 HashMap",
     "difficulty": "intermediate",
     "mission": "Arrange what happens <strong>internally</strong> when you call map.put(key, value).",
     "items": [
@@ -213,13 +213,13 @@
       "equals",
       "store"
     ],
-    "explain": "HashMap.put: hashCode → bucket index → if empty, insert. If occupied, walk chain comparing equals(). If key found, replace value. If not found, add to chain. Resize at load factor 0.75. This is why both hashCode AND equals must be consistent.",
+    "explain": "HashMap.put: hashCode \u2192 bucket index \u2192 if empty, insert. If occupied, walk chain comparing equals(). If key found, replace value. If not found, add to chain. Resize at load factor 0.75. This is why both hashCode AND equals must be consistent.",
     "topic": "collections"
   },
   {
     "id": "core-streams-01",
     "type": "FILL_BLANK",
-    "subtopic": "Streams — filter",
+    "subtopic": "Streams \u2014 filter",
     "difficulty": "basic",
     "mission": "Complete the stream to get <strong>only active deliveries</strong>.",
     "code": "List<Delivery> active = deliveries.stream()\n    ._____(d -> d.getStatus() == DeliveryStatus.ACTIVE)\n    .collect(Collectors.toList());",
@@ -231,13 +231,13 @@
       "select"
     ],
     "answer": "filter",
-    "explain": "filter(predicate) keeps elements where the predicate returns true. map() transforms elements. filter() is the equivalent of SQL WHERE — select only rows matching a condition.",
+    "explain": "filter(predicate) keeps elements where the predicate returns true. map() transforms elements. filter() is the equivalent of SQL WHERE \u2014 select only rows matching a condition.",
     "topic": "collections"
   },
   {
     "id": "core-streams-02",
     "type": "FILL_BLANK",
-    "subtopic": "Streams — map",
+    "subtopic": "Streams \u2014 map",
     "difficulty": "basic",
     "mission": "Extract <strong>only the driver names</strong> from a list of deliveries.",
     "code": "List<String> driverNames = deliveries.stream()\n    ._____(Delivery::getDriverName)\n    .collect(Collectors.toList());",
@@ -249,13 +249,13 @@
       "forEach"
     ],
     "answer": "map",
-    "explain": "map(function) transforms each element. Delivery → String (driver name). It is like SQL SELECT column — extract/transform one field from each row. The result stream has a different type than the input.",
+    "explain": "map(function) transforms each element. Delivery \u2192 String (driver name). It is like SQL SELECT column \u2014 extract/transform one field from each row. The result stream has a different type than the input.",
     "topic": "collections"
   },
   {
     "id": "core-streams-03",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Streams — Pipeline",
+    "subtopic": "Streams \u2014 Pipeline",
     "difficulty": "intermediate",
     "mission": "What does this stream pipeline produce?",
     "code": "List<Integer> distances = List.of(10, 25, 5, 50, 30, 8);\nlong count = distances.stream()\n    .filter(d -> d > 15)\n    .count();\nSystem.out.println(count);",
@@ -266,13 +266,13 @@
       "0"
     ],
     "answer": "3",
-    "explain": "filter(d > 15) keeps: 25, 50, 30. count() = 3. Streams are lazy — filter does not create a new list, it just filters during traversal. count() is a terminal operation that triggers processing.",
+    "explain": "filter(d > 15) keeps: 25, 50, 30. count() = 3. Streams are lazy \u2014 filter does not create a new list, it just filters during traversal. count() is a terminal operation that triggers processing.",
     "topic": "collections"
   },
   {
     "id": "core-streams-04",
     "type": "FILL_BLANK",
-    "subtopic": "Streams — Collectors",
+    "subtopic": "Streams \u2014 Collectors",
     "difficulty": "intermediate",
     "mission": "Group deliveries <strong>by driver</strong> into a Map.",
     "code": "Map<String, List<Delivery>> byDriver = deliveries.stream()\n    .collect(Collectors._____(Delivery::getDriverName));",
@@ -284,13 +284,13 @@
       "mapping"
     ],
     "answer": "groupingBy",
-    "explain": "groupingBy(classifier) creates a Map<Key, List<Element>>. Like SQL GROUP BY — group deliveries by driver name. partitioningBy splits into true/false only. toMap creates Map<Key, Value> (one entry per key).",
+    "explain": "groupingBy(classifier) creates a Map<Key, List<Element>>. Like SQL GROUP BY \u2014 group deliveries by driver name. partitioningBy splits into true/false only. toMap creates Map<Key, Value> (one entry per key).",
     "topic": "collections"
   },
   {
     "id": "core-streams-05",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Streams — reduce",
+    "subtopic": "Streams \u2014 reduce",
     "difficulty": "intermediate",
     "mission": "What is the <strong>total distance</strong>?",
     "code": "List<Integer> legs = List.of(12, 8, 15, 20);\nint total = legs.stream()\n    .reduce(0, Integer::sum);\nSystem.out.println(total);",
@@ -307,7 +307,7 @@
   {
     "id": "core-streams-06",
     "type": "PICK_INVALID",
-    "subtopic": "Streams — Anti-patterns",
+    "subtopic": "Streams \u2014 Anti-patterns",
     "difficulty": "intermediate",
     "mission": "Which stream usage is an <strong>anti-pattern</strong>?",
     "snippets": [
@@ -328,7 +328,7 @@
       }
     ],
     "answer": "b",
-    "explain": "Using forEach with side effects (mutation + DB save) is an anti-pattern. Streams are designed for transformation pipelines, not imperative side effects. Use a for loop for mutations and DB operations. Streams should be used for filter/map/reduce/collect — pure transformations.",
+    "explain": "Using forEach with side effects (mutation + DB save) is an anti-pattern. Streams are designed for transformation pipelines, not imperative side effects. Use a for loop for mutations and DB operations. Streams should be used for filter/map/reduce/collect \u2014 pure transformations.",
     "topic": "collections"
   },
   {
@@ -346,7 +346,7 @@
       "ifPresent"
     ],
     "answer": "orElseThrow",
-    "explain": "orElseThrow(supplier) unwraps the Optional or throws if empty. NEVER call .get() without checking — it throws NoSuchElementException. orElse(default) returns a default value. orElseThrow is the standard pattern for \"find or 404\".",
+    "explain": "orElseThrow(supplier) unwraps the Optional or throws if empty. NEVER call .get() without checking \u2014 it throws NoSuchElementException. orElse(default) returns a default value. orElseThrow is the standard pattern for \"find or 404\".",
     "topic": "collections"
   },
   {
@@ -364,7 +364,7 @@
       "Identifiable"
     ],
     "answer": "T",
-    "explain": "The type parameter T (declared as <T extends Identifiable>) is used in the parameter list. This means the method works with any List of objects that implement Identifiable — List<Delivery>, List<Driver>, List<Route>. The return type preserves the specific type.",
+    "explain": "The type parameter T (declared as <T extends Identifiable>) is used in the parameter list. This means the method works with any List of objects that implement Identifiable \u2014 List<Delivery>, List<Driver>, List<Route>. The return type preserves the specific type.",
     "topic": "collections"
   },
   {
@@ -387,7 +387,7 @@
   {
     "id": "core-generics-03",
     "type": "FILL_BLANK",
-    "subtopic": "Generics — Wildcards",
+    "subtopic": "Generics \u2014 Wildcards",
     "difficulty": "intermediate",
     "mission": "Complete so this method accepts <strong>any list of Number subtypes</strong> (Integer, Double, Long).",
     "code": "public double sumAll(List<? _____ Number> numbers) {\n    return numbers.stream()\n        .mapToDouble(Number::doubleValue)\n        .sum();\n}",
@@ -409,7 +409,7 @@
     "difficulty": "intermediate",
     "question": "When would you write a generic class or method?",
     "interviewerIntent": "Test practical understanding of generics beyond syntax.",
-    "shortAnswer": "When the logic is the same regardless of the type — repositories (GenericRepository<T>), event handlers (EventHandler<E>), response wrappers (ApiResponse<T>), utility methods (findById, filter, transform). Generics provide type safety without code duplication.",
+    "shortAnswer": "When the logic is the same regardless of the type \u2014 repositories (GenericRepository<T>), event handlers (EventHandler<E>), response wrappers (ApiResponse<T>), utility methods (findById, filter, transform). Generics provide type safety without code duplication.",
     "modelAnswer": "Context: Generics var you write logic once that works with any type, while maintaining compile-time type safety.\n\nCommon use cases:\n- Repository<T>: findById, save, delete work for any entity type\n- EventHandler<E>: process any event type with the same consumer pattern\n- ApiResponse<T>: wrap any response payload with metadata (status, pagination)\n- Pair<A, B>, Either<L, R>: utility types that hold different types\n\nWhen NOT to use:\n- When there is only one type ever (just use the concrete type)\n- When the logic genuinely differs per type (use polymorphism instead)\n- When it adds complexity without type safety benefit\n\nMy experience: In Java EE, we used generic repositories (GenericRepository<T extends SenaiEntity>) that provided CRUD operations for any entity. Spring Data does this with JpaRepository<T, ID>.",
     "senaiExample": "GenericRepository<T extends SenaiEntity> provided findById, persist, merge for all entities. Each specific repository extended it with custom queries.",
     "reweExample": "Spring Data JpaRepository<Delivery, Long> is a generic repository. KafkaTemplate<String, LogisticsEvent> is a generic producer. Same pattern.",
@@ -427,7 +427,7 @@
     "followUps": [
       {
         "question": "What is type erasure?",
-        "answerHint": "At runtime, generic types are erased — List<String> becomes List. The JVM does not know the generic type. This is why you cannot do new T() or instanceof T."
+        "answerHint": "At runtime, generic types are erased \u2014 List<String> becomes List. The JVM does not know the generic type. This is why you cannot do new T() or instanceof T."
       },
       {
         "question": "What is PECS?",
@@ -437,12 +437,12 @@
     "vocabulary": [
       {
         "term": "type erasure",
-        "meaning": "tipos genéricos são removidos em runtime — JVM não sabe o T",
-        "example": "Due to type erasure, you cannot create new T() at runtime — the JVM does not know what T is."
+        "meaning": "tipos gen\u00e9ricos s\u00e3o removidos em runtime \u2014 JVM n\u00e3o sabe o T",
+        "example": "Due to type erasure, you cannot create new T() at runtime \u2014 the JVM does not know what T is."
       },
       {
         "term": "PECS",
-        "meaning": "Producer Extends, Consumer Super — regra para wildcards",
+        "meaning": "Producer Extends, Consumer Super \u2014 regra para wildcards",
         "example": "A method that reads from a list uses ? extends T. A method that writes to a list uses ? super T."
       }
     ],
@@ -469,22 +469,22 @@
   {
     "id": "core-collections-compare-01",
     "type": "COMPARE_CONCEPTS",
-    "subtopic": "Collections — Choosing",
+    "subtopic": "Collections \u2014 Choosing",
     "difficulty": "basic",
-    "mission": "Compare: <strong>List</strong> vs <strong>Set</strong> vs <strong>Map</strong> — when to use each",
+    "mission": "Compare: <strong>List</strong> vs <strong>Set</strong> vs <strong>Map</strong> \u2014 when to use each",
     "conceptA": {
       "name": "List",
       "definition": "Ordered, allows duplicates, index-based access. Use when order matters or duplicates are valid. ArrayList (fast random access) or LinkedList (fast insert/remove in middle)."
     },
     "conceptB": {
       "name": "Set / Map",
-      "definition": "Set: unique elements, no duplicates, no index. Map: key→value pairs, unique keys, O(1) lookup. Use Set for uniqueness. Use Map for associations/lookups."
+      "definition": "Set: unique elements, no duplicates, no index. Map: key\u2192value pairs, unique keys, O(1) lookup. Use Set for uniqueness. Use Map for associations/lookups."
     },
     "keyDifference": "List = \"I need ordered items (possibly with duplicates)\". Set = \"I need unique items\". Map = \"I need to look up a value by a key\". Choose based on what QUESTION you ask the collection.",
     "javaExample": "Delivery stops in order: List<Stop>. Unique driver IDs assigned today: Set<String>. Cache delivery by ID: Map<Long, Delivery>.",
     "interviewAnswer": "I choose based on the access pattern: List when I need order or index access. Set when uniqueness is the constraint. Map when I need key-based lookup. In logistics, route stops are a List (ordered), assigned drivers are a Set (unique), and delivery cache is a Map (fast lookup by ID).",
     "topic": "collections",
-    "answer": "**List:** Ordered, allows duplicates, index-based access. Use when order matters or duplicates are valid. ArrayList (fast random access) or LinkedList (fast insert/remove in middle).\n\n**Set / Map:** Set: unique elements, no duplicates, no index. Map: key→value pairs, unique keys, O(1) lookup. Use Set for uniqueness. Use Map for associations/lookups.\n\n\n**Key Difference:** List = \"I need ordered items (possibly with duplicates)\". Set = \"I need unique items\". Map = \"I need to look up a value by a key\". Choose based on what QUESTION you ask the collection."
+    "answer": "**List:** Ordered, allows duplicates, index-based access. Use when order matters or duplicates are valid. ArrayList (fast random access) or LinkedList (fast insert/remove in middle).\n\n**Set / Map:** Set: unique elements, no duplicates, no index. Map: key\u2192value pairs, unique keys, O(1) lookup. Use Set for uniqueness. Use Map for associations/lookups.\n\n\n**Key Difference:** List = \"I need ordered items (possibly with duplicates)\". Set = \"I need unique items\". Map = \"I need to look up a value by a key\". Choose based on what QUESTION you ask the collection."
   },
   {
     "id": "core-types-01",
@@ -500,7 +500,7 @@
       "Compile Error"
     ],
     "answer": "10",
-    "explain": "Primitives are copied by VALUE. Changing b does not affect a — they are independent copies. References (objects) share the same heap object, so changes through one reference ARE visible to the other.",
+    "explain": "Primitives are copied by VALUE. Changing b does not affect a \u2014 they are independent copies. References (objects) share the same heap object, so changes through one reference ARE visible to the other.",
     "topic": "collections"
   },
   {
@@ -534,7 +534,7 @@
       "0"
     ],
     "answer": "Compile Error",
-    "explain": "int → byte is a NARROWING conversion — possible data loss. Requires explicit cast: byte b = (byte) x; Without the cast, the compiler rejects it. With cast: 128 overflows byte (max 127) → wraps to -128.",
+    "explain": "int \u2192 byte is a NARROWING conversion \u2014 possible data loss. Requires explicit cast: byte b = (byte) x; Without the cast, the compiler rejects it. With cast: 128 overflows byte (max 127) \u2192 wraps to -128.",
     "topic": "collections"
   },
   {
@@ -569,7 +569,7 @@
       "null"
     ],
     "answer": "Compile Error: count not found",
-    "explain": "count is declared inside the if block — its scope ends with the closing brace. Outside the block, it does not exist. Fix: declare count before the if block. Variable scope = from declaration to the end of the enclosing block {}.",
+    "explain": "count is declared inside the if block \u2014 its scope ends with the closing brace. Outside the block, it does not exist. Fix: declare count before the if block. Variable scope = from declaration to the end of the enclosing block {}.",
     "topic": "collections"
   },
   {
@@ -603,7 +603,7 @@
       "P"
     ],
     "answer": "DV",
-    "explain": "Matches \"DISPATCHED\", prints \"D\". NO break → falls through to \"DELIVERED\", prints \"V\". Then break stops. Fall-through is a common interview trap. Without break, execution continues into the next case regardless of match.",
+    "explain": "Matches \"DISPATCHED\", prints \"D\". NO break \u2192 falls through to \"DELIVERED\", prints \"V\". Then break stops. Fall-through is a common interview trap. Without break, execution continues into the next case regardless of match.",
     "topic": "collections"
   },
   {
@@ -621,7 +621,7 @@
       "&&"
     ],
     "answer": "?",
-    "explain": "Ternary: condition ? valueIfTrue : valueIfFalse. Compact alternative to if/else for simple value assignment. Avoid nesting ternaries — they become unreadable. Use for simple one-line decisions.",
+    "explain": "Ternary: condition ? valueIfTrue : valueIfFalse. Compact alternative to if/else for simple value assignment. Avoid nesting ternaries \u2014 they become unreadable. Use for simple one-line decisions.",
     "topic": "collections"
   },
   {
@@ -655,7 +655,7 @@
       "Compile Error"
     ],
     "answer": "ArrayIndexOutOfBoundsException",
-    "explain": "Array indices go from 0 to length-1. stops.length = 5, but index 5 does not exist (last valid is 4). This is a RUNTIME exception — compiles fine but crashes. Fix: stops[stops.length - 1] for last element.",
+    "explain": "Array indices go from 0 to length-1. stops.length = 5, but index 5 does not exist (last valid is 4). This is a RUNTIME exception \u2014 compiles fine but crashes. Fix: stops[stops.length - 1] for last element.",
     "topic": "collections"
   },
   {
@@ -696,7 +696,7 @@
   {
     "id": "core-loops-01",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Loops — break",
+    "subtopic": "Loops \u2014 break",
     "difficulty": "basic",
     "mission": "What prints? Think about <strong>break</strong>.",
     "code": "for (int i = 0; i < 10; i++) {\n    if (i == 3) break;\n    System.out.print(i + \" \");\n}",
@@ -713,7 +713,7 @@
   {
     "id": "core-loops-02",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Loops — while",
+    "subtopic": "Loops \u2014 while",
     "difficulty": "basic",
     "mission": "How many times does the loop <strong>execute</strong>?",
     "code": "int deliveries = 5;\nwhile (deliveries > 0) {\n    deliveries--;\n}\nSystem.out.println(deliveries);",
@@ -724,13 +724,13 @@
       "1"
     ],
     "answer": "0",
-    "explain": "Starts at 5, decrements each iteration: 5→4→3→2→1→0. When deliveries=0, condition (0>0) is false, loop exits. Prints 0. The loop ran 5 times. while checks BEFORE each iteration; do-while checks AFTER (always runs at least once).",
+    "explain": "Starts at 5, decrements each iteration: 5\u21924\u21923\u21922\u21921\u21920. When deliveries=0, condition (0>0) is false, loop exits. Prints 0. The loop ran 5 times. while checks BEFORE each iteration; do-while checks AFTER (always runs at least once).",
     "topic": "collections"
   },
   {
     "id": "core-loops-03",
     "type": "FILL_BLANK",
-    "subtopic": "Loops — for-each",
+    "subtopic": "Loops \u2014 for-each",
     "difficulty": "basic",
     "mission": "Complete the enhanced for loop to process <strong>each delivery</strong>.",
     "code": "for (Delivery d _____ deliveries) {\n    process(d);\n}",
@@ -748,7 +748,7 @@
   {
     "id": "core-exceptions-01",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Exceptions — try/catch/finally",
+    "subtopic": "Exceptions \u2014 try/catch/finally",
     "difficulty": "intermediate",
     "mission": "What prints? Think about <strong>finally</strong> execution.",
     "code": "try {\n    System.out.print(\"A\");\n    throw new RuntimeException();\n} catch (Exception e) {\n    System.out.print(\"B\");\n} finally {\n    System.out.print(\"C\");\n}",
@@ -759,13 +759,13 @@
       "AC"
     ],
     "answer": "ABC",
-    "explain": "finally ALWAYS executes — whether exception occurs or not, whether caught or not. Flow: print A → throw → caught by catch → print B → finally → print C. Even if catch re-throws, finally still runs.",
+    "explain": "finally ALWAYS executes \u2014 whether exception occurs or not, whether caught or not. Flow: print A \u2192 throw \u2192 caught by catch \u2192 print B \u2192 finally \u2192 print C. Even if catch re-throws, finally still runs.",
     "topic": "collections"
   },
   {
     "id": "core-exceptions-02",
     "type": "PICK_INVALID",
-    "subtopic": "Exceptions — Checked vs Unchecked",
+    "subtopic": "Exceptions \u2014 Checked vs Unchecked",
     "difficulty": "intermediate",
     "mission": "Which exception is <strong>unchecked</strong> (does NOT require try/catch or throws)?",
     "snippets": [
@@ -786,13 +786,13 @@
       }
     ],
     "answer": "b",
-    "explain": "Unchecked = extends RuntimeException. Compiler does NOT force you to catch them. NullPointerException, ArrayIndexOutOfBoundsException, IllegalArgumentException, ClassCastException — all unchecked. IOException, SQLException — checked (must catch or declare throws).",
+    "explain": "Unchecked = extends RuntimeException. Compiler does NOT force you to catch them. NullPointerException, ArrayIndexOutOfBoundsException, IllegalArgumentException, ClassCastException \u2014 all unchecked. IOException, SQLException \u2014 checked (must catch or declare throws).",
     "topic": "collections"
   },
   {
     "id": "core-exceptions-03",
     "type": "FILL_BLANK",
-    "subtopic": "Exceptions — Custom",
+    "subtopic": "Exceptions \u2014 Custom",
     "difficulty": "intermediate",
     "mission": "Create a <strong>custom unchecked exception</strong> for delivery not found.",
     "code": "public class DeliveryNotFoundException extends _____ {\n    public DeliveryNotFoundException(String msg) {\n        super(msg);\n    }\n}",
@@ -804,13 +804,13 @@
       "Throwable"
     ],
     "answer": "RuntimeException",
-    "explain": "Extending RuntimeException makes it unchecked — callers are not forced to catch it. This is the modern Java convention for business exceptions. Extending Exception (checked) forces every caller to handle it — appropriate for recoverable I/O errors, not for \"not found\" scenarios.",
+    "explain": "Extending RuntimeException makes it unchecked \u2014 callers are not forced to catch it. This is the modern Java convention for business exceptions. Extending Exception (checked) forces every caller to handle it \u2014 appropriate for recoverable I/O errors, not for \"not found\" scenarios.",
     "topic": "collections"
   },
   {
     "id": "core-exceptions-04",
     "type": "ORDER_EXECUTION",
-    "subtopic": "Exceptions — Catch Order",
+    "subtopic": "Exceptions \u2014 Catch Order",
     "difficulty": "basic",
     "mission": "Arrange catch blocks in <strong>valid order</strong> (most specific first).",
     "items": [
@@ -837,7 +837,7 @@
       "rte",
       "ex"
     ],
-    "explain": "Most specific → most general. NumberFormatException extends IllegalArgumentException extends RuntimeException extends Exception. Reversing causes \"unreachable catch block\" compile error. The first matching catch handles it.",
+    "explain": "Most specific \u2192 most general. NumberFormatException extends IllegalArgumentException extends RuntimeException extends Exception. Reversing causes \"unreachable catch block\" compile error. The first matching catch handles it.",
     "topic": "collections"
   },
   {
@@ -846,15 +846,15 @@
     "subtopic": "String Immutability",
     "difficulty": "basic",
     "mission": "What prints? Strings are <strong>immutable</strong>.",
-    "code": "String route = \"Warehouse\";\nroute.concat(\" → Store A\");\nSystem.out.println(route);",
+    "code": "String route = \"Warehouse\";\nroute.concat(\" \u2192 Store A\");\nSystem.out.println(route);",
     "choices": [
-      "Warehouse → Store A",
+      "Warehouse \u2192 Store A",
       "Warehouse",
       "null",
       "Compile Error"
     ],
     "answer": "Warehouse",
-    "explain": "Strings are IMMUTABLE. concat() returns a NEW string — it does not modify the original. The result is discarded because it is not assigned. Fix: route = route.concat(\" → Store A\"); or use StringBuilder for building strings in loops.",
+    "explain": "Strings are IMMUTABLE. concat() returns a NEW string \u2014 it does not modify the original. The result is discarded because it is not assigned. Fix: route = route.concat(\" \u2192 Store A\"); or use StringBuilder for building strings in loops.",
     "topic": "collections"
   },
   {
@@ -863,7 +863,7 @@
     "subtopic": "StringBuilder",
     "difficulty": "basic",
     "mission": "Build a route string <strong>efficiently</strong> in a loop.",
-    "code": "_____ sb = new StringBuilder();\nfor (String stop : stops) {\n    sb.append(stop).append(\" → \");\n}\nString route = sb.toString();",
+    "code": "_____ sb = new StringBuilder();\nfor (String stop : stops) {\n    sb.append(stop).append(\" \u2192 \");\n}\nString route = sb.toString();",
     "blank": "_____",
     "choices": [
       "StringBuilder",
@@ -872,7 +872,7 @@
       "CharSequence"
     ],
     "answer": "StringBuilder",
-    "explain": "StringBuilder is mutable — append() modifies in place without creating new objects. In a loop, String concatenation creates N new String objects (O(n²) total characters copied). StringBuilder is O(n). StringBuffer is the same but synchronized (thread-safe, rarely needed).",
+    "explain": "StringBuilder is mutable \u2014 append() modifies in place without creating new objects. In a loop, String concatenation creates N new String objects (O(n\u00b2) total characters copied). StringBuilder is O(n). StringBuffer is the same but synchronized (thread-safe, rarely needed).",
     "topic": "collections"
   },
   {
@@ -889,7 +889,7 @@
       "false true"
     ],
     "answer": "true false",
-    "explain": "String literals are INTERNED (String pool) — same content = same object. a==b is true (same pool reference). new String() creates a NEW object on the heap, bypassing the pool. a==c is false (different objects). Always use .equals() for content comparison.",
+    "explain": "String literals are INTERNED (String pool) \u2014 same content = same object. a==b is true (same pool reference). new String() creates a NEW object on the heap, bypassing the pool. a==c is false (different objects). Always use .equals() for content comparison.",
     "topic": "collections"
   },
   {
@@ -907,7 +907,7 @@
       "new"
     ],
     "answer": "now",
-    "explain": "LocalDateTime.now() returns current date+time. LocalDate.now() for date only. LocalTime.now() for time only. These are immutable — operations like plusDays(1) return NEW instances. Part of java.time package (Java 8+), replacing the problematic Date/Calendar.",
+    "explain": "LocalDateTime.now() returns current date+time. LocalDate.now() for date only. LocalTime.now() for time only. These are immutable \u2014 operations like plusDays(1) return NEW instances. Part of java.time package (Java 8+), replacing the problematic Date/Calendar.",
     "topic": "collections"
   },
   {
@@ -924,7 +924,7 @@
       "Exception"
     ],
     "answer": "2026-07-19",
-    "explain": "LocalDate is IMMUTABLE — plusDays() returns a NEW object, it does NOT modify the original. The result is discarded. Fix: delivery = delivery.plusDays(3); Same pattern as String — all java.time classes are immutable.",
+    "explain": "LocalDate is IMMUTABLE \u2014 plusDays() returns a NEW object, it does NOT modify the original. The result is discarded. Fix: delivery = delivery.plusDays(3); Same pattern as String \u2014 all java.time classes are immutable.",
     "topic": "collections"
   },
   {
@@ -950,7 +950,7 @@
     "type": "PREDICT_OUTPUT",
     "subtopic": "Pass by Value",
     "difficulty": "intermediate",
-    "mission": "What prints? Java is <strong>pass by value</strong> — but what does that mean for objects?",
+    "mission": "What prints? Java is <strong>pass by value</strong> \u2014 but what does that mean for objects?",
     "code": "public static void changeName(Driver driver) {\n    driver.setName(\"Carlos\");\n}\n\nDriver d = new Driver(\"Maria\");\nchangeName(d);\nSystem.out.println(d.getName());",
     "choices": [
       "Maria",
@@ -965,7 +965,7 @@
   {
     "id": "core-methods-02",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Pass by Value — reassignment",
+    "subtopic": "Pass by Value \u2014 reassignment",
     "difficulty": "intermediate",
     "mission": "What prints? Focus on <strong>reference reassignment</strong> inside a method.",
     "code": "public static void replace(Driver driver) {\n    driver = new Driver(\"Carlos\"); // reassign local ref\n}\n\nDriver d = new Driver(\"Maria\");\nreplace(d);\nSystem.out.println(d.getName());",
@@ -993,7 +993,7 @@
       "Exception"
     ],
     "answer": "7",
-    "explain": "Exact match wins: 3 and 4 are int literals → add(int, int) is called, returns int 7. If you passed 3.0 and 4.0, add(double, double) would be called. Overload resolution is compile-time based on parameter types.",
+    "explain": "Exact match wins: 3 and 4 are int literals \u2192 add(int, int) is called, returns int 7. If you passed 3.0 and 4.0, add(double, double) would be called. Overload resolution is compile-time based on parameter types.",
     "topic": "collections"
   },
   {
@@ -1001,7 +1001,7 @@
     "type": "FILL_BLANK",
     "subtopic": "Static",
     "difficulty": "basic",
-    "mission": "A counter shared across ALL instances — must be <strong>static</strong>.",
+    "mission": "A counter shared across ALL instances \u2014 must be <strong>static</strong>.",
     "code": "public class DeliveryTracker {\n    private _____ int totalDeliveries = 0;\n\n    public void trackDelivery() {\n        totalDeliveries++; // shared across all instances\n    }\n}",
     "blank": "_____",
     "choices": [
@@ -1038,7 +1038,7 @@
       }
     ],
     "answer": "b",
-    "explain": "protected is the ANSWER — most restrictive while allowing subclass access across packages. Order from most to least restrictive: private → default (package) → protected → public. Default (no modifier) allows same-package only — subclasses in other packages cannot access.",
+    "explain": "protected is the ANSWER \u2014 most restrictive while allowing subclass access across packages. Order from most to least restrictive: private \u2192 default (package) \u2192 protected \u2192 public. Default (no modifier) allows same-package only \u2014 subclasses in other packages cannot access.",
     "topic": "collections"
   },
   {
@@ -1055,13 +1055,13 @@
       "AB"
     ],
     "answer": "BA",
-    "explain": "this() calls the other constructor FIRST, then continues with the rest of the current constructor. Flow: new Route() → this(\"Default\",0) → prints B → returns → prints A. Constructor chaining with this() must be the FIRST statement.",
+    "explain": "this() calls the other constructor FIRST, then continues with the rest of the current constructor. Flow: new Route() \u2192 this(\"Default\",0) \u2192 prints B \u2192 returns \u2192 prints A. Constructor chaining with this() must be the FIRST statement.",
     "topic": "collections"
   },
   {
     "id": "core-methods-07",
     "type": "FILL_BLANK",
-    "subtopic": "Constructors — Default",
+    "subtopic": "Constructors \u2014 Default",
     "difficulty": "basic",
     "mission": "When does Java <strong>NOT</strong> provide a default constructor?",
     "code": "class Delivery {\n    private String id;\n    // Java provides no-arg constructor ONLY if:\n    // _____\n}",
@@ -1079,7 +1079,7 @@
   {
     "id": "core-inherit-01",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Inheritance — super",
+    "subtopic": "Inheritance \u2014 super",
     "difficulty": "intermediate",
     "mission": "What prints? Think about <strong>super()</strong> and constructor order.",
     "code": "class Vehicle {\n    Vehicle() { System.out.print(\"V\"); }\n}\nclass Truck extends Vehicle {\n    Truck() { System.out.print(\"T\"); }\n}\n\nnew Truck();",
@@ -1090,13 +1090,13 @@
       "TV"
     ],
     "answer": "VT",
-    "explain": "Java always calls the parent constructor FIRST (implicit super() if not explicit). Flow: new Truck() → super() [Vehicle()] → prints V → Truck() body → prints T. Parent is ALWAYS initialized before child. This is fundamental to inheritance.",
+    "explain": "Java always calls the parent constructor FIRST (implicit super() if not explicit). Flow: new Truck() \u2192 super() [Vehicle()] \u2192 prints V \u2192 Truck() body \u2192 prints T. Parent is ALWAYS initialized before child. This is fundamental to inheritance.",
     "topic": "collections"
   },
   {
     "id": "core-inherit-02",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Inheritance — Override",
+    "subtopic": "Inheritance \u2014 Override",
     "difficulty": "intermediate",
     "mission": "What prints? Think about <strong>dynamic dispatch</strong>.",
     "code": "class Vehicle {\n    String type() { return \"Vehicle\"; }\n}\nclass Truck extends Vehicle {\n    @Override\n    String type() { return \"Truck\"; }\n}\n\nVehicle v = new Truck();\nSystem.out.println(v.type());",
@@ -1113,7 +1113,7 @@
   {
     "id": "core-inherit-03",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Inheritance — Casting",
+    "subtopic": "Inheritance \u2014 Casting",
     "difficulty": "intermediate",
     "mission": "What happens at <strong>runtime</strong>?",
     "code": "Vehicle v = new Vehicle();\nTruck t = (Truck) v;  // Compiles fine!",
@@ -1124,7 +1124,7 @@
       "null"
     ],
     "answer": "ClassCastException",
-    "explain": "Downcasting (Vehicle → Truck) compiles because the compiler allows it (v COULD be a Truck). But at runtime, v is actually a Vehicle, not a Truck → ClassCastException. Always check with instanceof before downcasting: if (v instanceof Truck t) { ... }",
+    "explain": "Downcasting (Vehicle \u2192 Truck) compiles because the compiler allows it (v COULD be a Truck). But at runtime, v is actually a Vehicle, not a Truck \u2192 ClassCastException. Always check with instanceof before downcasting: if (v instanceof Truck t) { ... }",
     "topic": "collections"
   },
   {
@@ -1175,7 +1175,7 @@
   {
     "id": "core-inherit-06",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Interface — multiple",
+    "subtopic": "Interface \u2014 multiple",
     "difficulty": "intermediate",
     "mission": "Does this <strong>compile</strong>? A class implementing two interfaces.",
     "code": "interface Dispatchable { void dispatch(); }\ninterface Trackable { void track(); }\n\nclass Delivery implements Dispatchable, Trackable {\n    public void dispatch() { System.out.print(\"D\"); }\n    public void track() { System.out.print(\"T\"); }\n}\n\nDelivery d = new Delivery();\nd.dispatch();\nd.track();",
@@ -1204,13 +1204,13 @@
       "Array"
     ],
     "answer": "ArrayList",
-    "explain": "ArrayList is the standard List implementation — backed by a resizable array. O(1) random access, O(1) amortized add at end, O(n) insert in middle. Declare as List<> (interface) on the left, instantiate as ArrayList<> on the right — program to the interface.",
+    "explain": "ArrayList is the standard List implementation \u2014 backed by a resizable array. O(1) random access, O(1) amortized add at end, O(n) insert in middle. Declare as List<> (interface) on the left, instantiate as ArrayList<> on the right \u2014 program to the interface.",
     "topic": "collections"
   },
   {
     "id": "core-arraylist-02",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "ArrayList — remove",
+    "subtopic": "ArrayList \u2014 remove",
     "difficulty": "intermediate",
     "mission": "What prints? Be careful with <strong>remove()</strong> overloads.",
     "code": "List<Integer> list = new ArrayList<>(List.of(10, 20, 30));\nlist.remove(1);  // remove by INDEX, not value!\nSystem.out.println(list);",
@@ -1227,7 +1227,7 @@
   {
     "id": "core-arraylist-03",
     "type": "FILL_BLANK",
-    "subtopic": "Lambda — forEach",
+    "subtopic": "Lambda \u2014 forEach",
     "difficulty": "basic",
     "mission": "Print each delivery using a <strong>method reference</strong>.",
     "code": "deliveries.forEach(System.out_____);",
@@ -1239,13 +1239,13 @@
       "::print"
     ],
     "answer": "::println",
-    "explain": "System.out::println is a method reference — shorthand for (d) -> System.out.println(d). :: refers to an existing method by name. Types: ClassName::staticMethod, object::instanceMethod, ClassName::new (constructor reference).",
+    "explain": "System.out::println is a method reference \u2014 shorthand for (d) -> System.out.println(d). :: refers to an existing method by name. Types: ClassName::staticMethod, object::instanceMethod, ClassName::new (constructor reference).",
     "topic": "collections"
   },
   {
     "id": "core-arraylist-04",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Lambda — sort",
+    "subtopic": "Lambda \u2014 sort",
     "difficulty": "intermediate",
     "mission": "What is the <strong>sorted order</strong>?",
     "code": "List<String> drivers = new ArrayList<>(List.of(\"Carlos\", \"Ana\", \"Bruno\"));\ndrivers.sort((a, b) -> a.compareTo(b));\nSystem.out.println(drivers);",
@@ -1256,13 +1256,13 @@
       "Exception"
     ],
     "answer": "[Ana, Bruno, Carlos]",
-    "explain": "The lambda (a, b) -> a.compareTo(b) is a Comparator — returns negative (a before b), zero (equal), positive (a after b). String.compareTo uses alphabetical order. Shorthand: drivers.sort(Comparator.naturalOrder()) or drivers.sort(String::compareTo).",
+    "explain": "The lambda (a, b) -> a.compareTo(b) is a Comparator \u2014 returns negative (a before b), zero (equal), positive (a after b). String.compareTo uses alphabetical order. Shorthand: drivers.sort(Comparator.naturalOrder()) or drivers.sort(String::compareTo).",
     "topic": "collections"
   },
   {
     "id": "core-arraylist-05",
     "type": "FILL_BLANK",
-    "subtopic": "Lambda — Predicate",
+    "subtopic": "Lambda \u2014 Predicate",
     "difficulty": "intermediate",
     "mission": "Remove all <strong>cancelled deliveries</strong> from the list using removeIf.",
     "code": "deliveries.removeIf(d -> d.getStatus() == DeliveryStatus._____);",
@@ -1280,7 +1280,7 @@
   {
     "id": "core-arraylist-06",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Lambda — Functional Interface",
+    "subtopic": "Lambda \u2014 Functional Interface",
     "difficulty": "intermediate",
     "mission": "What does this <strong>Function</strong> return?",
     "code": "Function<String, Integer> length = s -> s.length();\nSystem.out.println(length.apply(\"REWE\"));",
@@ -1291,7 +1291,7 @@
       "Compile Error"
     ],
     "answer": "4",
-    "explain": "Function<T, R> takes T and returns R. Function<String, Integer> takes a String and returns an Integer. length.apply(\"REWE\") returns \"REWE\".length() = 4. Key functional interfaces: Function (T→R), Predicate (T→boolean), Consumer (T→void), Supplier (→T).",
+    "explain": "Function<T, R> takes T and returns R. Function<String, Integer> takes a String and returns an Integer. length.apply(\"REWE\") returns \"REWE\".length() = 4. Key functional interfaces: Function (T\u2192R), Predicate (T\u2192boolean), Consumer (T\u2192void), Supplier (\u2192T).",
     "topic": "collections"
   },
   {
@@ -1302,17 +1302,17 @@
     "mission": "Compare the 4 core <strong>functional interfaces</strong>.",
     "conceptA": {
       "name": "Function & Predicate",
-      "definition": "Function<T,R>: takes T, returns R. Example: Delivery → String (get name). Predicate<T>: takes T, returns boolean. Example: Delivery → is it late?"
+      "definition": "Function<T,R>: takes T, returns R. Example: Delivery \u2192 String (get name). Predicate<T>: takes T, returns boolean. Example: Delivery \u2192 is it late?"
     },
     "conceptB": {
       "name": "Consumer & Supplier",
-      "definition": "Consumer<T>: takes T, returns void. Example: Delivery → print it. Supplier<T>: takes nothing, returns T. Example: () → create new Delivery."
+      "definition": "Consumer<T>: takes T, returns void. Example: Delivery \u2192 print it. Supplier<T>: takes nothing, returns T. Example: () \u2192 create new Delivery."
     },
-    "keyDifference": "Function transforms (T→R). Predicate tests (T→boolean). Consumer acts (T→void). Supplier produces (→T). These are the building blocks of the Streams API.",
+    "keyDifference": "Function transforms (T\u2192R). Predicate tests (T\u2192boolean). Consumer acts (T\u2192void). Supplier produces (\u2192T). These are the building blocks of the Streams API.",
     "javaExample": "filter(Predicate), map(Function), forEach(Consumer), orElseGet(Supplier). Every Stream operation uses one of these four.",
     "interviewAnswer": "The four core functional interfaces cover all lambda signatures: Function transforms data, Predicate filters, Consumer performs side effects, and Supplier provides values lazily. The Streams API is built entirely on these abstractions.",
     "topic": "collections",
-    "answer": "**Function & Predicate:** Function<T,R>: takes T, returns R. Example: Delivery → String (get name). Predicate<T>: takes T, returns boolean. Example: Delivery → is it late?\n\n**Consumer & Supplier:** Consumer<T>: takes T, returns void. Example: Delivery → print it. Supplier<T>: takes nothing, returns T. Example: () → create new Delivery.\n\n\n**Key Difference:** Function transforms (T→R). Predicate tests (T→boolean). Consumer acts (T→void). Supplier produces (→T). These are the building blocks of the Streams API."
+    "answer": "**Function & Predicate:** Function<T,R>: takes T, returns R. Example: Delivery \u2192 String (get name). Predicate<T>: takes T, returns boolean. Example: Delivery \u2192 is it late?\n\n**Consumer & Supplier:** Consumer<T>: takes T, returns void. Example: Delivery \u2192 print it. Supplier<T>: takes nothing, returns T. Example: () \u2192 create new Delivery.\n\n\n**Key Difference:** Function transforms (T\u2192R). Predicate tests (T\u2192boolean). Consumer acts (T\u2192void). Supplier produces (\u2192T). These are the building blocks of the Streams API."
   },
   {
     "id": "oca-ch1-q02",
@@ -1538,7 +1538,7 @@
       "F_o_o_B_a_r"
     ],
     "answer": "FooBar",
-    "explain": "In Java, class names begin with an uppercase letter by convention. Then they use lowercase with the exception of new words. Option B follows this convention and is correct. Option A follows the convention for variable names. Option C follows the convention for constants. Option D doesn’t follow any "
+    "explain": "In Java, class names begin with an uppercase letter by convention. Then they use lowercase with the exception of new words. Option B follows this convention and is correct. Option A follows the convention for variable names. Option C follows the convention for constants. Option D doesn\u2019t follow any "
   },
   {
     "id": "oca-ch2-q06",
@@ -1651,7 +1651,7 @@
       "6"
     ],
     "answer": "1",
-    "explain": "Remember that in ternary expressions, only one of the two right-most expressions are evaluated. Since meal>6 is false, ––tip is evaluated and ++tip is skipped. The result is that tip is changed from 2 to 1, making Option A the correct answer. The value of total is 6, since the pre-increment operator",
+    "explain": "Remember that in ternary expressions, only one of the two right-most expressions are evaluated. Since meal>6 is false, \u2013\u2013tip is evaluated and ++tip is skipped. The result is that tip is changed from 2 to 1, making Option A the correct answer. The value of total is 6, since the pre-increment operator",
     "code": "int meal = 5;\nint tip = 2;\nint total = meal + (meal>6 ? ++tip : tip);"
   },
   {
@@ -1701,7 +1701,7 @@
       "A default statement can only be used when at least one case statement is present."
     ],
     "answer": "Unlike a case statement, the default statement does not take a value.",
-    "explain": "A default statement inside a switch statement is optional and can be placed in any order within the switch’s case statements, making Options A and B incorrect. Option D is an incorrect statement as a switch statement can be composed of a single default statement and no case statements. Option C is c"
+    "explain": "A default statement inside a switch statement is optional and can be placed in any order within the switch\u2019s case statements, making Options A and B incorrect. Option D is an incorrect statement as a switch statement can be composed of a single default statement and no case statements. Option C is c"
   },
   {
     "id": "oca-ch3-q06",
@@ -1783,7 +1783,7 @@
       "The code does not compile."
     ],
     "answer": "2",
-    "explain": "The first step is to determine whether or not the if-then statement’s expression is executed. The expression 6 % 3 evaluates to 0, since there is no remainder, and since 0 >= 1 is false, the expression triceratops++ is not called. Notice there are no brackets {} in the if-then statement. Despite the",
+    "explain": "The first step is to determine whether or not the if-then statement\u2019s expression is executed. The expression 6 % 3 evaluates to 0, since there is no remainder, and since 0 >= 1 is false, the expression triceratops++ is not called. Notice there are no brackets {} in the if-then statement. Despite the",
     "code": "package dinosaur;\npublic class Park {\n  public final static void main(String... arguments) {\n  int pterodactyl = 6;\nlong triceratops = 3;\nif(pterodactyl % 3 >= 1) triceratops++;\ntriceratops--;\nSystem.out.print(triceratops);\n}\n}"
   },
   {
@@ -1848,7 +1848,7 @@
       "printStormNames(new String[] { \"Don\" });"
     ],
     "answer": "printStormNames(\"Cindy\");",
-    "explain": "From within a method, an array or varargs parameter is treated the same. However, there is a difference from the caller’s point of view. A varargs parameter can receive either an array or individual values, making Options A and B compile. However, an array parameter can only take an array, which pre",
+    "explain": "From within a method, an array or varargs parameter is treated the same. However, there is a difference from the caller\u2019s point of view. A varargs parameter can receive either an array or individual values, making Options A and B compile. However, an array parameter can only take an array, which pre",
     "code": "public void printStormName(String... names) {\n  System.out.println(Arrays.toString(names));\n}\npublic void printStormNames(String[] names) {\n  System.out.println(Arrays.toString(names));\n}"
   },
   {
@@ -1873,7 +1873,7 @@
     "topic": "collections",
     "subtopic": "Arrays",
     "difficulty": "intermediate",
-    "mission": "Which of the following create an empty two-dimensional array with dimensions 2×2?",
+    "mission": "Which of the following create an empty two-dimensional array with dimensions 2\u00d72?",
     "choices": [
       "int[][] blue = new int[2, 2];",
       "int[][] blue = new int[2], [2];",
@@ -1963,7 +1963,7 @@
       "Three"
     ],
     "answer": "Two",
-    "explain": "When using an array initializer, you are not allowed to specify the size separately. The size is inferred from the number of elements listed. Therefore, tiger and ohMy are incorrect. When you’re not using an array initializer, the size is required. An empty array initializer is allowed. Option C is ",
+    "explain": "When using an array initializer, you are not allowed to specify the size separately. The size is inferred from the number of elements listed. Therefore, tiger and ohMy are incorrect. When you\u2019re not using an array initializer, the size is required. An empty array initializer is allowed. Option C is ",
     "code": "String lion [] = new String[] {\n  \"lion\"\n};\nString tiger [] = new String[1] {\n  \"tiger\"\n};\nString bear [] = new String[] {\n};\nString ohMy [] = new String[0] {\n};"
   },
   {
@@ -2155,7 +2155,7 @@
       "The code does not compile."
     ],
     "answer": "The code does not compile.",
-    "explain": "The sell() method does not compile because it does not return a value if both of the if-then statements’ conditional expressions evaluate to false. While logically, it is true that price is either less than 10 or greater than or equal to 10, the compiler does not know that. It just knows that if bot",
+    "explain": "The sell() method does not compile because it does not return a value if both of the if-then statements\u2019 conditional expressions evaluate to false. While logically, it is true that price is either less than 10 or greater than or equal to 10, the compiler does not know that. It just knows that if bot",
     "code": "package stocks;\npublic class Bond {\n  private static int price = 5;\npublic boolean sell() {\n  if(price<10) {\n  price++;\nreturn true;\n}\nelse if(price>=10) {\n  return false;\n}\n}\npublic static void main(String[] cash) {\n  new Bond().sell();\nnew Bond().sell();\nnew Bond().sell();\nSystem.out.print(price);\n}\n}"
   },
   {
@@ -2280,10 +2280,10 @@
     "difficulty": "intermediate",
     "mission": "Which of the following statements is not true?",
     "choices": [
-      "An instance of one class may access an instance of another class’s attributes if it has a reference to the instance and the attributes are declared public.",
+      "An instance of one class may access an instance of another class\u2019s attributes if it has a reference to the instance and the attributes are declared public.",
       "An instance of one class may access package-private attributes in a parent class, provided the parent class is not in the same package.",
-      "Two instances of the same class may access each other’s private attributes.",
-      "An instance of one class may access an instance of another class’s attributes if both classes are located in the same package and marked protected."
+      "Two instances of the same class may access each other\u2019s private attributes.",
+      "An instance of one class may access an instance of another class\u2019s attributes if both classes are located in the same package and marked protected."
     ],
     "answer": "An instance of one class may access package-private attributes in a parent class, provided the parent class is not in the same package.",
     "explain": "Options A, C, and D are true statements. In particular, Option C allows us to write the equals() methods between two objects that compare private attributes of the class. Option D is true because protected access also provides package-private access. Option B is false. Package-private attributes are"
@@ -2359,7 +2359,7 @@
     "topic": "collections",
     "subtopic": "Inheritance",
     "difficulty": "intermediate",
-    "mission": "Imagine you are working with another team to build an application. You are developing code that uses a class that the other team has not finished writing yet. Which element of Java would best facilitate this development, allowing easy integration once the other team’s code is complete?",
+    "mission": "Imagine you are working with another team to build an application. You are developing code that uses a class that the other team has not finished writing yet. Which element of Java would best facilitate this development, allowing easy integration once the other team\u2019s code is complete?",
     "choices": [
       "An abstract class",
       "An interface",
@@ -2367,7 +2367,7 @@
       "An access modifier"
     ],
     "answer": "An interface",
-    "explain": "The key here is understanding which of these features of Java allow one developer to build their application around another developer’s code, even if that code is not ready yet. For this problem, an interface is the best choice. If the two teams agree on a common interface, one developer can write c"
+    "explain": "The key here is understanding which of these features of Java allow one developer to build their application around another developer\u2019s code, even if that code is not ready yet. For this problem, an interface is the best choice. If the two teams agree on a common interface, one developer can write c"
   },
   {
     "id": "oca-ch7-q07",
@@ -2704,7 +2704,7 @@
       "The code compiles but throws an exception at runtime."
     ],
     "answer": "The code does not compile.",
-    "explain": "Calling the constructor and then insert() is an example of method chaining. However, the sb.length() call is a problem. The sb reference doesn’t exist until after the chained calls complete. Just because it happens to be on a separate line doesn’t change when the reference is created. Since the code",
+    "explain": "Calling the constructor and then insert() is an example of method chaining. However, the sb.length() call is a problem. The sb reference doesn\u2019t exist until after the chained calls complete. Just because it happens to be on a separate line doesn\u2019t change when the reference is created. Since the code",
     "code": "StringBuilder sb = new StringBuilder(\"radical\") .insert(sb.length(), \"robots\");\nSystem.out.println(sb);"
   },
   {
@@ -2786,7 +2786,7 @@
       "None of the above"
     ],
     "answer": "None of the above",
-    "explain": "The add() and get() methods are available on ArrayList. However, ArrayList uses size rather than length to get the number of elements. Therefore, Option D is correct. If length was changed to size, Option B would compile if put in the blank. Option A still wouldn’t compile in the blank because a cas",
+    "explain": "The add() and get() methods are available on ArrayList. However, ArrayList uses size rather than length to get the number of elements. Therefore, Option D is correct. If length was changed to size, Option B would compile if put in the blank. Option A still wouldn\u2019t compile in the blank because a cas",
     "code": "forgot to include the data type. Which of the following reference types can fill in the blank to complete this method? public static void secret( ____________mystery) {\n  mystery.add(\"metal\");\nString str = mystery.get(0);\nint num = mystery.length();\n}"
   },
   {
@@ -2861,14 +2861,14 @@
     "type": "PICK_INVALID",
     "difficulty": "INTERMEDIATE",
     "question": "Which is NOT a benefit of the Builder pattern over telescoping constructors?",
-    "options": [
+    "explain": "Builders are slightly SLOWER (extra object allocation for the builder itself). The benefits are readability, flexibility, and immutability \u2014 not raw speed. From Effective Java Item 2.",
+    "choices": [
       "Named parameters make code readable",
       "Can enforce invariants in build()",
       "Faster object creation than constructors",
       "Immutable objects are easy to create"
     ],
-    "correctAnswer": "Faster object creation than constructors",
-    "explanation": "Builders are slightly SLOWER (extra object allocation for the builder itself). The benefits are readability, flexibility, and immutability — not raw speed. From Effective Java Item 2."
+    "answer": "Faster object creation than constructors"
   },
   {
     "id": "ej-5",
@@ -2877,8 +2877,8 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "INTERMEDIATE",
     "question": "Why does Bloch say 'prefer dependency injection to hardwiring resources'? What's wrong with this code?\n\n```java\npublic class SpellChecker {\n    private final Lexicon dictionary = new EnglishLexicon();\n    public boolean isValid(String word) { ... }\n}\n```",
-    "correctOutput": "The class is untestable (can't substitute a mock dictionary), inflexible (only English), and violates SRP (creating its own dependency). Pass the Lexicon via constructor: `SpellChecker(Lexicon dict)` — allows testing with a test dictionary and supports multiple languages.",
-    "explanation": "Effective Java Item 5. This is the foundation of modern DI (Spring, CDI). Static utility classes and singletons that hardwire resources are inappropriate when behavior depends on the underlying resource."
+    "correctOutput": "The class is untestable (can't substitute a mock dictionary), inflexible (only English), and violates SRP (creating its own dependency). Pass the Lexicon via constructor: `SpellChecker(Lexicon dict)` \u2014 allows testing with a test dictionary and supports multiple languages.",
+    "explain": "Effective Java Item 5. This is the foundation of modern DI (Spring, CDI). Static utility classes and singletons that hardwire resources are inappropriate when behavior depends on the underlying resource."
   },
   {
     "id": "ej-7",
@@ -2887,7 +2887,7 @@
     "type": "ORAL_ANSWER",
     "difficulty": "SENIOR",
     "question": "What is an 'obsolete object reference' and how does it cause memory leaks in Java? Give an example.",
-    "answer": "An obsolete reference is a reference that will never be dereferenced again but is still held by the program. The GC cannot collect the object or anything reachable from it. Classic example: a Stack implementation that pops by decrementing size but doesn't null out the array slot — the array still references popped objects. Fix: `elements[size] = null`. Common sources: 1) classes managing their own memory (caches, pools), 2) listeners/callbacks not deregistered, 3) inner classes holding outer class reference."
+    "answer": "An obsolete reference is a reference that will never be dereferenced again but is still held by the program. The GC cannot collect the object or anything reachable from it. Classic example: a Stack implementation that pops by decrementing size but doesn't null out the array slot \u2014 the array still references popped objects. Fix: `elements[size] = null`. Common sources: 1) classes managing their own memory (caches, pools), 2) listeners/callbacks not deregistered, 3) inner classes holding outer class reference."
   },
   {
     "id": "ej-10",
@@ -2896,8 +2896,8 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "INTERMEDIATE",
     "question": "What happens if you override equals() but NOT hashCode()?\n\n```java\nMap<PhoneNumber, String> map = new HashMap<>();\nmap.put(new PhoneNumber(707, 867, 5309), \"Jenny\");\nString result = map.get(new PhoneNumber(707, 867, 5309));\n```",
-    "correctOutput": "result is null. The two PhoneNumber instances are equal (same digits) but have different hashCodes (default Object.hashCode uses identity). HashMap uses hashCode to find the bucket — different hash means different bucket, so the get() never finds the entry.",
-    "explanation": "Effective Java Item 11: You MUST override hashCode when you override equals. The contract: equal objects must have equal hash codes. Violation breaks HashMap, HashSet, and any hash-based collection."
+    "correctOutput": "result is null. The two PhoneNumber instances are equal (same digits) but have different hashCodes (default Object.hashCode uses identity). HashMap uses hashCode to find the bucket \u2014 different hash means different bucket, so the get() never finds the entry.",
+    "explain": "Effective Java Item 11: You MUST override hashCode when you override equals. The contract: equal objects must have equal hash codes. Violation breaks HashMap, HashSet, and any hash-based collection."
   },
   {
     "id": "ej-17",

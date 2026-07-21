@@ -18,12 +18,12 @@ export class DashboardComponent {
 
   // Section definitions — which topics go in which section
   private readonly learnIds = [
-    'oop', 'solid', 'collections', 'java-modern', 'data-persistence', 'spring',
+    'oop', 'solid', 'collections', 'java-modern', 'dsa', 'data-persistence', 'spring',
     'rest', 'security', 'concurrency', 'patterns', 'testing',
-    'docker', 'k8s', 'kotlin', 'angular', 'kafka'
+    'docker', 'k8s', 'kotlin', 'angular', 'kafka', 'system-design-modeling'
   ];
 
-  private readonly interviewIds = ['system-design', 'behavioral', 'mindset'];
+  private readonly interviewIds = ['system-design', 'software-architecture', 'behavioral', 'mindset'];
   private readonly experienceIds = ['stories', 'portfolio'];
   private readonly reweIds = ['rewe'];
 

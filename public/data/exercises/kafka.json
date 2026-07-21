@@ -172,13 +172,6 @@
         "label": "Consumer processes and commits offset"
       }
     ],
-    "answer": [
-      "produce",
-      "partition",
-      "store",
-      "consume",
-      "process"
-    ],
     "explain": "Producer \u2192 partition (by key) \u2192 broker stores (append-only log) \u2192 consumer reads at its offset \u2192 processes and commits. Key insight: the message stays in the log AFTER consumption (unlike JMS). Other consumers can still read it.",
     "topic": "kafka"
   },
@@ -1190,8 +1183,7 @@
       }
     ],
     "topic": "kafka",
-    "explain": "The controller handles all leader elections. Clients experience a brief timeout (~ms to seconds) then transparently connect to new leaders. The recovered broker catches up by replicating from current leaders before rejoining the ISR.",
-    "answer": "[0, 1, 2, 3, 4, 5]"
+    "explain": "The controller handles all leader elections. Clients experience a brief timeout (~ms to seconds) then transparently connect to new leaders. The recovered broker catches up by replicating from current leaders before rejoining the ISR."
   },
   {
     "id": "kafka-internals-02",

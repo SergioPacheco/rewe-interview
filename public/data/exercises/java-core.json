@@ -206,13 +206,6 @@
         "label": "Store new entry or replace existing value"
       }
     ],
-    "answer": [
-      "hash",
-      "index",
-      "empty",
-      "equals",
-      "store"
-    ],
     "explain": "HashMap.put: hashCode \u2192 bucket index \u2192 if empty, insert. If occupied, walk chain comparing equals(). If key found, replace value. If not found, add to chain. Resize at load factor 0.75. This is why both hashCode AND equals must be consistent.",
     "topic": "collections"
   },
@@ -830,12 +823,6 @@
         "id": "ex",
         "label": "catch (Exception e)"
       }
-    ],
-    "answer": [
-      "nfe",
-      "iae",
-      "rte",
-      "ex"
     ],
     "explain": "Most specific \u2192 most general. NumberFormatException extends IllegalArgumentException extends RuntimeException extends Exception. Reversing causes \"unreachable catch block\" compile error. The first matching catch handles it.",
     "topic": "collections"

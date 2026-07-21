@@ -1,25 +1,462 @@
 [
-  {"id":"path-mindset","topic":"mindset","title":"Learning path: think like a collaborative senior engineer","lesson":{"goal":"Turn interview pressure into clear, evidence-based communication.","outcome":"A two-minute answer structure: context, decision, trade-off, result, and reflection.","challenge":"Answer one difficult question without claiming experience you do not have."},"sections":[{"heading":"Use one repeatable answer loop","content":"Start with the situation and the constraint. State your reasoning, the option you chose, the trade-off you accepted, and what you learned. This prevents both empty confidence and overlong technical monologues."},{"heading":"Practice with evidence","content":"For every claim, prepare one concrete example, one limitation, and one question you would ask the interviewer. Good judgment is more convincing than a perfect-sounding answer."}]},
-  {"id":"path-rewe","topic":"rewe","title":"Learning path: understand the logistics problem before proposing solutions","lesson":{"goal":"Connect technical choices to transport operations, people, and service outcomes.","outcome":"A concise problem map linking a user journey, operational pain, data, and system boundary.","challenge":"Explain a logistics trade-off without jumping straight to a tool."},"sections":[{"heading":"Follow one operational journey","content":"Trace a delivery from planning to completion. At each step, identify who acts, what data changes, and what happens when a dependency is delayed. This reveals the real system before an architecture diagram does."},{"heading":"Turn domain knowledge into questions","content":"Ask about volume, peak periods, SLAs, manual workarounds, data ownership, and customer impact. A relevant solution begins with the cost of the current problem."}]},
-  {"id":"path-oop","topic":"oop","title":"Learning path: model behaviour, not class diagrams","lesson":{"goal":"Use objects to protect business rules and make change safer.","outcome":"A small model with invariants, responsibilities, and focused tests.","challenge":"Replace one inheritance hierarchy with composition where behaviour varies."},"sections":[{"heading":"Begin with an invariant","content":"Choose a rule that must always hold, such as “a delivery cannot be completed before dispatch”. Put the rule near the state it protects and test the allowed transitions."},{"heading":"Judge the model by change","content":"When a new delivery type arrives, ask whether you add a focused collaborator or modify unrelated classes. A good object model localises change."}]},
-  {"id":"path-solid","topic":"solid","title":"Learning path: use SOLID to reduce change cost","lesson":{"goal":"Recognise coupling that makes ordinary changes risky.","outcome":"One refactoring proposal with a before/after dependency sketch and tests.","challenge":"Explain the trade-off of an abstraction that is not worth creating yet."},"sections":[{"heading":"Start from a painful change","content":"Do not apply principles as a checklist. Choose a feature that forces edits in unrelated code, then identify the responsibility or dependency that caused the ripple."},{"heading":"Prove improvement with tests","content":"Refactor in small steps. The result should make the change easier to test, not merely create more interfaces and files."}]},
-  {"id":"path-collections","topic":"collections","title":"Learning path: choose data structures from operations","lesson":{"goal":"Select Java data structures based on access, ordering, duplication, and cost.","outcome":"A short decision note and a benchmark or test for one hot path.","challenge":"Justify one collection choice without saying “it is faster” vaguely."},"sections":[{"heading":"Name the operations first","content":"Will you search by key, preserve insertion order, remove from both ends, allow duplicates, or process a stream once? The operations narrow the choice before implementation starts."},{"heading":"Validate assumptions","content":"Use realistic input sizes and measure only when performance matters. Prefer the simplest structure that satisfies correctness and clarity."}]},
-  {"id":"path-java-modern","topic":"java-modern","title":"Learning path: modern Java for safer, clearer domain code","lesson":{"goal":"Use language features to make invalid states and accidental mutation harder.","outcome":"A small refactoring using records, sealed types, pattern matching, or structured concurrency where appropriate.","challenge":"Remove boilerplate without hiding business meaning."},"sections":[{"heading":"Choose a real friction point","content":"Start with a DTO that should be immutable, a closed set of states, or conditional logic that is hard to read. Apply one feature to make that intent explicit."},{"heading":"Keep compatibility in view","content":"Modern syntax is valuable only when the team, build, libraries, and runtime can support it. Record the minimum Java version and migration impact."}]},
-  {"id":"path-sql","topic":"sql","title":"Learning path: diagnose data access before optimising","lesson":{"goal":"Make query performance and correctness observable.","outcome":"A query plan review, index decision, and safe migration plan.","challenge":"Explain why an index helps one query but may hurt writes."},"sections":[{"heading":"Start from a user-facing query","content":"Capture the exact filters, sort, cardinality, and expected response time. Inspect the execution plan before adding caches or infrastructure."},{"heading":"Treat data changes as releases","content":"Use compatible migrations, measure lock and write impact, and keep rollback possible. A fast query that corrupts or blocks production is not an optimisation."}]},
-  {"id":"path-system-design","topic":"system-design","title":"Learning path: design from constraints to validation","lesson":{"goal":"Create a defensible system design rather than reciting a reference architecture.","outcome":"Requirements, estimates, diagram, bottlenecks, trade-offs, and validation plan.","challenge":"State what you deliberately do not solve in version one."},"sections":[{"heading":"Clarify before drawing","content":"Ask about users, volume, latency, consistency, data sensitivity, failure tolerance, cost, and team ownership. Estimates are assumptions to make visible, not decoration."},{"heading":"Design a thin end-to-end path","content":"Describe request flow, storage, failure behaviour, and observability first. Add cache, queue, sharding, or multi-region only when a constraint makes it necessary."}]},
-  {"id":"path-behavioral","topic":"behavioral","title":"Learning path: show judgment through stories","lesson":{"goal":"Communicate collaboration, conflict, and growth with credible evidence.","outcome":"Three STAR stories with a technical decision and an honest lesson learned.","challenge":"Describe a failure without blaming people or hiding your part."},"sections":[{"heading":"Use a decision as the centre of the story","content":"Situation and task matter, but the interview value is in what you noticed, how you involved others, and why you chose an action."},{"heading":"End with learning","content":"A strong story names the outcome and what you would change next time. Reflection signals maturity more than a flawless outcome."}]},
-  {"id":"path-stories","topic":"stories","title":"Learning path: turn experience into memorable evidence","lesson":{"goal":"Preserve the impact and emotion of real work while making its reasoning clear.","outcome":"A one-minute and a three-minute version of each story.","challenge":"Quantify impact without inventing numbers."},"sections":[{"heading":"Keep the human and business stakes","content":"Explain the manual burden, uncertainty, customer impact, or operational bottleneck that made the work matter before presenting the technology."},{"heading":"Make your contribution precise","content":"Separate what you personally designed or implemented from what the team or organisation achieved. This makes the story credible and easy to follow."}]},
-  {"id":"path-portfolio","topic":"portfolio","title":"Learning path: present a project as decisions and proof","lesson":{"goal":"Show how a project solves a problem, not just which frameworks it uses.","outcome":"A project narrative with context, architecture, trade-offs, evidence, and next improvements.","challenge":"Explain one limitation of the project before someone asks."},"sections":[{"heading":"Lead with value","content":"State the user or business problem, the workflow, and the resulting capability. Technology follows as evidence of how the solution was built."},{"heading":"Use artefacts as proof","content":"Show a diagram, a small code slice, a test, a dashboard, or an ADR. One concrete artefact is more persuasive than a long technology inventory."}]},
-  {"id":"path-spring","topic":"spring","title":"Learning path: build a Spring service that is safe to change","lesson":{"goal":"Use Spring as an adapter around clear business rules and observable operations.","outcome":"A vertical feature with tests, validation, transaction boundary, and health signal.","challenge":"Explain where the transaction starts and why."},"sections":[{"heading":"Build one vertical slice","content":"Follow one request from controller through use case and persistence. Keep validation, error mapping, and business rules intentional rather than spread across framework annotations."},{"heading":"Operate what you build","content":"Add health, metrics, configuration discipline, and integration tests before calling a service complete. A controller returning 200 is not enough."}]},
-  {"id":"path-rest","topic":"rest","title":"Learning path: design contracts for consumers and change","lesson":{"goal":"Create APIs that clients can understand, evolve, and recover from.","outcome":"An OpenAPI-backed endpoint with errors, pagination, idempotency, and compatibility rules.","challenge":"Describe what a client should do after a timeout."},"sections":[{"heading":"Model a consumer journey","content":"Start with what a client needs to accomplish, not your database table. Define resource, operation, validation, state transitions, errors, and authorization."},{"heading":"Plan evolution on day one","content":"Prefer additive changes, stable error shapes, explicit deprecation, and contract tests. A breaking change is a product event, not just a code change."}]},
-  {"id":"path-security","topic":"security","title":"Learning path: protect a real flow, not a compliance checklist","lesson":{"goal":"Make threats, controls, and operational evidence explicit.","outcome":"A short threat model and security controls for one sensitive flow.","challenge":"Show how a compromised credential is limited and detected."},"sections":[{"heading":"Trace a sensitive action","content":"Follow login, authorization, data access, and audit logging through one user journey. Mark trust boundaries and abuse paths before choosing security products."},{"heading":"Layer controls deliberately","content":"Identity, least privilege, input handling, secrets, encryption, rate limits, and monitoring each address different risk. Name the owner and verification for every control."}]},
-  {"id":"path-kafka","topic":"kafka","title":"Learning path: use messaging for a business fact","lesson":{"goal":"Design event flows that tolerate replay, duplication, delay, and evolution.","outcome":"A versioned event contract, partition strategy, and consumer recovery plan.","challenge":"Prove a duplicate event cannot create a duplicate business effect."},"sections":[{"heading":"Begin with a fact","content":"Publish an event only when something meaningful happened in a domain. Define its owner, key, ordering need, retention, sensitive data, and consumer contract."},{"heading":"Operate the unhappy path","content":"Simulate consumer lag, malformed data, redelivery, and broker outage. A queue is useful only when the team can observe and recover it."}]},
-  {"id":"path-jpa","topic":"jpa","title":"Learning path: map persistence without losing performance or invariants","lesson":{"goal":"Make entity design, transaction boundaries, and query behaviour intentional.","outcome":"A mapped aggregate with an integration test and a measured query plan.","challenge":"Find and eliminate one N+1 or lazy-loading surprise."},"sections":[{"heading":"Start from aggregate behaviour","content":"Choose which state changes together and which invariants must hold. Map relationships to support that behaviour, not merely to mirror every foreign key."},{"heading":"Observe generated SQL","content":"Use integration tests and logs to inspect joins, fetches, locks, and transaction boundaries. ORM convenience never removes database cost."}]},
-  {"id":"path-concurrency","topic":"concurrency","title":"Learning path: make shared work correct before making it parallel","lesson":{"goal":"Reason about ownership, visibility, cancellation, and failure across concurrent tasks.","outcome":"A concurrency design with a safety invariant and a repeatable test.","challenge":"Explain what happens if one task fails after another has already changed state."},"sections":[{"heading":"Identify shared mutable state","content":"Ask who owns each value and whether it is immutable, confined, synchronised, or externally coordinated. Most concurrency bugs start before an executor is chosen."},{"heading":"Test the failure paths","content":"Use timeouts, cancellation, load, and repeated runs. A single successful run proves almost nothing about concurrent correctness."}]},
-  {"id":"path-patterns","topic":"patterns","title":"Learning path: use patterns as names for trade-offs","lesson":{"goal":"Select a pattern when a concrete pressure exists, not because the diagram is familiar.","outcome":"A before/after code sketch explaining the pressure, benefit, and cost.","challenge":"Reject one pattern that would add indirection without solving a current problem."},"sections":[{"heading":"Start with changing behaviour","content":"Ask what varies, what should stay stable, and who should own the variation. Then compare a direct implementation with the smallest pattern that isolates it."},{"heading":"Watch for pattern debt","content":"Every abstraction adds concepts to learn and paths to debug. Keep it only while its flexibility pays for its complexity."}]},
-  {"id":"path-testing","topic":"testing","title":"Learning path: create confidence at the right boundary","lesson":{"goal":"Use tests to reduce the risks that matter most in a change.","outcome":"A test strategy for one feature: unit, integration, and end-to-end evidence where justified.","challenge":"Remove a brittle test that proves implementation detail rather than behaviour."},"sections":[{"heading":"Test decisions, not lines","content":"Start with invariants, public contracts, failure handling, and integration points. The right test makes a risky change safe to make."},{"heading":"Choose the cheapest credible signal","content":"Unit tests are fast; integration tests expose real wiring; end-to-end tests prove journeys but cost more. Balance feedback speed with the risk being covered."}]},
-  {"id":"path-docker","topic":"docker","title":"Learning path: package a service for repeatable delivery","lesson":{"goal":"Make local, CI, and production execution predictable.","outcome":"A small, reproducible image with configuration, health, and secret boundaries defined.","challenge":"Explain why the image is safe to rebuild and does not contain a production secret."},"sections":[{"heading":"Make the runtime explicit","content":"Specify base image, build stage, ports, filesystem ownership, configuration inputs, and health behaviour. A container image is an operational contract."},{"heading":"Validate outside your laptop","content":"Build from a clean environment, run with non-default configuration, scan dependencies, and confirm the image starts without hidden local state."}]},
-  {"id":"path-k8s","topic":"k8s","title":"Learning path: declare workload behaviour and recovery","lesson":{"goal":"Use Kubernetes to express availability, configuration, and safe rollout requirements.","outcome":"A deployment with resources, probes, configuration, and a rollback-aware rollout plan.","challenge":"Explain what Kubernetes does when the application is alive but cannot serve customers."},"sections":[{"heading":"Model the workload first","content":"Define statelessness, dependencies, startup time, capacity, persistence, and failure modes before writing YAML. Manifests should encode those facts."},{"heading":"Test deployment failure","content":"Verify readiness, liveness, scaling, configuration change, and rollback in a controlled environment. Kubernetes does not make an unhealthy application healthy."}]},
-  {"id":"path-kotlin","topic":"kotlin","title":"Learning path: express domain intent with Kotlin safely","lesson":{"goal":"Use Kotlin features to reduce null, mutability, and boilerplate mistakes.","outcome":"A small domain model with explicit nullability, immutable data, and focused tests.","challenge":"Interoperate with one Java API without hiding platform-null risk."},"sections":[{"heading":"Start with an invalid state","content":"Identify a value that should not be null or a state that should not mutate. Use Kotlin’s type system and data modelling to make the rule visible."},{"heading":"Keep JVM boundaries explicit","content":"Java interoperability, framework proxies, serialization, and exceptions can weaken Kotlin guarantees. Test those edges rather than assuming language safety transfers automatically."}]},
-  {"id":"path-angular","topic":"angular","title":"Learning path: build an observable, accessible user journey","lesson":{"goal":"Use Angular structure to make UI state, data flow, and error handling understandable.","outcome":"One accessible feature with a state model, service boundary, and failure UI.","challenge":"Show what the user sees while data loads, fails, and retries."},"sections":[{"heading":"Model state before components","content":"List loading, success, empty, validation, permission, and failure states. Components and signals should make these states easy to see and test."},{"heading":"Follow the user journey","content":"Trace route, input, service call, rendering, and recovery. Performance and accessibility belong in the feature definition, not in a final polish pass."}]}
+  {
+    "id": "path-mindset",
+    "topic": "mindset",
+    "title": "Learning path: think like a collaborative senior engineer",
+    "lesson": {
+      "goal": "Turn interview pressure into clear, evidence-based communication.",
+      "outcome": "A two-minute answer structure: context, decision, trade-off, result, and reflection.",
+      "challenge": "Answer one difficult question without claiming experience you do not have."
+    },
+    "sections": [
+      {
+        "heading": "Use one repeatable answer loop",
+        "content": "Start with the situation and the constraint. State your reasoning, the option you chose, the trade-off you accepted, and what you learned. This prevents both empty confidence and overlong technical monologues."
+      },
+      {
+        "heading": "Practice with evidence",
+        "content": "For every claim, prepare one concrete example, one limitation, and one question you would ask the interviewer. Good judgment is more convincing than a perfect-sounding answer."
+      }
+    ]
+  },
+  {
+    "id": "path-rewe",
+    "topic": "rewe",
+    "title": "Learning path: understand the logistics problem before proposing solutions",
+    "lesson": {
+      "goal": "Connect technical choices to transport operations, people, and service outcomes.",
+      "outcome": "A concise problem map linking a user journey, operational pain, data, and system boundary.",
+      "challenge": "Explain a logistics trade-off without jumping straight to a tool."
+    },
+    "sections": [
+      {
+        "heading": "Follow one operational journey",
+        "content": "Trace a delivery from planning to completion. At each step, identify who acts, what data changes, and what happens when a dependency is delayed. This reveals the real system before an architecture diagram does."
+      },
+      {
+        "heading": "Turn domain knowledge into questions",
+        "content": "Ask about volume, peak periods, SLAs, manual workarounds, data ownership, and customer impact. A relevant solution begins with the cost of the current problem."
+      }
+    ]
+  },
+  {
+    "id": "path-oop",
+    "topic": "oop",
+    "title": "Learning path: model behaviour, not class diagrams",
+    "lesson": {
+      "goal": "Use objects to protect business rules and make change safer.",
+      "outcome": "A small model with invariants, responsibilities, and focused tests.",
+      "challenge": "Replace one inheritance hierarchy with composition where behaviour varies."
+    },
+    "sections": [
+      {
+        "heading": "Begin with an invariant",
+        "content": "Choose a rule that must always hold, such as \u201ca delivery cannot be completed before dispatch\u201d. Put the rule near the state it protects and test the allowed transitions."
+      },
+      {
+        "heading": "Judge the model by change",
+        "content": "When a new delivery type arrives, ask whether you add a focused collaborator or modify unrelated classes. A good object model localises change."
+      }
+    ]
+  },
+  {
+    "id": "path-solid",
+    "topic": "solid",
+    "title": "Learning path: use SOLID to reduce change cost",
+    "lesson": {
+      "goal": "Recognise coupling that makes ordinary changes risky.",
+      "outcome": "One refactoring proposal with a before/after dependency sketch and tests.",
+      "challenge": "Explain the trade-off of an abstraction that is not worth creating yet."
+    },
+    "sections": [
+      {
+        "heading": "Start from a painful change",
+        "content": "Do not apply principles as a checklist. Choose a feature that forces edits in unrelated code, then identify the responsibility or dependency that caused the ripple."
+      },
+      {
+        "heading": "Prove improvement with tests",
+        "content": "Refactor in small steps. The result should make the change easier to test, not merely create more interfaces and files."
+      }
+    ]
+  },
+  {
+    "id": "path-collections",
+    "topic": "collections",
+    "title": "Learning path: choose data structures from operations",
+    "lesson": {
+      "goal": "Select Java data structures based on access, ordering, duplication, and cost.",
+      "outcome": "A short decision note and a benchmark or test for one hot path.",
+      "challenge": "Justify one collection choice without saying \u201cit is faster\u201d vaguely."
+    },
+    "sections": [
+      {
+        "heading": "Name the operations first",
+        "content": "Will you search by key, preserve insertion order, remove from both ends, allow duplicates, or process a stream once? The operations narrow the choice before implementation starts."
+      },
+      {
+        "heading": "Validate assumptions",
+        "content": "Use realistic input sizes and measure only when performance matters. Prefer the simplest structure that satisfies correctness and clarity."
+      }
+    ]
+  },
+  {
+    "id": "path-java-modern",
+    "topic": "java-modern",
+    "title": "Learning path: modern Java for safer, clearer domain code",
+    "lesson": {
+      "goal": "Use language features to make invalid states and accidental mutation harder.",
+      "outcome": "A small refactoring using records, sealed types, pattern matching, or structured concurrency where appropriate.",
+      "challenge": "Remove boilerplate without hiding business meaning."
+    },
+    "sections": [
+      {
+        "heading": "Choose a real friction point",
+        "content": "Start with a DTO that should be immutable, a closed set of states, or conditional logic that is hard to read. Apply one feature to make that intent explicit."
+      },
+      {
+        "heading": "Keep compatibility in view",
+        "content": "Modern syntax is valuable only when the team, build, libraries, and runtime can support it. Record the minimum Java version and migration impact."
+      }
+    ]
+  },
+  {
+    "id": "path-sql",
+    "topic": "data-persistence",
+    "title": "Learning path: diagnose data access before optimising",
+    "lesson": {
+      "goal": "Make query performance and correctness observable.",
+      "outcome": "A query plan review, index decision, and safe migration plan.",
+      "challenge": "Explain why an index helps one query but may hurt writes."
+    },
+    "sections": [
+      {
+        "heading": "Start from a user-facing query",
+        "content": "Capture the exact filters, sort, cardinality, and expected response time. Inspect the execution plan before adding caches or infrastructure."
+      },
+      {
+        "heading": "Treat data changes as releases",
+        "content": "Use compatible migrations, measure lock and write impact, and keep rollback possible. A fast query that corrupts or blocks production is not an optimisation."
+      }
+    ]
+  },
+  {
+    "id": "path-system-design",
+    "topic": "system-design",
+    "title": "Learning path: design from constraints to validation",
+    "lesson": {
+      "goal": "Create a defensible system design rather than reciting a reference architecture.",
+      "outcome": "Requirements, estimates, diagram, bottlenecks, trade-offs, and validation plan.",
+      "challenge": "State what you deliberately do not solve in version one."
+    },
+    "sections": [
+      {
+        "heading": "Clarify before drawing",
+        "content": "Ask about users, volume, latency, consistency, data sensitivity, failure tolerance, cost, and team ownership. Estimates are assumptions to make visible, not decoration."
+      },
+      {
+        "heading": "Design a thin end-to-end path",
+        "content": "Describe request flow, storage, failure behaviour, and observability first. Add cache, queue, sharding, or multi-region only when a constraint makes it necessary."
+      }
+    ]
+  },
+  {
+    "id": "path-behavioral",
+    "topic": "behavioral",
+    "title": "Learning path: show judgment through stories",
+    "lesson": {
+      "goal": "Communicate collaboration, conflict, and growth with credible evidence.",
+      "outcome": "Three STAR stories with a technical decision and an honest lesson learned.",
+      "challenge": "Describe a failure without blaming people or hiding your part."
+    },
+    "sections": [
+      {
+        "heading": "Use a decision as the centre of the story",
+        "content": "Situation and task matter, but the interview value is in what you noticed, how you involved others, and why you chose an action."
+      },
+      {
+        "heading": "End with learning",
+        "content": "A strong story names the outcome and what you would change next time. Reflection signals maturity more than a flawless outcome."
+      }
+    ]
+  },
+  {
+    "id": "path-stories",
+    "topic": "stories",
+    "title": "Learning path: turn experience into memorable evidence",
+    "lesson": {
+      "goal": "Preserve the impact and emotion of real work while making its reasoning clear.",
+      "outcome": "A one-minute and a three-minute version of each story.",
+      "challenge": "Quantify impact without inventing numbers."
+    },
+    "sections": [
+      {
+        "heading": "Keep the human and business stakes",
+        "content": "Explain the manual burden, uncertainty, customer impact, or operational bottleneck that made the work matter before presenting the technology."
+      },
+      {
+        "heading": "Make your contribution precise",
+        "content": "Separate what you personally designed or implemented from what the team or organisation achieved. This makes the story credible and easy to follow."
+      }
+    ]
+  },
+  {
+    "id": "path-portfolio",
+    "topic": "portfolio",
+    "title": "Learning path: present a project as decisions and proof",
+    "lesson": {
+      "goal": "Show how a project solves a problem, not just which frameworks it uses.",
+      "outcome": "A project narrative with context, architecture, trade-offs, evidence, and next improvements.",
+      "challenge": "Explain one limitation of the project before someone asks."
+    },
+    "sections": [
+      {
+        "heading": "Lead with value",
+        "content": "State the user or business problem, the workflow, and the resulting capability. Technology follows as evidence of how the solution was built."
+      },
+      {
+        "heading": "Use artefacts as proof",
+        "content": "Show a diagram, a small code slice, a test, a dashboard, or an ADR. One concrete artefact is more persuasive than a long technology inventory."
+      }
+    ]
+  },
+  {
+    "id": "path-spring",
+    "topic": "spring",
+    "title": "Learning path: build a Spring service that is safe to change",
+    "lesson": {
+      "goal": "Use Spring as an adapter around clear business rules and observable operations.",
+      "outcome": "A vertical feature with tests, validation, transaction boundary, and health signal.",
+      "challenge": "Explain where the transaction starts and why."
+    },
+    "sections": [
+      {
+        "heading": "Build one vertical slice",
+        "content": "Follow one request from controller through use case and persistence. Keep validation, error mapping, and business rules intentional rather than spread across framework annotations."
+      },
+      {
+        "heading": "Operate what you build",
+        "content": "Add health, metrics, configuration discipline, and integration tests before calling a service complete. A controller returning 200 is not enough."
+      }
+    ]
+  },
+  {
+    "id": "path-rest",
+    "topic": "rest",
+    "title": "Learning path: design contracts for consumers and change",
+    "lesson": {
+      "goal": "Create APIs that clients can understand, evolve, and recover from.",
+      "outcome": "An OpenAPI-backed endpoint with errors, pagination, idempotency, and compatibility rules.",
+      "challenge": "Describe what a client should do after a timeout."
+    },
+    "sections": [
+      {
+        "heading": "Model a consumer journey",
+        "content": "Start with what a client needs to accomplish, not your database table. Define resource, operation, validation, state transitions, errors, and authorization."
+      },
+      {
+        "heading": "Plan evolution on day one",
+        "content": "Prefer additive changes, stable error shapes, explicit deprecation, and contract tests. A breaking change is a product event, not just a code change."
+      }
+    ]
+  },
+  {
+    "id": "path-security",
+    "topic": "security",
+    "title": "Learning path: protect a real flow, not a compliance checklist",
+    "lesson": {
+      "goal": "Make threats, controls, and operational evidence explicit.",
+      "outcome": "A short threat model and security controls for one sensitive flow.",
+      "challenge": "Show how a compromised credential is limited and detected."
+    },
+    "sections": [
+      {
+        "heading": "Trace a sensitive action",
+        "content": "Follow login, authorization, data access, and audit logging through one user journey. Mark trust boundaries and abuse paths before choosing security products."
+      },
+      {
+        "heading": "Layer controls deliberately",
+        "content": "Identity, least privilege, input handling, secrets, encryption, rate limits, and monitoring each address different risk. Name the owner and verification for every control."
+      }
+    ]
+  },
+  {
+    "id": "path-kafka",
+    "topic": "kafka",
+    "title": "Learning path: use messaging for a business fact",
+    "lesson": {
+      "goal": "Design event flows that tolerate replay, duplication, delay, and evolution.",
+      "outcome": "A versioned event contract, partition strategy, and consumer recovery plan.",
+      "challenge": "Prove a duplicate event cannot create a duplicate business effect."
+    },
+    "sections": [
+      {
+        "heading": "Begin with a fact",
+        "content": "Publish an event only when something meaningful happened in a domain. Define its owner, key, ordering need, retention, sensitive data, and consumer contract."
+      },
+      {
+        "heading": "Operate the unhappy path",
+        "content": "Simulate consumer lag, malformed data, redelivery, and broker outage. A queue is useful only when the team can observe and recover it."
+      }
+    ]
+  },
+  {
+    "id": "path-jpa",
+    "topic": "data-persistence",
+    "title": "Learning path: map persistence without losing performance or invariants",
+    "lesson": {
+      "goal": "Make entity design, transaction boundaries, and query behaviour intentional.",
+      "outcome": "A mapped aggregate with an integration test and a measured query plan.",
+      "challenge": "Find and eliminate one N+1 or lazy-loading surprise."
+    },
+    "sections": [
+      {
+        "heading": "Start from aggregate behaviour",
+        "content": "Choose which state changes together and which invariants must hold. Map relationships to support that behaviour, not merely to mirror every foreign key."
+      },
+      {
+        "heading": "Observe generated SQL",
+        "content": "Use integration tests and logs to inspect joins, fetches, locks, and transaction boundaries. ORM convenience never removes database cost."
+      }
+    ]
+  },
+  {
+    "id": "path-concurrency",
+    "topic": "concurrency",
+    "title": "Learning path: make shared work correct before making it parallel",
+    "lesson": {
+      "goal": "Reason about ownership, visibility, cancellation, and failure across concurrent tasks.",
+      "outcome": "A concurrency design with a safety invariant and a repeatable test.",
+      "challenge": "Explain what happens if one task fails after another has already changed state."
+    },
+    "sections": [
+      {
+        "heading": "Identify shared mutable state",
+        "content": "Ask who owns each value and whether it is immutable, confined, synchronised, or externally coordinated. Most concurrency bugs start before an executor is chosen."
+      },
+      {
+        "heading": "Test the failure paths",
+        "content": "Use timeouts, cancellation, load, and repeated runs. A single successful run proves almost nothing about concurrent correctness."
+      }
+    ]
+  },
+  {
+    "id": "path-patterns",
+    "topic": "patterns",
+    "title": "Learning path: use patterns as names for trade-offs",
+    "lesson": {
+      "goal": "Select a pattern when a concrete pressure exists, not because the diagram is familiar.",
+      "outcome": "A before/after code sketch explaining the pressure, benefit, and cost.",
+      "challenge": "Reject one pattern that would add indirection without solving a current problem."
+    },
+    "sections": [
+      {
+        "heading": "Start with changing behaviour",
+        "content": "Ask what varies, what should stay stable, and who should own the variation. Then compare a direct implementation with the smallest pattern that isolates it."
+      },
+      {
+        "heading": "Watch for pattern debt",
+        "content": "Every abstraction adds concepts to learn and paths to debug. Keep it only while its flexibility pays for its complexity."
+      }
+    ]
+  },
+  {
+    "id": "path-testing",
+    "topic": "testing",
+    "title": "Learning path: create confidence at the right boundary",
+    "lesson": {
+      "goal": "Use tests to reduce the risks that matter most in a change.",
+      "outcome": "A test strategy for one feature: unit, integration, and end-to-end evidence where justified.",
+      "challenge": "Remove a brittle test that proves implementation detail rather than behaviour."
+    },
+    "sections": [
+      {
+        "heading": "Test decisions, not lines",
+        "content": "Start with invariants, public contracts, failure handling, and integration points. The right test makes a risky change safe to make."
+      },
+      {
+        "heading": "Choose the cheapest credible signal",
+        "content": "Unit tests are fast; integration tests expose real wiring; end-to-end tests prove journeys but cost more. Balance feedback speed with the risk being covered."
+      }
+    ]
+  },
+  {
+    "id": "path-docker",
+    "topic": "docker",
+    "title": "Learning path: package a service for repeatable delivery",
+    "lesson": {
+      "goal": "Make local, CI, and production execution predictable.",
+      "outcome": "A small, reproducible image with configuration, health, and secret boundaries defined.",
+      "challenge": "Explain why the image is safe to rebuild and does not contain a production secret."
+    },
+    "sections": [
+      {
+        "heading": "Make the runtime explicit",
+        "content": "Specify base image, build stage, ports, filesystem ownership, configuration inputs, and health behaviour. A container image is an operational contract."
+      },
+      {
+        "heading": "Validate outside your laptop",
+        "content": "Build from a clean environment, run with non-default configuration, scan dependencies, and confirm the image starts without hidden local state."
+      }
+    ]
+  },
+  {
+    "id": "path-k8s",
+    "topic": "k8s",
+    "title": "Learning path: declare workload behaviour and recovery",
+    "lesson": {
+      "goal": "Use Kubernetes to express availability, configuration, and safe rollout requirements.",
+      "outcome": "A deployment with resources, probes, configuration, and a rollback-aware rollout plan.",
+      "challenge": "Explain what Kubernetes does when the application is alive but cannot serve customers."
+    },
+    "sections": [
+      {
+        "heading": "Model the workload first",
+        "content": "Define statelessness, dependencies, startup time, capacity, persistence, and failure modes before writing YAML. Manifests should encode those facts."
+      },
+      {
+        "heading": "Test deployment failure",
+        "content": "Verify readiness, liveness, scaling, configuration change, and rollback in a controlled environment. Kubernetes does not make an unhealthy application healthy."
+      }
+    ]
+  },
+  {
+    "id": "path-kotlin",
+    "topic": "kotlin",
+    "title": "Learning path: express domain intent with Kotlin safely",
+    "lesson": {
+      "goal": "Use Kotlin features to reduce null, mutability, and boilerplate mistakes.",
+      "outcome": "A small domain model with explicit nullability, immutable data, and focused tests.",
+      "challenge": "Interoperate with one Java API without hiding platform-null risk."
+    },
+    "sections": [
+      {
+        "heading": "Start with an invalid state",
+        "content": "Identify a value that should not be null or a state that should not mutate. Use Kotlin\u2019s type system and data modelling to make the rule visible."
+      },
+      {
+        "heading": "Keep JVM boundaries explicit",
+        "content": "Java interoperability, framework proxies, serialization, and exceptions can weaken Kotlin guarantees. Test those edges rather than assuming language safety transfers automatically."
+      }
+    ]
+  },
+  {
+    "id": "path-angular",
+    "topic": "angular",
+    "title": "Learning path: build an observable, accessible user journey",
+    "lesson": {
+      "goal": "Use Angular structure to make UI state, data flow, and error handling understandable.",
+      "outcome": "One accessible feature with a state model, service boundary, and failure UI.",
+      "challenge": "Show what the user sees while data loads, fails, and retries."
+    },
+    "sections": [
+      {
+        "heading": "Model state before components",
+        "content": "List loading, success, empty, validation, permission, and failure states. Components and signals should make these states easy to see and test."
+      },
+      {
+        "heading": "Follow the user journey",
+        "content": "Trace route, input, service call, rendering, and recovery. Performance and accessibility belong in the feature definition, not in a final polish pass."
+      }
+    ]
+  }
 ]

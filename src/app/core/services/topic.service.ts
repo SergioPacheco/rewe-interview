@@ -121,6 +121,8 @@ export class TopicService {
       'data/exercises/senior-questions.json'
       ,'data/exercises/software-architecture.json'
       ,'data/exercises/practice-coverage.json'
+      ,'data/exercises/dsa.json'
+      ,'data/exercises/system-design-modeling.json'
     ];
 
     const results = await Promise.allSettled(
@@ -149,6 +151,7 @@ export class TopicService {
 
   private async loadAllTheory(): Promise<TheoryChapter[]> {
     const files = [
+      'data/topics/theory-learning-paths.json',
       'data/topics/theory-java-basics.json',
       'data/topics/theory-java-modern.json',
       'data/topics/theory-rewe.json',

@@ -194,17 +194,21 @@ export class ChoiceListComponent {
   /** Internal state */
   selectedIndex = signal<number | null>(null);
   checked = signal(false);
+  private lastChoicesFingerprint = '';
 
   isCorrect = computed(() => this.selectedIndex() === this.correctIndex());
 
   constructor() {
-    // Auto-reset when choices change (new question loaded)
+    // Auto-reset when choices ACTUALLY change (new question loaded)
+    // Compare by content fingerprint to avoid resetting on same-content re-renders
     effect(() => {
-      // Reading choices() subscribes to changes
-      this.choices();
-      // Reset selection state for the new question
-      this.selectedIndex.set(null);
-      this.checked.set(false);
+      const choices = this.choices();
+      const fingerprint = choices.map(c => c.label).join('|');
+      if (fingerprint !== this.lastChoicesFingerprint) {
+        this.lastChoicesFingerprint = fingerprint;
+        this.selectedIndex.set(null);
+        this.checked.set(false);
+      }
     }, { allowSignalWrites: true });
   }
 

@@ -432,10 +432,10 @@
             }
 
             <!-- Explanation -->
-            @if (getField(q, 'explain') || getField(q, 'explanation')) {
+            @if (getExplanationText(q)) {
               <details class="reveal-panel" open>
                 <summary>💡 Explanation</summary>
-                <div class="reveal-panel__text" [innerHTML]="(getField(q, 'explain') || getField(q, 'explanation')) | markdown"></div>
+                <div class="reveal-panel__text" [innerHTML]="getExplanationText(q) | markdown"></div>
               </details>
             }
 

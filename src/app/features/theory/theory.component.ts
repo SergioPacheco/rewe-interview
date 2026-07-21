@@ -277,7 +277,37 @@ export class TheoryComponent {
   }
 
   getField(q: any, field: string): string {
-    return q?.[field] ?? '';
+    const val = q?.[field];
+    if (val == null) return '';
+    if (typeof val === 'string') return val;
+    return ''; // non-string fields handled by specific methods
+  }
+
+  /** Get explanation as renderable text (handles string or structured object) */
+  getExplanationText(q: any): string {
+    const explain = q?.explain;
+    if (typeof explain === 'string' && explain) return explain;
+
+    const explanation = q?.explanation;
+    if (!explanation) return '';
+    if (typeof explanation === 'string') return explanation;
+
+    // Structured explanation (DESIGN_DECISION): format as markdown
+    if (typeof explanation === 'object') {
+      const bestChoice = q?.bestChoice || q?.answer;
+      const lines: string[] = [];
+      for (const [key, val] of Object.entries(explanation)) {
+        const entry = val as any;
+        const isBest = key === bestChoice;
+        lines.push(`**Option ${key.toUpperCase()}${isBest ? ' ✅ (Best)' : ''}:**`);
+        if (entry.pros) lines.push(...entry.pros.map((p: string) => `- ✓ ${p}`));
+        if (entry.cons) lines.push(...entry.cons.map((c: string) => `- ✗ ${c}`));
+        if (entry.verdict) lines.push(`\n> ${entry.verdict}`);
+        lines.push('');
+      }
+      return lines.join('\n');
+    }
+    return '';
   }
 
   getFieldArray(q: any, field: string): any[] {

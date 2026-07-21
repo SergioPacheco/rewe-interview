@@ -488,5 +488,73 @@
       "interview-prep",
       "senior-level"
     ]
+  },
+  {
+    "id": "sql-optimization-sargable-01",
+    "type": "FILL_BLANK",
+    "topic": "sql",
+    "subtopic": "Query Optimization",
+    "difficulty": "intermediate",
+    "mission": "An index exists on <code>scheduled_at</code>. Which predicate is most likely to let PostgreSQL use it efficiently for all deliveries in 2026?",
+    "choices": [
+      "EXTRACT(YEAR FROM scheduled_at) = 2026",
+      "scheduled_at >= TIMESTAMPTZ '2026-01-01' AND scheduled_at < TIMESTAMPTZ '2027-01-01'",
+      "CAST(scheduled_at AS text) LIKE '2026%'",
+      "scheduled_at + interval '0 days' >= TIMESTAMPTZ '2026-01-01'"
+    ],
+    "answer": "scheduled_at >= TIMESTAMPTZ '2026-01-01' AND scheduled_at < TIMESTAMPTZ '2027-01-01'",
+    "explain": "The range predicate leaves the indexed column unchanged, so it is sargable. Functions, casts and arithmetic around the column generally force PostgreSQL to evaluate the expression for many rows instead of using the plain B-tree access path. Confirm the real plan with EXPLAIN (ANALYZE, BUFFERS)."
+  },
+  {
+    "id": "sql-optimization-index-design-01",
+    "type": "DESIGN_DECISION",
+    "topic": "sql",
+    "subtopic": "Query Optimization",
+    "difficulty": "senior",
+    "question": "A high-traffic screen runs this query repeatedly: <code>WHERE status = 'PLANNED' AND scheduled_at &gt;= :from ORDER BY scheduled_at, id LIMIT 50</code>. Which index is the best first hypothesis to test?",
+    "options": [
+      {
+        "label": "A) CREATE INDEX idx_delivery_status_scheduled_id ON delivery(status, scheduled_at, id)",
+        "description": "Matches the equality filter, then the range/order columns used by the access path."
+      },
+      {
+        "label": "B) CREATE INDEX idx_delivery_id_status ON delivery(id, status)",
+        "description": "Starts with the primary key, which the query does not filter on."
+      },
+      {
+        "label": "C) CREATE INDEX idx_delivery_status ON delivery(status)",
+        "description": "Helps the filter but may still require sorting many matching rows."
+      }
+    ],
+    "bestOption": 0,
+    "explanation": "A is the strongest initial hypothesis because the leading equality condition is status, followed by the date used for the range and ordering. It can reduce both row lookup and sort work. It is still a hypothesis: inspect EXPLAIN ANALYZE, consider the selectivity of status, and weigh the write cost of the extra index before shipping it."
+  },
+  {
+    "id": "sql-optimization-plan-reading-01",
+    "type": "PICK_INVALID",
+    "topic": "sql",
+    "subtopic": "Query Optimization",
+    "difficulty": "senior",
+    "question": "Which statement about PostgreSQL execution plans is incorrect?",
+    "options": [
+      {
+        "id": "A",
+        "text": "A sequential scan can be the right plan for a small table or when a query returns most of its rows."
+      },
+      {
+        "id": "B",
+        "text": "A large difference between estimated and actual rows can indicate stale statistics or a poor cardinality estimate."
+      },
+      {
+        "id": "C",
+        "text": "If EXPLAIN ANALYZE shows a sequential scan, adding an index is always the correct fix."
+      },
+      {
+        "id": "D",
+        "text": "EXPLAIN ANALYZE executes the query, so it requires care with data-changing statements."
+      }
+    ],
+    "answer": "C",
+    "explanation": "C is incorrect. A sequential scan is often cheaper than an index scan when most rows are needed or the table is small. Read actual time, loops, row estimates, buffers and sort/hash activity before changing the query or adding an index."
   }
 ]

@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, effect, signal } from '@angular/core';
+import { Component, computed, inject, input, effect, OnDestroy, signal } from '@angular/core';
 import { InterviewService } from '../../core/services/interview.service';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 import { CodeBlockComponent } from '../../shared/components/code-block/code-block.component';
@@ -15,7 +15,7 @@ import { CodeBlockComponent } from '../../shared/components/code-block/code-bloc
   templateUrl: './interview.component.html',
   styleUrl: './interview.component.scss'
 })
-export class InterviewComponent {
+export class InterviewComponent implements OnDestroy {
   private interviewService = inject(InterviewService);
 
   /** Topic ID passed from parent (TheoryComponent) */
@@ -46,6 +46,7 @@ export class InterviewComponent {
 
   // UI state
   readonly expandedSections = new Set<string>();
+  readonly isReadingCoreAnswer = signal(false);
 
   constructor() {
     // Load interview data when topicId changes
@@ -63,6 +64,7 @@ export class InterviewComponent {
     if (index >= 0 && index < max) {
       this._selectedIndex.set(index);
     }
+    this.stopCoreAnswerAudio();
     this.expandedSections.clear();
   }
 
@@ -71,6 +73,7 @@ export class InterviewComponent {
     if (idx < this.questions().length - 1) {
       this._selectedIndex.set(idx + 1);
     }
+    this.stopCoreAnswerAudio();
     this.expandedSections.clear();
   }
 
@@ -79,6 +82,7 @@ export class InterviewComponent {
     if (idx > 0) {
       this._selectedIndex.set(idx - 1);
     }
+    this.stopCoreAnswerAudio();
     this.expandedSections.clear();
   }
 
@@ -92,6 +96,55 @@ export class InterviewComponent {
 
   isExpanded(section: string): boolean {
     return this.expandedSections.has(section);
+  }
+
+  ngOnDestroy(): void {
+    this.stopCoreAnswerAudio();
+  }
+
+  /** Uses the device's available British-English browser voice. */
+  toggleCoreAnswerAudio(markdown: string): void {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    if (this.isReadingCoreAnswer()) {
+      this.stopCoreAnswerAudio();
+      return;
+    }
+
+    const text = this.toSpeechText(markdown);
+    if (!text) return;
+
+    const synthesis = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-GB';
+    utterance.rate = 0.95;
+
+    const britishVoice = synthesis.getVoices()
+      .find(voice => voice.lang.toLowerCase().startsWith('en-gb'));
+    if (britishVoice) utterance.voice = britishVoice;
+
+    utterance.onend = () => this.isReadingCoreAnswer.set(false);
+    utterance.onerror = () => this.isReadingCoreAnswer.set(false);
+    synthesis.cancel();
+    this.isReadingCoreAnswer.set(true);
+    synthesis.speak(utterance);
+  }
+
+  private stopCoreAnswerAudio(): void {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    this.isReadingCoreAnswer.set(false);
+  }
+
+  private toSpeechText(markdown: string): string {
+    return markdown
+      .replace(/```[\s\S]*?```/g, ' Code example omitted. ')
+      .replace(/`([^`]+)`/g, '$1')
+      .replace(/\*{1,3}|#{1,6}|[_~]/g, '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   /** CSS class for difficulty badge */

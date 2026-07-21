@@ -70,12 +70,24 @@
 
         <!-- Short Answer -->
         <section class="interview-section">
-          <button class="interview-section__toggle" (click)="toggleSection('short')"
-                  [class.interview-section__toggle--open]="isExpanded('short')">
-            <span class="interview-section__icon">💬</span>
-            <span class="interview-section__title">Core Answer</span>
-            <span class="interview-section__arrow">{{ isExpanded('short') ? '▼' : '▶' }}</span>
-          </button>
+          <div class="interview-section__header">
+            <button class="interview-section__toggle" (click)="toggleSection('short')"
+                    [class.interview-section__toggle--open]="isExpanded('short')">
+              <span class="interview-section__icon">💬</span>
+              <span class="interview-section__title">Core Answer</span>
+              <span class="interview-section__arrow">{{ isExpanded('short') ? '▼' : '▶' }}</span>
+            </button>
+            <button
+              type="button"
+              class="interview-section__listen"
+              [class.interview-section__listen--active]="isReadingCoreAnswer()"
+              [attr.aria-label]="isReadingCoreAnswer() ? 'Stop reading Core Answer' : 'Read Core Answer in British English'"
+              [attr.title]="isReadingCoreAnswer() ? 'Stop audio' : 'Listen in British English'"
+              (click)="toggleCoreAnswerAudio(q.shortAnswer)"
+            >
+              {{ isReadingCoreAnswer() ? '■' : '🔊' }}
+            </button>
+          </div>
           @if (isExpanded('short')) {
             <div class="interview-section__body">
               <div class="short-answer" [innerHTML]="q.shortAnswer | markdown"></div>

@@ -8,12 +8,13 @@ import { InterviewService } from '../../core/services/interview.service';
 import { TheoryChapter } from '../../models';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 import { SyntaxHighlightPipe } from '../../shared/pipes/syntax-highlight.pipe';
+import { ChoiceListComponent, ChoiceResult } from '../../shared/components/choice-list/choice-list.component';
 import { InterviewComponent } from '../interview/interview.component';
 
 @Component({
   selector: 'app-theory',
   standalone: true,
-  imports: [MarkdownPipe, SyntaxHighlightPipe, InterviewComponent],
+  imports: [MarkdownPipe, SyntaxHighlightPipe, ChoiceListComponent, InterviewComponent],
   templateUrl: './theory.component.html',
   styleUrl: './theory.component.scss',
   // Learn chapters render trusted authored HTML through [innerHTML]. Disabling
@@ -193,6 +194,12 @@ export class TheoryComponent {
     this.lastResult.set(correct ? 'correct' : 'incorrect');
   }
 
+  onChoiceAnswered(result: ChoiceResult): void {
+    this.practiceChecked.set(true);
+    this.selectedPracticeIndex.set(result.index);
+    this.lastResult.set(result.correct ? 'correct' : 'incorrect');
+  }
+
   revealAnswer(): void {
     this.showResult.set(true);
     const q = this.currentQuestion() as any;
@@ -252,6 +259,23 @@ export class TheoryComponent {
       ? (choice as Record<string, unknown>)['id'] ?? this.choiceLabel(choice)
       : choice;
     return correct === value || correct === this.choiceLabel(choice);
+  }
+
+  /** Get the correct answer index for a question with choices */
+  getCorrectIndex(q: any): number {
+    const choices = this.getChoices(q);
+    for (let i = 0; i < choices.length; i++) {
+      if (this.isCorrectChoice(q, choices[i], i)) return i;
+    }
+    return -1;
+  }
+
+  /** Convert raw choices to ChoiceOption[] for the reusable component */
+  getChoiceOptions(q: any): Array<{ label: string; description?: string }> {
+    return this.getChoices(q).map((c: unknown) => ({
+      label: this.choiceLabel(c),
+      description: this.choiceDescription(c) || undefined
+    }));
   }
 
   getField(q: any, field: string): string {

@@ -374,33 +374,13 @@
             <pre class="question-card__code"><code [innerHTML]="getField(q, 'code') | syntaxHighlight"></code></pre>
           }
 
-          <!-- Choices visible before answer (interactive selection) -->
+          <!-- Choices: interactive reusable component -->
           @if (getChoices(q).length > 0 && !showResult()) {
-            <div class="question-card__choices">
-              @for (choice of getChoices(q); track $index) {
-                <button
-                  class="choice-item choice-item--clickable"
-                  [class.choice-item--selected]="selectedPracticeIndex() === $index && !practiceChecked()"
-                  [class.choice-item--correct]="practiceChecked() && isCorrectChoice(q, choice, $index)"
-                  [class.choice-item--wrong]="practiceChecked() && selectedPracticeIndex() === $index && !isCorrectChoice(q, choice, $index)"
-                  [class.choice-item--dimmed]="practiceChecked() && selectedPracticeIndex() !== $index && !isCorrectChoice(q, choice, $index)"
-                  [disabled]="practiceChecked()"
-                  (click)="selectPracticeChoice(q, choice, $index)"
-                >
-                  <span>{{ choiceLetter($index) }}) {{ choiceLabel(choice) }}</span>
-                  @if (choiceDescription(choice)) {
-                    <small>{{ choiceDescription(choice) }}</small>
-                  }
-                </button>
-              }
-            </div>
-
-            <!-- Feedback after selection -->
-            @if (practiceChecked()) {
-              <div class="question-card__feedback" [attr.data-result]="lastResult()">
-                <span>{{ lastResult() === 'correct' ? '✓ Correct!' : '✗ Incorrect' }}</span>
-              </div>
-            }
+            <app-choice-list
+              [choices]="getChoiceOptions(q)"
+              [correctIndex]="getCorrectIndex(q)"
+              (answered)="onChoiceAnswered($event)"
+            />
           }
 
           <!-- Hint -->

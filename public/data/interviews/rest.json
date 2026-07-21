@@ -4,92 +4,110 @@
     "topic": "rest",
     "subtopic": "rest-verbs",
     "difficulty": "BEGINNER",
-    "question": "What is the most important concept in REST APIs and why?",
-    "shortAnswer": "[Short answer about the foundational concept of REST APIs]",
-    "detailedAnswer": "[Detailed explanation of the core concept in REST APIs, with examples and production context]",
+    "question": "When would you use PUT vs PATCH vs POST?",
+    "shortAnswer": "POST creates a new resource (server assigns ID). PUT replaces the entire resource (client sends full representation). PATCH partially updates specific fields. PUT is idempotent (same request twice = same result), POST is not.",
+    "detailedAnswer": "HTTP verbs have specific semantics:\n\n- POST /orders → Create new order (server assigns ID). NOT idempotent.\n- PUT /orders/123 → Replace order 123 entirely. Must send complete representation. Idempotent.\n- PATCH /orders/123 → Update specific fields of order 123. May or may not be idempotent.\n\nIdempotency matters for retries:\n- PUT: safe to retry (same result)\n- POST: retry may create duplicates (need idempotency key)\n- PATCH: depends on operation (\"set status=ACTIVE\" is idempotent, \"increment count\" is not)\n\nCommon mistakes:\n- Using POST for everything (ignores HTTP semantics)\n- Using PUT for partial updates (should send full resource)\n- Ignoring idempotency implications",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "POST creates, PUT replaces entirely, PATCH updates partially",
+      "PUT is idempotent — safe to retry",
+      "POST is not idempotent — retry may duplicate",
+      "PATCH idempotency depends on the operation",
+      "PUT requires full resource representation"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "Using POST for everything",
+      "Confusing PUT with PATCH",
+      "Not knowing what idempotent means",
+      "\"PUT and PATCH are the same\""
     ],
     "followUps": [
       {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
+        "question": "How do you prevent duplicate creation on POST retry?",
+        "hint": "Idempotency key in header. Server deduplicates."
       },
       {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
+        "question": "What status code do you return for a successful PUT?",
+        "hint": "200 with updated resource, or 204 No Content."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "senai-services REST API design",
+      "description": "Designed REST endpoints following proper verb semantics. Used POST for creation, PUT for full replacement, custom PATCH operations for state transitions (confirm, cancel)."
+    }
   },
   {
     "id": "interview-rest-2",
     "topic": "rest",
     "subtopic": "rest-design",
     "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using REST APIs.",
-    "shortAnswer": "[Short answer about a real challenge involving REST APIs]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "question": "How do you design pagination for a REST API?",
+    "shortAnswer": "Offset/limit for simple cases, cursor-based for large datasets. Always include: deterministic ordering (with tiebreaker), total count as opt-in (expensive), next/prev links in response. Enforce server-side max limit to prevent abuse.",
+    "detailedAnswer": "Pagination approaches:\n\n1. Offset/Limit (simple, most common):\n```\nGET /orders?offset=20&limit=10\n```\nPros: easy to implement, random page access\nCons: slow for large offsets (DB skips rows), inconsistent under inserts/deletes\n\n2. Cursor/Keyset (scalable):\n```\nGET /orders?after=eyJpZCI6MTIzfQ&limit=10\n```\nPros: consistent performance regardless of page, stable under mutations\nCons: no random page access, cursor is opaque\n\nMandatory rules:\n- Deterministic ORDER BY with tiebreaker (id, timestamp+id)\n- Server enforces max limit (e.g., 100)\n- Response includes pagination metadata\n- Total count is opt-in (COUNT(*) is expensive)\n\nResponse format:\n```json\n{\"data\": [...], \"pagination\": {\"total\": 1523, \"limit\": 10, \"offset\": 20, \"next\": \"/orders?offset=30&limit=10\"}}\n```",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "Offset/limit for simple cases, cursor for scale",
+      "Deterministic ordering with tiebreaker column",
+      "Server enforces maximum page size",
+      "Total count is expensive — make it opt-in",
+      "Cursor-based is consistent under data mutations"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "No pagination at all (returns all records)",
+      "No server-side limit enforcement",
+      "Non-deterministic ordering (random results)",
+      "\"I always use offset/limit\" without knowing cursor alternative"
     ],
     "followUps": [
       {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
+        "question": "Why is offset-based pagination slow for large offsets?",
+        "hint": "DB must skip N rows to reach the offset. Cursor uses WHERE clause — always fast."
       },
       {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
+        "question": "How do you handle pagination when data is being inserted?",
+        "hint": "Offset can show duplicates/gaps. Cursor is stable."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "senai-services pagination",
+      "description": "Implemented offset/limit pagination with deterministic ORDER BY (always include PK as tiebreaker). Server enforces max 100 per request."
+    }
   },
   {
     "id": "interview-rest-3",
     "topic": "rest",
-    "subtopic": "rest-verbs",
+    "subtopic": "rest-versioning",
     "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with REST APIs?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in REST APIs]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "question": "How do you version a REST API? What is your strategy for breaking changes?",
+    "shortAnswer": "I use path-based versioning (/v1/, /v2/) for clarity. Breaking changes get a new version; additive changes (new optional fields) do not. Both versions share the same business logic — only the adapter/DTO layer differs. Deprecation with timeline, not surprise removal.",
+    "detailedAnswer": "Versioning strategies:\n\n1. Path-based: /api/v1/orders, /api/v2/orders (most common, most explicit)\n2. Header-based: Accept: application/vnd.myapp.v2+json (cleaner URLs, harder to discover)\n3. Query param: /orders?version=2 (easy but pollutes params)\n\nMy preference: path-based for external APIs (explicit, easy to route), header-based acceptable for internal.\n\nWhat constitutes a breaking change:\n- Removing a field from response\n- Changing field type\n- Making optional parameter required\n- Changing error response format\n- Changing semantic meaning of a field\n\nWhat is NOT breaking (usually):\n- Adding optional field to response\n- Adding optional parameter\n- New endpoint\n\nStrategy:\n- New version shares Business layer (DRY)\n- Only Endpoint + DTO differ per version\n- Deprecation announced with timeline\n- Old version supported for N months\n- Monitor usage of old version before removal",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "Path-based versioning for clarity (/v1/, /v2/)",
+      "Breaking change = new version. Additive = same version.",
+      "Shared business logic — only adapter layer differs",
+      "Deprecation with timeline, not surprise removal",
+      "Monitor old version usage before decommissioning"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "\"We never version\" (breaks all clients on changes)",
+      "Duplicating business logic between versions",
+      "Versioning every minor change",
+      "No deprecation policy — just remove endpoints"
     ],
     "followUps": [
       {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
+        "question": "How do you communicate deprecation to API consumers?",
+        "hint": "Deprecation header, documentation, changelog, direct notification."
       },
       {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
+        "question": "When would you choose NOT to create a new version?",
+        "hint": "Additive changes, internal APIs with coordinated deploys."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "senai-services v2/v3 versioning",
+      "description": "Path-based versioning. Both versions delegate to same Business layer. Bug fixes in shared layer affect all versions. Breaking changes only in newest version."
+    }
   }
 ]

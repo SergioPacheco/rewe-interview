@@ -4,92 +4,184 @@
     "topic": "kafka",
     "subtopic": "kafka-fundamentals",
     "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Messaging & Kafka and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Messaging & Kafka]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Messaging & Kafka, with examples and production context]",
+    "question": "What is Apache Kafka and when would you use it?",
+    "shortAnswer": "Kafka is a distributed event streaming platform. Use it when you need: decoupled producers/consumers, event replay, high throughput message processing, or event-driven architecture. Do NOT use it for simple request-response or small-scale point-to-point messaging.",
+    "detailedAnswer": "Kafka is a distributed commit log that enables:\n\n1. Pub/Sub messaging — multiple consumers read the same events independently\n2. Event sourcing — full history of state changes\n3. Stream processing — real-time data pipelines\n4. Decoupling — producers and consumers evolve independently\n\nWhen to use Kafka:\n- High throughput (millions of events/sec)\n- Multiple consumers need the same data\n- Event replay is needed (reprocess from history)\n- Decoupling between systems\n- Ordering within a partition matters\n\nWhen NOT to use Kafka:\n- Simple request-response (use REST)\n- Small scale, single consumer (use RabbitMQ or simple queue)\n- Transactions across multiple services (Kafka is not a transaction coordinator)\n- Low-latency RPC (Kafka adds latency vs direct call)",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Distributed commit log, not just a message queue",
+      "Retention-based (keeps messages, consumers track offset)",
+      "Partitions enable parallelism and ordering",
+      "Decouples producers from consumers",
+      "Event replay capability (reprocess history)"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "\"Kafka is a message queue\" (incomplete understanding)",
+      "Cannot differentiate from RabbitMQ/ActiveMQ",
+      "No mention of when NOT to use Kafka",
+      "\"Use Kafka for everything\" without justification"
     ],
     "followUps": [
       {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
+        "question": "How does Kafka differ from RabbitMQ?",
+        "hint": "Log-based retention vs queue (message consumed = deleted). Kafka enables replay."
       },
       {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
+        "question": "What is a partition and why does it matter?",
+        "hint": "Unit of parallelism and ordering guarantee."
+      },
+      {
+        "question": "How would you decide between Kafka and a simple HTTP call?",
+        "hint": "Coupling, throughput, replay needs, consumer count."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 JMS messaging (Kafka equivalent)",
+      "description": "Used ActiveMQ Artemis with 80 queues and 128 MDBs for async processing. Same patterns: decoupling, retry, DLQ. Kafka adds partitioning and replay."
+    }
   },
   {
     "id": "interview-kafka-2",
     "topic": "kafka",
-    "subtopic": "kafka-architecture",
-    "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Messaging & Kafka.",
-    "shortAnswer": "[Short answer about a real challenge involving Messaging & Kafka]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "subtopic": "kafka-delivery",
+    "difficulty": "SENIOR",
+    "question": "How do you guarantee exactly-once processing in Kafka?",
+    "shortAnswer": "True exactly-once requires: idempotent producer (enable.idempotence=true), transactional producer (read-process-write atomically), and idempotent consumer (deduplicate using event ID or idempotency key). In practice, I aim for effectively-once: at-least-once delivery + idempotent processing.",
+    "detailedAnswer": "Exactly-once semantics (EOS) has three components:\n\n1. Idempotent Producer:\n- enable.idempotence=true\n- Kafka deduplicates retries using sequence numbers\n- Guarantees: no duplicates within a single producer session\n\n2. Transactional Producer:\n- Atomic read-process-write across topics/partitions\n- init/begin/commit/abort transaction API\n- Consumer reads with isolation.level=read_committed\n\n3. Idempotent Consumer (YOUR responsibility):\n- Kafka guarantees at-least-once delivery to consumers\n- YOUR code must handle duplicates:\n  - Deduplicate by event ID in a processed-events table\n  - Use idempotent operations (SET status=DONE is idempotent)\n  - Compare event timestamp vs last-processed timestamp\n\nIn practice, \"effectively-once\" = at-least-once + idempotent consumer. This is more robust than relying on Kafka transactions alone.",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "Exactly-once = idempotent producer + transactions + idempotent consumer",
+      "Idempotent producer prevents retry duplicates",
+      "Transactional producer: atomic read-process-write",
+      "Consumer idempotency is YOUR responsibility",
+      "Effectively-once > exactly-once in practice"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "\"Kafka guarantees exactly-once out of the box\"",
+      "Not knowing that consumer idempotency is application responsibility",
+      "Confusing at-most-once with exactly-once",
+      "\"We just use acks=all\" (that is durability, not EOS)"
     ],
     "followUps": [
       {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
+        "question": "What happens when a consumer crashes mid-processing?",
+        "hint": "Message redelivered. Without idempotency, processed twice."
       },
       {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
+        "question": "How do you implement consumer idempotency?",
+        "hint": "Event ID in processed-events table with ON CONFLICT DO NOTHING."
+      },
+      {
+        "question": "What is the performance cost of Kafka transactions?",
+        "hint": "Higher latency, reduced throughput. Only use when atomicity is required."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 MDB idempotency",
+      "description": "Implemented INSERT ON CONFLICT DO NOTHING for message deduplication in JMS consumers. Same pattern applies to Kafka consumers."
+    }
   },
   {
     "id": "interview-kafka-3",
     "topic": "kafka",
-    "subtopic": "kafka-fundamentals",
-    "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Messaging & Kafka?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Messaging & Kafka]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "subtopic": "kafka-architecture",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you choose a partition key? What are the consequences of a bad choice?",
+    "shortAnswer": "Partition key determines message ordering and parallelism. I choose keys that group related events (order_id for order events) and distribute evenly. Bad key (e.g., country_code with 90% Brazil) creates hot partitions — one consumer overloaded while others idle.",
+    "detailedAnswer": "Partition key design:\n\nGood keys:\n- order_id: all events for an order go to same partition (ordering preserved)\n- customer_id: all events for a customer in order\n- device_id: sensor readings in order per device\n\nBad keys:\n- country_code: skewed distribution (hot partitions)\n- null: round-robin, no ordering guarantee\n- timestamp: all events in same time window hit same partition\n- too-fine-grained (UUID): perfect distribution but no ordering semantics\n\nConsequences of bad partitioning:\n1. Hot partition: one consumer overwhelmed, others idle\n2. No ordering: events processed out of order\n3. Consumer lag: one partition falls behind\n4. Rebalancing issues: partition reassignment affects more consumers\n\nDesign questions:\n- Which events MUST be ordered relative to each other?\n- What is the cardinality? (need at least as many distinct keys as partitions)\n- Will distribution be even over time?",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "Key determines ordering AND distribution",
+      "Group related events under same key",
+      "Even distribution prevents hot partitions",
+      "Cardinality must exceed partition count",
+      "null key = round-robin, no ordering"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "\"I just use random UUID\" (loses ordering)",
+      "Cannot explain hot partition problem",
+      "Not considering cardinality vs partition count",
+      "\"I always use the same key as the DB primary key\""
     ],
     "followUps": [
       {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
+        "question": "How would you partition delivery events for REWE?",
+        "hint": "delivery_id or driver_id depending on what needs ordering."
       },
       {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
+        "question": "What do you do when you need to repartition?",
+        "hint": "Create new topic with new partition count, migrate consumers gradually."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kafka-4",
+    "topic": "kafka",
+    "subtopic": "kafka-consumers",
+    "difficulty": "INTERMEDIATE",
+    "question": "Explain consumer groups and rebalancing.",
+    "shortAnswer": "A consumer group is a set of consumers that divide topic partitions among themselves. Each partition is assigned to exactly one consumer in the group. Rebalancing redistributes partitions when consumers join/leave — during rebalancing, consumption pauses (causes latency spikes).",
+    "detailedAnswer": "Consumer groups:\n- Each consumer in a group reads from a subset of partitions\n- Each partition assigned to exactly ONE consumer in the group\n- Multiple groups can read the same topic independently\n- If consumers > partitions → some consumers idle\n\nRebalancing triggers:\n1. Consumer joins the group (new instance)\n2. Consumer leaves (crash, graceful shutdown)\n3. Partitions added to topic\n4. Consumer heartbeat timeout\n\nRebalancing impact:\n- ALL consumers pause during rebalance (stop-the-world)\n- Partitions reassigned (potentially different consumer)\n- Uncommitted offsets may cause reprocessing\n\nMitigation:\n- Cooperative rebalancing (incremental, less disruptive)\n- Static group membership (instance.id)\n- Longer session.timeout to avoid false positives\n- Graceful shutdown with close() to trigger clean rebalance",
+    "keyPoints": [
+      "Partitions divided among consumers in a group",
+      "One partition = one consumer (within a group)",
+      "Rebalancing pauses ALL consumers temporarily",
+      "Cooperative rebalancing reduces disruption",
+      "Static membership prevents unnecessary rebalances"
+    ],
+    "redFlags": [
+      "Not knowing that rebalancing pauses consumption",
+      "\"More consumers = always better\" (idle if > partitions)",
+      "Cannot explain what triggers rebalancing",
+      "No mention of offset management during rebalance"
+    ],
+    "followUps": [
+      {
+        "question": "What happens to uncommitted offsets during rebalancing?",
+        "hint": "Lost. Messages may be reprocessed. Need idempotent consumer."
+      },
+      {
+        "question": "How would you scale consumers for REWE delivery events?",
+        "hint": "Match consumer count to partition count. Scale topic partitions first if needed."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kafka-5",
+    "topic": "kafka",
+    "subtopic": "kafka-comparison",
+    "difficulty": "SENIOR",
+    "question": "You have experience with JMS/ActiveMQ. How would that transfer to Kafka?",
+    "shortAnswer": "Core patterns transfer: async processing, decoupling, retry, DLQ, idempotency. Key differences: Kafka has retention (replay), partitioned parallelism, and consumer groups vs JMS point-to-point queues. My 128 MDB experience with transaction boundaries, idempotency keys, and error handling maps directly.",
+    "detailedAnswer": "What transfers directly:\n- Async processing patterns (command, event, document)\n- Error handling: retry + DLQ\n- Idempotency: same need, same solutions (dedup table)\n- Transaction boundaries: when to commit\n- Monitoring: consumer lag ≈ queue depth\n- Backpressure: maxSession ≈ max.poll.records\n\nWhat is different:\n- JMS: message consumed = gone. Kafka: retained by time/size\n- JMS: single consumer per queue. Kafka: consumer groups\n- JMS: broker manages delivery. Kafka: consumer pulls and manages offsets\n- JMS: message ordering per queue. Kafka: ordering per partition\n- JMS: easy exactly-once with XA. Kafka: idempotent consumer pattern\n\nMy experience:\n- 80 queues, 128 MDBs in SGN3\n- Idempotent processing with INSERT ON CONFLICT\n- DLQ management and reprocessing\n- Transaction boundaries: separate TX from external calls\n- Batch processing with controlled concurrency",
+    "keyPoints": [
+      "Patterns transfer: async, retry, DLQ, idempotency",
+      "Key difference: retention and replay",
+      "Consumer manages offsets (pull model)",
+      "Partition ordering vs queue ordering",
+      "128 MDB experience maps to Kafka consumer implementations"
+    ],
+    "redFlags": [
+      "\"JMS and Kafka are the same thing\"",
+      "Cannot articulate the differences",
+      "No practical messaging experience at all",
+      "Not acknowledging the learning curve"
+    ],
+    "followUps": [
+      {
+        "question": "What would be hardest for you in the transition?",
+        "hint": "Offset management, partition rebalancing, distributed consumer coordination."
+      },
+      {
+        "question": "How would you handle ordering across multiple partitions?",
+        "hint": "You cannot — design around it. Choose partition key for ordering needs."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 JMS with 80 queues and 128 MDBs",
+      "description": "Built and maintained async processing for notifications, integrations (Moodle, LDAP), batch processing. Applied idempotency, DLQ, retry with backoff. Ready to apply same patterns in Kafka."
+    }
   }
 ]

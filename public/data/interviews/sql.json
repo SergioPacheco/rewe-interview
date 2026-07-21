@@ -2,94 +2,112 @@
   {
     "id": "interview-sql-1",
     "topic": "sql",
-    "subtopic": "sql-joins",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in SQL & Performance and why?",
-    "shortAnswer": "[Short answer about the foundational concept of SQL & Performance]",
-    "detailedAnswer": "[Detailed explanation of the core concept in SQL & Performance, with examples and production context]",
+    "subtopic": "sql-indexes",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you decide what columns to index?",
+    "shortAnswer": "Index columns that appear in WHERE clauses of frequent queries, JOIN conditions, and ORDER BY. Consider selectivity (high cardinality = good index). Composite indexes: leftmost prefix matters. Do NOT index everything — each index costs write performance and storage.",
+    "detailedAnswer": "Index decision framework:\n\n1. Look at query patterns (EXPLAIN ANALYZE):\n- WHERE clause columns (most impactful)\n- JOIN conditions\n- ORDER BY columns (avoids filesort)\n- Covering indexes (include all SELECT columns)\n\n2. Consider selectivity:\n- High cardinality (email, ID) → good index candidate\n- Low cardinality (boolean, status with 3 values) → usually not worth it alone\n- Exception: partial index on low-cardinality (WHERE status = 'ACTIVE')\n\n3. Composite index rules:\n- Leftmost prefix: (A, B, C) serves queries on A, (A,B), (A,B,C) but NOT (B,C)\n- Most selective column first (usually)\n- Equality columns before range columns\n\n4. Trade-offs:\n- Each index: +read speed, -write speed, +storage\n- Too many indexes: INSERT/UPDATE become slow\n- Missing indexes: SELECT becomes slow\n\n5. PostgreSQL specifics:\n- Partial indexes: WHERE clause in CREATE INDEX\n- Expression indexes: index on function result\n- GIN for JSONB, full-text search\n- BRIN for time-series data (sorted tables)",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Index WHERE, JOIN, ORDER BY columns",
+      "High selectivity = good index candidate",
+      "Composite index: leftmost prefix rule",
+      "Every index costs write performance",
+      "EXPLAIN ANALYZE is the source of truth"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "\"Index every column\"",
+      "Not knowing the leftmost prefix rule",
+      "Never using EXPLAIN ANALYZE",
+      "Ignoring write performance impact"
     ],
     "followUps": [
       {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
+        "question": "When would you use a partial index?",
+        "hint": "Index only active records: WHERE status = 'ACTIVE'. Smaller index, faster scans."
       },
       {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
+        "question": "How do you identify missing indexes in production?",
+        "hint": "pg_stat_user_tables seq_scan count, slow query log, EXPLAIN ANALYZE."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 query optimization",
+      "description": "Regularly used EXPLAIN ANALYZE to identify Seq Scans. Added composite indexes that dropped query time from 48s to 2s. Partial indexes for active-only queries."
+    }
   },
   {
     "id": "interview-sql-2",
     "topic": "sql",
-    "subtopic": "sql-indexes",
-    "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using SQL & Performance.",
-    "shortAnswer": "[Short answer about a real challenge involving SQL & Performance]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "subtopic": "sql-transactions",
+    "difficulty": "SENIOR",
+    "question": "Explain transaction isolation levels. When would you use each?",
+    "shortAnswer": "READ COMMITTED (default, avoids dirty reads), REPEATABLE READ (snapshot at TX start, avoids non-repeatable reads), SERIALIZABLE (full isolation, detects conflicts). I use READ COMMITTED for most operations, SERIALIZABLE for critical financial calculations where phantom reads would cause errors.",
+    "detailedAnswer": "Isolation levels (PostgreSQL):\n\n1. READ COMMITTED (default):\n- Sees only committed data at statement start\n- Same query in same TX can return different results (phantom reads OK)\n- Best for: most OLTP workloads\n\n2. REPEATABLE READ:\n- Snapshot at TX start — consistent view throughout\n- Serialization failure on write conflict (must retry)\n- Best for: reports, calculations needing consistent snapshot\n\n3. SERIALIZABLE:\n- As if transactions executed sequentially\n- Detects serialization anomalies (write skew)\n- May throw serialization errors (must retry)\n- Best for: financial operations, inventory management\n\nPractical guidance:\n- READ COMMITTED: 95% of operations. Simple, fast, sufficient.\n- REPEATABLE READ: when you read data, compute, then write based on it\n- SERIALIZABLE: when correctness is more important than throughput\n\nImportant: higher isolation ≠ slower. In PostgreSQL, REPEATABLE READ uses snapshots (MVCC), not locks. But serialization failures require application-level retry.",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "READ COMMITTED = default, sufficient for most cases",
+      "REPEATABLE READ = consistent snapshot, needs retry on conflict",
+      "SERIALIZABLE = full isolation, requires retry logic",
+      "Higher isolation in PG uses MVCC, not locks",
+      "Application must handle serialization failures"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "Not knowing the default isolation level",
+      "Confusing isolation with locking",
+      "\"SERIALIZABLE is always safest\" without considering retry cost",
+      "Never having needed anything beyond READ COMMITTED"
     ],
     "followUps": [
       {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
+        "question": "What is a phantom read and when does it matter?",
+        "hint": "New rows appear between reads in same TX. Matters for aggregations."
       },
       {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
+        "question": "How do you handle serialization failures?",
+        "hint": "Application-level retry loop. Transaction must be fully re-executed."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 PostgreSQL transactions",
+      "description": "Used READ COMMITTED for all standard operations. Applied optimistic locking (version column) for concurrent edits instead of higher isolation levels."
+    }
   },
   {
     "id": "interview-sql-3",
     "topic": "sql",
-    "subtopic": "sql-joins",
-    "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with SQL & Performance?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in SQL & Performance]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "subtopic": "sql-performance",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you investigate a slow query?",
+    "shortAnswer": "EXPLAIN ANALYZE first — check for Seq Scans, row estimate vs actual mismatch, nested loops over large sets. Then: check indexes (missing or unused), look for N+1 patterns (application generating many queries), verify statistics are fresh (ANALYZE), and check for lock contention.",
+    "detailedAnswer": "Slow query investigation process:\n\n1. EXPLAIN ANALYZE — the source of truth:\n- Seq Scan on large table → missing index\n- Rows estimated vs actual differ wildly → stale statistics\n- Nested Loop with many rows → consider Hash/Merge Join\n- Sort with large external sort → add index for ORDER BY\n\n2. Check for common causes:\n- Missing index on WHERE/JOIN columns\n- N+1 queries from application (check APM)\n- Lock contention (pg_stat_activity, pg_locks)\n- Stale statistics (run ANALYZE)\n- Too many columns fetched (SELECT *)\n\n3. Fix strategies:\n- Add targeted index (not \"index everything\")\n- Rewrite query (LATERAL JOIN, CTE, subquery)\n- Add LIMIT for pagination\n- Materialized view for complex aggregations\n- Partition large tables by date\n\n4. Verify fix:\n- EXPLAIN ANALYZE before/after\n- Measure in production (not just dev)\n- Monitor regression over time",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "EXPLAIN ANALYZE is always step 1",
+      "Check: Seq Scan, row estimates, join types",
+      "Common causes: missing index, N+1, stale stats, locks",
+      "Verify fix with before/after EXPLAIN",
+      "Monitor after deployment — do not assume fixed"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "\"I just add indexes until it is fast\"",
+      "Never using EXPLAIN ANALYZE",
+      "Optimizing queries without measuring",
+      "Not considering application-level causes (N+1)"
     ],
     "followUps": [
       {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
+        "question": "What does it mean when estimated rows differ greatly from actual?",
+        "hint": "Stale statistics. Run ANALYZE. May need extended statistics for correlated columns."
       },
       {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
+        "question": "How do you prevent slow queries from reaching production?",
+        "hint": "EXPLAIN ANALYZE in CI, query review in PR, performance testing with realistic data."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 48k queries → 2s optimization",
+      "description": "Used Glowroot + EXPLAIN ANALYZE to find N+1 in enrollment page (48,000 queries). Fixed with LATERAL JOIN and proper indexing. 48s → 2s."
+    }
   }
 ]

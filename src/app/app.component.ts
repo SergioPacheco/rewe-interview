@@ -50,7 +50,7 @@ export class AppComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     await this.topicService.loadAll();
 
-    // Build breadcrumbs on navigation + scroll to top
+    // Build breadcrumbs on navigation + scroll to top + auto-expand sidebar
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd)
     ).subscribe(() => {
@@ -58,6 +58,12 @@ export class AppComponent implements OnInit {
       // Scroll main-content to top on navigation
       const main = document.querySelector('.main-content');
       if (main) main.scrollTop = 0;
+      // Auto-expand sidebar for current topic
+      const url = this.router.url;
+      const parts = url.split('#')[0].split('?')[0].split('/').filter(Boolean);
+      if (parts[0] === 'topic' && parts[1]) {
+        this.expandedTopic.set(parts[1]);
+      }
     });
     this.updateBreadcrumbs();
   }

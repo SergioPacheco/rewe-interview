@@ -150,3 +150,13 @@ export interface QuizSession {
   combo: number;
   maxCombo: number;
 }
+
+// ===== INTERVIEW =====
+export type { InterviewDifficulty, ExperienceLevel, VisualBlockType } from './interview.model';
+export type {
+  InterviewFollowUp,
+  CodeExample,
+  VisualBlock,
+  RealExperience,
+  InterviewQuestion
+} from './interview.model';

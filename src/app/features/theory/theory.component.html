@@ -1,10 +1,11 @@
 <div class="topic-view">
-  <!-- Tabs: Learn / Practice -->
+  <!-- Tabs: Learn / Practice / Interview -->
   <div class="tabs">
     <button class="tabs__btn" [class.tabs__btn--active]="activeTab() === 'learn'" (click)="switchTab('learn')">📖 Learn</button>
     @if (hasExercises()) {
       <button class="tabs__btn" [class.tabs__btn--active]="activeTab() === 'practice'" (click)="switchTab('practice')">🎯 Practice</button>
     }
+    <button class="tabs__btn" [class.tabs__btn--active]="activeTab() === 'interview'" (click)="switchTab('interview')">🎙️ Interview</button>
   </div>
 
   <!-- ==================== LEARN TAB ==================== -->
@@ -453,5 +454,10 @@
         </div>
       }
     </div>
+  }
+
+  <!-- ==================== INTERVIEW TAB ==================== -->
+  @if (activeTab() === 'interview') {
+    <app-interview [topicId]="topicId()" [subtopicId]="selectedSubtopic()" />
   }
 </div>

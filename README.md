@@ -58,22 +58,43 @@ src/app/
 ├── core/services/
 │   ├── topic.service.ts          ← Data loader + subtopic normalization
 │   ├── quiz-engine.service.ts    ← Quiz state machine (Signals)
+│   ├── interview.service.ts      ← Interview questions loader (lazy per topic)
 │   └── progress.service.ts       ← XP, streak, mastery (localStorage)
 ├── features/
 │   ├── dashboard/                ← 5-section landing (Learn/Practice/Interview/Experience/REWE)
-│   ├── theory/                   ← Learn + Practice tabs (answer hidden until attempt)
+│   ├── theory/                   ← Learn + Practice + Interview tabs (topic container)
+│   ├── interview/                ← Interview tab component (accordion sections)
 │   ├── quiz/                     ← Standalone quiz mode
 │   └── resume/                   ← CV page
 ├── shared/pipes/
 │   └── markdown.pipe.ts          ← MD → HTML rendering
-└── models/index.ts               ← TypeScript interfaces
+└── models/
+    ├── index.ts                  ← Core interfaces (Topic, Question, etc.)
+    └── interview.model.ts        ← Interview-specific interfaces
 
 public/data/
 ├── exercises/                    ← 24 JSON files, 695+ exercises
-│   ├── senior-questions.json     ← 24 senior-level with follow-ups
-│   └── system-design-v2-pilots.json ← Schema v2 with rubric
+├── interviews/                   ← Interview prep questions per topic
+│   └── oop.json                  ← Pilot: 3 OOP interview questions
 └── topics/                       ← Theory files + index.json
 ```
+
+### Topic → 3 Tabs Architecture
+
+Each topic presents three distinct activities:
+
+```
+Topic (e.g., "Java OOP")
+├── 📖 Learn      — full didactic content (always visible)
+├── 🎯 Practice   — quiz with scoring (answer after attempt)
+└── 🎙️ Interview  — oral preparation (expandable reference sections)
+```
+
+| Tab | Purpose | Data source | Scoring? |
+|-----|---------|-------------|:--------:|
+| Learn | Understand concepts | `public/data/topics/theory-*.json` | ❌ |
+| Practice | Verify knowledge | `public/data/exercises/*.json` | ✅ |
+| Interview | Learn to communicate | `public/data/interviews/*.json` | ❌ |
 
 ---
 

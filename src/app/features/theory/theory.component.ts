@@ -4,14 +4,16 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { TopicService } from '../../core/services/topic.service';
 import { QuizEngineService } from '../../core/services/quiz-engine.service';
+import { InterviewService } from '../../core/services/interview.service';
 import { TheoryChapter } from '../../models';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 import { SyntaxHighlightPipe } from '../../shared/pipes/syntax-highlight.pipe';
+import { InterviewComponent } from '../interview/interview.component';
 
 @Component({
   selector: 'app-theory',
   standalone: true,
-  imports: [MarkdownPipe, SyntaxHighlightPipe],
+  imports: [MarkdownPipe, SyntaxHighlightPipe, InterviewComponent],
   templateUrl: './theory.component.html',
   styleUrl: './theory.component.scss'
 })
@@ -19,6 +21,7 @@ export class TheoryComponent {
   private route = inject(ActivatedRoute);
   private topicService = inject(TopicService);
   protected engine = inject(QuizEngineService);
+  protected interviewService = inject(InterviewService);
 
   // Route params
   readonly topicId = toSignal(
@@ -32,7 +35,7 @@ export class TheoryComponent {
   );
 
   // State
-  activeTab = signal<'learn' | 'practice'>('learn');
+  activeTab = signal<'learn' | 'practice' | 'interview'>('learn');
   showResult = signal(false);
   selectedAnswer = signal('');
   lastResult = signal<'correct' | 'incorrect' | 'partial'>('incorrect');
@@ -120,10 +123,13 @@ export class TheoryComponent {
 
   // ===== Methods =====
 
-  switchTab(tab: 'learn' | 'practice'): void {
+  switchTab(tab: 'learn' | 'practice' | 'interview'): void {
     this.activeTab.set(tab);
     if (tab === 'practice') {
       this.startEngine();
+    }
+    if (tab === 'interview') {
+      this.interviewService.loadForTopic(this.topicId());
     }
   }
 

@@ -1,0 +1,233 @@
+<div class="interview-content">
+  @if (loading()) {
+    <div class="interview-loading">Loading interview questions...</div>
+  } @else if (!hasQuestions()) {
+    <div class="interview-empty">
+      <span class="interview-empty__icon">🎙️</span>
+      <p class="interview-empty__text">Interview questions are not yet available for this topic.</p>
+      <p class="interview-empty__hint">Check the Learn and Practice tabs in the meantime.</p>
+    </div>
+  } @else {
+    <!-- Question selector -->
+    <div class="question-nav">
+      <div class="question-nav__list">
+        @for (q of questions(); track q.id; let i = $index) {
+          <button
+            class="question-nav__btn"
+            [class.question-nav__btn--active]="i === selectedIndex()"
+            (click)="selectQuestion(i)">
+            <span class="question-nav__number">{{ i + 1 }}</span>
+            <span class="question-nav__diff badge" [class]="difficultyClass(q.difficulty)">{{ q.difficulty }}</span>
+          </button>
+        }
+      </div>
+      <div class="question-nav__arrows">
+        <button (click)="previous()" [disabled]="selectedIndex() === 0" class="nav-arrow">←</button>
+        <span class="nav-counter">{{ selectedIndex() + 1 }} / {{ totalQuestions() }}</span>
+        <button (click)="next()" [disabled]="selectedIndex() === totalQuestions() - 1" class="nav-arrow">→</button>
+      </div>
+    </div>
+
+    <!-- Current question -->
+    @if (currentQuestion(); as q) {
+      <article class="interview-card">
+        <!-- Header -->
+        <header class="interview-card__header">
+          <h2 class="interview-card__question">{{ q.question }}</h2>
+          <div class="interview-card__meta">
+            <span class="badge" [class]="difficultyClass(q.difficulty)">{{ q.difficulty }}</span>
+            @if (q.experienceLevel) {
+              <span class="badge-exp" [class]="experienceClass(q.experienceLevel)">
+                {{ experienceLabel(q.experienceLevel) }}
+              </span>
+            }
+          </div>
+          @if (q.context) {
+            <p class="interview-card__context">{{ q.context }}</p>
+          }
+        </header>
+
+        <!-- Short Answer -->
+        <section class="interview-section">
+          <button class="interview-section__toggle" (click)="toggleSection('short')"
+                  [class.interview-section__toggle--open]="isExpanded('short')">
+            <span class="interview-section__icon">💬</span>
+            <span class="interview-section__title">Short Answer (30-60s)</span>
+            <span class="interview-section__arrow">{{ isExpanded('short') ? '▼' : '▶' }}</span>
+          </button>
+          @if (isExpanded('short')) {
+            <div class="interview-section__body">
+              <div class="short-answer" [innerHTML]="q.shortAnswer | markdown"></div>
+            </div>
+          }
+        </section>
+
+        <!-- Detailed Explanation -->
+        <section class="interview-section">
+          <button class="interview-section__toggle" (click)="toggleSection('detailed')"
+                  [class.interview-section__toggle--open]="isExpanded('detailed')">
+            <span class="interview-section__icon">📖</span>
+            <span class="interview-section__title">Detailed Explanation</span>
+            <span class="interview-section__arrow">{{ isExpanded('detailed') ? '▼' : '▶' }}</span>
+          </button>
+          @if (isExpanded('detailed')) {
+            <div class="interview-section__body">
+              <div class="detailed-answer" [innerHTML]="q.detailedAnswer | markdown"></div>
+            </div>
+          }
+        </section>
+
+        <!-- Key Points -->
+        <section class="interview-section">
+          <button class="interview-section__toggle" (click)="toggleSection('keypoints')"
+                  [class.interview-section__toggle--open]="isExpanded('keypoints')">
+            <span class="interview-section__icon">✅</span>
+            <span class="interview-section__title">Key Points</span>
+            <span class="interview-section__arrow">{{ isExpanded('keypoints') ? '▼' : '▶' }}</span>
+          </button>
+          @if (isExpanded('keypoints')) {
+            <div class="interview-section__body">
+              <ul class="key-points">
+                @for (point of q.keyPoints; track point) {
+                  <li class="key-points__item">{{ point }}</li>
+                }
+              </ul>
+            </div>
+          }
+        </section>
+
+        <!-- Code Examples -->
+        @if (q.codeExamples && q.codeExamples.length > 0) {
+          <section class="interview-section">
+            <button class="interview-section__toggle" (click)="toggleSection('code')"
+                    [class.interview-section__toggle--open]="isExpanded('code')">
+              <span class="interview-section__icon">💻</span>
+              <span class="interview-section__title">Code Examples</span>
+              <span class="interview-section__arrow">{{ isExpanded('code') ? '▼' : '▶' }}</span>
+            </button>
+            @if (isExpanded('code')) {
+              <div class="interview-section__body">
+                @for (example of q.codeExamples; track example.title) {
+                  <div class="code-example">
+                    @if (example.title) {
+                      <h4 class="code-example__title">{{ example.title }}</h4>
+                    }
+                    <pre class="code-example__pre"><code>{{ example.code }}</code></pre>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        <!-- Visual Blocks -->
+        @if (q.visualBlocks && q.visualBlocks.length > 0) {
+          <section class="interview-section">
+            <button class="interview-section__toggle" (click)="toggleSection('visual')"
+                    [class.interview-section__toggle--open]="isExpanded('visual')">
+              <span class="interview-section__icon">🎨</span>
+              <span class="interview-section__title">Visual Explanation</span>
+              <span class="interview-section__arrow">{{ isExpanded('visual') ? '▼' : '▶' }}</span>
+            </button>
+            @if (isExpanded('visual')) {
+              <div class="interview-section__body">
+                @for (block of q.visualBlocks; track block.title) {
+                  <div class="visual-block">
+                    <h4 class="visual-block__title">{{ block.title }}</h4>
+                    <pre class="visual-block__content">{{ block.content }}</pre>
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        <!-- Follow-up Questions -->
+        @if (q.followUps && q.followUps.length > 0) {
+          <section class="interview-section">
+            <button class="interview-section__toggle" (click)="toggleSection('followups')"
+                    [class.interview-section__toggle--open]="isExpanded('followups')">
+              <span class="interview-section__icon">🔄</span>
+              <span class="interview-section__title">Follow-up Questions</span>
+              <span class="interview-section__arrow">{{ isExpanded('followups') ? '▼' : '▶' }}</span>
+            </button>
+            @if (isExpanded('followups')) {
+              <div class="interview-section__body">
+                @for (fu of q.followUps; track fu.question) {
+                  <div class="follow-up">
+                    <p class="follow-up__question">{{ fu.question }}</p>
+                    @if (fu.hint) {
+                      <p class="follow-up__hint">💡 {{ fu.hint }}</p>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </section>
+        }
+
+        <!-- Red Flags -->
+        @if (q.redFlags && q.redFlags.length > 0) {
+          <section class="interview-section">
+            <button class="interview-section__toggle" (click)="toggleSection('redflags')"
+                    [class.interview-section__toggle--open]="isExpanded('redflags')">
+              <span class="interview-section__icon">🚩</span>
+              <span class="interview-section__title">Red Flags (avoid these)</span>
+              <span class="interview-section__arrow">{{ isExpanded('redflags') ? '▼' : '▶' }}</span>
+            </button>
+            @if (isExpanded('redflags')) {
+              <div class="interview-section__body">
+                <ul class="red-flags">
+                  @for (flag of q.redFlags; track flag) {
+                    <li class="red-flags__item">{{ flag }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </section>
+        }
+
+        <!-- Real Experience -->
+        @if (q.realExperience) {
+          <section class="interview-section">
+            <button class="interview-section__toggle" (click)="toggleSection('experience')"
+                    [class.interview-section__toggle--open]="isExpanded('experience')">
+              <span class="interview-section__icon">🏢</span>
+              <span class="interview-section__title">Real Experience</span>
+              <span class="interview-section__arrow">{{ isExpanded('experience') ? '▼' : '▶' }}</span>
+            </button>
+            @if (isExpanded('experience')) {
+              <div class="interview-section__body">
+                <div class="real-experience">
+                  <h4 class="real-experience__title">{{ q.realExperience.title }}</h4>
+                  <p class="real-experience__desc">{{ q.realExperience.description }}</p>
+                </div>
+              </div>
+            }
+          </section>
+        }
+
+        <!-- Tradeoffs -->
+        @if (q.tradeoffs && q.tradeoffs.length > 0) {
+          <section class="interview-section">
+            <button class="interview-section__toggle" (click)="toggleSection('tradeoffs')"
+                    [class.interview-section__toggle--open]="isExpanded('tradeoffs')">
+              <span class="interview-section__icon">⚖️</span>
+              <span class="interview-section__title">Trade-offs</span>
+              <span class="interview-section__arrow">{{ isExpanded('tradeoffs') ? '▼' : '▶' }}</span>
+            </button>
+            @if (isExpanded('tradeoffs')) {
+              <div class="interview-section__body">
+                <ul class="tradeoffs">
+                  @for (t of q.tradeoffs; track t) {
+                    <li class="tradeoffs__item">{{ t }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </section>
+        }
+      </article>
+    }
+  }
+</div>

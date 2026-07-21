@@ -1,0 +1,155 @@
+[
+  {
+    "id": "interview-oop-polymorphism-1",
+    "topic": "oop",
+    "subtopic": "oop-polymorphism",
+    "difficulty": "INTERMEDIATE",
+    "question": "What is polymorphism and where have you used it?",
+    "context": "Classic opening question — tests if you can go beyond the textbook definition and connect to real production code.",
+    "shortAnswer": "Polymorphism lets you write code against an interface and have different implementations execute at runtime. I used it in the SGN notification system — one `NotificationSender` interface with `EmailSender`, `SmsSender`, and `PushSender` implementations, injected via CDI depending on the channel configured per student.",
+    "detailedAnswer": "Polymorphism means 'many forms' — the ability to treat objects of different classes through a common interface. In Java, this happens through method overriding (runtime polymorphism) and method overloading (compile-time).\n\nThe real power is in runtime polymorphism: you program against an abstraction, and the JVM resolves the actual method at runtime based on the object's real type. This eliminates conditional logic, makes the system extensible (add new implementations without modifying existing code), and enables dependency injection.\n\nIn the SGN system, we had a notification module that originally used a giant if/else chain to decide how to notify students. We refactored to a `NotificationSender` interface with three implementations. Adding WhatsApp later required zero changes to existing code — just a new class implementing the interface.",
+    "keyPoints": [
+      "Runtime polymorphism = method resolution based on actual object type",
+      "Eliminates if/else chains for type-based behavior",
+      "Enables Open/Closed Principle — extend without modifying",
+      "Foundation for Dependency Injection and Strategy pattern",
+      "Makes code testable — mock the interface, test the caller"
+    ],
+    "redFlags": [
+      "Only reciting a textbook definition without examples",
+      "Confusing overloading with overriding",
+      "Cannot explain WHY it matters (just knows WHAT it is)",
+      "Inventing an experience that falls apart under follow-up",
+      "Claiming inheritance is always needed for polymorphism (interfaces!)"
+    ],
+    "followUps": [
+      { "question": "Why not just use an if/else or switch?", "hint": "Talk about Open/Closed Principle and what happens when you add a new type." },
+      { "question": "When would composition be preferable to polymorphism via inheritance?", "hint": "Favor composition when behavior varies independently of the type hierarchy." },
+      { "question": "Can polymorphism make a design harder to maintain?", "hint": "Deep hierarchies, unclear contracts, runtime surprises with covariant returns." },
+      { "question": "How does dependency injection relate to polymorphism?", "hint": "DI is polymorphism operationalized — the container decides which implementation at runtime." }
+    ],
+    "codeExamples": [
+      {
+        "language": "java",
+        "title": "Interface-based polymorphism (production pattern)",
+        "code": "public interface NotificationSender {\n    void send(Notification notification);\n}\n\npublic class EmailSender implements NotificationSender {\n    @Override\n    public void send(Notification notification) {\n        // SMTP logic\n    }\n}\n\npublic class PushSender implements NotificationSender {\n    @Override\n    public void send(Notification notification) {\n        // Firebase push\n    }\n}\n\n// Caller doesn't know or care which implementation\npublic class NotificationService {\n    @Inject\n    private NotificationSender sender;\n\n    public void notify(Student student, Event event) {\n        sender.send(buildNotification(student, event));\n    }\n}"
+      }
+    ],
+    "visualBlocks": [
+      {
+        "type": "HIERARCHY",
+        "title": "NotificationSender hierarchy",
+        "content": "         NotificationSender\n                │\n    ┌───────────┼───────────┐\n    │           │           │\nEmailSender  SmsSender  PushSender"
+      },
+      {
+        "type": "FLOW",
+        "title": "Runtime resolution",
+        "content": "Animal reference\n       │\n       ▼\n    Dog object\n       │\n       ▼\nDog.makeSound()"
+      }
+    ],
+    "realExperience": {
+      "title": "SGN3 Notification refactoring",
+      "description": "Replaced a 200-line if/else chain in the notification module with a Strategy pattern using CDI injection. Each channel (email, SMS, push) became its own implementation. Adding WhatsApp later was a single new class + CDI qualifier."
+    },
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-oop-encapsulation-1",
+    "topic": "oop",
+    "subtopic": "oop-encapsulation",
+    "difficulty": "BEGINNER",
+    "question": "Explain encapsulation. Why do we make fields private?",
+    "context": "Sounds basic but reveals whether you understand the WHY — protecting invariants, not just hiding data.",
+    "shortAnswer": "Encapsulation means bundling data with the methods that operate on it, and restricting direct access to the internal state. We make fields private to protect invariants — the object controls its own consistency. A `BankAccount` with a public `balance` field can be set to -1000 by anyone; with private + methods, we enforce business rules.",
+    "detailedAnswer": "Encapsulation is about protecting invariants, not about hiding data for the sake of hiding. When a field is private, the class owns the rules for how that data changes.\n\nConsider a `Matricula` entity in the SGN system. If `situacao` (status) were public, any code could set it to ATIVA without checking prerequisites (payment confirmed, documents validated, turma has capacity). By encapsulating it behind `confirmar()`, `cancelar()`, `trancar()` methods, the entity guarantees that every state transition is valid.\n\nEncapsulation also enables change without breaking clients. If the internal representation changes (e.g., storing dates as epoch instead of LocalDate), the public API stays the same. This is why getter/setter alone is weak encapsulation — `setStatus(ATIVA)` is no better than a public field. Real encapsulation exposes behavior, not data.",
+    "keyPoints": [
+      "Protects invariants — object controls its own consistency",
+      "Enables evolution — internal changes don't break callers",
+      "Getters/setters alone are NOT real encapsulation",
+      "Behavior methods (confirm, cancel) are stronger than set methods",
+      "Information hiding reduces coupling between modules"
+    ],
+    "redFlags": [
+      "Saying 'we make fields private because it's best practice' without explaining WHY",
+      "Equating encapsulation with getters/setters",
+      "Cannot give an example of an invariant that encapsulation protects",
+      "Never mentioning the distinction between data hiding and behavior exposure"
+    ],
+    "followUps": [
+      { "question": "If we have a getter and setter for every field, is that really encapsulated?", "hint": "No — it's a public field with extra steps. Real encapsulation exposes behavior." },
+      { "question": "How does encapsulation relate to immutability?", "hint": "Immutable objects are perfectly encapsulated — no one can change their state after creation." },
+      { "question": "Can you give an example where breaking encapsulation caused a bug?", "hint": "Think of a case where someone set a field directly and bypassed validation." }
+    ],
+    "codeExamples": [
+      {
+        "language": "java",
+        "title": "Weak vs strong encapsulation",
+        "code": "// ❌ Weak — setter exposes internal state directly\npublic class Matricula {\n    private String situacao;\n    public void setSituacao(String s) { this.situacao = s; }\n}\n\n// ✅ Strong — behavior method protects invariants\npublic class Matricula {\n    private SituacaoMatricula situacao;\n\n    public void confirmar() {\n        if (this.situacao != PENDENTE) {\n            throw new IllegalStateException(\"Can only confirm PENDING enrollment\");\n        }\n        this.situacao = ATIVA;\n        this.dataConfirmacao = LocalDate.now();\n    }\n}"
+      }
+    ],
+    "realExperience": {
+      "title": "SGN3 Matricula state machine",
+      "description": "The enrollment entity had public setters that allowed invalid state transitions. We refactored to behavior methods (confirmar, cancelar, trancar) that enforce preconditions. Reduced state-related bugs by eliminating direct field manipulation."
+    },
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-oop-composition-1",
+    "topic": "oop",
+    "subtopic": "oop-composition",
+    "difficulty": "SENIOR",
+    "question": "When would you choose composition over inheritance? Give a real example.",
+    "context": "Senior-level question. Tests design judgment, not just knowledge of the concepts.",
+    "shortAnswer": "I choose composition when behaviors vary independently of the type hierarchy, when I need runtime flexibility, or when inheritance would create a rigid tree that breaks with new requirements. In SGN, we replaced a deep report hierarchy (BaseReport → PdfReport → StudentPdfReport → ...) with a composed pipeline: ReportBuilder + DataSource + Formatter + Exporter — each interchangeable independently.",
+    "detailedAnswer": "Inheritance creates an 'is-a' relationship that's permanent and rigid. Composition creates a 'has-a' relationship that's flexible and runtime-configurable.\n\nThe classic signal that inheritance is wrong: you need multiple orthogonal behaviors. A `FlyingFish` can't extend both `Bird` and `Fish` in Java. But with composition, a `Creature` can have a `MovementStrategy` (fly, swim, walk) and a `BreathingStrategy` (lungs, gills) — each varying independently.\n\nIn production, the strongest signal is: 'I need to change behavior at runtime' or 'I have a combinatorial explosion of subclasses.' In the SGN reporting module, we had 14 report subclasses that shared code inconsistently. Refactoring to composition (pluggable data source, formatter, and export strategy) reduced it to 4 components that combined in dozens of ways.\n\nInheritance still wins for true type hierarchies where substitutability (LSP) is the goal — like JPA entity hierarchies with shared persistent fields.",
+    "keyPoints": [
+      "Composition when behaviors vary independently (combinatorial explosion)",
+      "Composition when you need runtime flexibility (Strategy pattern)",
+      "Inheritance when LSP substitutability is the actual goal",
+      "Inheritance for stable, shallow hierarchies with shared state",
+      "'Favor composition' doesn't mean 'never use inheritance'",
+      "Design smell: override method just to disable parent behavior"
+    ],
+    "redFlags": [
+      "Dogmatically saying 'never use inheritance'",
+      "Cannot articulate WHEN inheritance is still appropriate",
+      "No real example — only textbook Animal/Vehicle",
+      "Confusing composition with aggregation",
+      "Not mentioning the LSP connection"
+    ],
+    "followUps": [
+      { "question": "Can you name a case where inheritance was the RIGHT choice?", "hint": "JPA entities with shared audit fields, or template method for a fixed algorithm with variable steps." },
+      { "question": "How does the Decorator pattern combine inheritance and composition?", "hint": "It uses inheritance for the type contract but composition for behavior layering." },
+      { "question": "What's the cost of over-using composition?", "hint": "Indirection, harder to trace flow, more objects to wire together." }
+    ],
+    "clarifyingQuestions": [
+      "Are we talking about a specific domain or general design principles?",
+      "Is this about a new design or refactoring existing inheritance?"
+    ],
+    "tradeoffs": [
+      "Composition adds indirection — harder to follow the execution flow",
+      "Inheritance gives you polymorphism for free — composition requires explicit delegation",
+      "Composition is more testable — each piece is independently mockable",
+      "Inheritance shares implementation (code reuse) — composition shares contracts (interface reuse)"
+    ],
+    "codeExamples": [
+      {
+        "language": "java",
+        "title": "Composition: pluggable report pipeline",
+        "code": "// Instead of: BaseReport → PdfReport → StudentPdfReport → ...\n\npublic class ReportGenerator {\n    private final DataSource dataSource;\n    private final Formatter formatter;\n    private final Exporter exporter;\n\n    public ReportGenerator(DataSource ds, Formatter fmt, Exporter exp) {\n        this.dataSource = ds;\n        this.formatter = fmt;\n        this.exporter = exp;\n    }\n\n    public byte[] generate(ReportRequest request) {\n        var data = dataSource.fetch(request);\n        var formatted = formatter.format(data);\n        return exporter.export(formatted);\n    }\n}\n\n// Usage: combine freely\nnew ReportGenerator(studentDataSource, tableFormatter, pdfExporter);\nnew ReportGenerator(turmaDataSource, chartFormatter, excelExporter);"
+      }
+    ],
+    "visualBlocks": [
+      {
+        "type": "COMPARISON",
+        "title": "Inheritance vs Composition",
+        "content": "INHERITANCE (rigid tree)         COMPOSITION (pluggable)\n\n  BaseReport                     ReportGenerator\n    ├── PdfReport                  ├── DataSource (interface)\n    │     └── StudentPdf           ├── Formatter  (interface)\n    └── ExcelReport                └── Exporter   (interface)\n         └── TurmaExcel\n\n14 classes, hard to change       4 interfaces, combine freely"
+      }
+    ],
+    "realExperience": {
+      "title": "SGN3 Report module refactoring",
+      "description": "Replaced a 14-class inheritance tree for reports with a composed pipeline (DataSource + Formatter + Exporter). Each component is independently testable and swappable. Adding a new output format (Excel, PDF, CSV) no longer requires a new subclass — just a new Exporter implementation."
+    },
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  }
+]

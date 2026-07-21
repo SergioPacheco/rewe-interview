@@ -2,14 +2,14 @@
   {
     "id": "kafka-oral-01",
     "type": "ORAL_ANSWER",
-    "subtopic": "JMS → Kafka",
+    "subtopic": "JMS \u2192 Kafka",
     "difficulty": "senior",
     "question": "You have experience with JMS. How would you compare it with Kafka?",
     "interviewerIntent": "Evaluate messaging fundamentals, honesty and ability to transfer experience without claiming they are identical.",
-    "shortAnswer": "My JMS experience gives me strong foundations in async messaging: producers, consumers, retry, DLQ and idempotency. Kafka adds a different model — append-only log, consumer-managed offsets, partition-based parallelism and message replay. The patterns transfer but the operational model is fundamentally different.",
+    "shortAnswer": "My JMS experience gives me strong foundations in async messaging: producers, consumers, retry, DLQ and idempotency. Kafka adds a different model \u2014 append-only log, consumer-managed offsets, partition-based parallelism and message replay. The patterns transfer but the operational model is fundamentally different.",
     "modelAnswer": "Context: I have production experience with JMS and ActiveMQ Artemis for asynchronous integration between services.\n\nTransferable concepts: Message producers and consumers, asynchronous decoupling, retry on failure, dead-letter handling, idempotent processing, event-driven architecture.\n\nKey differences I recognize:\n- JMS: message consumed = removed from queue. Kafka: messages retained in the log (replayable).\n- JMS: broker tracks delivery state. Kafka: consumer manages its own offset (position).\n- JMS: queue = point-to-point. Kafka: topic + consumer groups = multiple independent readers of the same data.\n- JMS: ordering within a queue. Kafka: ordering within a partition (not across partitions).\n- JMS: acknowledgment per message. Kafka: offset commit (can batch).\n\nMy approach: I would transfer my messaging patterns (idempotent consumers, DLQ, retry backoff) while learning Kafka-specific operations (partition keys, consumer group rebalancing, offset management, schema evolution).\n\nTrade-off: Kafka introduces operational complexity (ZooKeeper/KRaft, partition management, retention policies) that JMS does not have. But it enables event sourcing and replay that JMS cannot.",
-    "senaiExample": "SGN3 uses 80+ JMS queues on Artemis for async processing — enrollment events, notifications, integrations. MDBs consume with retry and DLQ. These patterns transfer to @KafkaListener.",
-    "reweExample": "TRAB team publishes logistics events (DeliveryPlanned, TruckDeparted, DeliveryCompleted) to Kafka topics. Multiple services consume independently — tracking, analytics, driver notification.",
+    "senaiExample": "SGN3 uses 80+ JMS queues on Artemis for async processing \u2014 enrollment events, notifications, integrations. MDBs consume with retry and DLQ. These patterns transfer to @KafkaListener.",
+    "reweExample": "TRAB team publishes logistics events (DeliveryPlanned, TruckDeparted, DeliveryCompleted) to Kafka topics. Multiple services consume independently \u2014 tracking, analytics, driver notification.",
     "keyPoints": [
       "Acknowledge transferable patterns (producer/consumer, retry, DLQ, idempotency)",
       "Explain key differences (log vs queue, offset vs ack, retention vs removal)",
@@ -26,11 +26,11 @@
     "followUps": [
       {
         "question": "What is the biggest mistake when moving from JMS to Kafka?",
-        "answerHint": "Treating Kafka like a queue — expecting messages to disappear after consumption. Also: not thinking about partition keys for ordering."
+        "answerHint": "Treating Kafka like a queue \u2014 expecting messages to disappear after consumption. Also: not thinking about partition keys for ordering."
       },
       {
         "question": "How does idempotency differ?",
-        "answerHint": "Same principle (process once regardless of retries) but implementation differs. Kafka can deliver messages multiple times (at-least-once). Consumer must handle duplicates — usually via unique event ID + dedup table."
+        "answerHint": "Same principle (process once regardless of retries) but implementation differs. Kafka can deliver messages multiple times (at-least-once). Consumer must handle duplicates \u2014 usually via unique event ID + dedup table."
       },
       {
         "question": "What Kafka concepts are completely new to you?",
@@ -40,17 +40,17 @@
     "vocabulary": [
       {
         "term": "offset",
-        "meaning": "posição do consumidor no log — equivalente a um bookmark",
+        "meaning": "posi\u00e7\u00e3o do consumidor no log \u2014 equivalente a um bookmark",
         "example": "The consumer commits offset 42, meaning it has processed all messages up to position 42 in the partition."
       },
       {
         "term": "consumer group",
-        "meaning": "grupo de consumidores que divide partições entre si",
-        "example": "Three instances of tracking-service in the same consumer group each get assigned different partitions — work is distributed."
+        "meaning": "grupo de consumidores que divide parti\u00e7\u00f5es entre si",
+        "example": "Three instances of tracking-service in the same consumer group each get assigned different partitions \u2014 work is distributed."
       },
       {
         "term": "partition",
-        "meaning": "subdivisão de um topic que permite paralelismo e garante ordem",
+        "meaning": "subdivis\u00e3o de um topic que permite paralelismo e garante ordem",
         "example": "Messages with the same key always go to the same partition, guaranteeing ordering for that key."
       }
     ],
@@ -82,9 +82,9 @@
     "question": "When would you use Kafka over a direct REST call between services?",
     "interviewerIntent": "Test understanding of async vs sync communication trade-offs.",
     "shortAnswer": "Use Kafka when: the producer should not wait for the consumer, multiple services need the same event, you need retry/resilience, ordering matters, or you want to replay events. Use REST when you need an immediate response or the interaction is request-reply.",
-    "modelAnswer": "Context: In distributed systems, services communicate either synchronously (REST) or asynchronously (Kafka).\n\nUse Kafka when:\n1. Fire-and-forget: producer does not need a response (DeliveryPlanned event)\n2. Fan-out: multiple services need the same event (tracking + analytics + notification all consume DeliveryPlanned)\n3. Resilience: consumer is temporarily down — messages wait in the log\n4. Ordering: events for the same delivery must be processed in sequence\n5. Replay: new service needs to process historical events\n6. Decoupling: producer and consumer evolve independently\n\nUse REST when:\n1. Request-reply: you need an answer now (check stock availability)\n2. Simple query: GET current delivery status\n3. Low latency required: sub-100ms response\n4. Two-party interaction: only one specific service needs to respond\n\nIn my JMS experience, I made the same decisions — JMS for async/fire-and-forget, REST for immediate responses. Kafka adds fan-out and replay that JMS does not provide easily.",
+    "modelAnswer": "Context: In distributed systems, services communicate either synchronously (REST) or asynchronously (Kafka).\n\nUse Kafka when:\n1. Fire-and-forget: producer does not need a response (DeliveryPlanned event)\n2. Fan-out: multiple services need the same event (tracking + analytics + notification all consume DeliveryPlanned)\n3. Resilience: consumer is temporarily down \u2014 messages wait in the log\n4. Ordering: events for the same delivery must be processed in sequence\n5. Replay: new service needs to process historical events\n6. Decoupling: producer and consumer evolve independently\n\nUse REST when:\n1. Request-reply: you need an answer now (check stock availability)\n2. Simple query: GET current delivery status\n3. Low latency required: sub-100ms response\n4. Two-party interaction: only one specific service needs to respond\n\nIn my JMS experience, I made the same decisions \u2014 JMS for async/fire-and-forget, REST for immediate responses. Kafka adds fan-out and replay that JMS does not provide easily.",
     "senaiExample": "SGN3: REST for real-time lookups (check enrollment status). JMS for async processes (generate certificate, send email, sync with Moodle). Same decision framework applies to Kafka.",
-    "reweExample": "REST: driver checks delivery details. Kafka: DeliveryPlanned event consumed by tracking service, route optimizer, driver notifier and analytics — independently and asynchronously.",
+    "reweExample": "REST: driver checks delivery details. Kafka: DeliveryPlanned event consumed by tracking service, route optimizer, driver notifier and analytics \u2014 independently and asynchronously.",
     "keyPoints": [
       "Kafka = async, fire-and-forget, fan-out, resilience",
       "REST = sync, request-reply, immediate response",
@@ -100,7 +100,7 @@
     "followUps": [
       {
         "question": "What about eventual consistency?",
-        "answerHint": "Kafka events mean the consumer processes LATER — data is eventually consistent, not immediately. The system must tolerate this (e.g., delivery status takes seconds to update in dashboard)."
+        "answerHint": "Kafka events mean the consumer processes LATER \u2014 data is eventually consistent, not immediately. The system must tolerate this (e.g., delivery status takes seconds to update in dashboard)."
       },
       {
         "question": "Can you do request-reply with Kafka?",
@@ -110,18 +110,18 @@
     "vocabulary": [
       {
         "term": "fan-out",
-        "meaning": "um evento consumido por múltiplos serviços independentemente",
-        "example": "DeliveryPlanned fans out to tracking, analytics and notification — each has its own consumer group."
+        "meaning": "um evento consumido por m\u00faltiplos servi\u00e7os independentemente",
+        "example": "DeliveryPlanned fans out to tracking, analytics and notification \u2014 each has its own consumer group."
       },
       {
         "term": "eventual consistency",
-        "meaning": "dados ficam consistentes após algum tempo, não imediatamente",
-        "example": "After publishing DeliveryCompleted, the analytics dashboard updates within seconds — eventually consistent."
+        "meaning": "dados ficam consistentes ap\u00f3s algum tempo, n\u00e3o imediatamente",
+        "example": "After publishing DeliveryCompleted, the analytics dashboard updates within seconds \u2014 eventually consistent."
       },
       {
         "term": "backpressure",
         "meaning": "consumidor controla a velocidade de consumo sem afetar o produtor",
-        "example": "If the analytics consumer is slow, it just falls behind on offsets — the producer and other consumers are unaffected."
+        "example": "If the analytics consumer is slow, it just falls behind on offsets \u2014 the producer and other consumers are unaffected."
       }
     ],
     "selfEvaluation": [
@@ -179,7 +179,7 @@
       "consume",
       "process"
     ],
-    "explain": "Producer → partition (by key) → broker stores (append-only log) → consumer reads at its offset → processes and commits. Key insight: the message stays in the log AFTER consumption (unlike JMS). Other consumers can still read it.",
+    "explain": "Producer \u2192 partition (by key) \u2192 broker stores (append-only log) \u2192 consumer reads at its offset \u2192 processes and commits. Key insight: the message stays in the log AFTER consumption (unlike JMS). Other consumers can still read it.",
     "topic": "kafka"
   },
   {
@@ -210,14 +210,14 @@
       "a": {
         "pros": [
           "Events for same delivery are ORDERED (same partition)",
-          "Consumer sees planned→dispatched→delivered in sequence",
+          "Consumer sees planned\u2192dispatched\u2192delivered in sequence",
           "Idempotency per delivery is simpler"
         ],
         "cons": [
           "Hot partition if one delivery has many events",
           "Scaling limited by number of deliveries"
         ],
-        "verdict": "Best for logistics events. You need ordering per delivery — planned before dispatched before completed."
+        "verdict": "Best for logistics events. You need ordering per delivery \u2014 planned before dispatched before completed."
       },
       "b": {
         "pros": [
@@ -243,7 +243,7 @@
         "verdict": "Only for events where order does not matter (analytics, logging). Never for lifecycle events."
       }
     },
-    "nuance": "Partition key = ordering guarantee. Same key → same partition → ordered. In logistics, delivery lifecycle events MUST be ordered per delivery. In my JMS experience, we guaranteed ordering with single-consumer queues. In Kafka, we guarantee it with partition keys.",
+    "nuance": "Partition key = ordering guarantee. Same key \u2192 same partition \u2192 ordered. In logistics, delivery lifecycle events MUST be ordered per delivery. In my JMS experience, we guaranteed ordering with single-consumer queues. In Kafka, we guarantee it with partition keys.",
     "topic": "kafka"
   },
   {
@@ -294,14 +294,14 @@
           "Message processing order may break for that delivery",
           "DLT needs monitoring"
         ],
-        "verdict": "Industry standard. Same pattern as JMS max-delivery-attempts + DLQ — the concept transfers directly from my Artemis experience."
+        "verdict": "Industry standard. Same pattern as JMS max-delivery-attempts + DLQ \u2014 the concept transfers directly from my Artemis experience."
       },
       "c": {
         "pros": [
           "Never blocks"
         ],
         "cons": [
-          "DATA LOSS — the event is never processed",
+          "DATA LOSS \u2014 the event is never processed",
           "No way to recover without replaying from offset"
         ],
         "verdict": "Unacceptable for business-critical events like delivery status updates."
@@ -313,7 +313,7 @@
   {
     "id": "kafka-refactor-01",
     "type": "CODE_REFACTOR",
-    "subtopic": "JMS → Kafka",
+    "subtopic": "JMS \u2192 Kafka",
     "difficulty": "intermediate",
     "mission": "Translate this <strong>JMS MDB</strong> to a Spring Kafka consumer.",
     "code": "@MessageDriven(activationConfig = {\n    @ActivationConfigProperty(propertyName = \"destinationLookup\", propertyValue = \"queue/DeliveryQueue\"),\n    @ActivationConfigProperty(propertyName = \"destinationType\", propertyValue = \"javax.jms.Queue\")\n})\npublic class DeliveryMDB implements MessageListener {\n\n    @Inject private DeliveryService deliveryService;\n\n    @Override\n    public void onMessage(Message message) {\n        try {\n            DeliveryEvent event = deserialize(message);\n            deliveryService.processDelivery(event);\n        } catch (Exception e) {\n            throw new EJBException(e); // triggers redelivery\n        }\n    }\n}",
@@ -324,13 +324,13 @@
       "Single consumer per queue (no built-in parallelism)"
     ],
     "refactoredCode": "@Component\npublic class DeliveryEventConsumer {\n\n    private final DeliveryService deliveryService;\n\n    public DeliveryEventConsumer(DeliveryService deliveryService) {\n        this.deliveryService = deliveryService;\n    }\n\n    @KafkaListener(\n        topics = \"delivery-events\",\n        groupId = \"tracking-service\",\n        containerFactory = \"kafkaListenerContainerFactory\"\n    )\n    public void onDeliveryEvent(DeliveryEvent event) {\n        // Spring Kafka auto-deserializes using configured deserializer\n        deliveryService.processDelivery(event);\n        // Offset auto-committed after successful processing\n        // On exception: Spring Kafka retries per configured ErrorHandler\n    }\n}",
-    "explain": "@MessageDriven → @KafkaListener. JMS Queue → Kafka topic + consumer group. Manual deserialization → auto-deserialization. EJBException for retry → Spring Kafka ErrorHandler. The processing logic (deliveryService.processDelivery) is IDENTICAL.",
+    "explain": "@MessageDriven \u2192 @KafkaListener. JMS Queue \u2192 Kafka topic + consumer group. Manual deserialization \u2192 auto-deserialization. EJBException for retry \u2192 Spring Kafka ErrorHandler. The processing logic (deliveryService.processDelivery) is IDENTICAL.",
     "topic": "kafka"
   },
   {
     "id": "kafka-compare-01",
     "type": "COMPARE_CONCEPTS",
-    "subtopic": "JMS → Kafka",
+    "subtopic": "JMS \u2192 Kafka",
     "difficulty": "intermediate",
     "mission": "Compare: <strong>JMS Acknowledgment</strong> vs <strong>Kafka Offset Commit</strong>",
     "conceptA": {
@@ -342,8 +342,8 @@
       "definition": "Consumer commits its position (offset) in the partition. Message stays in log regardless. Committing = \"I processed up to here.\" Broker stores offset per consumer group."
     },
     "keyDifference": "JMS: per-message acknowledgment, message removed after ack. Kafka: positional bookmark (offset), message stays forever (until retention expires). Kafka allows replay by resetting offset; JMS does not.",
-    "javaExample": "JMS: message.acknowledge() removes it. Kafka: consumer.commitSync() says \"I'm at offset 42\" — the message at 42 stays in the topic and other consumers can still read it.",
-    "interviewAnswer": "In JMS, acknowledging removes the message. In Kafka, committing an offset is a bookmark — the message stays in the log. This enables replay: a new consumer can start from offset 0 and reprocess everything. It also means multiple consumer groups read the same messages independently, which is impossible with JMS queues.",
+    "javaExample": "JMS: message.acknowledge() removes it. Kafka: consumer.commitSync() says \"I'm at offset 42\" \u2014 the message at 42 stays in the topic and other consumers can still read it.",
+    "interviewAnswer": "In JMS, acknowledging removes the message. In Kafka, committing an offset is a bookmark \u2014 the message stays in the log. This enables replay: a new consumer can start from offset 0 and reprocess everything. It also means multiple consumer groups read the same messages independently, which is impossible with JMS queues.",
     "topic": "kafka",
     "answer": "**JMS Acknowledgment:** Consumer acknowledges each message. Acknowledged = removed from queue. Not acknowledged = redelivered. Broker tracks state per message.\n\n**Kafka Offset Commit:** Consumer commits its position (offset) in the partition. Message stays in log regardless. Committing = \"I processed up to here.\" Broker stores offset per consumer group.\n\n\n**Key Difference:** JMS: per-message acknowledgment, message removed after ack. Kafka: positional bookmark (offset), message stays forever (until retention expires). Kafka allows replay by resetting offset; JMS does not."
   },
@@ -354,12 +354,12 @@
     "difficulty": "senior",
     "question": "How do you ensure a Kafka consumer is idempotent?",
     "interviewerIntent": "Test understanding of at-least-once delivery and how to handle duplicates.",
-    "shortAnswer": "Kafka provides at-least-once delivery by default — the same message can be delivered multiple times (consumer crash after processing but before offset commit). My consumer must handle duplicates using a unique event ID stored in a deduplication table, checked atomically before processing.",
-    "modelAnswer": "Context: Kafka guarantees at-least-once delivery by default. If the consumer processes a message but crashes before committing the offset, the message is redelivered on restart.\n\nProblem: Without idempotency, a DeliveryCompleted event processed twice could trigger duplicate notifications to drivers or double-count in analytics.\n\nSolution: Each event carries a unique eventId. Before processing, check if eventId exists in a processed_events table:\n\nINSERT INTO processed_events (event_id, processed_at) VALUES (:id, NOW()) ON CONFLICT (event_id) DO NOTHING;\n\nIf INSERT returns 0 rows affected → already processed, skip. If 1 row → first time, proceed.\n\nConnection to my JMS experience: We used the exact same pattern with Artemis MDBs — INSERT ON CONFLICT DO NOTHING as the idempotency guard. The SQL is identical. The concept transfers perfectly.\n\nTrade-off: Extra DB write per message. For high-throughput topics, consider a TTL-based cache (Redis) for dedup instead of a permanent table.",
+    "shortAnswer": "Kafka provides at-least-once delivery by default \u2014 the same message can be delivered multiple times (consumer crash after processing but before offset commit). My consumer must handle duplicates using a unique event ID stored in a deduplication table, checked atomically before processing.",
+    "modelAnswer": "Context: Kafka guarantees at-least-once delivery by default. If the consumer processes a message but crashes before committing the offset, the message is redelivered on restart.\n\nProblem: Without idempotency, a DeliveryCompleted event processed twice could trigger duplicate notifications to drivers or double-count in analytics.\n\nSolution: Each event carries a unique eventId. Before processing, check if eventId exists in a processed_events table:\n\nINSERT INTO processed_events (event_id, processed_at) VALUES (:id, NOW()) ON CONFLICT (event_id) DO NOTHING;\n\nIf INSERT returns 0 rows affected \u2192 already processed, skip. If 1 row \u2192 first time, proceed.\n\nConnection to my JMS experience: We used the exact same pattern with Artemis MDBs \u2014 INSERT ON CONFLICT DO NOTHING as the idempotency guard. The SQL is identical. The concept transfers perfectly.\n\nTrade-off: Extra DB write per message. For high-throughput topics, consider a TTL-based cache (Redis) for dedup instead of a permanent table.",
     "senaiExample": "SGN3 MDBs use INSERT ON CONFLICT DO NOTHING with a chave_idempotencia column. Same pattern, different framework.",
     "reweExample": "TRAB consumer for DeliveryCompleted: check event_id in processed_events before updating delivery status and notifying driver. Prevents double-notification on redelivery.",
     "keyPoints": [
-      "Kafka = at-least-once by default → duplicates possible",
+      "Kafka = at-least-once by default \u2192 duplicates possible",
       "Unique event ID in every message",
       "Dedup table with ON CONFLICT DO NOTHING (atomic)",
       "Same pattern used with JMS at SENAI",
@@ -383,18 +383,18 @@
     "vocabulary": [
       {
         "term": "at-least-once",
-        "meaning": "mensagem entregue pelo menos uma vez — pode haver duplicatas",
+        "meaning": "mensagem entregue pelo menos uma vez \u2014 pode haver duplicatas",
         "example": "Kafka at-least-once: if offset commit fails, the consumer reprocesses from last committed offset."
       },
       {
         "term": "deduplication",
-        "meaning": "detectar e ignorar mensagens já processadas",
-        "example": "The dedup table stores processed event IDs — duplicates are detected with ON CONFLICT DO NOTHING."
+        "meaning": "detectar e ignorar mensagens j\u00e1 processadas",
+        "example": "The dedup table stores processed event IDs \u2014 duplicates are detected with ON CONFLICT DO NOTHING."
       },
       {
         "term": "poison pill",
-        "meaning": "mensagem impossível de processar que bloqueia o consumidor",
-        "example": "A malformed event that always fails parsing is a poison pill — send it to DLT and move on."
+        "meaning": "mensagem imposs\u00edvel de processar que bloqueia o consumidor",
+        "example": "A malformed event that always fails parsing is a poison pill \u2014 send it to DLT and move on."
       }
     ],
     "selfEvaluation": [
@@ -450,7 +450,7 @@
       "dispatch"
     ],
     "answer": "send",
-    "explain": "KafkaTemplate.send(topic, key, value) publishes a message. The key (delivery ID) determines the partition — all events for the same delivery go to the same partition, preserving order. Equivalent to JMS messageProducer.send() but with an explicit key for partitioning.",
+    "explain": "KafkaTemplate.send(topic, key, value) publishes a message. The key (delivery ID) determines the partition \u2014 all events for the same delivery go to the same partition, preserving order. Equivalent to JMS messageProducer.send() but with an explicit key for partitioning.",
     "topic": "kafka"
   },
   {
@@ -477,7 +477,7 @@
       }
     ],
     "answer": "b",
-    "explain": "FALSE: Kafka guarantees ordering only WITHIN a partition, NOT across partitions. If a topic has 4 partitions, events in different partitions may be consumed out of order relative to each other. To guarantee ordering for a delivery, use the delivery ID as partition key → same partition → ordered.",
+    "explain": "FALSE: Kafka guarantees ordering only WITHIN a partition, NOT across partitions. If a topic has 4 partitions, events in different partitions may be consumed out of order relative to each other. To guarantee ordering for a delivery, use the delivery ID as partition key \u2192 same partition \u2192 ordered.",
     "topic": "kafka"
   },
   {
@@ -499,7 +499,7 @@
       },
       {
         "id": "c",
-        "label": "Break the schema — all consumers must update simultaneously",
+        "label": "Break the schema \u2014 all consumers must update simultaneously",
         "desc": "Change the event structure. All consumers must deploy the new version before producers."
       }
     ],
@@ -507,7 +507,7 @@
     "explanation": {
       "a": {
         "pros": [
-          "Backward compatible — old consumers unaffected",
+          "Backward compatible \u2014 old consumers unaffected",
           "No coordination needed",
           "Simple evolution",
           "Avro/Protobuf handle optional fields natively"
@@ -542,7 +542,7 @@
         "verdict": "Anti-pattern in microservices. Defeats the purpose of async decoupling."
       }
     },
-    "nuance": "Same principle as REST API versioning: add optional fields without breaking existing consumers. Schema Registry (Avro/Protobuf) enforces compatibility rules automatically. My REST versioning experience transfers — the same backward-compatibility discipline applies to events.",
+    "nuance": "Same principle as REST API versioning: add optional fields without breaking existing consumers. Schema Registry (Avro/Protobuf) enforces compatibility rules automatically. My REST versioning experience transfers \u2014 the same backward-compatibility discipline applies to events.",
     "topic": "kafka"
   },
   {
@@ -554,11 +554,11 @@
     "questions": [
       {
         "q": "What happens when a consumer instance dies?",
-        "hint": "Consumer group rebalance — its partitions are redistributed to remaining instances. Messages are reprocessed from last committed offset (hence need for idempotency)."
+        "hint": "Consumer group rebalance \u2014 its partitions are redistributed to remaining instances. Messages are reprocessed from last committed offset (hence need for idempotency)."
       },
       {
         "q": "How does scaling Kafka consumers work?",
-        "hint": "Add more consumer instances to the group (max = number of partitions). If 4 partitions and 4 instances → each gets 1. If 5 instances → one is idle."
+        "hint": "Add more consumer instances to the group (max = number of partitions). If 4 partitions and 4 instances \u2192 each gets 1. If 5 instances \u2192 one is idle."
       },
       {
         "q": "What is consumer lag?",
@@ -575,7 +575,7 @@
     ],
     "topic": "kafka",
     "question": "The interviewer probes operational knowledge about Kafka in production.",
-    "answer": "**Q: What happens when a consumer instance dies?**\nConsumer group rebalance — its partitions are redistributed to remaining instances. Messages are reprocessed from last committed offset (hence need for idempotency).\n\n**Q: How does scaling Kafka consumers work?**\nAdd more consumer instances to the group (max = number of partitions). If 4 partitions and 4 instances → each gets 1. If 5 instances → one is idle.\n\n**Q: What is consumer lag?**\nDifference between latest produced offset and consumer committed offset. Growing lag = consumer is falling behind. Critical metric to monitor.\n\n**Q: How would you investigate a consumer that is falling behind?**\nCheck consumer lag metric. Look at processing time per message. Check if external dependencies (DB, REST) are slow. Consider adding partitions + instances for parallelism.\n\n**Q: What happens if a topic runs out of disk space?**\nMessages are deleted by retention policy (time or size). If retention is too long and volume high, disk fills. Solution: tune retention, add brokers, monitor disk usage."
+    "answer": "**Q: What happens when a consumer instance dies?**\nConsumer group rebalance \u2014 its partitions are redistributed to remaining instances. Messages are reprocessed from last committed offset (hence need for idempotency).\n\n**Q: How does scaling Kafka consumers work?**\nAdd more consumer instances to the group (max = number of partitions). If 4 partitions and 4 instances \u2192 each gets 1. If 5 instances \u2192 one is idle.\n\n**Q: What is consumer lag?**\nDifference between latest produced offset and consumer committed offset. Growing lag = consumer is falling behind. Critical metric to monitor.\n\n**Q: How would you investigate a consumer that is falling behind?**\nCheck consumer lag metric. Look at processing time per message. Check if external dependencies (DB, REST) are slow. Consider adding partitions + instances for parallelism.\n\n**Q: What happens if a topic runs out of disk space?**\nMessages are deleted by retention policy (time or size). If retention is too long and volume high, disk fills. Solution: tune retention, add brokers, monitor disk usage."
   },
   {
     "id": "kafka-oral-04",
@@ -586,7 +586,7 @@
     "interviewerIntent": "Assess ability to think in events for the logistics domain.",
     "shortAnswer": "Core delivery lifecycle events: DeliveryPlanned, TruckDeparted, WarehouseArrivalRegistered, DeliveryInTransit, DeliveryCompleted, DeliveryFailed, DeliveryDelayed, RouteChanged. Each carries the delivery ID as key (ordering) and relevant payload.",
     "modelAnswer": "Context: A delivery tracking system for 5,700+ supermarkets needs to communicate delivery lifecycle between services.\n\nEvents I would design:\n- DeliveryPlanned: route, stops, driver, estimated times\n- TruckDeparted: warehouse ID, departure time, loaded items\n- DeliveryInTransit: current GPS, estimated arrival\n- StopCompleted: which stop, delivery time, signature\n- DeliveryCompleted: all stops done, total time\n- DeliveryDelayed: reason, new estimated time\n- DeliveryFailed: stop ID, reason (nobody home, wrong address)\n- RouteChanged: new route, reason (road closure, priority change)\n\nDesign decisions:\n- Key: delivery ID (ordering per delivery)\n- Topic: one topic per event type OR one \"delivery-events\" topic with type field\n- Payload: self-contained (consumer does not need to call back producer for context)\n- Timestamp: when the event HAPPENED, not when it was published\n\nConsumers: tracking dashboard, driver app, planner alerts, analytics, external carrier integration, NEO platform.",
-    "senaiExample": "SGN3 events: EnrollmentConfirmed, CertificateGenerated, GradeRegistered — same approach of lifecycle events for business entities.",
+    "senaiExample": "SGN3 events: EnrollmentConfirmed, CertificateGenerated, GradeRegistered \u2014 same approach of lifecycle events for business entities.",
     "reweExample": "TRAB team: exactly these delivery lifecycle events flowing between warehouse systems, driver apps, route planners and the NEO communication platform.",
     "keyPoints": [
       "Design events around business lifecycle (not technical operations)",
@@ -596,7 +596,7 @@
       "Timestamp = when it happened, not when published"
     ],
     "mistakesToAvoid": [
-      "Designing events around CRUD operations (DeliveryCreated, DeliveryUpdated — too generic)",
+      "Designing events around CRUD operations (DeliveryCreated, DeliveryUpdated \u2014 too generic)",
       "Not mentioning the partition key strategy",
       "Making events too small (requiring callbacks) or too large (entire entity)"
     ],
@@ -607,19 +607,19 @@
       },
       {
         "question": "How large should an event payload be?",
-        "answerHint": "Self-contained for the consumer to act without callbacks. But not the entire entity — just what changed plus identifying context. Typically 1-10 KB."
+        "answerHint": "Self-contained for the consumer to act without callbacks. But not the entire entity \u2014 just what changed plus identifying context. Typically 1-10 KB."
       }
     ],
     "vocabulary": [
       {
         "term": "event-carried state transfer",
         "meaning": "evento que carrega dados suficientes para o consumidor agir sem callback",
-        "example": "DeliveryCompleted carries delivery ID, driver, timestamps, stops — consumer does not need to call delivery-service for details."
+        "example": "DeliveryCompleted carries delivery ID, driver, timestamps, stops \u2014 consumer does not need to call delivery-service for details."
       },
       {
         "term": "domain event",
-        "meaning": "algo significativo que aconteceu no domínio de negócio",
-        "example": "DeliveryDelayed is a domain event — it represents a business-meaningful occurrence, not a technical one."
+        "meaning": "algo significativo que aconteceu no dom\u00ednio de neg\u00f3cio",
+        "example": "DeliveryDelayed is a domain event \u2014 it represents a business-meaningful occurrence, not a technical one."
       }
     ],
     "selfEvaluation": [
@@ -654,13 +654,13 @@
     },
     "conceptB": {
       "name": "Event Sourcing",
-      "definition": "State IS the sequence of events. No separate DB for current state — rebuild state by replaying events from the beginning. Events are the source of truth."
+      "definition": "State IS the sequence of events. No separate DB for current state \u2014 rebuild state by replaying events from the beginning. Events are the source of truth."
     },
     "keyDifference": "Event-driven: events are communication between services (can be lost, DB is source of truth). Event sourcing: events ARE the data (replay to rebuild state). Most systems use event-driven without event sourcing.",
-    "javaExample": "Event-driven: save delivery to DB, then publish DeliveryPlanned event for other services. Event sourcing: store DeliveryPlanned, TruckDeparted, DeliveryCompleted events — derive current delivery state by replaying them.",
-    "interviewAnswer": "Most logistics systems use event-driven architecture — services communicate via Kafka events, but each service maintains its own database as source of truth. Event sourcing (state derived from events) is powerful for audit trails but adds complexity. I would start with event-driven and consider event sourcing only for domains where the complete history IS the business value.",
+    "javaExample": "Event-driven: save delivery to DB, then publish DeliveryPlanned event for other services. Event sourcing: store DeliveryPlanned, TruckDeparted, DeliveryCompleted events \u2014 derive current delivery state by replaying them.",
+    "interviewAnswer": "Most logistics systems use event-driven architecture \u2014 services communicate via Kafka events, but each service maintains its own database as source of truth. Event sourcing (state derived from events) is powerful for audit trails but adds complexity. I would start with event-driven and consider event sourcing only for domains where the complete history IS the business value.",
     "topic": "kafka",
-    "answer": "**Event-Driven Architecture:** Services communicate via events. Producer publishes what happened. Consumer reacts. Current state stored in DB. Events are notifications.\n\n**Event Sourcing:** State IS the sequence of events. No separate DB for current state — rebuild state by replaying events from the beginning. Events are the source of truth.\n\n\n**Key Difference:** Event-driven: events are communication between services (can be lost, DB is source of truth). Event sourcing: events ARE the data (replay to rebuild state). Most systems use event-driven without event sourcing."
+    "answer": "**Event-Driven Architecture:** Services communicate via events. Producer publishes what happened. Consumer reacts. Current state stored in DB. Events are notifications.\n\n**Event Sourcing:** State IS the sequence of events. No separate DB for current state \u2014 rebuild state by replaying events from the beginning. Events are the source of truth.\n\n\n**Key Difference:** Event-driven: events are communication between services (can be lost, DB is source of truth). Event sourcing: events ARE the data (replay to rebuild state). Most systems use event-driven without event sourcing."
   },
   {
     "type": "DESIGN_DECISION",
@@ -682,7 +682,7 @@
       }
     ],
     "bestOption": 0,
-    "explanation": "Option A (backward-compatible evolution) is the standard approach:\n\n**Rules of backward compatibility:**\n- ✅ Add optional field with default → old consumers ignore it, new consumers use it\n- ✅ Add new event type to same topic → consumers skip unknown types\n- ❌ Remove field → breaks consumers expecting it\n- ❌ Rename field → breaks deserialization\n- ❌ Change field type → breaks deserialization\n\n**With Avro + Schema Registry:**\n```json\n// V1\n{ \"deliveryId\": \"long\", \"status\": \"string\", \"timestamp\": \"long\" }\n\n// V2 (backward-compatible)\n{ \"deliveryId\": \"long\", \"status\": \"string\", \"timestamp\": \"long\",\n  \"priority\": { \"type\": \"int\", \"default\": 0 } }\n```\n\nSchema Registry validates compatibility BEFORE allowing the new schema to be registered. If it breaks compatibility → rejected.\n\n**Option B** is needed only for truly breaking changes (rare). Adds operational complexity.\n**Option C** is dangerous — requires coordinated deployment of 4+ services simultaneously.",
+    "explanation": "Option A (backward-compatible evolution) is the standard approach:\n\n**Rules of backward compatibility:**\n- \u2705 Add optional field with default \u2192 old consumers ignore it, new consumers use it\n- \u2705 Add new event type to same topic \u2192 consumers skip unknown types\n- \u274c Remove field \u2192 breaks consumers expecting it\n- \u274c Rename field \u2192 breaks deserialization\n- \u274c Change field type \u2192 breaks deserialization\n\n**With Avro + Schema Registry:**\n```json\n// V1\n{ \"deliveryId\": \"long\", \"status\": \"string\", \"timestamp\": \"long\" }\n\n// V2 (backward-compatible)\n{ \"deliveryId\": \"long\", \"status\": \"string\", \"timestamp\": \"long\",\n  \"priority\": { \"type\": \"int\", \"default\": 0 } }\n```\n\nSchema Registry validates compatibility BEFORE allowing the new schema to be registered. If it breaks compatibility \u2192 rejected.\n\n**Option B** is needed only for truly breaking changes (rare). Adds operational complexity.\n**Option C** is dangerous \u2014 requires coordinated deployment of 4+ services simultaneously.",
     "tags": [
       "schema-evolution",
       "avro",
@@ -696,7 +696,7 @@
     "difficulty": "senior",
     "subtopic": "Exactly-Once Semantics",
     "question": "Explain the difference between at-most-once, at-least-once, and exactly-once in Kafka. When would you use each?",
-    "modelAnswer": "**At-most-once** (may lose, never duplicate):\n- Commit offset BEFORE processing\n- If crash after commit but before processing → message lost\n- Use for: metrics, logs, non-critical analytics\n\n**At-least-once** (never lose, may duplicate):\n- Commit offset AFTER processing\n- If crash after processing but before commit → reprocessed on restart\n- Use for: 95% of business events (with idempotent consumers)\n- REWE default: delivery events, notifications, billing\n\n**Exactly-once** (no loss, no duplicates):\n- Kafka transactions: producer + consumer in atomic unit\n- enable.idempotence=true + transactional.id + read_committed isolation\n- Use for: financial operations, cross-topic transformations\n\n**Practical reality:**\n- Exactly-once in Kafka only works Kafka-to-Kafka (consume → transform → produce)\n- When you consume from Kafka and write to an external system (DB, API), exactly-once is NOT possible — use at-least-once + idempotency\n\n```java\n// At-least-once + idempotent consumer (REWE standard)\n@KafkaListener(topics = \"delivery-completed\")\npublic void handle(DeliveryCompletedEvent event) {\n    int inserted = billingRepo.createInvoiceIfAbsent(event.deliveryId(), event);\n    if (inserted == 0) return; // already processed — idempotent\n    // ... process\n}\n```",
+    "modelAnswer": "**At-most-once** (may lose, never duplicate):\n- Commit offset BEFORE processing\n- If crash after commit but before processing \u2192 message lost\n- Use for: metrics, logs, non-critical analytics\n\n**At-least-once** (never lose, may duplicate):\n- Commit offset AFTER processing\n- If crash after processing but before commit \u2192 reprocessed on restart\n- Use for: 95% of business events (with idempotent consumers)\n- REWE default: delivery events, notifications, billing\n\n**Exactly-once** (no loss, no duplicates):\n- Kafka transactions: producer + consumer in atomic unit\n- enable.idempotence=true + transactional.id + read_committed isolation\n- Use for: financial operations, cross-topic transformations\n\n**Practical reality:**\n- Exactly-once in Kafka only works Kafka-to-Kafka (consume \u2192 transform \u2192 produce)\n- When you consume from Kafka and write to an external system (DB, API), exactly-once is NOT possible \u2014 use at-least-once + idempotency\n\n```java\n// At-least-once + idempotent consumer (REWE standard)\n@KafkaListener(topics = \"delivery-completed\")\npublic void handle(DeliveryCompletedEvent event) {\n    int inserted = billingRepo.createInvoiceIfAbsent(event.deliveryId(), event);\n    if (inserted == 0) return; // already processed \u2014 idempotent\n    // ... process\n}\n```",
     "tags": [
       "exactly-once",
       "delivery-semantics",
@@ -710,7 +710,7 @@
     "difficulty": "inter",
     "subtopic": "Consumer Lag Monitoring",
     "question": "How do you monitor Kafka consumers in production? What metrics indicate problems?",
-    "modelAnswer": "**Key metrics:**\n\n| Metric | Healthy | Alert threshold | Meaning |\n|--------|---------|-----------------|---------|\n| Consumer lag | <100 | >10,000 for 5min | Consumer falling behind producer |\n| Rebalance frequency | Rare | >3/hour | Consumers crashing/restarting |\n| Processing time/msg | <100ms | p99 >5s | Consumer logic is slow |\n| Error rate | 0% | >1% | Deserialization or processing failures |\n| DLT messages | 0 | >0 | Poison messages accumulating |\n\n**Consumer lag** is the most critical:\n```\nLag = Latest offset (what producer wrote) - Committed offset (what consumer processed)\n```\n\n**Monitoring tools:**\n- Kafka CLI: `kafka-consumer-groups.sh --describe --group trab-delivery-service`\n- Prometheus + kafka_consumer_lag_records gauge\n- Grafana dashboard with lag per partition\n\n**Alert response:**\n- Lag growing slowly → consumer is slower than producer (optimize processing)\n- Lag spike after deploy → new version has a bug or is slower\n- Lag growing + consumer crashed → check logs, restart consumer group\n- Lag stable at high number → consumer stuck on poison message → check DLT",
+    "modelAnswer": "**Key metrics:**\n\n| Metric | Healthy | Alert threshold | Meaning |\n|--------|---------|-----------------|---------|\n| Consumer lag | <100 | >10,000 for 5min | Consumer falling behind producer |\n| Rebalance frequency | Rare | >3/hour | Consumers crashing/restarting |\n| Processing time/msg | <100ms | p99 >5s | Consumer logic is slow |\n| Error rate | 0% | >1% | Deserialization or processing failures |\n| DLT messages | 0 | >0 | Poison messages accumulating |\n\n**Consumer lag** is the most critical:\n```\nLag = Latest offset (what producer wrote) - Committed offset (what consumer processed)\n```\n\n**Monitoring tools:**\n- Kafka CLI: `kafka-consumer-groups.sh --describe --group trab-delivery-service`\n- Prometheus + kafka_consumer_lag_records gauge\n- Grafana dashboard with lag per partition\n\n**Alert response:**\n- Lag growing slowly \u2192 consumer is slower than producer (optimize processing)\n- Lag spike after deploy \u2192 new version has a bug or is slower\n- Lag growing + consumer crashed \u2192 check logs, restart consumer group\n- Lag stable at high number \u2192 consumer stuck on poison message \u2192 check DLT",
     "tags": [
       "monitoring",
       "consumer-lag",
@@ -739,7 +739,7 @@
       }
     ],
     "bestOption": 1,
-    "explanation": "Option B (Dead Letter Topic) is the standard production pattern:\n\n```java\n@Bean\npublic DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> kafka) {\n    var recoverer = new DeadLetterPublishingRecoverer(kafka,\n        (record, ex) -> new TopicPartition(record.topic() + \".DLT\", -1));\n    var backoff = new FixedBackOff(1000L, 3); // 3 retries, 1s apart\n    return new DefaultErrorHandler(recoverer, backoff);\n}\n```\n\n**What goes to DLT:**\n- Deserialization errors (bad payload format)\n- Unrecoverable business errors (referenced entity doesn't exist)\n- Validation failures\n\n**What should NOT go to DLT (should retry):**\n- Temporary DB connection failure\n- External service timeout\n- Transient network error\n\n**DLT message includes:**\n- Original message (key, value, headers)\n- Error reason (exception class + message)\n- Retry count\n- Original topic + partition + offset\n\n**Monitoring:** Alert when DLT has any messages → ops investigates.",
+    "explanation": "Option B (Dead Letter Topic) is the standard production pattern:\n\n```java\n@Bean\npublic DefaultErrorHandler errorHandler(KafkaTemplate<String, Object> kafka) {\n    var recoverer = new DeadLetterPublishingRecoverer(kafka,\n        (record, ex) -> new TopicPartition(record.topic() + \".DLT\", -1));\n    var backoff = new FixedBackOff(1000L, 3); // 3 retries, 1s apart\n    return new DefaultErrorHandler(recoverer, backoff);\n}\n```\n\n**What goes to DLT:**\n- Deserialization errors (bad payload format)\n- Unrecoverable business errors (referenced entity doesn't exist)\n- Validation failures\n\n**What should NOT go to DLT (should retry):**\n- Temporary DB connection failure\n- External service timeout\n- Transient network error\n\n**DLT message includes:**\n- Original message (key, value, headers)\n- Error reason (exception class + message)\n- Retry count\n- Original topic + partition + offset\n\n**Monitoring:** Alert when DLT has any messages \u2192 ops investigates.",
     "tags": [
       "dlt",
       "error-handling",
@@ -753,7 +753,7 @@
     "difficulty": "inter",
     "subtopic": "Partitioning Strategy",
     "question": "You have a topic \"delivery-events\" with 12 partitions. 500,000 deliveries/day. How do you choose partition keys? What are the trade-offs?",
-    "modelAnswer": "**Partition key = delivery ID (recommended for REWE transport):**\n\n```java\nkafka.send(\"delivery-events\", delivery.getId().toString(), event);\n// Same deliveryId → always same partition → ordered per delivery\n```\n\n**Why deliveryId:**\n- All events for one delivery go to same partition → consumers see them IN ORDER\n- PLANNED → DISPATCHED → IN_TRANSIT → DELIVERED (order preserved)\n- Parallel processing across deliveries (different partitions)\n\n**Trade-offs of different keys:**\n\n| Key | Ordering guarantee | Risk |\n|-----|-------------------|------|\n| deliveryId | Per delivery | Balanced (500K unique IDs distribute well) |\n| driverId | Per driver | Hot partitions (popular drivers get more events) |\n| warehouseId | Per warehouse | Very unbalanced (3 warehouses = 3 hot partitions) |\n| Random (null key) | None | Maximum throughput but no ordering |\n\n**Sizing: 12 partitions for 500K/day:**\n- ~6 events/second average, ~60/s peak\n- 12 partitions can handle 12 parallel consumers\n- Each partition: ~5 events/s peak → trivial for Kafka\n- For REWE scale: 12 is fine. Would increase to 24-48 for 10M/day.",
+    "modelAnswer": "**Partition key = delivery ID (recommended for REWE transport):**\n\n```java\nkafka.send(\"delivery-events\", delivery.getId().toString(), event);\n// Same deliveryId \u2192 always same partition \u2192 ordered per delivery\n```\n\n**Why deliveryId:**\n- All events for one delivery go to same partition \u2192 consumers see them IN ORDER\n- PLANNED \u2192 DISPATCHED \u2192 IN_TRANSIT \u2192 DELIVERED (order preserved)\n- Parallel processing across deliveries (different partitions)\n\n**Trade-offs of different keys:**\n\n| Key | Ordering guarantee | Risk |\n|-----|-------------------|------|\n| deliveryId | Per delivery | Balanced (500K unique IDs distribute well) |\n| driverId | Per driver | Hot partitions (popular drivers get more events) |\n| warehouseId | Per warehouse | Very unbalanced (3 warehouses = 3 hot partitions) |\n| Random (null key) | None | Maximum throughput but no ordering |\n\n**Sizing: 12 partitions for 500K/day:**\n- ~6 events/second average, ~60/s peak\n- 12 partitions can handle 12 parallel consumers\n- Each partition: ~5 events/s peak \u2192 trivial for Kafka\n- For REWE scale: 12 is fine. Would increase to 24-48 for 10M/day.",
     "tags": [
       "partitioning",
       "ordering",
@@ -767,7 +767,7 @@
     "difficulty": "senior",
     "subtopic": "Kafka Connect",
     "question": "Instead of writing a custom consumer to sync delivery data to an analytics database, a colleague suggests Kafka Connect. When is Connect appropriate vs a custom consumer?",
-    "modelAnswer": "**Kafka Connect — use when:**\n- Standard data flow: topic → database (or DB → topic)\n- No complex business transformation needed\n- Connector already exists (JDBC Sink, Elasticsearch Sink, S3 Sink)\n- Want operational simplicity (config-only, no code)\n\n**Custom consumer — use when:**\n- Complex business logic during processing\n- Need to call external APIs during consumption\n- Custom error handling / retry strategies\n- Multi-step transformations with state\n- Need fine-grained control over commits/offsets\n\n**REWE examples:**\n\nUse Connect:\n```\ndelivery-events → JDBC Sink Connector → analytics_db.delivery_events\ndriver-location → S3 Sink Connector → data lake (hourly batches)\n```\n\nUse custom consumer:\n```\ndelivery-completed → BillingConsumer → validate + calculate price + create invoice + publish invoice-created\ndelivery-dispatched → NotificationConsumer → resolve template + call SMS API + handle retry\n```\n\n**Rule of thumb:** If the consumer does more than \"take message, write to target\" → custom consumer. If it's just data movement → Connect.",
+    "modelAnswer": "**Kafka Connect \u2014 use when:**\n- Standard data flow: topic \u2192 database (or DB \u2192 topic)\n- No complex business transformation needed\n- Connector already exists (JDBC Sink, Elasticsearch Sink, S3 Sink)\n- Want operational simplicity (config-only, no code)\n\n**Custom consumer \u2014 use when:**\n- Complex business logic during processing\n- Need to call external APIs during consumption\n- Custom error handling / retry strategies\n- Multi-step transformations with state\n- Need fine-grained control over commits/offsets\n\n**REWE examples:**\n\nUse Connect:\n```\ndelivery-events \u2192 JDBC Sink Connector \u2192 analytics_db.delivery_events\ndriver-location \u2192 S3 Sink Connector \u2192 data lake (hourly batches)\n```\n\nUse custom consumer:\n```\ndelivery-completed \u2192 BillingConsumer \u2192 validate + calculate price + create invoice + publish invoice-created\ndelivery-dispatched \u2192 NotificationConsumer \u2192 resolve template + call SMS API + handle retry\n```\n\n**Rule of thumb:** If the consumer does more than \"take message, write to target\" \u2192 custom consumer. If it's just data movement \u2192 Connect.",
     "tags": [
       "kafka-connect",
       "architecture",
@@ -783,12 +783,12 @@
     "question": "What problems do you see in this Kafka consumer?",
     "code": "@KafkaListener(topics = \"delivery-events\", groupId = \"billing\")\npublic void handle(String message) {\n    DeliveryEvent event = objectMapper.readValue(message, DeliveryEvent.class);\n\n    if (event.getType().equals(\"COMPLETED\")) {\n        Invoice invoice = new Invoice();\n        invoice.setDeliveryId(event.getDeliveryId());\n        invoice.setAmount(calculatePrice(event));\n        invoiceRepository.save(invoice);\n\n        emailService.sendInvoice(invoice);\n        analyticsService.recordRevenue(invoice);\n    }\n}",
     "problems": [
-      "No idempotency — reprocessing creates duplicate invoices",
-      "No error handling — any exception kills the consumer (offset not committed)",
-      "Deserialization inline — failure on bad message blocks the partition",
-      "Too many responsibilities — invoice creation + email + analytics in one consumer",
-      "Synchronous email/analytics — slows consumption, couples to their availability",
-      "String payload — loses Avro/Schema Registry benefits, no schema validation"
+      "No idempotency \u2014 reprocessing creates duplicate invoices",
+      "No error handling \u2014 any exception kills the consumer (offset not committed)",
+      "Deserialization inline \u2014 failure on bad message blocks the partition",
+      "Too many responsibilities \u2014 invoice creation + email + analytics in one consumer",
+      "Synchronous email/analytics \u2014 slows consumption, couples to their availability",
+      "String payload \u2014 loses Avro/Schema Registry benefits, no schema validation"
     ],
     "refactored": "@KafkaListener(topics = \"delivery-events\", groupId = \"billing\")\npublic void handle(@Payload DeliveryEvent event,\n                   @Header(KafkaHeaders.RECEIVED_KEY) String key) {\n\n    if (!\"COMPLETED\".equals(event.getType())) return;\n\n    // Idempotent: INSERT ... ON CONFLICT DO NOTHING\n    int created = invoiceRepo.createIfAbsent(event.getDeliveryId(), calculatePrice(event));\n    if (created == 0) {\n        log.info(\"Invoice already exists for delivery {}, skipping\", event.getDeliveryId());\n        return;\n    }\n\n    // Publish event for downstream (email + analytics consume independently)\n    eventPublisher.publish(new InvoiceCreated(event.getDeliveryId()));\n    log.info(\"Invoice created for delivery {}\", event.getDeliveryId());\n}",
     "tags": [
@@ -798,14 +798,14 @@
     ],
     "topic": "kafka",
     "id": "kafka-consumer-implementation-22",
-    "answer": "**Refactored:**\n```java\n@KafkaListener(topics = \"delivery-events\", groupId = \"billing\")\npublic void handle(@Payload DeliveryEvent event,\n                   @Header(KafkaHeaders.RECEIVED_KEY) String key) {\n\n    if (!\"COMPLETED\".equals(event.getType())) return;\n\n    // Idempotent: INSERT ... ON CONFLICT DO NOTHING\n    int created = invoiceRepo.createIfAbsent(event.getDeliveryId(), calculatePrice(event));\n    if (created == 0) {\n        log.info(\"Invoice already exists for delivery {}, skipping\", event.getDeliveryId());\n        return;\n    }\n\n    // Publish event for downstream (email + analytics consume independently)\n    eventPublisher.publish(new InvoiceCreated(event.getDeliveryId()));\n    log.info(\"Invoice created for delivery {}\", event.getDeliveryId());\n}\n```\n\n**Problems:** No idempotency — reprocessing creates duplicate invoices; No error handling — any exception kills the consumer (offset not committed); Deserialization inline — failure on bad message blocks the partition; Too many responsibilities — invoice creation + email + analytics in one consumer; Synchronous email/analytics — slows consumption, couples to their availability; String payload — loses Avro/Schema Registry benefits, no schema validation"
+    "answer": "**Refactored:**\n```java\n@KafkaListener(topics = \"delivery-events\", groupId = \"billing\")\npublic void handle(@Payload DeliveryEvent event,\n                   @Header(KafkaHeaders.RECEIVED_KEY) String key) {\n\n    if (!\"COMPLETED\".equals(event.getType())) return;\n\n    // Idempotent: INSERT ... ON CONFLICT DO NOTHING\n    int created = invoiceRepo.createIfAbsent(event.getDeliveryId(), calculatePrice(event));\n    if (created == 0) {\n        log.info(\"Invoice already exists for delivery {}, skipping\", event.getDeliveryId());\n        return;\n    }\n\n    // Publish event for downstream (email + analytics consume independently)\n    eventPublisher.publish(new InvoiceCreated(event.getDeliveryId()));\n    log.info(\"Invoice created for delivery {}\", event.getDeliveryId());\n}\n```\n\n**Problems:** No idempotency \u2014 reprocessing creates duplicate invoices; No error handling \u2014 any exception kills the consumer (offset not committed); Deserialization inline \u2014 failure on bad message blocks the partition; Too many responsibilities \u2014 invoice creation + email + analytics in one consumer; Synchronous email/analytics \u2014 slows consumption, couples to their availability; String payload \u2014 loses Avro/Schema Registry benefits, no schema validation"
   },
   {
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "Consumer Group Rebalancing",
     "question": "What is a consumer group rebalance? When does it happen? Why should you minimize it?",
-    "modelAnswer": "**Rebalance** = Kafka redistributes partitions among consumers in a group.\n\n**When it happens:**\n- Consumer joins the group (new pod scaled up)\n- Consumer leaves (pod scaled down, crash, timeout)\n- New partitions added to topic\n- Consumer takes too long to poll (max.poll.interval.ms exceeded)\n\n**During rebalance:**\n- ALL consumers in the group STOP processing (stop-the-world)\n- Partitions are reassigned\n- Consumers resume from last committed offset\n\n**Why minimize:**\n- Processing stops during rebalance (seconds to minutes depending on group size)\n- For REWE transport: no delivery events processed during this window\n- Frequent rebalances = unstable system\n\n**How to minimize:**\n```properties\n# Increase poll interval (if processing is slow)\nmax.poll.interval.ms=300000\n\n# Reduce records per poll (process faster)\nmax.poll.records=100\n\n# Session timeout (before broker considers consumer dead)\nsession.timeout.ms=30000\n\n# Static group membership (Kafka 2.3+) — no rebalance on transient restart\ngroup.instance.id=billing-consumer-pod-1\n```\n\n**Static membership**: Each consumer has a stable ID. If it restarts within session.timeout, its partitions are NOT reassigned — avoids unnecessary rebalance.",
+    "modelAnswer": "**Rebalance** = Kafka redistributes partitions among consumers in a group.\n\n**When it happens:**\n- Consumer joins the group (new pod scaled up)\n- Consumer leaves (pod scaled down, crash, timeout)\n- New partitions added to topic\n- Consumer takes too long to poll (max.poll.interval.ms exceeded)\n\n**During rebalance:**\n- ALL consumers in the group STOP processing (stop-the-world)\n- Partitions are reassigned\n- Consumers resume from last committed offset\n\n**Why minimize:**\n- Processing stops during rebalance (seconds to minutes depending on group size)\n- For REWE transport: no delivery events processed during this window\n- Frequent rebalances = unstable system\n\n**How to minimize:**\n```properties\n# Increase poll interval (if processing is slow)\nmax.poll.interval.ms=300000\n\n# Reduce records per poll (process faster)\nmax.poll.records=100\n\n# Session timeout (before broker considers consumer dead)\nsession.timeout.ms=30000\n\n# Static group membership (Kafka 2.3+) \u2014 no rebalance on transient restart\ngroup.instance.id=billing-consumer-pod-1\n```\n\n**Static membership**: Each consumer has a stable ID. If it restarts within session.timeout, its partitions are NOT reassigned \u2014 avoids unnecessary rebalance.",
     "tags": [
       "rebalancing",
       "consumer-groups",
@@ -822,7 +822,7 @@
     "options": [
       {
         "label": "A) Fine-grained: one event type per business action",
-        "description": "DeliveryPlanned, DeliveryDispatched, DriverAssigned, RouteOptimized — each a separate event."
+        "description": "DeliveryPlanned, DeliveryDispatched, DriverAssigned, RouteOptimized \u2014 each a separate event."
       },
       {
         "label": "B) Coarse: one DeliveryUpdated event with before/after state",
@@ -830,7 +830,7 @@
       },
       {
         "label": "C) Hybrid: domain events for state transitions, data events for CRUD",
-        "description": "Business actions → specific events. Administrative changes → generic updated event."
+        "description": "Business actions \u2192 specific events. Administrative changes \u2192 generic updated event."
       }
     ],
     "bestOption": 0,
@@ -848,7 +848,7 @@
     "difficulty": "senior",
     "subtopic": "Kafka Transactions",
     "question": "Explain how Kafka transactions work and when you would use them at REWE.",
-    "modelAnswer": "**Kafka transactions = atomic produce across multiple topics/partitions:**\n\n```java\n@Bean\npublic KafkaTemplate<String, Object> kafkaTemplate(ProducerFactory<String, Object> pf) {\n    var template = new KafkaTemplate<>(pf);\n    template.setTransactionIdPrefix(\"delivery-tx-\");\n    return template;\n}\n\n// Atomic: both messages published or neither\nkafkaTemplate.executeInTransaction(ops -> {\n    ops.send(\"delivery-events\", deliveryEvent);\n    ops.send(\"audit-log\", auditEvent);\n    return null;\n});\n```\n\n**What Kafka transactions guarantee:**\n- All messages in a transaction are visible atomically to consumers (read_committed)\n- If producer crashes mid-transaction → messages are discarded (not visible)\n- Combined with idempotent producer → no duplicate messages\n\n**REWE use cases:**\n- Consume from delivery-events → produce to billing-events + audit-events (atomic)\n- Stream processing: read input → transform → write output (exactly-once)\n\n**NOT a replacement for database transactions:**\n- Kafka TX only covers Kafka-to-Kafka operations\n- If you write to DB + Kafka → NOT atomic (use outbox pattern instead)\n\n**When NOT to use:**\n- Simple produce to one topic (idempotent producer is enough)\n- Write to external system (Kafka TX can't protect external calls)",
+    "modelAnswer": "**Kafka transactions = atomic produce across multiple topics/partitions:**\n\n```java\n@Bean\npublic KafkaTemplate<String, Object> kafkaTemplate(ProducerFactory<String, Object> pf) {\n    var template = new KafkaTemplate<>(pf);\n    template.setTransactionIdPrefix(\"delivery-tx-\");\n    return template;\n}\n\n// Atomic: both messages published or neither\nkafkaTemplate.executeInTransaction(ops -> {\n    ops.send(\"delivery-events\", deliveryEvent);\n    ops.send(\"audit-log\", auditEvent);\n    return null;\n});\n```\n\n**What Kafka transactions guarantee:**\n- All messages in a transaction are visible atomically to consumers (read_committed)\n- If producer crashes mid-transaction \u2192 messages are discarded (not visible)\n- Combined with idempotent producer \u2192 no duplicate messages\n\n**REWE use cases:**\n- Consume from delivery-events \u2192 produce to billing-events + audit-events (atomic)\n- Stream processing: read input \u2192 transform \u2192 write output (exactly-once)\n\n**NOT a replacement for database transactions:**\n- Kafka TX only covers Kafka-to-Kafka operations\n- If you write to DB + Kafka \u2192 NOT atomic (use outbox pattern instead)\n\n**When NOT to use:**\n- Simple produce to one topic (idempotent producer is enough)\n- Write to external system (Kafka TX can't protect external calls)",
     "tags": [
       "transactions",
       "exactly-once",
@@ -862,7 +862,7 @@
     "difficulty": "inter",
     "subtopic": "Event Sourcing vs Event-Driven",
     "question": "Your colleague says \"we should use event sourcing for deliveries.\" Is that the same as event-driven? Should you do it?",
-    "modelAnswer": "**They are DIFFERENT things:**\n\n**Event-Driven Architecture (what REWE does):**\n- Services communicate via events (Kafka)\n- Events are notifications: \"something happened\"\n- Each service has its OWN state/database\n- Events are eventually consumed and processed\n- Current state lives in the service's DB\n\n**Event Sourcing (a persistence pattern):**\n- Store ALL events as the source of truth (no current-state table)\n- Current state is DERIVED by replaying events from the beginning\n- Never update/delete — only append new events\n- Must replay N events to reconstruct current state\n\n**Should REWE use Event Sourcing for deliveries?**\nProbably NOT, because:\n- Delivery lifecycle is simple (5-6 states) → a status column + event table (audit) is sufficient\n- Event sourcing adds complexity: projections, snapshots, eventual consistency\n- Read patterns are simple: \"what's the current status?\" → single column query\n- Team learning curve is steep\n\n**When Event Sourcing makes sense:**\n- Financial ledgers (every transaction is immutable, audit is the primary concern)\n- Systems where \"undo\" is a core feature\n- Complex state with many branching paths\n\n**Recommendation:** Event-driven architecture + status column + audit trail (event table). Gets 90% of the benefit without the complexity of full event sourcing.",
+    "modelAnswer": "**They are DIFFERENT things:**\n\n**Event-Driven Architecture (what REWE does):**\n- Services communicate via events (Kafka)\n- Events are notifications: \"something happened\"\n- Each service has its OWN state/database\n- Events are eventually consumed and processed\n- Current state lives in the service's DB\n\n**Event Sourcing (a persistence pattern):**\n- Store ALL events as the source of truth (no current-state table)\n- Current state is DERIVED by replaying events from the beginning\n- Never update/delete \u2014 only append new events\n- Must replay N events to reconstruct current state\n\n**Should REWE use Event Sourcing for deliveries?**\nProbably NOT, because:\n- Delivery lifecycle is simple (5-6 states) \u2192 a status column + event table (audit) is sufficient\n- Event sourcing adds complexity: projections, snapshots, eventual consistency\n- Read patterns are simple: \"what's the current status?\" \u2192 single column query\n- Team learning curve is steep\n\n**When Event Sourcing makes sense:**\n- Financial ledgers (every transaction is immutable, audit is the primary concern)\n- Systems where \"undo\" is a core feature\n- Complex state with many branching paths\n\n**Recommendation:** Event-driven architecture + status column + audit trail (event table). Gets 90% of the benefit without the complexity of full event sourcing.",
     "tags": [
       "event-sourcing",
       "architecture",
@@ -876,7 +876,7 @@
     "difficulty": "inter",
     "subtopic": "Producer Configuration",
     "question": "What producer settings are important for a reliable delivery-events producer?",
-    "modelAnswer": "**Critical producer settings:**\n\n```properties\n# Durability: wait for ALL replicas to acknowledge\nacks=all\n\n# Idempotent: no duplicate messages on retry\nenable.idempotence=true\n\n# Retries: handle transient broker failures\nretries=2147483647  # effectively infinite (with delivery.timeout.ms as cap)\ndelivery.timeout.ms=120000  # 2 minutes total delivery attempt\n\n# Ordering: one in-flight request ensures order per partition\nmax.in.flight.requests.per.connection=5  # safe with idempotence enabled\n\n# Batching: efficiency (wait a bit to batch messages)\nlinger.ms=5  # wait 5ms for more messages to batch\nbatch.size=16384  # 16KB batch\n```\n\n**What these mean for REWE:**\n- `acks=all`: a delivery event is not \"sent\" until all Kafka replicas have it — no data loss even if a broker dies\n- `enable.idempotence=true`: if the producer retries (network timeout), Kafka deduplicates — no duplicate events\n- Retries with timeout: transient failures auto-recover, eventually fails with clear error\n\n**Error handling in producer:**\n```java\nkafka.send(topic, key, event).whenComplete((result, ex) -> {\n    if (ex != null) {\n        log.error(\"Failed to publish event after retries\", ex);\n        outboxRepo.save(new PendingEvent(event)); // fallback\n    }\n});\n```",
+    "modelAnswer": "**Critical producer settings:**\n\n```properties\n# Durability: wait for ALL replicas to acknowledge\nacks=all\n\n# Idempotent: no duplicate messages on retry\nenable.idempotence=true\n\n# Retries: handle transient broker failures\nretries=2147483647  # effectively infinite (with delivery.timeout.ms as cap)\ndelivery.timeout.ms=120000  # 2 minutes total delivery attempt\n\n# Ordering: one in-flight request ensures order per partition\nmax.in.flight.requests.per.connection=5  # safe with idempotence enabled\n\n# Batching: efficiency (wait a bit to batch messages)\nlinger.ms=5  # wait 5ms for more messages to batch\nbatch.size=16384  # 16KB batch\n```\n\n**What these mean for REWE:**\n- `acks=all`: a delivery event is not \"sent\" until all Kafka replicas have it \u2014 no data loss even if a broker dies\n- `enable.idempotence=true`: if the producer retries (network timeout), Kafka deduplicates \u2014 no duplicate events\n- Retries with timeout: transient failures auto-recover, eventually fails with clear error\n\n**Error handling in producer:**\n```java\nkafka.send(topic, key, event).whenComplete((result, ex) -> {\n    if (ex != null) {\n        log.error(\"Failed to publish event after retries\", ex);\n        outboxRepo.save(new PendingEvent(event)); // fallback\n    }\n});\n```",
     "tags": [
       "producer-config",
       "reliability",
@@ -905,7 +905,7 @@
       }
     ],
     "bestOption": 1,
-    "explanation": "Option B (single topic per aggregate/entity) is the recommended pattern:\n\n**Why one topic for all delivery events:**\n- **Ordering**: ALL events for a delivery are in the same partition (by deliveryId key)\n- **Simplicity**: fewer topics to manage (ops)\n- **Consumer flexibility**: billing can consume ALL delivery events, filter to \"COMPLETED\"\n- **Correlation**: consumer sees the full lifecycle in order\n\n**Why NOT A (topic per type):**\n- Loses ordering across event types (dispatched might arrive before planned)\n- Consumer that needs multiple types must subscribe to N topics\n- Operationally: 10 event types × 5 entities = 50 topics to manage\n\n**Why NOT C (topic per consumer):**\n- Producer must know all consumers (tight coupling!)\n- Adding a new consumer requires changing the producer\n- Violates event-driven principle (producer shouldn't know consumers)\n\n**Naming convention:**\n```\n{domain}-events     → delivery-events, driver-events, route-events\n{domain}-commands   → delivery-commands (if using CQRS)\n{domain}-events.DLT → dead letter for that topic\n```",
+    "explanation": "Option B (single topic per aggregate/entity) is the recommended pattern:\n\n**Why one topic for all delivery events:**\n- **Ordering**: ALL events for a delivery are in the same partition (by deliveryId key)\n- **Simplicity**: fewer topics to manage (ops)\n- **Consumer flexibility**: billing can consume ALL delivery events, filter to \"COMPLETED\"\n- **Correlation**: consumer sees the full lifecycle in order\n\n**Why NOT A (topic per type):**\n- Loses ordering across event types (dispatched might arrive before planned)\n- Consumer that needs multiple types must subscribe to N topics\n- Operationally: 10 event types \u00d7 5 entities = 50 topics to manage\n\n**Why NOT C (topic per consumer):**\n- Producer must know all consumers (tight coupling!)\n- Adding a new consumer requires changing the producer\n- Violates event-driven principle (producer shouldn't know consumers)\n\n**Naming convention:**\n```\n{domain}-events     \u2192 delivery-events, driver-events, route-events\n{domain}-commands   \u2192 delivery-commands (if using CQRS)\n{domain}-events.DLT \u2192 dead letter for that topic\n```",
     "tags": [
       "topic-design",
       "architecture",
@@ -919,7 +919,7 @@
     "difficulty": "inter",
     "subtopic": "Testing Kafka",
     "question": "How do you test Kafka producers and consumers in Spring Boot?",
-    "modelAnswer": "**Three levels of Kafka testing:**\n\n**1. Unit test (no Kafka — mock the template):**\n```java\n@ExtendWith(MockitoExtension.class)\nclass DeliveryEventPublisherTest {\n    @Mock KafkaTemplate<String, DeliveryEvent> kafka;\n    @InjectMocks DeliveryEventPublisher publisher;\n\n    @Test\n    void shouldPublishWithDeliveryIdAsKey() {\n        publisher.publishCompleted(delivery);\n        verify(kafka).send(\"delivery-events\", \"4567\", expectedEvent);\n    }\n}\n```\n\n**2. Integration with EmbeddedKafka:**\n```java\n@SpringBootTest\n@EmbeddedKafka(topics = \"delivery-events\", partitions = 1)\nclass DeliveryEventIntegrationTest {\n\n    @Autowired KafkaTemplate<String, DeliveryEvent> producer;\n    @Autowired KafkaConsumer<String, DeliveryEvent> consumer;\n\n    @Test\n    void shouldProduceAndConsumeEvent() {\n        producer.send(\"delivery-events\", \"key\", event).get();\n        var records = KafkaTestUtils.getRecords(consumer);\n        assertThat(records).hasSize(1);\n    }\n}\n```\n\n**3. Integration with Testcontainers (real Kafka):**\n```java\n@Container\nstatic KafkaContainer kafka = new KafkaContainer(DockerImageName.parse(\"confluentinc/cp-kafka:7.5.0\"));\n```\n\n**Rule**: Unit test business logic (no Kafka needed). EmbeddedKafka for serialization/config validation. Testcontainers for full end-to-end (rarely needed).",
+    "modelAnswer": "**Three levels of Kafka testing:**\n\n**1. Unit test (no Kafka \u2014 mock the template):**\n```java\n@ExtendWith(MockitoExtension.class)\nclass DeliveryEventPublisherTest {\n    @Mock KafkaTemplate<String, DeliveryEvent> kafka;\n    @InjectMocks DeliveryEventPublisher publisher;\n\n    @Test\n    void shouldPublishWithDeliveryIdAsKey() {\n        publisher.publishCompleted(delivery);\n        verify(kafka).send(\"delivery-events\", \"4567\", expectedEvent);\n    }\n}\n```\n\n**2. Integration with EmbeddedKafka:**\n```java\n@SpringBootTest\n@EmbeddedKafka(topics = \"delivery-events\", partitions = 1)\nclass DeliveryEventIntegrationTest {\n\n    @Autowired KafkaTemplate<String, DeliveryEvent> producer;\n    @Autowired KafkaConsumer<String, DeliveryEvent> consumer;\n\n    @Test\n    void shouldProduceAndConsumeEvent() {\n        producer.send(\"delivery-events\", \"key\", event).get();\n        var records = KafkaTestUtils.getRecords(consumer);\n        assertThat(records).hasSize(1);\n    }\n}\n```\n\n**3. Integration with Testcontainers (real Kafka):**\n```java\n@Container\nstatic KafkaContainer kafka = new KafkaContainer(DockerImageName.parse(\"confluentinc/cp-kafka:7.5.0\"));\n```\n\n**Rule**: Unit test business logic (no Kafka needed). EmbeddedKafka for serialization/config validation. Testcontainers for full end-to-end (rarely needed).",
     "tags": [
       "testing",
       "embedded-kafka",
@@ -933,7 +933,7 @@
     "difficulty": "senior",
     "subtopic": "Kafka vs Alternatives",
     "question": "When would you NOT use Kafka? What are the alternatives and when do they win?",
-    "modelAnswer": "**Kafka is NOT always the answer:**\n\n| Scenario | Better choice | Why |\n|----------|--------------|-----|\n| Request-reply pattern | REST / gRPC | Kafka is fire-and-forget, not request-response |\n| Small team, simple app | RabbitMQ | Simpler to operate, built-in routing, good enough for <10K msg/s |\n| Strict ordering across ALL messages | Single-partition topic or DB queue | Kafka orders per partition only |\n| Exactly-once to external system | Outbox + polling | Kafka can't transact with your DB |\n| Temporary task queue | Redis Streams / SQS | Lightweight, no Zookeeper/KRaft overhead |\n| Event bus within single JVM | CDI Events / Spring Events | No network hop, no serialization |\n\n**Kafka wins when:**\n- Multiple independent consumers need the same stream\n- High throughput (>100K events/s)\n- Replay/audit trail required\n- Consumer speed varies (some fast, some slow)\n- Event sourcing or stream processing (KStreams, ksqlDB)\n\n**REWE context:**\n- Kafka for inter-service events: ✓ (delivery, billing, analytics)\n- Kafka for intra-service commands: ✗ (use direct method call)\n- Kafka for simple notifications: maybe (RabbitMQ could also work, but Kafka is already there)\n\n**Honest interview answer:** \"I'd use Kafka when I need decoupled event streaming with multiple consumers and replay. For simpler messaging (one producer, one consumer, no replay), RabbitMQ or even a DB-backed queue might be simpler to operate.\"",
+    "modelAnswer": "**Kafka is NOT always the answer:**\n\n| Scenario | Better choice | Why |\n|----------|--------------|-----|\n| Request-reply pattern | REST / gRPC | Kafka is fire-and-forget, not request-response |\n| Small team, simple app | RabbitMQ | Simpler to operate, built-in routing, good enough for <10K msg/s |\n| Strict ordering across ALL messages | Single-partition topic or DB queue | Kafka orders per partition only |\n| Exactly-once to external system | Outbox + polling | Kafka can't transact with your DB |\n| Temporary task queue | Redis Streams / SQS | Lightweight, no Zookeeper/KRaft overhead |\n| Event bus within single JVM | CDI Events / Spring Events | No network hop, no serialization |\n\n**Kafka wins when:**\n- Multiple independent consumers need the same stream\n- High throughput (>100K events/s)\n- Replay/audit trail required\n- Consumer speed varies (some fast, some slow)\n- Event sourcing or stream processing (KStreams, ksqlDB)\n\n**REWE context:**\n- Kafka for inter-service events: \u2713 (delivery, billing, analytics)\n- Kafka for intra-service commands: \u2717 (use direct method call)\n- Kafka for simple notifications: maybe (RabbitMQ could also work, but Kafka is already there)\n\n**Honest interview answer:** \"I'd use Kafka when I need decoupled event streaming with multiple consumers and replay. For simpler messaging (one producer, one consumer, no replay), RabbitMQ or even a DB-backed queue might be simpler to operate.\"",
     "tags": [
       "alternatives",
       "rabbitmq",
@@ -1081,5 +1081,150 @@
       "interview-prep",
       "senior-level"
     ]
+  },
+  {
+    "id": "kafka-replication-01",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "Replication & ISR",
+    "mission": "You have replication.factor=3, min.insync.replicas=2, acks=all. Broker 3 goes down. What happens to produce requests?",
+    "choices": [
+      "Produce succeeds (2 ISR remaining >= min.insync.replicas)",
+      "Produce fails (need all 3 replicas)",
+      "Produce succeeds but with acks=1 fallback",
+      "Topic becomes read-only"
+    ],
+    "answer": "Produce succeeds (2 ISR remaining >= min.insync.replicas)",
+    "explain": "With acks=all, the producer waits for ALL in-sync replicas to acknowledge. ISR shrinks to 2 (leader + 1 follower). Since min.insync.replicas=2 and we have 2 ISR members, produce succeeds. If ANOTHER broker goes down (ISR=1 < min.insync.replicas=2), produce would fail with NotEnoughReplicasException.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-replication-02",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "senior",
+    "subtopic": "Replication & ISR",
+    "mission": "acks=all, min.insync.replicas=2, replication.factor=3. ALL brokers go down. Broker 3 (which was OUT of sync) comes back first. What happens?",
+    "choices": [
+      "Broker 3 becomes leader, some messages lost (unclean election)",
+      "Partition stays unavailable until an ISR member returns",
+      "Broker 3 becomes leader with no data loss",
+      "Kafka automatically recovers all messages from disk"
+    ],
+    "answer": "Partition stays unavailable until an ISR member returns",
+    "explain": "With unclean.leader.election.enable=false (default since 0.11), Kafka will NOT promote an out-of-sync replica. The partition remains unavailable until a broker that was in the ISR recovers. This preserves data integrity at the cost of availability. With unclean.leader.election.enable=true, Broker 3 would become leader but messages not replicated to it would be LOST.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-reliability-01",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "Reliable Delivery",
+    "mission": "Producer sends message with acks=1. Leader writes to log and responds SUCCESS. Leader crashes before followers replicate. What happens?",
+    "choices": [
+      "Message is safe \u2014 followers will get it eventually",
+      "Message is LOST \u2014 new leader never received it",
+      "Message is duplicated on recovery",
+      "Producer gets an exception and can retry"
+    ],
+    "answer": "Message is LOST \u2014 new leader never received it",
+    "explain": "With acks=1, the producer only waits for the leader to acknowledge. If the leader crashes before followers replicate, the message exists only on the crashed leader's disk. The new leader (elected from ISR) never received it. When the old leader recovers, it truncates its log to match the new leader. The message is permanently lost. Solution: use acks=all.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-reliability-02",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Reliable Delivery",
+    "question": "How do you achieve exactly-once delivery end-to-end with Kafka?",
+    "interviewerIntent": "Tests deep understanding of delivery guarantees across producer, broker, and consumer",
+    "keyPoints": [
+      "Idempotent producer: prevents duplicates from retries (per partition)",
+      "Transactions: atomic writes across multiple partitions",
+      "Consumer: read_committed isolation + idempotent processing",
+      "End-to-end: idempotent producer + transactional consumer (read-process-write pattern)",
+      "OR: consumer-side dedup (INSERT ON CONFLICT, check offset)"
+    ],
+    "followUps": [
+      {
+        "question": "What is the performance cost of exactly-once?",
+        "answerHint": "Transactions add ~3-5% latency. Idempotent producer is nearly free (sequence numbers are lightweight)."
+      },
+      {
+        "question": "When is at-least-once + consumer idempotency better than transactions?",
+        "answerHint": "When writing to external systems (databases, APIs) that dont support Kafka transactions. Most real-world cases."
+      }
+    ],
+    "explanation": "True exactly-once requires: (1) Idempotent producer (no duplicates), (2) Transactions for atomic multi-partition writes, (3) Consumer with read_committed + idempotent sink. In practice, most systems use at-least-once + idempotent consumer (INSERT ON CONFLICT) because it is simpler and works with external systems.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-internals-01",
+    "type": "ORDER_EXECUTION",
+    "difficulty": "inter",
+    "subtopic": "Broker Internals",
+    "mission": "What happens when a broker <strong>crashes</strong>? Order the recovery steps:",
+    "items": [
+      {
+        "id": "detect",
+        "label": "Controller detects broker failure (ZK ephemeral node disappears)"
+      },
+      {
+        "id": "elect",
+        "label": "Controller elects new leaders from ISR for affected partitions"
+      },
+      {
+        "id": "notify",
+        "label": "Controller sends LeaderAndISR requests to remaining brokers"
+      },
+      {
+        "id": "serve",
+        "label": "New leaders start serving produce/consume requests"
+      },
+      {
+        "id": "recover",
+        "label": "Crashed broker recovers and rejoins as follower"
+      },
+      {
+        "id": "replicate",
+        "label": "Recovered broker replicates missed messages from new leaders"
+      }
+    ],
+    "correctOrder": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "explanation": "The controller handles all leader elections. Clients experience a brief timeout (~ms to seconds) then transparently connect to new leaders. The recovered broker catches up by replicating from current leaders before rejoining the ISR.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-internals-02",
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Broker Internals",
+    "question": "What is log compaction and when would you use it?",
+    "interviewerIntent": "Tests understanding of Kafka as more than a queue \u2014 also a state store",
+    "keyPoints": [
+      "Keeps only LATEST value per key (vs time-based retention)",
+      "Old values for same key are removed during compaction",
+      "Tombstone (null value) = delete key entirely after compaction",
+      "Use cases: current state per entity, CDC, KTable materialization",
+      "NOT for event sourcing (need full history) or time-windowed analytics"
+    ],
+    "followUps": [
+      {
+        "question": "How is this different from a database?",
+        "answerHint": "Its still append-only and immutable until compaction runs. Consumers still read a log, not query by key. For key-value lookups, use KTable or materialize to a DB."
+      },
+      {
+        "question": "Can you have both retention AND compaction?",
+        "answerHint": "Yes: cleanup.policy=compact,delete. Compact keeps latest per key, delete removes segments older than retention period."
+      }
+    ],
+    "explanation": "Log compaction transforms a topic from \"complete history\" to \"latest state per key\". Like a changelog where only the most recent entry per entity survives. Used for driver-status topics, configuration propagation, and CDC replication.",
+    "topic": "kafka"
   }
 ]

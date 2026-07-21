@@ -187,5 +187,65 @@
         "content": "Your ActiveMQ and JMS experience transfers directly in areas such as asynchronous design, retries, dead-letter handling, idempotency and operational monitoring."
       }
     ]
+  },
+  {
+    "id": "theory-kafka-replication",
+    "title": "Replication & In-Sync Replicas (ISR)",
+    "sections": [
+      {
+        "heading": "Leader and Follower Replicas",
+        "content": "Every partition has ONE leader replica and N-1 follower replicas (replication factor N). All produce and consume requests go through the leader \u2014 followers only replicate.\n\n<pre><code>// Topic with replication factor 3:\n// Partition 0: Leader=Broker1, Followers=Broker2,Broker3\n// Partition 1: Leader=Broker2, Followers=Broker1,Broker3\n// Partition 2: Leader=Broker3, Followers=Broker1,Broker2\n\n// If Broker1 dies:\n// Partition 0: new Leader elected from ISR (Broker2 or Broker3)\n// Partition 1 & 2: unaffected (leader is on other brokers)</code></pre>\n\n<strong>Key insight:</strong> Kafka distributes leaders across brokers for load balancing. Each broker is leader for some partitions and follower for others."
+      },
+      {
+        "heading": "In-Sync Replicas (ISR)",
+        "content": "A follower is \"in-sync\" if it has replicated all messages within <code>replica.lag.time.max.ms</code> (default 10s). Only ISR members can become leader.\n\n<pre><code>// ISR = [Broker1(leader), Broker2, Broker3]  \u2190 all caught up\n// Broker3 goes slow (network issue)...\n// After 10s: ISR = [Broker1(leader), Broker2]  \u2190 Broker3 removed\n// Broker3 catches up again...\n// ISR = [Broker1(leader), Broker2, Broker3]  \u2190 Broker3 rejoins\n\n// WHY IT MATTERS:\n// min.insync.replicas=2 means:\n// Producer with acks=all will FAIL if ISR < 2\n// This prevents writing to a single replica (risk of data loss)</code></pre>\n\n<strong>Interview connection:</strong> \"How does Kafka guarantee no data loss?\" \u2192 acks=all + min.insync.replicas=2 + replication.factor=3. This ensures at least 2 replicas confirm before producer gets success."
+      },
+      {
+        "heading": "Unclean Leader Election",
+        "content": "<code>unclean.leader.election.enable</code> (default: false since Kafka 0.11)\n\n\u2022 <strong>false:</strong> If all ISR replicas are down, partition is UNAVAILABLE until one recovers. No data loss.\n\u2022 <strong>true:</strong> Allow out-of-sync replica to become leader. Partition stays available but messages not yet replicated are LOST.\n\n<strong>Trade-off:</strong>\n\u2022 Banking/financial: false (data integrity > availability)\n\u2022 Metrics/logging: true might be acceptable (availability > completeness)\n\u2022 REWE delivery events: false (losing a delivery-completed event = billing error)"
+      }
+    ],
+    "topic": "kafka",
+    "subtopic": "kafka-replication"
+  },
+  {
+    "id": "theory-kafka-reliability",
+    "title": "Reliable Delivery \u2014 Producer Guarantees",
+    "sections": [
+      {
+        "heading": "acks configuration \u2014 the reliability dial",
+        "content": "<pre><code>// acks=0: Fire and forget\n// Producer doesn't wait for any acknowledgment\n// Fastest. Messages can be lost silently.\n// Use case: metrics, logging where loss is acceptable\n\n// acks=1: Leader acknowledged\n// Producer waits for leader to write to its local log\n// Message can be lost if leader crashes BEFORE replication\n// Use case: moderate reliability, good throughput\n\n// acks=all (or -1): All ISR acknowledged\n// Producer waits for ALL in-sync replicas to confirm\n// No data loss as long as at least one ISR replica survives\n// Slowest. Use case: financial, delivery events, anything critical\nprops.put(\"acks\", \"all\");\nprops.put(\"min.insync.replicas\", 2);  // broker-side config\n// Combined: 2 replicas must confirm \u2192 tolerates 1 broker failure</code></pre>\n\n<strong>REWE context:</strong> Delivery lifecycle events (planned\u2192dispatched\u2192delivered) need acks=all. Analytics events might use acks=1 for better throughput."
+      },
+      {
+        "heading": "Retries and Idempotent Producer",
+        "content": "<pre><code>// Problem: network timeout after broker received message\n// Producer retries \u2192 DUPLICATE message!\n\n// Solution: Idempotent Producer (Kafka 0.11+)\nprops.put(\"enable.idempotence\", true);\n// Automatically sets: acks=all, retries=Integer.MAX_VALUE\n// Broker assigns sequence number per producer+partition\n// Duplicate detection: same sequence = discard silently\n\n// What it guarantees:\n// - Exactly-once per partition (no duplicates from retries)\n// - Order preserved (no out-of-order from retries)\n\n// What it does NOT guarantee:\n// - Cross-partition atomicity (use transactions for that)\n// - End-to-end exactly-once (consumer must be idempotent too)</code></pre>\n\n<strong>Interview tip:</strong> \"How do you prevent duplicate events in Kafka?\" \u2192 Idempotent producer (producer-side) + idempotent consumer (consumer-side, e.g., INSERT ON CONFLICT)."
+      },
+      {
+        "heading": "Batching: batch.size and linger.ms",
+        "content": "<pre><code>// Kafka producer batches messages for efficiency\n\n// batch.size (default 16KB)\n// Max bytes per batch per partition\n// Larger = better throughput, higher latency\nprops.put(\"batch.size\", 32768); // 32KB\n\n// linger.ms (default 0)\n// How long to wait for more messages before sending batch\n// 0 = send immediately (low latency, small batches)\n// 5-100ms = wait for batch to fill (better throughput)\nprops.put(\"linger.ms\", 20);\n\n// Combined effect:\n// Send batch when EITHER condition is met:\n// - batch.size bytes accumulated, OR\n// - linger.ms time elapsed since first message in batch\n\n// Production tuning:\n// High throughput (analytics): batch.size=64KB, linger.ms=50\n// Low latency (delivery events): batch.size=16KB, linger.ms=5</code></pre>\n\n<strong>Analogy:</strong> Like waiting for more passengers on a bus. You can depart immediately (low latency) or wait 30 seconds for the bus to fill (better efficiency)."
+      }
+    ],
+    "topic": "kafka",
+    "subtopic": "kafka-reliability"
+  },
+  {
+    "id": "theory-kafka-internals",
+    "title": "Broker Internals \u2014 Controller, Storage, Requests",
+    "sections": [
+      {
+        "heading": "The Controller Broker",
+        "content": "ONE broker in the cluster is elected as Controller (via ZooKeeper/KRaft). It handles:\n\n\u2022 <strong>Leader election:</strong> When a broker dies, controller picks new leaders for its partitions from ISR\n\u2022 <strong>Broker membership:</strong> Detects join/leave via ephemeral nodes\n\u2022 <strong>Partition reassignment:</strong> Distributes replicas across brokers\n\n<pre><code>// Scenario: Broker 2 dies (was leader for partition 3)\n// Controller detects (ZooKeeper ephemeral node disappears)\n// Controller picks next replica in ISR as new leader\n// Controller sends LeaderAndISR request to all affected brokers\n// New leader starts serving produce/consume requests\n// Followers start replicating from new leader\n\n// All this happens in milliseconds \u2014 clients see brief timeout\n// then reconnect to new leader automatically</code></pre>\n\n<strong>KRaft mode (Kafka 3.3+):</strong> Replaces ZooKeeper with internal Raft consensus. Same concepts, simpler deployment."
+      },
+      {
+        "heading": "Log Storage & Segments",
+        "content": "Each partition is a directory on disk containing <strong>segments</strong>:\n\n<pre><code>// /kafka-data/delivery-events-0/   \u2190 partition 0\n//   00000000000000000000.log         \u2190 segment (messages)\n//   00000000000000000000.index       \u2190 offset \u2192 position mapping\n//   00000000000000000000.timeindex   \u2190 timestamp \u2192 offset mapping\n//   00000000000005238476.log         \u2190 next segment (after roll)\n//   00000000000005238476.index\n\n// Segment rolls when:\n// - Size exceeds log.segment.bytes (default 1GB)\n// - Time exceeds log.roll.ms\n\n// Retention:\n// log.retention.hours=168 (7 days default)\n// log.retention.bytes=-1 (unlimited)\n// Old segments are DELETED (or compacted)</code></pre>\n\n<strong>Why segments matter:</strong>\n\u2022 Sequential writes only (append to active segment) \u2192 fast\n\u2022 Old data deleted by removing entire segment files \u2192 efficient\n\u2022 Index allows O(1) offset lookup within segment"
+      },
+      {
+        "heading": "Log Compaction \u2014 keeping latest per key",
+        "content": "<pre><code>// cleanup.policy=compact\n// Instead of deleting old messages, keep LATEST value per key\n\n// Before compaction:\n// Key=driver-42: status=AVAILABLE (offset 100)\n// Key=driver-42: status=BUSY (offset 200)\n// Key=driver-42: status=AVAILABLE (offset 500)\n// Key=driver-99: status=OFFLINE (offset 300)\n\n// After compaction:\n// Key=driver-42: status=AVAILABLE (offset 500)  \u2190 latest only\n// Key=driver-99: status=OFFLINE (offset 300)    \u2190 latest only\n\n// Use cases:\n// - Current state per entity (driver status, delivery position)\n// - CDC (Change Data Capture) \u2014 latest row state\n// - KTable in Kafka Streams\n\n// Tombstone: value=null means DELETE the key\nproducer.send(new ProducerRecord(\"drivers\", \"driver-42\", null));\n// After compaction: key driver-42 is removed entirely</code></pre>\n\n<strong>REWE connection:</strong> Driver status topic uses compaction \u2014 consumers always see latest status per driver, even if they start reading from the beginning."
+      }
+    ],
+    "topic": "kafka",
+    "subtopic": "kafka-internals"
   }
 ]

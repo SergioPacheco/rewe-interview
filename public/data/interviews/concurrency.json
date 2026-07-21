@@ -3,93 +3,93 @@
     "id": "interview-concurrency-1",
     "topic": "concurrency",
     "subtopic": "conc-threads",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Concurrency and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Concurrency]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Concurrency, with examples and production context]",
+    "difficulty": "INTERMEDIATE",
+    "question": "What is the difference between a thread pool and creating threads manually?",
+    "shortAnswer": "Thread pools reuse a fixed set of threads (avoiding creation overhead), limit concurrency (preventing resource exhaustion), and provide lifecycle management. Manual thread creation is uncontrolled — under load, you can create thousands of threads that exhaust memory. In Jakarta EE, you must use ManagedExecutorService (container-managed) — never raw threads.",
+    "detailedAnswer": "Thread pools (ExecutorService):\n- Fixed number of threads reused across tasks\n- Queue for pending work when all threads are busy\n- Controlled concurrency — cannot exceed pool size\n- Lifecycle: shutdown, awaitTermination\n- Context propagation in Jakarta EE (security, transactions)\n\nManual threads (new Thread()):\n- No limit — can create thousands under load\n- No reuse — each thread has creation overhead (~1MB stack)\n- No queue — all start immediately\n- No lifecycle management\n- In Jakarta EE: FORBIDDEN — loses CDI context, transaction, security\n\nIn SGN3, the ArchUnit rule blocks manual thread creation. All async work goes through:\n1. JMS/MDB (preferred — durable, retry, DLQ)\n2. ManagedExecutorService (for CompletableFuture compositions)\n\nJava 21 Virtual Threads change the economics (lightweight, millions possible) but do not eliminate the need for bounded concurrency against shared resources (database, external APIs).",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Thread pools: reuse, bounded concurrency, lifecycle management",
+      "Manual threads: uncontrolled, no reuse, resource exhaustion risk",
+      "Jakarta EE: MUST use ManagedExecutorService (context propagation)",
+      "JMS/MDB preferred for durable async in SGN3",
+      "Virtual Threads (Java 21) change thread cost, not concurrency limits"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "\"I use new Thread() for background tasks\"",
+      "Not knowing why Jakarta EE prohibits raw threads",
+      "Confusing thread pool sizing with \"more is better\"",
+      "Not mentioning resource limits (DB connections, external APIs)"
     ],
     "followUps": [
-      {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
-      },
-      {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
-      }
+      { "question": "How do you size a thread pool?", "hint": "CPU-bound: cores. I/O-bound: cores × (1 + wait/compute ratio). But always measure." },
+      { "question": "What are Virtual Threads and do they replace thread pools?", "hint": "Lightweight threads (Java 21). Eliminate pool sizing for I/O tasks. Still need bounded access to shared resources." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 ManagedExecutorService + JMS",
+      "description": "All async processing uses JMS/MDB (128 MDBs for durable retry) or ManagedExecutorService (for CompletableFuture in REST integrations with Moodle/LDAP). Never raw threads — ArchUnit enforces this."
+    }
   },
   {
     "id": "interview-concurrency-2",
     "topic": "concurrency",
-    "subtopic": "conc-sync",
-    "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Concurrency.",
-    "shortAnswer": "[Short answer about a real challenge involving Concurrency]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "subtopic": "conc-safety",
+    "difficulty": "SENIOR",
+    "question": "How do you ensure thread safety without using synchronized everywhere?",
+    "shortAnswer": "Prefer immutability (no shared mutable state = no synchronization needed), use thread-safe data structures (ConcurrentHashMap, AtomicReference), confine state to a single thread (thread-local, request-scoped), or use lock-free patterns (CAS operations). synchronized is the last resort — it creates contention.",
+    "detailedAnswer": "Thread safety strategies (from best to worst):\n\n1. **Immutability**: no mutable shared state → inherently thread-safe\n   - Use final fields, unmodifiable collections, records\n   - Best approach when possible\n\n2. **Confinement**: state belongs to one thread only\n   - @RequestScoped, @ViewScoped in Jakarta EE (one user = one instance)\n   - ThreadLocal for per-thread state\n   - @Stateless EJB: no instance state allowed (ArchUnit enforces in SGN3)\n\n3. **Thread-safe data structures**:\n   - ConcurrentHashMap (lock striping, not global lock)\n   - AtomicInteger, AtomicReference (CAS operations)\n   - CopyOnWriteArrayList (for read-heavy, write-rare)\n\n4. **Synchronization (last resort)**:\n   - synchronized blocks (smallest scope possible)\n   - ReentrantLock (tryLock, interruptible)\n   - Creates contention — limit scope\n\nSGN3 approach: @Stateless beans have no mutable fields (ArchUnit enforces). @ApplicationScoped beans with caches use ConcurrentHashMap. No synchronized blocks needed because the architecture prevents shared mutable state.",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "Immutability first — no synchronization needed",
+      "Confinement: one thread owns the state (EJB @Stateless, @RequestScoped)",
+      "ConcurrentHashMap for shared caches (lock striping, not global lock)",
+      "synchronized is last resort — creates contention",
+      "ArchUnit prevents mutable state in @Stateless beans"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "\"I just use synchronized on every method\"",
+      "Not knowing about ConcurrentHashMap vs Collections.synchronizedMap",
+      "Ignoring immutability as a concurrency strategy",
+      "Not understanding the cost of contention"
     ],
     "followUps": [
-      {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
-      },
-      {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
-      }
+      { "question": "What is the difference between ConcurrentHashMap.putIfAbsent and computeIfAbsent?", "hint": "putIfAbsent evaluates the value eagerly. computeIfAbsent evaluates lazily and is atomic." },
+      { "question": "When would you use ReentrantLock over synchronized?", "hint": "tryLock (non-blocking), interruptible waiting, read-write separation (ReadWriteLock)." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 concurrency via architecture",
+      "description": "Thread safety achieved by architecture, not locks: @Stateless EJBs (no state), ConcurrentHashMap for @ApplicationScoped caches, JMS for async (queue handles concurrency). ArchUnit blocks mutable fields in @Stateless."
+    }
   },
   {
     "id": "interview-concurrency-3",
     "topic": "concurrency",
-    "subtopic": "conc-threads",
-    "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Concurrency?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Concurrency]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "subtopic": "conc-completable",
+    "difficulty": "INTERMEDIATE",
+    "question": "How would you use CompletableFuture for parallel API calls?",
+    "shortAnswer": "Use supplyAsync with a ManagedExecutorService to launch parallel calls, then combine with allOf() or thenCombine(). Always set timeouts on the HTTP client (real protection) and use orTimeout() as a deadline safety net. Handle exceptions with exceptionally() or handle().",
+    "detailedAnswer": "Pattern for parallel REST calls:\n\n```java\n// Launch calls in parallel\nCompletableFuture<Escola> escolaFuture = \n    CompletableFuture.supplyAsync(() -> escolaClient.get(id), managedExecutor);\nCompletableFuture<Turmas> turmasFuture = \n    CompletableFuture.supplyAsync(() -> turmaClient.list(id), managedExecutor);\n\n// Wait for all and combine\nCompletableFuture.allOf(escolaFuture, turmasFuture)\n    .orTimeout(35, TimeUnit.SECONDS)\n    .join();\n\nEscola escola = escolaFuture.join();\nTurmas turmas = turmasFuture.join();\n```\n\nCritical rules:\n1. **Always use ManagedExecutorService** — not ForkJoinPool (loses CDI context)\n2. **Timeout on the HTTP client** is the REAL protection (connect + read timeout)\n3. **orTimeout()** is deadline safety net — does NOT cancel the underlying network call\n4. **Handle failures per-future** — one failure shouldn't crash all\n5. **Limit concurrency** — don't create one future per item in a 10,000-item list",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "ManagedExecutorService — never ForkJoinPool in Jakarta EE",
+      "HTTP client timeout is the REAL protection",
+      "orTimeout() is deadline safety net, not cancellation",
+      "allOf() for waiting, thenCombine() for composing",
+      "Limit parallelism — don't exhaust pools"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "Using CompletableFuture without specifying executor",
+      "No timeout at any level",
+      "One future per item without limit (pool exhaustion)",
+      "Not handling exceptions (silent failures)"
     ],
     "followUps": [
-      {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
-      },
-      {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
-      }
+      { "question": "What happens when orTimeout fires but the HTTP call is still running?", "hint": "The thread is still blocked on the socket. orTimeout completes the future but doesn't interrupt the thread." },
+      { "question": "How do you limit concurrent futures to avoid pool exhaustion?", "hint": "Semaphore, or process in batches of N." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 parallel integration calls",
+      "description": "Used CompletableFuture with ManagedExecutorService for parallel calls to Moodle + LDAP during enrollment confirmation. HTTP client has 30s read timeout. orTimeout(35s) as safety net. Reduced total time from sequential (60s) to parallel (~30s max)."
+    }
   }
 ]

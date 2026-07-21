@@ -3,93 +3,93 @@
     "id": "interview-patterns-1",
     "topic": "patterns",
     "subtopic": "pat-strategy",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Design Patterns and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Design Patterns]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Design Patterns, with examples and production context]",
+    "difficulty": "INTERMEDIATE",
+    "question": "Explain the Strategy pattern and give a production example.",
+    "shortAnswer": "Strategy encapsulates interchangeable algorithms behind a common interface. The client chooses which strategy to use at runtime without modifying its code. In SGN3, validation logic uses this — different enrollment types (regular, scholarship, transfer) have different validation rules, each in its own class implementing a common Validacao interface.",
+    "detailedAnswer": "Strategy pattern:\n- Define a family of algorithms (strategies)\n- Encapsulate each in its own class implementing a common interface\n- Client delegates to the strategy without knowing which one\n\nStructure:\n```\nContext → Strategy interface → ConcreteStrategyA, ConcreteStrategyB\n```\n\nBenefits:\n- Open/Closed: add new strategies without modifying context\n- Testable: test each strategy in isolation\n- Eliminates conditional logic (if/else chains)\n\nWhen to use:\n- Multiple variants of the same algorithm\n- Need to switch behavior at runtime\n- if/else chain based on type is growing\n\nWhen NOT to use:\n- Only 2 simple, stable variants (if/else is fine)\n- Strategies share significant state (might need different pattern)\n- Adds indirection without real benefit (YAGNI)",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "Encapsulates interchangeable algorithms behind interface",
+      "Eliminates type-based if/else chains",
+      "Open/Closed — add strategies without modifying context",
+      "Each strategy independently testable",
+      "Know when NOT to use (YAGNI for 2 simple cases)"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "Cannot give a real example beyond textbook sorting",
+      "Over-applying it to every conditional",
+      "Confusing Strategy with Template Method",
+      "Not knowing the relationship to OCP"
     ],
     "followUps": [
-      {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
-      },
-      {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
-      }
+      { "question": "How do you select the right strategy at runtime?", "hint": "Factory method, DI container qualifier, Map<Type, Strategy>, or configuration." },
+      { "question": "What is the difference between Strategy and Template Method?", "hint": "Strategy: composition (HAS-A behavior). Template Method: inheritance (IS-A with hooks)." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 validation strategies per enrollment type",
+      "description": "Different enrollment types (regular, transfer, scholarship) have different validation rules. Each implemented as a separate Validacao class. The Business layer selects the correct validator based on the enrollment type — no giant if/else."
+    }
   },
   {
     "id": "interview-patterns-2",
     "topic": "patterns",
-    "subtopic": "pat-factory",
-    "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Design Patterns.",
-    "shortAnswer": "[Short answer about a real challenge involving Design Patterns]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "subtopic": "pat-builder",
+    "difficulty": "BEGINNER",
+    "question": "When would you use the Builder pattern?",
+    "shortAnswer": "When constructing an object with many optional parameters, or when construction is complex (multi-step, validation needed). Builder makes construction readable (named methods instead of positional args) and can enforce invariants at build time. I use it for DTOs with 10+ fields and for test data factories.",
+    "detailedAnswer": "Builder pattern solves:\n1. Telescoping constructor problem (10+ params, hard to read)\n2. Complex construction logic (validation, defaults, derived values)\n3. Immutable objects with many fields\n\nWhen to use:\n- Object has many optional parameters\n- Construction has steps (set A, derive B from A, validate)\n- You want readable, self-documenting construction\n- Immutable objects (build once, don't modify)\n\nWhen NOT to use:\n- Simple objects with 2-3 fields (just use constructor)\n- Mutable objects where setters are fine\n- Adds boilerplate without real benefit\n\nIn Java: Lombok @Builder reduces boilerplate. Without Lombok, static inner class pattern.\n\nIn tests: Builder pattern for test data factories — readable, reusable, with sensible defaults:\n```java\nTurma turma = TurmaBuilder.umaTurma()\n    .comSituacao(ATIVA)\n    .comModalidade(TECNICO)\n    .build();\n```",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "Solves telescoping constructor (many optional params)",
+      "Readable construction with named methods",
+      "Can enforce invariants at build() time",
+      "Essential for test data factories",
+      "Lombok @Builder reduces boilerplate in production code"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "Using Builder for 2-field objects (overkill)",
+      "Cannot explain when NOT to use it",
+      "Not mentioning the immutability connection",
+      "Never used it in tests (missed biggest use case)"
     ],
     "followUps": [
-      {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
-      },
-      {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
-      }
+      { "question": "How does Builder relate to immutability?", "hint": "Builder collects params, build() creates an immutable instance. Only way to construct complex immutable objects." },
+      { "question": "When would a record be better than Builder?", "hint": "When all fields are required and the object is simple. Records are constructors + immutability built-in." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 test data builders",
+      "description": "Used Builder pattern extensively for test data factories (TurmaBuilder, MatriculaBuilder). Each builder provides sensible defaults — tests only specify what they care about. Makes tests readable and maintainable."
+    }
   },
   {
     "id": "interview-patterns-3",
     "topic": "patterns",
-    "subtopic": "pat-strategy",
+    "subtopic": "pat-observer",
     "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Design Patterns?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Design Patterns]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "question": "How do you decide which design pattern to apply? What is your process?",
+    "shortAnswer": "I don't start from patterns — I start from the problem. Patterns are names for recurring solutions. My process: identify the force (what varies? what is coupled? what changes?), recall if a known pattern addresses that force, then evaluate if the pattern's trade-offs are acceptable for the context. Most of the time, simple composition with clear interfaces is enough.",
+    "detailedAnswer": "Pattern selection process:\n\n1. **Identify the design force** (the tension):\n   - What varies? → Strategy, Template Method\n   - What is created differently? → Factory, Builder\n   - What needs to notify others? → Observer, Event\n   - What should have one instance? → Singleton (via DI container)\n   - What needs decoration? → Decorator\n\n2. **Evaluate trade-offs**:\n   - Does it add justified complexity?\n   - Will the team understand it?\n   - Is it solving a real problem or hypothetical one?\n\n3. **Consider simpler alternatives**:\n   - Sometimes a clear interface + DI is all you need\n   - Not everything needs a named pattern\n   - YAGNI: don't pattern for hypothetical future\n\nIn practice, 90% of SGN3 design decisions use three things:\n- Interfaces + CDI injection (covers Strategy, Factory, Observer)\n- Composition over inheritance\n- Clear layer separation (WebBean → Service → Business → Repository)\n\nNamed patterns are vocabulary for communication, not a checklist to apply.",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "Start from the PROBLEM, not from the pattern",
+      "Identify the design force (what varies? what changes?)",
+      "Evaluate trade-offs for the specific context",
+      "Simple interface + DI covers most pattern use cases",
+      "Patterns are vocabulary, not a checklist"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "\"I always apply X pattern\" without context",
+      "Cannot explain WHEN a pattern is inappropriate",
+      "Naming patterns without real examples",
+      "Over-engineering simple code with unnecessary patterns"
     ],
     "followUps": [
-      {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
-      },
-      {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
-      }
+      { "question": "Give an example of a pattern you decided NOT to apply.", "hint": "Shows restraint and judgment. YAGNI in practice." },
+      { "question": "What pattern do you see most abused?", "hint": "Singleton (global state), or over-applied Strategy for 2 simple cases." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 pragmatic pattern usage",
+      "description": "Most design in SGN3 is solved by: interfaces + CDI injection + layer separation. Named patterns appear naturally (Repository, Strategy for validators, Observer via CDI events) but are not forced. The architecture IS the pattern."
+    }
   }
 ]

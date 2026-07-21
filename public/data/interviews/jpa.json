@@ -3,93 +3,94 @@
     "id": "interview-jpa-1",
     "topic": "jpa",
     "subtopic": "jpa-basics",
-    "difficulty": "BEGINNER",
-    "question": "What is the most important concept in Hibernate/JPA and why?",
-    "shortAnswer": "[Short answer about the foundational concept of Hibernate/JPA]",
-    "detailedAnswer": "[Detailed explanation of the core concept in Hibernate/JPA, with examples and production context]",
+    "difficulty": "INTERMEDIATE",
+    "question": "Explain the JPA entity lifecycle. What are the states and transitions?",
+    "shortAnswer": "An entity goes through: New (not managed), Managed (attached to persistence context, changes auto-tracked), Detached (was managed, now disconnected — changes not tracked), Removed (scheduled for deletion). Transitions happen via persist(), merge(), remove(), and context boundaries (transaction end, clear).",
+    "detailedAnswer": "JPA entity lifecycle states:\n\n1. **New/Transient**: created with `new`, not associated with any persistence context. Has no database row.\n\n2. **Managed**: associated with a persistence context. Changes are automatically detected (dirty checking) and synchronized to DB at flush/commit.\n\n3. **Detached**: was managed, but persistence context closed or entity was evicted. The object still has data, but changes are NOT tracked.\n\n4. **Removed**: scheduled for deletion. Will be deleted from DB at flush/commit.\n\nTransitions:\n- new → managed: `em.persist(entity)`\n- managed → detached: transaction ends, `em.detach()`, `em.clear()`\n- detached → managed: `em.merge(entity)` (returns NEW managed instance!)\n- managed → removed: `em.remove(entity)`\n\nCritical gotcha with merge(): it returns a NEW managed instance. The original detached object is NOT made managed. You must use the returned reference.",
     "keyPoints": [
-      "Foundational understanding",
-      "Practical application",
-      "Common mistakes",
-      "When to use vs alternatives"
+      "New → Managed via persist()",
+      "Managed entities auto-track changes (dirty checking)",
+      "Detached entities are NOT tracked — changes are lost unless merge()",
+      "merge() returns a NEW managed copy — use the return value",
+      "Persistence context = first-level cache (L1)"
     ],
     "redFlags": [
-      "Only textbook definition",
-      "No practical example",
-      "Cannot explain WHY it matters"
+      "Not knowing that merge() returns a different instance",
+      "Thinking detached entities still track changes",
+      "Confusing persist() with merge()",
+      "Not understanding when the persistence context ends"
     ],
     "followUps": [
-      {
-        "question": "Where have you applied this in production?",
-        "hint": "Connect to real experience."
-      },
-      {
-        "question": "What are the trade-offs?",
-        "hint": "Show that you understand both sides."
-      }
+      { "question": "What happens if you call persist() on a detached entity?", "hint": "EntityExistsException or PersistenceException — must use merge() instead." },
+      { "question": "How does dirty checking work?", "hint": "Hibernate keeps a snapshot of the entity at load time. At flush, compares current state vs snapshot." },
+      { "question": "What is the difference between em.find() and em.getReference()?", "hint": "find() loads immediately (or null). getReference() returns a proxy (lazy, throws EntityNotFoundException on access if not found)." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 Hibernate 5.3 persistence context",
+      "description": "Every EJB @Stateless method runs in a transaction with its own persistence context. Understanding lifecycle was critical for avoiding LazyInitializationException (accessing lazy collections after TX ends = detached entity)."
+    }
   },
   {
     "id": "interview-jpa-2",
     "topic": "jpa",
     "subtopic": "jpa-relations",
-    "difficulty": "INTERMEDIATE",
-    "question": "Describe a challenging problem you solved using Hibernate/JPA.",
-    "shortAnswer": "[Short answer about a real challenge involving Hibernate/JPA]",
-    "detailedAnswer": "[Detailed story: context, problem, approach, solution, result]",
+    "difficulty": "SENIOR",
+    "question": "How do you solve the N+1 query problem?",
+    "shortAnswer": "N+1 means 1 query for parents + N queries for each child collection accessed. Solutions: JOIN FETCH in JPQL, @EntityGraph, @BatchSize, or DTO projections with custom queries. I detected a case in SGN doing ~48,000 queries for an enrollment page — fixed with proper JOINs and projections, bringing it from ~16 minutes to ~2 seconds.",
+    "detailedAnswer": "The N+1 problem:\n1. Query loads N parent entities (1 query)\n2. Accessing a lazy relationship on each parent → 1 query per parent (N queries)\n3. Total: N+1 queries instead of 1-2\n\nSolutions (in order of preference):\n\n1. **JOIN FETCH**: `SELECT t FROM Turma t JOIN FETCH t.estudantes WHERE t.id = :id`\n   - Loads relationship in same query\n   - ⚠️ Cartesian product with multiple collections\n\n2. **@BatchSize(size=50)**: Hibernate loads lazy collections in batches\n   - Less queries: N/50 instead of N\n   - Global annotation on the collection\n\n3. **DTO projection**: Custom query returning only needed fields\n   - Most efficient — no entities, no dirty checking\n   - Best for read-only operations\n\n4. **Separate queries**: Two queries (parents + children by parent IDs)\n   - Avoids cartesian product of multiple JOIN FETCHes\n\nDetection: Glowroot traces showing 1000+ queries for a single page load.",
     "keyPoints": [
-      "Clear problem statement",
-      "Systematic approach",
-      "Measurable result",
-      "Lessons learned"
+      "1 + N queries instead of 1-2 optimal queries",
+      "JOIN FETCH is standard fix for single relationships",
+      "Multiple JOIN FETCHes → cartesian product (use separate queries)",
+      "DTO projections avoid the problem entirely",
+      "Detection via APM tools (Glowroot, query count per request)"
     ],
     "redFlags": [
-      "Vague problem description",
-      "No measurable outcome",
-      "Cannot explain the decision process"
+      "\"I just eager-load everything\" (causes different problems)",
+      "Not knowing what N+1 is",
+      "Cannot explain detection methods",
+      "Only knowing one solution"
     ],
     "followUps": [
-      {
-        "question": "What would you do differently today?",
-        "hint": "Shows growth and reflection."
-      },
-      {
-        "question": "How did you validate the solution?",
-        "hint": "Testing, monitoring, peer review."
-      }
+      { "question": "What happens if you JOIN FETCH two @OneToMany collections?", "hint": "Cartesian product — M×N rows. Use @BatchSize for the second or separate queries." },
+      { "question": "How did you detect the 48,000 queries?", "hint": "Glowroot APM showed query count per trace. Also visible in Hibernate statistics." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 enrollment page: 48k queries → ~10 queries",
+      "description": "Enrollment listing page was doing ~48,000 queries (N+1 on matrícula→estudante→pessoa chain for ~26,705 inscriptions). Root cause: cartesian product + N+1 in nested loops. Fixed with LATERAL JOIN, DTO projections, COUNT with pagination, and batch loading. Response time: ~16 minutes → ~2 seconds."
+    }
   },
   {
     "id": "interview-jpa-3",
     "topic": "jpa",
-    "subtopic": "jpa-basics",
-    "difficulty": "SENIOR",
-    "question": "What are common mistakes developers make with Hibernate/JPA?",
-    "shortAnswer": "[Short answer listing 3-4 common pitfalls in Hibernate/JPA]",
-    "detailedAnswer": "[Detailed explanation of each mistake, why it happens, and how to avoid it]",
+    "subtopic": "jpa-queries",
+    "difficulty": "INTERMEDIATE",
+    "question": "When do you use JPQL vs native SQL?",
+    "shortAnswer": "JPQL for standard CRUD and simple queries (portable, type-safe, refactorable). Native SQL when I need database-specific features: LATERAL JOIN, window functions, DISTINCT ON, JSONB operators, partial indexes, or when performance requires precise control over the execution plan.",
+    "detailedAnswer": "Decision framework:\n\n**Use JPQL when:**\n- Standard CRUD operations\n- Simple JOINs and WHERE clauses\n- Portability matters (unlikely in practice)\n- Hibernate can generate efficient SQL\n- Type-safe with Criteria API\n\n**Use native SQL when:**\n- PostgreSQL-specific: LATERAL JOIN, DISTINCT ON, window functions\n- Complex aggregations that Hibernate generates poorly\n- Performance-critical queries needing exact execution plan\n- Bulk UPDATE/DELETE avoiding entity loading\n- JSONB operations\n- UNION ALL (JPQL doesn't support UNION)\n\nIn SGN3, about 40% of repository queries are native SQL. The codebase prioritizes performance and PostgreSQL features over portability (we will never switch databases).\n\nKey rule: native queries return Tuple (not entities) for read operations — avoids unnecessary dirty checking overhead.",
     "keyPoints": [
-      "Identifies non-obvious mistakes",
-      "Explains root cause",
-      "Provides prevention strategies",
-      "Connects to real incidents"
+      "JPQL for standard CRUD (simple, type-safe)",
+      "Native for PG-specific features (LATERAL, window functions, DISTINCT ON)",
+      "Native for performance-critical queries",
+      "Return Tuple for read-only native queries (no dirty checking overhead)",
+      "JPQL doesn't support UNION — native required"
     ],
     "redFlags": [
-      "Only trivial/obvious mistakes",
-      "No prevention strategy",
-      "Never seen these in production"
+      "\"I always use JPQL\" (ignoring performance needs)",
+      "\"I always use native\" (missing Hibernate benefits)",
+      "Not knowing what features require native SQL",
+      "Using native SQL for simple findById operations"
     ],
     "followUps": [
-      {
-        "question": "How do you prevent these in your team?",
-        "hint": "Code review, linting, testing strategies, documentation."
-      },
-      {
-        "question": "Which mistake cost you the most time to debug?",
-        "hint": "Specific story with resolution."
-      }
+      { "question": "What is the risk of native queries during a database migration?", "hint": "Native SQL may use syntax specific to one version. JPQL is more portable across PG versions." },
+      { "question": "How do you test native queries?", "hint": "Against real PostgreSQL (not H2). Testcontainers or shared test DB." }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3: 40% native SQL in repositories",
+      "description": "Pragmatic mix: JPQL for simple entity operations, native SQL for complex reporting queries, LATERAL JOINs (pessoa→colaborador resolution), UNION ALL (produto_padronizado + produto_customizado), and bulk operations. Always return Tuple for read-only."
+    }
   }
 ]

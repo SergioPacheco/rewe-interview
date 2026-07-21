@@ -1,0 +1,114 @@
+[
+  {
+    "id": "interview-mindset-1",
+    "topic": "mindset",
+    "subtopic": "ms-thinking",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you handle disagreements with team members about technical decisions?",
+    "shortAnswer": "I separate the decision from the person. I present data, ask questions to understand their perspective, and propose a time-boxed experiment if we cannot agree. In SGN, when we disagreed on caching strategy, I built a prototype of both approaches and measured — data ended the debate.",
+    "detailedAnswer": "Technical disagreements are healthy — they mean people care. The problem is when they become personal or block progress.\n\nMy approach:\n1. Listen fully before responding (not just waiting for my turn)\n2. Ask \"what problem are you solving?\" — often we agree on the problem but differ on the solution\n3. Identify the reversibility — if the decision is easily reversible, just pick one and move on\n4. For irreversible decisions, propose a time-boxed spike or prototype\n5. If still stuck, defer to whoever will maintain the code long-term\n\nThe key insight: being right matters less than shipping. A good-enough solution today beats a perfect solution debated for a week.",
+    "keyPoints": [
+      "Separate the person from the idea",
+      "Data over opinions — prototype and measure",
+      "Consider reversibility of the decision",
+      "Defer to maintainer when equal arguments",
+      "Being right matters less than making progress"
+    ],
+    "redFlags": [
+      "\"I just do what they say\" — shows no technical ownership",
+      "Escalating every disagreement to management",
+      "Never compromising — always insisting on your way",
+      "Avoiding conflict entirely — silent resentment"
+    ],
+    "followUps": [
+      {
+        "question": "What if your manager disagrees with you?",
+        "hint": "Show that you voice your concerns clearly but commit once a decision is made."
+      },
+      {
+        "question": "Tell me about a time you were wrong in a technical decision.",
+        "hint": "Shows self-awareness and learning ability."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Caching strategy debate in SGN3",
+      "description": "Disagreed with colleague about Infinispan vs application-level cache. Built both prototypes in 2 hours, measured hit rates. Application cache won for our use case. No hard feelings."
+    }
+  },
+  {
+    "id": "interview-mindset-2",
+    "topic": "mindset",
+    "subtopic": "ms-answering",
+    "difficulty": "SENIOR",
+    "question": "How do you prioritize when everything is urgent?",
+    "shortAnswer": "I use impact×reversibility as the filter. What breaks production gets fixed now. What blocks other people is next. What only affects me waits. I communicate priorities transparently — stakeholders know what is queued and why.",
+    "detailedAnswer": "When everything feels urgent, the real skill is distinguishing between urgent and important.\n\nMy framework:\n1. Production incidents → immediate (users are affected NOW)\n2. Blockers for teammates → same day (multiplier effect)\n3. Deadline-driven work → based on actual deadline, not perceived urgency\n4. Everything else → batched into focus blocks\n\nThe mistake I see: treating every Slack message as P0. If everything is urgent, nothing is. I protect focus time and communicate clearly: \"I see your request. I will address it after X, expected by Y.\"",
+    "keyPoints": [
+      "Impact × reversibility as prioritization filter",
+      "Production incidents always first",
+      "Unblock teammates before solo work",
+      "Communicate queue transparently",
+      "Protect focus time — not everything is P0"
+    ],
+    "redFlags": [
+      "\"I just work harder\" — shows no strategic thinking",
+      "Cannot give a concrete framework",
+      "Blaming others for unclear priorities",
+      "Never saying no or pushing back on scope"
+    ],
+    "followUps": [
+      {
+        "question": "What do you do when your manager adds something urgent to an already full sprint?",
+        "hint": "Trade-off: something else must move. Make the trade-off visible."
+      },
+      {
+        "question": "How do you handle interruptions during deep work?",
+        "hint": "Batch interruptions, use async communication, set expectations."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Balancing production incidents with project delivery",
+      "description": "Managed a week where 3 production bugs hit while I was implementing a major feature. Communicated clearly to PM which deadlines would slip and why. Fixed critical bugs first, delivered feature 2 days late with full quality."
+    }
+  },
+  {
+    "id": "interview-mindset-3",
+    "topic": "mindset",
+    "subtopic": "ms-thinking",
+    "difficulty": "SENIOR",
+    "question": "What does \"senior\" mean to you?",
+    "shortAnswer": "A senior solves ambiguous problems independently, multiplies the team (code reviews, mentoring, documentation), owns decisions and their consequences, and knows when NOT to build something. Seniority is about judgment, not years.",
+    "detailedAnswer": "Seniority is not about knowing more APIs or having more years of experience. It is about judgment.\n\nA senior developer:\n- Navigates ambiguity without asking for step-by-step instructions\n- Makes the team better (reviews, mentoring, patterns, documentation)\n- Owns outcomes, not just code (\"the feature works\" vs \"the business problem is solved\")\n- Knows when to say \"we should NOT build this\" — the most valuable code is the code not written\n- Communicates proactively — bad news early, trade-offs explicitly\n- Makes reversible decisions quickly and irreversible decisions carefully\n\nWhat it is NOT:\n- Knowing every framework\n- Working alone without help\n- Being the fastest coder\n- Having 10+ years of experience",
+    "keyPoints": [
+      "Judgment over knowledge",
+      "Multiplier effect on the team",
+      "Owns outcomes, not just code",
+      "Knows when NOT to build",
+      "Communicates trade-offs proactively",
+      "Navigates ambiguity independently"
+    ],
+    "redFlags": [
+      "\"A senior knows all the frameworks\"",
+      "\"A senior works alone without needing help\"",
+      "\"It is about years of experience\"",
+      "Cannot articulate how they help their team beyond writing code"
+    ],
+    "followUps": [
+      {
+        "question": "How do you multiply your team?",
+        "hint": "Code reviews, knowledge sharing, documentation, pairing, improving processes."
+      },
+      {
+        "question": "Give an example of something you decided NOT to build.",
+        "hint": "Shows restraint and judgment — YAGNI in practice."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Refused to build a custom report engine",
+      "description": "Stakeholder wanted a configurable report system. Showed that Jasper + 3 parameterized templates solved 90% of cases. Saved 2 months of development. Sometimes the best code is the code you do not write."
+    }
+  }
+]

@@ -1,0 +1,105 @@
+[
+  {
+    "id": "interview-rewe-1",
+    "topic": "rewe",
+    "subtopic": "rewe-job",
+    "difficulty": "INTERMEDIATE",
+    "question": "Why REWE Digital specifically?",
+    "shortAnswer": "Three things attracted me: the NEO modernization (migrating a massive legacy system to microservices — I have done exactly this at scale), the TRAB team solving real logistics problems for 170,000 drivers, and the engineering culture that invests in platforms like UNIFY and event-driven architecture.",
+    "detailedAnswer": "I researched REWE Digital specifically, not just applied broadly.\n\nWhat attracted me:\n1. **NEO Program** — migrating from monolith to microservices is exactly what I did with SGN (26,705 inscriptions, 48k queries). I know the pain of legacy, the discipline of strangler pattern, and the patience required.\n2. **TRAB domain** — delivery logistics is a beautiful problem: real-time, high-concurrency, event-driven. The challenges (route optimization, driver availability, order fulfillment) are technically interesting.\n3. **Engineering investment** — UNIFY design system, Kafka as backbone, Kotlin adoption, team autonomy. These signal a company that invests in developer experience.\n4. **Scale** — 170,000 drivers, millions of deliveries. My biggest scale was 26,705 concurrent inscriptions. I want to operate at the next level.",
+    "keyPoints": [
+      "Specific knowledge about NEO modernization",
+      "Connection between my experience and their challenges",
+      "Understanding of TRAB domain (drivers, logistics)",
+      "Appreciation for engineering culture (UNIFY, Kafka, Kotlin)",
+      "Honest about wanting to grow in scale"
+    ],
+    "redFlags": [
+      "Generic answer that could apply to any company",
+      "\"I like the salary/benefits\"",
+      "No knowledge of what REWE Digital actually does",
+      "Confusing REWE Digital with REWE retail stores"
+    ],
+    "followUps": [
+      {
+        "question": "What do you know about the TRAB team specifically?",
+        "hint": "Tour planning, driver app, delivery windows, real-time tracking."
+      },
+      {
+        "question": "How does your experience prepare you for our scale?",
+        "hint": "Be honest about current scale, show readiness to learn."
+      }
+    ],
+    "experienceLevel": "INFERENCE"
+  },
+  {
+    "id": "interview-rewe-2",
+    "topic": "rewe",
+    "subtopic": "rewe-trab",
+    "difficulty": "SENIOR",
+    "question": "What challenges do you expect in moving from a monolith to microservices?",
+    "shortAnswer": "Distributed transactions (eventual consistency is harder than it looks), service boundaries that match the domain (wrong boundaries create distributed monoliths), operational complexity (observability, deployment, debugging across services), and the cultural shift from \"my module\" to \"my service with SLOs.\"",
+    "detailedAnswer": "Having done a partial migration in SGN (monolith + senai-services satellite), I know the real challenges are not technical — they are organizational and operational.\n\nTechnical challenges:\n- Data consistency across service boundaries (saga vs 2PC vs eventual)\n- Finding the right service boundaries (DDD bounded contexts)\n- Network reliability (timeouts, retries, circuit breakers)\n- Testing distributed systems (contract tests, chaos engineering)\n\nOperational challenges:\n- Observability (distributed tracing, correlation IDs, centralized logging)\n- Deployment complexity (independent deploys vs coordinated releases)\n- Debugging production issues across service boundaries\n\nOrganizational challenges:\n- Team ownership boundaries\n- API contracts and versioning between teams\n- The temptation to \"just call the other service\" creating coupling",
+    "keyPoints": [
+      "Eventual consistency is harder than ACID",
+      "Wrong boundaries create distributed monoliths",
+      "Operational complexity (observability, debugging)",
+      "Cultural shift is harder than technical shift",
+      "Network is not reliable — design for failure"
+    ],
+    "redFlags": [
+      "\"Microservices solve everything\"",
+      "No mention of trade-offs or challenges",
+      "Never done a migration, only read about it",
+      "\"Just use Kafka\" as answer to all consistency problems"
+    ],
+    "followUps": [
+      {
+        "question": "How would you decide where to draw service boundaries?",
+        "hint": "DDD bounded contexts, team ownership, data ownership, deployment independence."
+      },
+      {
+        "question": "What would you NOT extract as a microservice?",
+        "hint": "Shows judgment — not everything needs to be a service."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 + senai-services split",
+      "description": "Extracted integration logic (Moodle, LDAP, external APIs) into senai-services while keeping core domain in SGN3 monolith. Learned that wrong boundaries create more problems than they solve."
+    }
+  },
+  {
+    "id": "interview-rewe-3",
+    "topic": "rewe",
+    "subtopic": "rewe-job",
+    "difficulty": "BEGINNER",
+    "question": "How would you introduce yourself in the first 5 minutes of the interview?",
+    "shortAnswer": "I am a fullstack developer with 7 years of experience, currently at SENAI Santa Catarina building the SGN education management system. I specialize in Java/Jakarta EE backend with PostgreSQL, and I am expanding into Spring Boot, Kotlin, and event-driven architecture — which is exactly why REWE TRAB interests me.",
+    "detailedAnswer": "30-second version:\n\"I am Sergio, a fullstack developer based in Brazil with 7 years of experience. I currently build and maintain SGN, an education management system serving all SENAI schools in Santa Catarina — handling enrollment, grades, scheduling for thousands of students. My core stack is Java, PostgreSQL, and Jakarta EE. I am actively learning Spring Boot, Kotlin, and Kafka because I want to work with event-driven systems at scale — which is what drew me to REWE Digital and the TRAB team.\"\n\n60-second version adds:\n\"My biggest technical achievement was refactoring the enrollment system to handle 26,705 simultaneous inscriptions — which required rethinking our query strategy, adding proper indexing, and implementing async processing via JMS. I brought response times from 48 seconds to under 2 seconds.\"\n\nKey principles:\n- Specific numbers over vague claims\n- Connect past to desired future\n- Show awareness of what REWE needs",
+    "keyPoints": [
+      "Keep it under 90 seconds",
+      "Lead with role and context, not biography",
+      "Include one concrete number/achievement",
+      "Connect your experience to THEIR needs",
+      "End with why you are here (not why you left)"
+    ],
+    "redFlags": [
+      "Starting with childhood or education history",
+      "Listing every technology ever used",
+      "Talking for 5+ minutes without pause",
+      "Not mentioning anything specific to REWE"
+    ],
+    "followUps": [
+      {
+        "question": "Tell me more about the 26,705 inscriptions problem.",
+        "hint": "Be ready to deep-dive into any number you mention."
+      },
+      {
+        "question": "Why are you leaving your current role?",
+        "hint": "Growth-oriented answer, never negative about current employer."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  }
+]

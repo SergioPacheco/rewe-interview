@@ -40,11 +40,12 @@ export class InterviewService {
 
   /**
    * Load interview questions for a topic.
-   * No-op if already attempted (success or 404) for the same topic.
+   * Caches result per topic (success or failure) to prevent refetch loops.
    */
   async loadForTopic(topicId: string): Promise<void> {
-    if (this._loadedTopics.has(topicId)) {
-      return; // Already attempted — don't refetch
+    // Already loaded for this exact topic — skip
+    if (this._currentTopic() === topicId && this._loadedTopics.has(topicId)) {
+      return;
     }
 
     this._loading.set(true);

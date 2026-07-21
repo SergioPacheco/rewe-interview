@@ -1,0 +1,110 @@
+[
+  {
+    "id": "interview-solid-1",
+    "topic": "solid",
+    "subtopic": "solid-isp",
+    "difficulty": "INTERMEDIATE",
+    "question": "Explain the Open/Closed Principle with a real example.",
+    "shortAnswer": "Open for extension, closed for modification. In SGN, adding a new notification channel (WhatsApp) required only a new class implementing NotificationSender — zero changes to existing code. The if/else version required modifying the core notification method every time.",
+    "detailedAnswer": "Open/Closed Principle: software entities should be open for extension but closed for modification.\n\nIn practice, this means you can add new behavior without changing existing, tested code. The mechanism is polymorphism — interfaces, abstract classes, strategy pattern.\n\nReal example from SGN:\nBefore: NotificationService had a switch/case with EMAIL, SMS, PUSH. Adding WhatsApp meant modifying a tested method.\nAfter: NotificationSender interface with implementations. Adding WhatsApp = new class + CDI registration. Zero modifications to existing code.\n\nWhen NOT to apply:\n- Simple code with 2-3 cases that rarely change\n- When abstraction adds complexity without real extension points\n- YAGNI — do not preemptively abstract for hypothetical extensions",
+    "keyPoints": [
+      "Open for extension = new behavior via new code",
+      "Closed for modification = existing code untouched",
+      "Mechanism: interfaces + polymorphism",
+      "Know when NOT to apply (YAGNI)",
+      "Real benefit: tested code stays tested"
+    ],
+    "redFlags": [
+      "Only knowing the definition, no real example",
+      "Over-engineering everything \"just in case\"",
+      "Confusing OCP with \"never change code\"",
+      "Cannot name when it is NOT appropriate"
+    ],
+    "followUps": [
+      {
+        "question": "When would applying OCP be over-engineering?",
+        "hint": "Simple switch with 2 stable cases. Abstraction cost > benefit."
+      },
+      {
+        "question": "How does OCP relate to the Strategy pattern?",
+        "hint": "Strategy is the most common mechanism to achieve OCP."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN notification channels",
+      "description": "Refactored notification from switch/case to Strategy pattern. Adding WhatsApp required only a new implementation class — zero changes to existing notification logic."
+    }
+  },
+  {
+    "id": "interview-solid-2",
+    "topic": "solid",
+    "subtopic": "solid-lsp",
+    "difficulty": "SENIOR",
+    "question": "What is the Liskov Substitution Principle and why does it matter?",
+    "shortAnswer": "Any subtype must be usable wherever the parent type is expected without breaking correctness. It matters because violations create bugs that only appear at runtime — the compiler cannot catch them. Classic violation: Square extending Rectangle breaks setWidth/setHeight expectations.",
+    "detailedAnswer": "LSP says: if S is a subtype of T, objects of type T can be replaced with objects of type S without altering the correctness of the program.\n\nWhy it matters: when you violate LSP, polymorphism becomes dangerous. Code that works with the parent type breaks silently with certain subtypes.\n\nClassic violations:\n- Square extends Rectangle (setting width changes height — breaks caller expectations)\n- ReadOnlyList extends List (add() throws UnsupportedOperationException)\n- Any override that throws where parent does not, or ignores parent contract\n\nIn practice, LSP means:\n- Subtypes must honor the contract (preconditions, postconditions, invariants)\n- Throwing unexpected exceptions = violation\n- Silently ignoring operations = violation\n- Strengthening preconditions = violation (accepting less than parent)\n- Weakening postconditions = violation (promising less than parent)",
+    "keyPoints": [
+      "Substitutability without breaking correctness",
+      "Violations create runtime bugs invisible to compiler",
+      "Square/Rectangle is the classic example",
+      "Strengthening preconditions = violation",
+      "Design by contract: pre/postconditions + invariants"
+    ],
+    "redFlags": [
+      "Cannot explain beyond the textbook definition",
+      "No practical example of a violation",
+      "\"It means subtypes inherit from parent\" (circular)",
+      "Never mentions behavioral contracts"
+    ],
+    "followUps": [
+      {
+        "question": "Give a real LSP violation you have seen or fixed.",
+        "hint": "Think about exceptions thrown in overrides, or methods that silently do nothing."
+      },
+      {
+        "question": "How does LSP relate to composition over inheritance?",
+        "hint": "LSP violations are a signal that inheritance is wrong — use composition instead."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-solid-3",
+    "topic": "solid",
+    "subtopic": "solid-srp",
+    "difficulty": "SENIOR",
+    "question": "How do SOLID principles work together in a real system?",
+    "shortAnswer": "They are not independent rules — they reinforce each other. SRP creates focused classes. OCP makes them extensible via interfaces. LSP ensures subtypes are safe. ISP keeps interfaces small. DIP wires everything through abstractions. Together, they produce code that is testable, extensible, and maintainable.",
+    "detailedAnswer": "SOLID principles are a cohesive set, not a checklist:\n\n1. SRP creates small, focused classes → easier to understand and test\n2. OCP says extend via new classes, not modification → requires interfaces (ISP) and polymorphism (LSP)\n3. LSP ensures substitutability → makes OCP safe (new implementations do not break callers)\n4. ISP keeps interfaces small → clients depend only on what they use → easier DIP\n5. DIP inverts dependencies toward abstractions → enables all of the above\n\nIn SGN, the report module demonstrates all five:\n- SRP: DataSource, Formatter, Exporter are separate concerns\n- OCP: new formats added without modifying existing code\n- LSP: every Exporter is safely substitutable\n- ISP: Exporter interface has only export() — not also format()\n- DIP: ReportGenerator depends on interfaces, not concrete classes",
+    "keyPoints": [
+      "SOLID principles reinforce each other",
+      "SRP enables testability",
+      "OCP + LSP = safe polymorphism",
+      "ISP prevents fat interfaces",
+      "DIP is the glue that enables the rest",
+      "Over-applying any principle is also harmful"
+    ],
+    "redFlags": [
+      "Treating each principle in isolation",
+      "\"I always apply all SOLID principles\" (unrealistic)",
+      "Cannot give a concrete example connecting 2+ principles",
+      "Dogmatic application without pragmatism"
+    ],
+    "followUps": [
+      {
+        "question": "When have you intentionally violated a SOLID principle?",
+        "hint": "Shows pragmatism — sometimes a simple solution is better than a \"clean\" one."
+      },
+      {
+        "question": "Which principle is most often violated in legacy code?",
+        "hint": "Usually SRP (god classes) or DIP (concrete dependencies everywhere)."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN report module applying all 5 principles",
+      "description": "DataSource/Formatter/Exporter separation demonstrates SRP, OCP (new formats without modification), LSP (all exporters substitutable), ISP (minimal interfaces), DIP (constructor injection of abstractions)."
+    }
+  }
+]

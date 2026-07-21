@@ -2,104 +2,246 @@
   {
     "id": "interview-portfolio-1",
     "topic": "portfolio",
-    "subtopic": "portfolio-sgn",
-    "difficulty": "INTERMEDIATE",
-    "question": "Walk me through the architecture of a system you built.",
-    "shortAnswer": "SGN3: monolith with satellite. Core (Java/WildFly/Jakarta EE) handles all business logic with JSF UI. Satellite (senai-services) exposes REST APIs for external consumers (E-commerce, mobile app, student portal). Async via ActiveMQ Artemis. PostgreSQL for persistence across 8 schemas.",
-    "detailedAnswer": "SGN3 Architecture:\n\n```\n[JSF/PrimeFaces UI] → [WebBean] → [Service] → [Business] → [Repository] → [PostgreSQL]\n                                                    ↓\n                                              [JMS/Artemis]\n                                                    ↓\n                                               [MDB consumers]\n                                                    ↓\n                                    [External: Moodle, LDAP, Firebase, VTEX]\n\n[E-commerce] → [senai-services REST API] → [Same PostgreSQL]\n[Student Portal] ↗\n[Mobile App] ↗\n```\n\nKey decisions:\n- **Monolith**: Team is integrated, domain is coupled (enrollment↔scheduling↔financial). Transactions are local.\n- **Satellite for integrations**: senai-services isolates external-facing APIs and heavy integration processing.\n- **JMS for async**: 80 queues decouple time-sensitive UI from slow operations (Moodle, email, certification).\n- **Schemas as boundaries**: 8 schemas approximate bounded contexts without microservice overhead.\n\nTrade-offs:\n- Monolith: single deploy, shared DB (fast JOINs) but coupled deploy risk\n- JMS over sync: durability and retry, but more complexity",
+    "subtopic": "portfolio-overview",
+    "difficulty": "BEGINNER",
+    "question": "What problem does SinapiPRO address, and why did you build it?",
+    "shortAnswer": "SinapiPRO is a personal, open-source construction-management ERP for areas such as budgets, measurements, contracts, procurement, schedules, costs and suppliers. I built it both to model a domain I know from construction work and to apply a modern full-stack stack: Spring Boot and PostgreSQL on the backend, with Angular, TypeScript and PrimeNG on the frontend.",
+    "detailedAnswer": "The project has two goals. The product goal is to bring related construction workflows into a coherent system rather than a set of isolated CRUD screens. The engineering goal is to practice modern Java backend and Angular integration in a domain with real business vocabulary and connected processes.\n\nThe backend exposes REST APIs over PostgreSQL-backed business modules. The frontend contains routed business screens, forms, CRUD flows and reusable services using Angular, TypeScript and PrimeNG. The project is also a place to explore modular boundaries, authentication and authorization, Docker-based environments and separation between domain, application and infrastructure concerns.\n\nI present it as an ongoing personal project. That makes it valid hands-on evidence, but not evidence that I have operated the same stack at company production scale. I avoid quoting module counts, test coverage, users or throughput unless the current repository can demonstrate them.",
     "keyPoints": [
-      "Monolith + satellite (not microservices — justified for team/domain)",
-      "Layered: WebBean→Service→Business→Repository",
-      "JMS for async (80 queues, durability, retry)",
-      "Schemas as logical boundaries",
-      "REST API for external consumers via satellite"
+      "Explains the business domain before the stack",
+      "Connects the domain to prior construction experience",
+      "Names verified backend and frontend responsibilities",
+      "Presents the project as ongoing and open source",
+      "Does not convert project work into production-scale claims"
     ],
     "redFlags": [
-      "Cannot explain WHY monolith (just \"it's what we have\")",
-      "No mention of async/messaging strategy",
-      "Cannot draw the architecture from memory",
-      "No understanding of trade-offs in the decisions"
+      "Describes the project only as a technology showcase",
+      "Claims users, scale or completeness without evidence",
+      "Calls every CRUD area a separate bounded context",
+      "Presents exploration as production hardening"
     ],
     "followUps": [
       {
-        "question": "Why didn't you go with microservices?",
-        "hint": "Small team, coupled domain, shared transactions. Microservices would add distributed complexity without benefit."
+        "question": "Which business workflow best demonstrates that this is more than unrelated CRUD screens?"
       },
       {
-        "question": "What would you change if starting from scratch today?",
-        "hint": "Honest answer — maybe Spring Boot for developer experience, but same monolith decision for the domain."
+        "question": "Which part is most mature and which is still exploratory?"
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "SinapiPRO personal open-source project",
+      "description": "Designed and developed a construction-management ERP to apply Spring Boot, PostgreSQL, Angular, TypeScript and PrimeNG in a domain with connected business workflows."
+    }
   },
   {
     "id": "interview-portfolio-2",
     "topic": "portfolio",
-    "subtopic": "portfolio-rewe",
+    "subtopic": "portfolio-backend",
     "difficulty": "INTERMEDIATE",
-    "question": "Tell me about a project you built specifically to learn new technologies.",
-    "shortAnswer": "This REWE Interview Prep site. Angular 19, signals, standalone components, CDK, lazy loading — built specifically to demonstrate Angular skills for this position. It is not a toy: 21 topics, 700+ exercises, progressive learning structure, real architectural decisions. Every technique used is deliberate and can be explained.",
-    "detailedAnswer": "REWE Interview Prep (this project):\n\n**Why:**\n- Position requires Angular (my background is Java/Jakarta EE)\n- Decided to SHOW competence rather than just claim it\n- Built a real application, not a tutorial follow-along\n\n**Angular 19 techniques demonstrated:**\n- Signals for all state management (zero BehaviorSubject)\n- Standalone components (zero NgModules)\n- inject() function-based DI\n- @if/@for/@switch control flow\n- Lazy loading via loadComponent\n- OnPush change detection\n\n**Architecture:**\n- Feature-based (core/shared/features)\n- Each feature lazy-loaded\n- Services as single source of truth\n- Models as pure interfaces\n\n**Content:**\n- 21 topics, 700+ exercises\n- Learn/Practice/Interview tabs (clear separation of purpose)\n- Honest experience classification\n\nThis proves: I learn quickly, I build real things, and I make architectural decisions with intent.",
+    "question": "How do you structure the SinapiPRO backend, and how do you keep business modules from becoming tightly coupled?",
+    "shortAnswer": "SinapiPRO is one modular Spring Boot application organized in business slices such as budget, measurement, schedule, procurement and finance. Each slice separates API, application and domain concerns, while shared packages hold cross-cutting capabilities such as security and observability. REST adapters and PostgreSQL persistence sit at the boundaries. ArchUnit tests provide executable dependency evidence; folder names alone would not prove modularity.",
+    "detailedAnswer": "The repository exposes vertical business slices rather than horizontal packages containing every controller or repository. For an architecture walkthrough, I select one implemented slice—for example measurement—and trace a request from its REST endpoint through the application use case and domain rule to persistence. I then show an actual dependency on a shared capability or another slice and explain why that direction is allowed.\n\nThe project is a modular application, not a collection of microservices. That keeps local development, transactions and deployment simpler while still allowing boundaries to be practiced. The repository includes ArchUnit tests, which are better evidence than package naming, but their exact rules and any exceptions should be shown from the current build. Cross-slice access should use an intentional contract rather than arbitrary repository access.\n\nBecause the project is ongoing, I would acknowledge a real boundary violation if one exists and name the next improvement. The strongest answer demonstrates one path in code and one enforced rule instead of describing an ideal architecture diagram.",
     "keyPoints": [
-      "Built to demonstrate skills, not just claim them",
-      "Real application with architectural decisions",
-      "Angular 19 signals, standalone, inject(), lazy loading",
-      "700+ exercises across 21 topics",
-      "Every technique deliberate and explainable"
+      "Organizes around business capabilities",
+      "Explains one end-to-end request path",
+      "Uses explicit contracts across module boundaries",
+      "Justifies a modular application instead of microservices",
+      "Distinguishes intended architecture from current code evidence"
     ],
     "redFlags": [
-      "\"I followed a tutorial\" (not original work)",
-      "Cannot explain architectural decisions",
-      "No real complexity (just a todo app)",
-      "Technology choices cannot be justified"
+      "Claims clean architecture based only on folder names",
+      "Calls the modules microservices despite one deployment",
+      "Cannot trace a request from API to persistence",
+      "Hides current boundary violations"
     ],
     "followUps": [
       {
-        "question": "What was the hardest part of learning Angular coming from Java?",
-        "hint": "Reactive thinking (signals/observables), template syntax, TypeScript quirks vs Java."
+        "question": "Show one cross-module dependency and explain why it points in that direction."
       },
       {
-        "question": "What would you do differently if starting this project over?",
-        "hint": "Honest reflection — maybe different state management, better content strategy upfront."
+        "question": "Which transaction currently spans more than one business capability?"
+      },
+      {
+        "question": "What evidence would justify extracting a service later?"
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
     "id": "interview-portfolio-3",
     "topic": "portfolio",
-    "subtopic": "portfolio-sgn",
-    "difficulty": "SENIOR",
-    "question": "What was the most complex integration you built?",
-    "shortAnswer": "The Moodle integration in SGN3. Bidirectional: SGN creates virtual classrooms when turmas start, syncs enrollments, and retrieves grades. Challenges: Moodle API is slow (60s timeouts), unreliable (needs retry), and stateful (operations must be idempotent). Built with MicroProfile RestClient + JMS for async processing.",
-    "detailedAnswer": "Moodle integration complexity:\n\n**What it does:**\n- Creates Moodle courses when a turma (class) starts\n- Enrolls students when matriculated\n- Retrieves grades for academic records\n- Syncs instructor assignments\n\n**Challenges:**\n1. Moodle API is SLOW (legitimate 60s responses for batch operations)\n2. Unreliable (occasional 502/503, needs retry)\n3. Must be idempotent (retry after timeout shouldn't duplicate)\n4. Cannot block the web request (user shouldn't wait 60s)\n\n**Architecture:**\n1. Web action triggers JMS message (immediate response to user)\n2. MDB processes asynchronously (Moodle calls happen here)\n3. Retry via Artemis redelivery (max-delivery-attempts=5)\n4. Idempotency: check if Moodle course already exists before creating\n5. DLQ for permanent failures (manual review)\n6. Timeout: 5s connect, 60s read (Moodle is legitimately slow)\n\n**Key learnings:**\n- Never call external APIs inside a database transaction (holds connection)\n- Always have a fallback for when the external system is down\n- Log business IDs for traceability (id_turma, id_matricula)",
+    "subtopic": "portfolio-frontend",
+    "difficulty": "INTERMEDIATE",
+    "question": "How is the Angular frontend organized, and where do you place state and business rules?",
+    "shortAnswer": "The repository uses standalone Angular 19 pages organized around routed business features, with a core area for guards, interceptors and services. PrimeNG handles UI composition, Signals support synchronously consumed view state, and typed services own API calls. I keep authorization and business invariants on the backend, while form and presentation behavior stays near the feature. Angular 19 itself is now upgrade debt.",
+    "detailedAnswer": "I explain the frontend through one implemented page: route activation, data loading through a service, local or feature state, form validation, API submission, server-error mapping and user feedback. The repository structure provides concrete evidence for standalone components, routed pages, core guards/interceptors/services, Signals, PrimeNG and Cypress; I would open one flow rather than simply list those technologies.\n\nNot every rule belongs in the same place. Client validation gives fast feedback, but authorization and business invariants remain enforced by the backend. Data-transfer types should match API contracts deliberately, and mapping is useful when the view model differs from the transport shape. A route guard improves navigation behavior but cannot protect a server resource.\n\nFor state, I choose based on scope and behavior: component state for local interaction, a feature service for state shared within a workflow, RxJS for asynchronous event composition, and Signals for synchronously consumed UI state. The current Angular 19 version is outside official support, so an honest walkthrough includes the upgrade and regression-testing plan.",
     "keyPoints": [
-      "Async via JMS (user doesn't wait for Moodle)",
-      "Retry via Artemis redelivery (max 5 attempts)",
-      "Idempotent (check before create)",
-      "DLQ for permanent failures",
-      "60s timeout (Moodle is legitimately slow)"
+      "Walks through a real routed feature",
+      "Keeps server authority over security and business invariants",
+      "Uses typed services at the API boundary",
+      "Keeps state ownership narrow and explicit",
+      "Chooses Signals and RxJS by behavior, not fashion"
     ],
     "redFlags": [
-      "Synchronous call to slow external API in web request",
-      "No retry strategy",
-      "No idempotency (retries cause duplicates)",
-      "No timeout configured"
+      "Moves business authorization into route guards or UI checks",
+      "Uses a global store for every piece of state",
+      "Cannot explain loading, error and empty states",
+      "Treats PrimeNG components as the application architecture"
     ],
     "followUps": [
       {
-        "question": "What happens when Moodle is down for an hour?",
-        "hint": "Messages accumulate in queue. When Moodle returns, they process. DLQ catches permanent errors."
+        "question": "Show how one server validation error reaches the correct form control."
       },
       {
-        "question": "How do you handle partial failures (student enrolled in SGN but not in Moodle)?",
-        "hint": "Retry via JMS. If all retries fail → DLQ → manual reconciliation. SGN is source of truth."
+        "question": "Which state survives navigation, and why?"
+      },
+      {
+        "question": "Where would you draw the boundary between a shared component and a feature component?"
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "interview-portfolio-4",
+    "topic": "portfolio",
+    "subtopic": "portfolio-infra",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you run and package SinapiPRO, and what would still be required before a production deployment?",
+    "shortAnswer": "The repository provides Docker Compose environments, a Jib image build, Kubernetes manifests, a Helm chart and CI workflows. Those are real packaging and deployment artifacts, but they do not prove production operation. Before a production launch I would verify secrets, migrations, backup and restore, TLS, least privilege, health and resources, observability, scanning, rollout and rollback, data retention and an owned support model.",
+    "detailedAnswer": "I can demonstrate the repository's current artifacts: Compose starts the application and its development dependencies; Jib builds the backend image; Helm and Kubernetes directories describe a target deployment; and GitHub Actions contains automation. I would run the documented build, inspect pinned versions and show how configuration stays outside the image. An artifact that has never survived a real rollout remains design evidence, not operational evidence.\n\nFor production readiness, I would review identity and authorization, secret delivery and rotation, database migration and rollback behavior, backup and restore tests, network exposure, TLS, dependency and image scanning, logs, metrics, traces and alert ownership. Health checks need to represent real readiness; resource requests and limits need measurement; and shutdown must be tested with in-flight work.\n\nMy classification is therefore mixed: hands-on Docker, Compose, Jib, manifest and Helm work is transferable experience, while operating SinapiPRO on Kubernetes is not claimed. Repository history proves that the artifacts exist; deployment history and operational evidence would be required to claim production use.",
+    "keyPoints": [
+      "Explains what Docker currently proves",
+      "Separates packaging from production operations",
+      "Includes data recovery, security and observability",
+      "Verifies versions and manifests before quoting them",
+      "Does not claim Kubernetes operation without evidence"
+    ],
+    "redFlags": [
+      "Says containerized means production-ready",
+      "Ignores database migration and restore testing",
+      "Claims Kubernetes because a manifest or tutorial exists",
+      "Has health checks but no definition of readiness"
+    ],
+    "followUps": [
+      {
+        "question": "How would you test that a database restore actually works?"
+      },
+      {
+        "question": "Which signals would determine whether a rollout should continue?"
+      },
+      {
+        "question": "What state must survive container replacement?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 ↔ Moodle bidirectional integration",
-      "description": "Built and maintain full integration: course creation, enrollment sync, grade retrieval. MicroProfile RestClient + JMS async + retry + idempotency + DLQ. Handles Moodle's 60s response times and unreliability gracefully."
+      "title": "Container and deployment artifacts in SinapiPRO",
+      "description": "The repository contains Compose environments, a Jib build, Kubernetes manifests, a Helm chart and CI workflows. This is hands-on project evidence, not evidence of operating the system in production."
     }
+  },
+  {
+    "id": "interview-portfolio-5",
+    "topic": "portfolio",
+    "subtopic": "portfolio-quality",
+    "difficulty": "SENIOR",
+    "question": "What repository evidence demonstrates SinapiPRO's quality, and what does it still not prove?",
+    "shortAnswer": "The repository contains JUnit tests, PostgreSQL integration tests with Testcontainers, ArchUnit rules, Cypress end-to-end tests and GitHub Actions workflows. I would run the current commit and show one meaningful example at each risk boundary rather than quote a stale count. These artifacts prove executable intent and repeatability; they do not prove production reliability, adequate coverage of every workflow or a currently green build unless I show the run.",
+    "detailedAnswer": "The evidence is inspectable. Backend tests can exercise business rules, API behavior, authorization and PostgreSQL-specific persistence through Testcontainers and production migrations. ArchUnit rules check selected dependency boundaries. The Angular side includes Cypress flows, while GitHub Actions makes the build and checks repeatable. In an interview I would open one business test, one integration test, one architecture rule and one workflow result from the exact commit being discussed.\n\nEach artifact has limits. A containerized database improves fidelity but does not guarantee representative volume or concurrency. An architecture test enforces only the rules encoded in it. An end-to-end suite can miss important paths and become flaky. A workflow file is not evidence of a passing run, and a coverage percentage is not a risk model.\n\nThe honest conclusion names the largest current gap and the next test that would reduce it. I would verify the live CI result before the interview, avoid stale test counts, and distinguish project quality evidence from production SLO or incident evidence that SinapiPRO does not have.",
+    "keyPoints": [
+      "Names Testcontainers, ArchUnit, Cypress and CI artifacts that can be inspected",
+      "Matches test type to risk",
+      "Uses PostgreSQL for database-specific behavior",
+      "Tests user-visible frontend behavior",
+      "Names current gaps and avoids unsupported metrics"
+    ],
+    "redFlags": [
+      "Quotes test coverage that cannot be reproduced",
+      "Uses only mocked repository tests for SQL behavior",
+      "Counts tests instead of explaining covered risk",
+      "Claims a green build or scan without showing a current result"
+    ],
+    "followUps": [
+      {
+        "question": "Which untested failure is currently the greatest project risk?"
+      },
+      {
+        "question": "Which test requires a real PostgreSQL instance, and why?"
+      },
+      {
+        "question": "Show one test that prevented or would prevent a meaningful regression."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Executable quality artifacts in SinapiPRO",
+      "description": "The public repository contains backend and integration tests, Testcontainers, ArchUnit, Cypress and GitHub Actions. A current successful run still needs to be shown before quoting build status or counts."
+    }
+  },
+  {
+    "id": "interview-portfolio-6",
+    "topic": "portfolio",
+    "subtopic": "portfolio-pitch",
+    "difficulty": "BEGINNER",
+    "question": "Give me a 60–90 second overview of SinapiPRO.",
+    "context": "Use this as a spoken project pitch, then offer a backend, frontend or architecture deep dive.",
+    "shortAnswer": "SinapiPRO is my ongoing open-source construction-management ERP. I chose the domain because I have practical construction experience and wanted a project with connected workflows such as budgets, measurements, contracts, procurement, schedules, costs and suppliers—not a tutorial application. I built the backend with Spring Boot and PostgreSQL and the frontend with Angular, TypeScript and PrimeNG, including routed screens, forms, CRUD flows and reusable services. Architecturally, I use it to practice modular boundaries, REST contracts, security concerns, Docker-based environments and separation between domain, application and infrastructure. The project demonstrates hands-on modern full-stack learning, while I keep the boundary clear: it is a personal project, not a claim of operating this stack at enterprise production scale.",
+    "detailedAnswer": "The pitch should take about 60–90 seconds and answer four questions: what the product is, why the domain is meaningful, what you personally built and what engineering judgment it demonstrates. Stop before enumerating every module or library.\n\nAfter the pitch, invite the interviewer to choose a deep dive: one backend boundary, one Angular workflow, a security decision, a data model or the Docker environment. Keep the repository ready so claims can be demonstrated.\n\nUpdate the pitch whenever the implementation changes. Version numbers, module counts, test counts and infrastructure claims should come from the current repository, not from an old project description.",
+    "keyPoints": [
+      "Fits a natural 60–90 second delivery",
+      "Starts with product and domain value",
+      "States individual implementation work",
+      "Offers a concrete deep dive",
+      "Labels the project experience honestly"
+    ],
+    "redFlags": [
+      "Turns the pitch into a dependency list",
+      "Speaks for several minutes without offering a pause",
+      "Claims versions or counts from memory",
+      "Avoids showing actual repository evidence"
+    ],
+    "followUps": [
+      {
+        "question": "Which part would you choose for a five-minute technical deep dive?"
+      },
+      {
+        "question": "What architectural decision changed as the project grew?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "interview-portfolio-7",
+    "topic": "portfolio",
+    "subtopic": "portfolio-parallels",
+    "difficulty": "SENIOR",
+    "question": "Which lessons from SinapiPRO are relevant to a transport-logistics team, and which parallels would be misleading?",
+    "shortAnswer": "The useful parallels are engineering concerns: modeling connected workflows, keeping API contracts explicit, placing business rules on the server, handling validation and failures across a full-stack boundary, and designing modules around ownership. The misleading parallels would be claiming comparable production scale, operational criticality, event volume or knowledge of TRAB and NEO internals.",
+    "detailedAnswer": "SinapiPRO demonstrates that I can take a business domain from vocabulary and workflows into a Spring Boot/PostgreSQL backend and an Angular frontend. That is relevant to any full-stack team working with operational rules, because it requires API design, persistence, validation, UI state and maintainable module boundaries. My previous production work adds evidence in performance diagnosis, external integrations and asynchronous processing.\n\nThe domains are not equivalent. Construction budgeting does not prove knowledge of transport execution, and a personal deployment does not demonstrate the availability, throughput or support demands of REWE systems. I would use SinapiPRO to show learning speed and current-stack fluency, then ask the team about its actual workflows and operational constraints.\n\nSimilarly, modular design in SinapiPRO does not reveal how NEO's plug-and-play model works. It gives me a vocabulary for discussing contracts and coupling after the team supplies the facts.",
+    "keyPoints": [
+      "Connects capabilities, not imagined business equivalence",
+      "Uses the project as evidence of full-stack learning",
+      "Uses production history separately for operational evidence",
+      "Does not claim comparable scale",
+      "Does not infer NEO architecture from a personal project"
+    ],
+    "redFlags": [
+      "Says SinapiPRO reproduces TRAB's domain",
+      "Claims personal-project load demonstrates enterprise scale",
+      "Presents modularity as proof of plug-and-play architecture",
+      "Avoids naming important differences"
+    ],
+    "followUps": [
+      {
+        "question": "Which project skill would shorten your ramp-up most?"
+      },
+      {
+        "question": "Which logistics-specific concept would you need to learn first?"
+      },
+      {
+        "question": "What production concern is not exercised by SinapiPRO today?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   }
 ]

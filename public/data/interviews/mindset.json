@@ -4,111 +4,191 @@
     "topic": "mindset",
     "subtopic": "ms-thinking",
     "difficulty": "INTERMEDIATE",
-    "question": "How do you handle disagreements with team members about technical decisions?",
-    "shortAnswer": "I separate the decision from the person. I present data, ask questions to understand their perspective, and propose a time-boxed experiment if we cannot agree. In SGN, when we disagreed on caching strategy, I built a prototype of both approaches and measured — data ended the debate.",
-    "detailedAnswer": "Technical disagreements are healthy — they mean people care. The problem is when they become personal or block progress.\n\nMy approach:\n1. Listen fully before responding (not just waiting for my turn)\n2. Ask \"what problem are you solving?\" — often we agree on the problem but differ on the solution\n3. Identify the reversibility — if the decision is easily reversible, just pick one and move on\n4. For irreversible decisions, propose a time-boxed spike or prototype\n5. If still stuck, defer to whoever will maintain the code long-term\n\nThe key insight: being right matters less than shipping. A good-enough solution today beats a perfect solution debated for a week.",
+    "question": "How do you approach an engineering problem when the requirements are incomplete or ambiguous?",
+    "shortAnswer": "I make the ambiguity visible before proposing a solution. I identify the outcome, users, constraints and risks; separate facts from assumptions; and ask which uncertainty could change the design most. Then I choose the smallest reversible step that produces evidence and agree on how we will measure success.",
+    "detailedAnswer": "My first goal is not to remove every unknown; it is to find the unknowns that could make us build the wrong thing. I restate the problem in business terms, list confirmed facts and assumptions, and clarify quality attributes such as latency, availability, security and delivery date.\n\nI then map the decision surface: what is expensive to reverse, what can be tested cheaply, and who needs to be involved. A short spike, a production-data sample or a thin end-to-end slice often answers more than a long design debate. I document the current assumptions and define a review point so that new evidence can change the decision without being treated as failure.\n\nA strong answer should include a real example only if the candidate can explain the original ambiguity, the question they asked, the evidence they gathered and what changed as a result.",
     "keyPoints": [
-      "Separate the person from the idea",
-      "Data over opinions — prototype and measure",
-      "Consider reversibility of the decision",
-      "Defer to maintainer when equal arguments",
-      "Being right matters less than making progress"
+      "Separate confirmed facts from assumptions",
+      "Clarify the outcome and relevant quality attributes",
+      "Prioritize uncertainties that could change the design",
+      "Prefer a small reversible experiment when evidence is missing",
+      "Define success criteria and a review point"
     ],
     "redFlags": [
-      "\"I just do what they say\" — shows no technical ownership",
-      "Escalating every disagreement to management",
-      "Never compromising — always insisting on your way",
-      "Avoiding conflict entirely — silent resentment"
+      "Starts designing before clarifying the problem",
+      "Treats all unknowns as equally important",
+      "Uses seniority as a substitute for evidence",
+      "Cannot explain how the result would be measured"
     ],
     "followUps": [
       {
-        "question": "What if your manager disagrees with you?",
-        "hint": "Show that you voice your concerns clearly but commit once a decision is made."
+        "question": "Which assumption would you test first, and why?"
       },
       {
-        "question": "Tell me about a time you were wrong in a technical decision.",
-        "hint": "Shows self-awareness and learning ability."
+        "question": "Tell me about a case where clarification changed your original solution."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "Caching strategy debate in SGN3",
-      "description": "Disagreed with colleague about Infinispan vs application-level cache. Built both prototypes in 2 hours, measured hit rates. Application cache won for our use case. No hard feelings."
-    }
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
     "id": "interview-mindset-2",
     "topic": "mindset",
     "subtopic": "ms-answering",
-    "difficulty": "SENIOR",
-    "question": "How do you prioritize when everything is urgent?",
-    "shortAnswer": "I use impact×reversibility as the filter. What breaks production gets fixed now. What blocks other people is next. What only affects me waits. I communicate priorities transparently — stakeholders know what is queued and why.",
-    "detailedAnswer": "When everything feels urgent, the real skill is distinguishing between urgent and important.\n\nMy framework:\n1. Production incidents → immediate (users are affected NOW)\n2. Blockers for teammates → same day (multiplier effect)\n3. Deadline-driven work → based on actual deadline, not perceived urgency\n4. Everything else → batched into focus blocks\n\nThe mistake I see: treating every Slack message as P0. If everything is urgent, nothing is. I protect focus time and communicate clearly: \"I see your request. I will address it after X, expected by Y.\"",
+    "difficulty": "BEGINNER",
+    "question": "What do you do when an interviewer asks about a technology you have not used?",
+    "shortAnswer": "I say clearly what I have and have not done. Then I connect the question to adjacent production experience, reason from first principles, and state what I would verify before using the technology. I would rather give a bounded, testable answer than turn study into claimed production experience.",
+    "detailedAnswer": "I use a three-part response. First, I set the boundary: for example, 'I have studied Kafka but have not operated it in production.' Second, I connect it to relevant experience, such as durable messaging, retries, dead-letter queues and idempotent consumers with JMS. Third, I explain the important differences I would need to validate rather than implying the tools are interchangeable.\n\nIf I do not know a fact, I say so and explain how I would find it: documentation, a focused experiment, metrics or help from a teammate with direct experience. This still demonstrates judgment. Inventing certainty is much riskier than showing a disciplined learning process.\n\nThe exact boundary matters: hands-on personal project, transferable production experience and production operation are different claims.",
     "keyPoints": [
-      "Impact × reversibility as prioritization filter",
-      "Production incidents always first",
-      "Unblock teammates before solo work",
-      "Communicate queue transparently",
-      "Protect focus time — not everything is P0"
+      "State the experience boundary explicitly",
+      "Connect only genuinely transferable concepts",
+      "Acknowledge important differences between technologies",
+      "Reason in a testable way",
+      "Explain how missing information would be verified"
     ],
     "redFlags": [
-      "\"I just work harder\" — shows no strategic thinking",
-      "Cannot give a concrete framework",
-      "Blaming others for unclear priorities",
-      "Never saying no or pushing back on scope"
+      "Presents study or a tutorial as production ownership",
+      "Stops at 'I do not know' without attempting reasoned analysis",
+      "Claims two technologies are equivalent because they share a category",
+      "Guesses precise behavior without marking it as an assumption"
     ],
     "followUps": [
       {
-        "question": "What do you do when your manager adds something urgent to an already full sprint?",
-        "hint": "Trade-off: something else must move. Make the trade-off visible."
+        "question": "Which parts of your JMS experience transfer to Kafka, and which do not?"
       },
       {
-        "question": "How do you handle interruptions during deep work?",
-        "hint": "Batch interruptions, use async communication, set expectations."
+        "question": "How would you gain enough evidence to make a production recommendation?"
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "Balancing production incidents with project delivery",
-      "description": "Managed a week where 3 production bugs hit while I was implementing a major feature. Communicated clearly to PM which deadlines would slip and why. Fixed critical bugs first, delivered feature 2 days late with full quality."
-    }
+    "experienceLevel": "INFERENCE"
   },
   {
     "id": "interview-mindset-3",
     "topic": "mindset",
-    "subtopic": "ms-thinking",
+    "subtopic": "ms-tradeoffs",
     "difficulty": "SENIOR",
-    "question": "What does \"senior\" mean to you?",
-    "shortAnswer": "A senior solves ambiguous problems independently, multiplies the team (code reviews, mentoring, documentation), owns decisions and their consequences, and knows when NOT to build something. Seniority is about judgment, not years.",
-    "detailedAnswer": "Seniority is not about knowing more APIs or having more years of experience. It is about judgment.\n\nA senior developer:\n- Navigates ambiguity without asking for step-by-step instructions\n- Makes the team better (reviews, mentoring, patterns, documentation)\n- Owns outcomes, not just code (\"the feature works\" vs \"the business problem is solved\")\n- Knows when to say \"we should NOT build this\" — the most valuable code is the code not written\n- Communicates proactively — bad news early, trade-offs explicitly\n- Makes reversible decisions quickly and irreversible decisions carefully\n\nWhat it is NOT:\n- Knowing every framework\n- Working alone without help\n- Being the fastest coder\n- Having 10+ years of experience",
+    "question": "How do you compare two technically viable solutions?",
+    "shortAnswer": "I compare them against the same decision criteria, not personal preference. I start with the required outcomes and constraints, include delivery and operational costs, identify which trade-offs are reversible, and use evidence where the options differ materially. The best solution is the one that fits this context, not the most sophisticated one.",
+    "detailedAnswer": "I first agree on a short list of weighted criteria: correctness, delivery time, performance, failure behavior, security, operability, maintainability and team familiarity. Not every criterion matters equally for every decision.\n\nI make both the benefits and costs visible. For example, asynchronous processing can improve isolation and responsiveness, but introduces eventual consistency, retries and reconciliation. A shared transaction is simpler to reason about, but increases coupling. I also distinguish one-way-door decisions from choices that are cheap to revisit.\n\nWhen the outcome depends on an uncertain claim, I time-box a benchmark or spike using representative data. I record the decision, assumptions and consequences so the team can revisit it when those assumptions change.",
     "keyPoints": [
-      "Judgment over knowledge",
-      "Multiplier effect on the team",
-      "Owns outcomes, not just code",
-      "Knows when NOT to build",
-      "Communicates trade-offs proactively",
-      "Navigates ambiguity independently"
+      "Use common criteria tied to the problem",
+      "Include operational and organizational cost",
+      "State both benefits and consequences",
+      "Treat reversibility as a decision factor",
+      "Use representative evidence for disputed claims"
     ],
     "redFlags": [
-      "\"A senior knows all the frameworks\"",
-      "\"A senior works alone without needing help\"",
-      "\"It is about years of experience\"",
-      "Cannot articulate how they help their team beyond writing code"
+      "Chooses by novelty or personal familiarity alone",
+      "Lists advantages for one option and only disadvantages for the other",
+      "Ignores deployment, monitoring and support costs",
+      "Cannot say what evidence would change the recommendation"
     ],
     "followUps": [
       {
-        "question": "How do you multiply your team?",
-        "hint": "Code reviews, knowledge sharing, documentation, pairing, improving processes."
+        "question": "Which criteria would dominate for an operationally critical workflow?"
       },
       {
-        "question": "Give an example of something you decided NOT to build.",
-        "hint": "Shows restraint and judgment — YAGNI in practice."
+        "question": "When is a short experiment more useful than further discussion?"
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "Refused to build a custom report engine",
-      "description": "Stakeholder wanted a configurable report system. Showed that Jasper + 3 parameterized templates solved 90% of cases. Saved 2 months of development. Sometimes the best code is the code you do not write."
-    }
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "interview-mindset-4",
+    "topic": "mindset",
+    "subtopic": "ms-whiteboard",
+    "difficulty": "INTERMEDIATE",
+    "question": "How would you use the first ten minutes of an open-ended system-design interview?",
+    "shortAnswer": "I would clarify the users, core workflow, scale, data and required guarantees before drawing components. I would state assumptions, define an initial scope and sketch the simplest end-to-end design. Then I would let the largest risk—such as consistency, availability or throughput—drive the deeper discussion.",
+    "detailedAnswer": "I begin with a small set of high-leverage questions: who uses the system, what the primary write and read flows are, what must never be lost, expected traffic and data retention, and which failure matters most. If the interviewer cannot provide a number, I propose a reasonable assumption and label it.\n\nNext I define the scope and a minimal data model, then draw one request or event from entry to completion. Only after the basic flow is coherent do I add caching, queues, partitions or replicas to meet a stated requirement. I narrate why each component exists and call out failure paths.\n\nI reserve time to test the design against a concrete scenario, summarize trade-offs and identify what I would validate next. The diagram supports the reasoning; it is not the answer by itself.",
+    "keyPoints": [
+      "Clarify users, workflow, scale and guarantees",
+      "Label assumptions instead of hiding them",
+      "Start with one simple end-to-end flow",
+      "Add complexity only for an identified requirement",
+      "Test a failure path and summarize trade-offs"
+    ],
+    "redFlags": [
+      "Immediately draws a preferred stack",
+      "Invents scale silently",
+      "Adds components without explaining the requirement they satisfy",
+      "Describes only the happy path"
+    ],
+    "clarifyingQuestions": [
+      "What is the core user outcome?",
+      "Which guarantee matters most: latency, availability, consistency or durability?",
+      "What are the expected peak load and retention period?",
+      "Which dependencies are outside our control?"
+    ],
+    "followUps": [
+      {
+        "question": "Where is the first likely bottleneck in your initial design?"
+      },
+      {
+        "question": "How would the system behave during a downstream outage?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "interview-mindset-5",
+    "topic": "mindset",
+    "subtopic": "ms-mistakes",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you respond when evidence shows that your technical decision or assumption was wrong?",
+    "shortAnswer": "I make the impact visible, separate the failed assumption from blame, and decide whether containment or rollback is needed first. Then I share the new evidence, revise the decision with the responsible people, verify the correction and record what should change in our process. The useful lesson is a repeatable guardrail—for example representative-volume testing—not simply choosing the opposite technology next time.",
+    "detailedAnswer": "First I state what changed: which assumption the decision depended on, what signal contradicted it, and which users or systems are affected. If impact is active, containment comes before defending the original reasoning. I communicate uncertainty and involve the decision owner rather than quietly changing direction.\n\nNext I compare the current options with the new evidence. That may mean reverting, narrowing the rollout, applying a forward fix, or collecting one more bounded measurement. I preserve the evidence, verify the corrected behavior, and watch for secondary effects. Accountability means owning my contribution without rewriting history as though the mistake were obvious or assigning the failure to 'the team' while claiming the recovery personally.\n\nFinally I turn the lesson into a guardrail that would have exposed the assumption earlier: representative data, a compatibility test, an SLO, a review checklist, explicit rollback criteria, or a time-boxed spike. If no behavior changes, the retrospective has produced a story rather than learning.",
+    "keyPoints": [
+      "State the failed assumption and the new evidence",
+      "Contain active impact before defending the original choice",
+      "Own your part without exaggerating it",
+      "Describe containment and durable correction",
+      "Show a reusable change in behavior or process"
+    ],
+    "redFlags": [
+      "Uses a disguised success with no genuine mistake",
+      "Blames other people or missing requirements entirely",
+      "Cannot identify the assumption that failed",
+      "Claims a lesson but no changed behavior"
+    ],
+    "followUps": [
+      {
+        "question": "What was the earliest signal that your assumption was wrong?"
+      },
+      {
+        "question": "What do you do differently on similar decisions now?"
+      }
+    ],
+    "experienceLevel": "INFERENCE"
+  },
+  {
+    "id": "interview-mindset-6",
+    "topic": "mindset",
+    "subtopic": "ms-production",
+    "difficulty": "SENIOR",
+    "question": "What do you want to know before approving a risky change for production?",
+    "shortAnswer": "I want evidence of correctness at representative scale, a clear blast radius, observability for the expected failure modes, and a rollback or containment path. I also confirm ownership: who watches the release, what thresholds trigger action, and how data is reconciled if rollback cannot undo a partial business operation.",
+    "detailedAnswer": "My checklist follows the change through its lifecycle. Before release: tests at the appropriate level, schema and compatibility review, security implications, capacity assumptions and dependency behavior. During release: staged exposure where possible, dashboards and logs tied to business identifiers, and explicit success and abort thresholds. After release: a defined observation window and reconciliation for asynchronous or partially completed work.\n\nRollback is not always enough. A binary can be reverted while data written under the new behavior remains. For migrations and distributed workflows, I want forward-fix and reconciliation plans as well as deployment rollback.\n\nThe depth should match risk. A low-impact, reversible UI change does not need the same ceremony as a database migration or a change to enrollment, billing or delivery execution.",
+    "keyPoints": [
+      "Match controls to blast radius and reversibility",
+      "Test with representative data and dependency behavior",
+      "Define observable success and abort thresholds",
+      "Plan for data reconciliation, not only binary rollback",
+      "Assign release and incident ownership"
+    ],
+    "redFlags": [
+      "Treats passing unit tests as sufficient evidence for every risk",
+      "Has a rollback command but no data recovery plan",
+      "Cannot name the production signals to watch",
+      "Leaves monitoring and response ownership implicit"
+    ],
+    "followUps": [
+      {
+        "question": "How would your release plan change for a database migration?"
+      },
+      {
+        "question": "What would make you stop or reverse the rollout?"
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

@@ -4,30 +4,36 @@
     "topic": "docker",
     "subtopic": "docker-basics",
     "difficulty": "BEGINNER",
-    "question": "Explain the difference between a Docker image and a container.",
-    "shortAnswer": "An image is a read-only template (filesystem layers + metadata). A container is a running instance of an image — it adds a writable layer on top. You can run multiple containers from the same image, each with its own state. Analogy: image is the class, container is the instance.",
-    "detailedAnswer": "Image:\n- Read-only filesystem layers (each Dockerfile instruction = layer)\n- Immutable — building always produces the same result\n- Stored in registries (Docker Hub, private registry)\n- Shared across containers (layer deduplication)\n\nContainer:\n- Running process with its own writable layer on top of the image\n- Has its own network, PID namespace, filesystem view\n- Ephemeral — when removed, writable layer is lost\n- Multiple containers from same image run independently\n\nIn SGN3 context:\n- WildFly image: base OS + JDK + WildFly + SGN3 WAR deployed\n- Each pod in OKD runs a container from that image\n- Image built once in CI → deployed to multiple environments\n- Container state (logs, temp files) is ephemeral — persistent data in external DB",
+    "question": "What is the difference between an image, a container and a volume?",
+    "shortAnswer": "An image is an immutable, content-addressed package of filesystem layers and runtime metadata. A container is an instance of that image with process configuration and its own writable layer; it can be running or stopped. Stopping a container does not delete that layer, but removing the container does. A volume stores data outside the writable layer so it can outlive and be shared independently of a container.",
+    "detailedAnswer": "**Image**:\n- Read-only layers plus metadata such as entrypoint, environment defaults and exposed ports\n- Identified by content digest; a tag is only a mutable reference to an image\n- Shared layers can be reused by many containers\n\n**Container**:\n- A created instance with isolation, runtime settings and a writable layer over the image\n- Can be created, running, paused or stopped\n- `docker stop` stops its process but normally keeps the container and writable layer\n- `docker rm` removes the container and its writable layer; `--rm` requests automatic removal on exit\n\n**Volume or bind mount**:\n- Stores data outside the container writable layer\n- A named volume has its own lifecycle and normally survives container removal\n- A bind mount maps a host path and couples the workload to that host layout\n\nApplications should still be designed so containers are replaceable. Durable state belongs in a volume or external service, while caches and temporary files may intentionally remain ephemeral.",
     "keyPoints": [
-      "Image = read-only template (layers), Container = running instance",
-      "Multiple containers from one image (independent)",
-      "Containers are ephemeral — writable layer lost on removal",
-      "Images are immutable — reproducible builds",
-      "Layer caching speeds up builds"
+      "An image is immutable content; a tag can move",
+      "A container can exist while stopped",
+      "Stopping does not normally remove the writable layer",
+      "Removing the container removes its writable layer",
+      "Volumes have a lifecycle independent of a particular container"
     ],
     "redFlags": [
-      "Confusing image with container",
-      "\"Container is a lightweight VM\" (oversimplification)",
-      "Not knowing that containers are ephemeral",
-      "Cannot explain layers"
+      "Saying data is lost merely because a container stops",
+      "Treating an image tag as an immutable identity",
+      "Storing required database data only in the container layer",
+      "Describing a container as a full virtual machine"
     ],
     "followUps": [
-      { "question": "What happens to data written inside a container when it stops?", "hint": "Lost (writable layer removed). Use volumes for persistent data." },
-      { "question": "How do layers affect build performance?", "hint": "Unchanged layers are cached. Order Dockerfile instructions from least to most changing." }
+      {
+        "question": "What happens to a file written inside a container after `docker stop` and `docker start`?",
+        "hint": "It normally remains in that container's writable layer; it disappears when that container is removed unless it was mounted elsewhere."
+      },
+      {
+        "question": "When would you choose a bind mount instead of a named volume?",
+        "hint": "Often for local source-code editing or when an explicit host path is required; account for permissions and host coupling."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
       "title": "SGN3 containerized deployment",
-      "description": "SGN3 runs as containerized WildFly in OKD (OpenShift). Image built in CI pipeline, deployed across HML/Prod. Multiple pods (containers) from same image for horizontal scaling."
+      "description": "SGN3 runs in OKD from CI-built WildFly application images, with replaceable replicas and persistent business state held outside each container."
     }
   },
   {
@@ -35,30 +41,36 @@
     "topic": "docker",
     "subtopic": "docker-basics",
     "difficulty": "INTERMEDIATE",
-    "question": "How do you write an efficient Dockerfile? What are common mistakes?",
-    "shortAnswer": "Key principles: multi-stage builds (build in one stage, copy artifacts to slim runtime), order instructions from least to most changing (dependencies before code), minimize layers, use .dockerignore, don't run as root. Common mistakes: copying entire project before dependency resolution (cache invalidation), using :latest tag, running as root.",
-    "detailedAnswer": "Efficient Dockerfile:\n\n1. **Multi-stage build** — separate build from runtime:\n```dockerfile\n# Build stage\nFROM maven:3.9 AS build\nCOPY pom.xml .\nRUN mvn dependency:resolve  # Cached unless pom changes\nCOPY src ./src\nRUN mvn package -DskipTests\n\n# Runtime stage (smaller image)\nFROM eclipse-temurin:21-jre\nCOPY --from=build target/app.jar /app.jar\nUSER 1001\nENTRYPOINT [\"java\", \"-jar\", \"/app.jar\"]\n```\n\n2. **Layer ordering** — least changing first:\n   - OS packages → dependencies → compiled code → config\n   - Changing code doesn't invalidate dependency cache\n\n3. **Security:**\n   - Non-root user (USER 1001)\n   - Minimal base image (distroless or slim)\n   - No secrets in image (use env vars or mounted secrets)\n\nCommon mistakes:\n- `COPY . .` before `mvn dependency:resolve` (entire cache invalidated on any code change)\n- Using :latest (non-reproducible builds)\n- Running as root (security risk)\n- Installing dev tools in production image",
+    "question": "How do you make a Docker build efficient, secure and reproducible?",
+    "shortAnswer": "I use a multi-stage build, a small appropriate runtime base, a non-root runtime user and `.dockerignore`. I arrange stable dependency inputs before frequently changing source and use BuildKit cache or secret mounts where needed. For reproducibility I pin the base image by digest and lock downloaded dependencies; immutability of a built image does not mean two builds from mutable inputs will match.",
+    "detailedAnswer": "These goals overlap but are not identical:\n\n**Efficient**:\n- Multi-stage builds keep compilers and package managers out of the runtime image.\n- Copy dependency manifests before source when that lets dependency resolution be cached.\n- Use `.dockerignore` to reduce build context and accidental inclusion.\n- Use BuildKit cache mounts for package-manager caches rather than baking caches into the final image.\n- Combine commands when atomic package-manager behavior requires it, but do not chase the fewest possible layers at the expense of cacheability and clarity.\n\n**Secure**:\n- Run as a dedicated non-root user where the application permits it.\n- Include only required runtime packages and update them deliberately.\n- Use BuildKit secret/SSH mounts for build credentials; `ARG`, `ENV` and `COPY` can persist sensitive values in metadata or layers.\n- Scan the resulting image and record provenance/SBOM according to the delivery process.\n\n**Reproducible/auditable**:\n- Pin the base image to a digest; even version tags can be updated.\n- Lock application and OS dependency versions/checksums and control network inputs.\n- Build the artifact once, identify it by digest and promote that same artifact across environments.\n\nA pinned digest trades automatic updates for deliberate maintenance, so automation should alert or propose reviewed refreshes.",
     "keyPoints": [
-      "Multi-stage: build in one stage, run in slim stage",
-      "Order: least-changing instructions first (cache efficiency)",
-      "Non-root user for security",
-      "Copy dependencies before code (cache layer reuse)",
-      ".dockerignore to exclude unnecessary files"
+      "Multi-stage builds separate build tools from runtime",
+      "Cache-friendly ordering follows stable inputs",
+      "Pin base digests and dependency inputs for reproducibility",
+      "Use build secret mounts instead of copying credentials",
+      "Promote one digest rather than rebuilding per environment"
     ],
     "redFlags": [
-      "Single-stage Dockerfile with build tools in production image",
-      "COPY . . as first instruction (cache always invalidated)",
-      "Running as root in production",
-      "Using :latest tag (not reproducible)"
+      "Equating image immutability with reproducible builds",
+      "Assuming a version tag cannot change",
+      "Passing secrets through Dockerfile ARG or COPY",
+      "Optimizing only layer count while ignoring cache behavior and security"
     ],
     "followUps": [
-      { "question": "What is a multi-stage build and why use it?", "hint": "Build tools (Maven, npm) only in build stage. Production image is minimal (only runtime)." },
-      { "question": "How do you handle secrets that the build needs?", "hint": "Docker BuildKit --mount=type=secret. Never COPY secrets into a layer." }
+      {
+        "question": "Why is `FROM eclipse-temurin:21` not fully reproducible?",
+        "hint": "The tag is a mutable reference; pin the resolved digest and manage updates deliberately."
+      },
+      {
+        "question": "How can a build use a private-repository credential without storing it in a layer?",
+        "hint": "Use a BuildKit secret or SSH mount only for the relevant RUN instruction."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 Docker build pipeline",
-      "description": "Multi-stage Dockerfile: Maven build stage → WildFly runtime stage with deployed WAR. Layer caching for dependencies (pom.xml changes infrequently). Non-root execution in OKD."
+      "title": "SGN3 image build pipeline",
+      "description": "The CI pipeline separates the Maven build from the WildFly runtime image, reuses stable dependency layers and runs the deployed workload under OKD security constraints."
     }
   },
   {
@@ -66,30 +78,36 @@
     "topic": "docker",
     "subtopic": "docker-compose",
     "difficulty": "INTERMEDIATE",
-    "question": "How do you use Docker Compose for local development?",
-    "shortAnswer": "Docker Compose defines the entire local environment: PostgreSQL, ActiveMQ Artemis, WildFly (or app), all with consistent ports and configurations. One command (docker compose up) gives every developer the same environment. I use it to run SGN3 dependencies locally without installing each service manually.",
-    "detailedAnswer": "Docker Compose for local dev:\n\n```yaml\nservices:\n  postgres:\n    image: postgres:10\n    ports: [\"5434:5432\"]\n    volumes: [pgdata:/var/lib/postgresql/data]\n    environment:\n      POSTGRES_DB: senai\n      POSTGRES_USER: ...\n\n  artemis:\n    image: apache/activemq-artemis\n    ports: [\"8161:8161\", \"61616:61616\"]\n\n  wildfly:\n    build: .\n    ports: [\"8080:8080\", \"9990:9990\"]\n    depends_on: [postgres, artemis]\n```\n\nBenefits:\n- Reproducible: every developer gets the same environment\n- Isolated: doesn't conflict with other projects\n- Disposable: `docker compose down -v` for clean state\n- Fast onboarding: new developer runs one command\n\nIn SGN3: PostgreSQL + Artemis + Glowroot run via Compose. WildFly runs locally in IDE (hot reload) connecting to Compose services.",
+    "question": "How would you design a Docker Compose setup that is useful and predictable for local development?",
+    "shortAnswer": "I model only the services needed for the local workflow, pin their versions, add health checks, use named volumes deliberately and expose the minimum ports. Short-form `depends_on` gives start order, not application readiness, so either the app retries dependencies or Compose waits on a declared healthy condition. I keep secrets and environment-specific overrides out of the committed base file and document reset commands that can delete data.",
+    "detailedAnswer": "A maintainable Compose setup includes:\n\n- Stable image references and explicit build contexts\n- A default network where services use DNS names rather than `localhost`\n- Health checks for dependencies such as PostgreSQL\n- Application retry/backoff, because dependencies can become unavailable after startup too\n- Named volumes for data that should survive container replacement, and disposable test volumes where isolation matters\n- Minimal host port publishing; container-to-container traffic does not require every port on the host\n- An example environment file containing names and safe defaults, not real credentials\n- Profiles or override files for optional tooling\n\n`depends_on` in short form controls creation/start order but does not prove the dependency is ready. Long-form dependencies can wait for `service_healthy` when a health check exists, but resilience still belongs in the application.\n\nBe explicit about lifecycle: `docker compose down` removes the project containers and network; `down -v` also removes declared named volumes and can destroy local database data. A ‘one command’ setup is reproducible only to the extent that images, dependencies and initialization inputs are controlled.",
     "keyPoints": [
-      "One command for entire local environment",
-      "Reproducible across all developers",
-      "Dependencies (DB, queue) in containers, app in IDE for hot reload",
-      "Volumes for persistent data, disposable for clean state",
-      "depends_on for service ordering"
+      "Service names provide DNS inside the Compose network",
+      "Start order is not the same as readiness",
+      "Health checks complement application retry behavior",
+      "Named volumes survive ordinary container replacement",
+      "`down -v` is a destructive reset and should be documented as such"
     ],
     "redFlags": [
-      "\"I install PostgreSQL directly on my machine\"",
-      "Not knowing docker compose up/down",
-      "Cannot explain volumes (data lost on container removal)",
-      "No local development strategy at all"
+      "Assuming short-form depends_on waits for a usable database",
+      "Committing real credentials in the Compose file",
+      "Publishing every internal service port to the host",
+      "Running `down -v` without recognizing that it removes named-volume data"
     ],
     "followUps": [
-      { "question": "What is the difference between docker compose up and docker compose run?", "hint": "up starts all services. run starts one service for a one-off command." },
-      { "question": "How do you handle database migrations in Docker Compose?", "hint": "Init scripts in volumes, or Flyway/Liquibase on startup." }
+      {
+        "question": "Why should the application still retry if Compose waits for a healthy database at startup?",
+        "hint": "Startup health is only a point-in-time signal; the database can fail or restart later."
+      },
+      {
+        "question": "How would you give each integration-test run isolated database state?",
+        "hint": "Use a distinct project/volume or an ephemeral container lifecycle, then apply migrations and deterministic fixtures."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 local dev with Docker Compose",
-      "description": "PostgreSQL 10 + ActiveMQ Artemis in Docker Compose. WildFly runs in IDE (IntelliJ) for hot deploy. Glowroot embedded for local performance analysis. One docker compose up and the dev environment is ready."
+      "title": "SGN3 local dependencies with Compose",
+      "description": "PostgreSQL and ActiveMQ Artemis run as local Compose dependencies while WildFly can run from the IDE for a faster edit/deploy loop. Persistent and disposable data lifecycles are treated explicitly."
     }
   }
 ]

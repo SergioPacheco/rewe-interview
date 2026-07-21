@@ -1,76 +1,137 @@
 [
   {
-    "id": "interview-oop-polymorphism-1",
-    "topic": "oop",
-    "subtopic": "oop-polymorphism",
-    "difficulty": "INTERMEDIATE",
-    "question": "What is polymorphism and where have you used it?",
-    "context": "Classic opening question — tests if you can go beyond the textbook definition and connect to real production code.",
-    "shortAnswer": "Polymorphism lets you write code against an interface and have different implementations execute at runtime. I used it in the SGN system with CDI injection — business services depend on interfaces, and the container provides the correct implementation. This is how we support multiple integration channels (email via SMTP, push via Firebase) without the caller knowing the difference.",
-    "detailedAnswer": "Polymorphism means 'many forms' — the ability to treat objects of different classes through a common interface. In Java, this happens through method overriding (runtime polymorphism) and method overloading (compile-time).\n\nThe real power is in runtime polymorphism: you program against an abstraction, and the JVM resolves the actual method at runtime based on the object's real type. This eliminates conditional logic, makes the system extensible (add new implementations without modifying existing code), and enables dependency injection.\n\nIn SGN3, CDI injection is polymorphism in action — a Business class depends on an interface, and the CDI container resolves the implementation at runtime. When we added a new integration channel, we created a new implementation and a CDI qualifier. No modification to existing code.",
-    "keyPoints": [
-      "Runtime polymorphism = method resolution based on actual object type",
-      "Eliminates if/else chains for type-based behavior",
-      "Enables Open/Closed Principle — extend without modifying",
-      "Foundation for Dependency Injection and Strategy pattern",
-      "Makes code testable — mock the interface, test the caller"
-    ],
-    "redFlags": [
-      "Only reciting a textbook definition without examples",
-      "Confusing overloading with overriding",
-      "Cannot explain WHY it matters (just knows WHAT it is)",
-      "Inventing an experience that falls apart under follow-up",
-      "Claiming inheritance is always needed for polymorphism (interfaces!)"
-    ],
-    "followUps": [
-      { "question": "Why not just use an if/else or switch?", "hint": "Talk about Open/Closed Principle and what happens when you add a new type." },
-      { "question": "When would composition be preferable to polymorphism via inheritance?", "hint": "Favor composition when behavior varies independently of the type hierarchy." },
-      { "question": "Can polymorphism make a design harder to maintain?", "hint": "Deep hierarchies, unclear contracts, runtime surprises with covariant returns." },
-      { "question": "How does dependency injection relate to polymorphism?", "hint": "DI is polymorphism operationalized — the container decides which implementation at runtime." }
-    ],
-    "codeExamples": [
-      {
-        "language": "java",
-        "title": "Interface-based polymorphism with CDI",
-        "code": "// Interface — the abstraction\npublic interface IntegracaoClient {\n    void enviar(DadosIntegracao dados);\n}\n\n// Implementations resolved at runtime via CDI\npublic class MoodleClient implements IntegracaoClient {\n    @Override\n    public void enviar(DadosIntegracao dados) {\n        // REST call to Moodle\n    }\n}\n\npublic class LdapClient implements IntegracaoClient {\n    @Override\n    public void enviar(DadosIntegracao dados) {\n        // LDAP operation\n    }\n}\n\n// Caller — doesn't know which implementation\npublic class IntegracaoBusiness {\n    @Inject\n    private IntegracaoClient client;\n\n    public void processar(Long idMatricula) {\n        client.enviar(buildDados(idMatricula));\n    }\n}"
-      }
-    ],
-    "realExperience": {
-      "title": "SGN3 CDI-based integration layer",
-      "description": "Business classes depend on integration interfaces (IntegracaoClient). CDI injects Moodle, LDAP, or Firebase implementations based on qualifiers. Adding a new integration channel requires only a new implementation class — zero changes to callers."
-    },
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
-  },
-  {
     "id": "interview-oop-encapsulation-1",
     "topic": "oop",
     "subtopic": "oop-encapsulation",
     "difficulty": "BEGINNER",
-    "question": "Explain encapsulation. Why do we make fields private?",
-    "context": "Sounds basic but reveals whether you understand the WHY — protecting invariants, not just hiding data.",
-    "shortAnswer": "Encapsulation means bundling data with the methods that operate on it, and restricting direct access to the internal state. We make fields private to protect invariants — the object controls its own consistency. In SGN3, all entities use private fields with access only through business methods that enforce state transition rules.",
-    "detailedAnswer": "Encapsulation is about protecting invariants, not about hiding data for the sake of hiding. When a field is private, the class owns the rules for how that data changes.\n\nIn the SGN3 system, entity fields are private and state transitions happen through business layer methods that enforce preconditions. For example, a matrícula (enrollment) can only move to ATIVA status if prerequisites are met — this is enforced in the Business layer, not exposed as a simple setter.\n\nEncapsulation also enables change without breaking clients. If the internal representation changes (e.g., storing dates as epoch instead of LocalDate), the public API stays the same.\n\nReal encapsulation exposes behavior, not data. `setStatus(ATIVA)` is no better than a public field. `confirmar()` with validation is real encapsulation.",
+    "question": "What does encapsulation protect, beyond simply making fields private?",
+    "shortAnswer": "Encapsulation gives one component control over its state and invariants. Private fields help, but the public API matters more: methods such as reserve(), confirm(), or cancel() can validate allowed transitions, while generic setters may still expose an invalid state. Encapsulation also hides representation choices, so an implementation can change without forcing every caller to change.",
+    "detailedAnswer": "Encapsulation combines state with the operations that are allowed to observe or change it. Its main benefit is not secrecy; it is preserving invariants at a clear boundary. An Order that exposes setStatus() and setTotal() can be put into combinations the domain does not allow. An Order that exposes addItem(), pay(), and cancel() can check preconditions and update related state atomically.\n\nPrivate fields are one mechanism, not the definition. Returning a mutable internal List from a getter, for example, still leaks the representation. Defensive copies, immutable views, narrow interfaces, and module boundaries can all contribute to encapsulation. There is also a trade-off: putting every rule inside an entity can couple it to services or workflows, so rules that need external data may belong in a domain service while the entity still protects its local invariants.",
     "keyPoints": [
-      "Protects invariants — object controls its own consistency",
-      "Enables evolution — internal changes don't break callers",
-      "Getters/setters alone are NOT real encapsulation",
-      "Behavior methods (confirm, cancel) are stronger than set methods",
-      "Information hiding reduces coupling between modules"
+      "Encapsulation protects invariants through a controlled public API",
+      "Private fields alone do not prevent representation leaks",
+      "Behavior-oriented methods communicate valid state transitions",
+      "A stable API allows internal representation to evolve"
     ],
     "redFlags": [
-      "Saying 'we make fields private because it's best practice' without explaining WHY",
-      "Equating encapsulation with getters/setters",
-      "Cannot give an example of an invariant that encapsulation protects",
-      "Never mentioning the distinction between data hiding and behavior exposure"
+      "Equating encapsulation with automatically generated getters and setters",
+      "Returning mutable internal collections without considering ownership",
+      "Placing infrastructure-dependent workflows inside an entity solely to appear object-oriented"
     ],
     "followUps": [
-      { "question": "If we have a getter and setter for every field, is that really encapsulated?", "hint": "No — it's a public field with extra steps. Real encapsulation exposes behavior." },
-      { "question": "How does encapsulation relate to immutability?", "hint": "Immutable objects are perfectly encapsulated — no one can change their state after creation." },
-      { "question": "Can you give an example where breaking encapsulation caused a bug?", "hint": "Think of a case where someone set a field directly and bypassed validation." }
+      {
+        "question": "Is an object with private fields and a setter for every field well encapsulated?",
+        "hint": "Evaluate whether callers can still violate invariants through the public API."
+      },
+      {
+        "question": "How would you expose a collection without leaking mutable state?",
+        "hint": "Consider immutable values, copies, unmodifiable views, and ownership."
+      },
+      {
+        "question": "When might a domain service own a rule instead of the entity?",
+        "hint": "Think about rules that require repositories, clocks, or several aggregates."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-oop-abstraction-1",
+    "topic": "oop",
+    "subtopic": "oop-abstraction",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you choose a useful abstraction, and how can an abstraction become harmful?",
+    "shortAnswer": "A useful abstraction exposes the capability a client needs while hiding volatile details. I look for a stable concept with multiple consumers or implementations, then design the smallest contract that represents it. An abstraction is harmful when it is speculative, leaks implementation details, or forces unrelated implementations into methods they cannot support.",
+    "detailedAnswer": "Abstraction is selective simplification: it presents an intentional model and omits details that callers should not depend on. A PaymentGateway might expose authorize and refund while hiding HTTP, authentication, and provider-specific payloads. That boundary can reduce coupling and improve testing.\n\nThe hard part is choosing the right level. Abstracting every class behind an interface adds navigation and maintenance cost without necessarily creating flexibility. Conversely, an interface that mirrors a vendor SDK leaks the detail it was meant to isolate. Evidence for an abstraction includes repeated concepts, a volatile external dependency, a real testing seam, or implementations that honor the same contract. Start with concrete code when the concept is still unclear, and extract an abstraction once its stable shape is visible.",
+    "keyPoints": [
+      "An abstraction models a stable capability rather than copying an implementation",
+      "Its contract should be smaller than the details it hides",
+      "Useful seams often isolate volatility, ownership, or external systems",
+      "Premature abstractions create indirection and constrain later design"
+    ],
+    "redFlags": [
+      "Creating one interface for every class without a concrete reason",
+      "Leaking vendor-specific types through an allegedly vendor-neutral contract",
+      "Combining unrelated capabilities in one broad abstraction"
+    ],
+    "followUps": [
+      {
+        "question": "Does testability alone justify an interface?",
+        "hint": "Discuss alternatives such as fakes around real boundaries and the cost of indirection."
+      },
+      {
+        "question": "What signs suggest an abstraction is at the wrong level?",
+        "hint": "Look for leaky types, unsupported methods, frequent casts, or many one-off parameters."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-oop-inheritance-1",
+    "topic": "oop",
+    "subtopic": "oop-inheritance",
+    "difficulty": "INTERMEDIATE",
+    "question": "When is inheritance an appropriate design choice in Java?",
+    "shortAnswer": "Inheritance is appropriate when there is a genuine, stable subtype relationship and every subtype can honor the parent's contract. It can share a protocol and selected implementation, but code reuse alone is a weak reason. I prefer shallow hierarchies and verify substitutability; if behavior varies independently or must change at runtime, composition is usually a better fit.",
+    "detailedAnswer": "Inheritance couples a subtype to both the public contract and protected implementation choices of its parent. It works well for stable taxonomies or framework extension points when a subtype truly is usable wherever the parent is expected. A sealed domain hierarchy can be a good example because the alternatives and their contracts are explicit.\n\nProblems appear when inheritance is used only to reuse code. A subclass may override methods to reject parent behavior, depend on call order, or inherit state it cannot maintain. Those are signs that Liskov substitutability is broken. Prefer composition for optional capabilities, orthogonal behaviors, or runtime configuration. If inheritance is selected, keep the base contract small, document invariants, avoid fragile protected state, and test the contract against every subtype.",
+    "keyPoints": [
+      "A subtype must honor the semantic contract of its parent",
+      "Code reuse by itself does not establish an is-a relationship",
+      "Shallow, stable hierarchies are easier to reason about",
+      "Composition better supports independently varying behavior"
+    ],
+    "redFlags": [
+      "A subtype overrides a parent method only to throw UnsupportedOperationException",
+      "Correct behavior depends on undocumented protected fields or call order",
+      "The hierarchy grows along several independent dimensions"
+    ],
+    "followUps": [
+      {
+        "question": "Why is extending a class for code reuse risky?",
+        "hint": "Consider semantic contracts, protected internals, and the fragile base-class problem."
+      },
+      {
+        "question": "How would you test substitutability across a hierarchy?",
+        "hint": "Run shared contract tests against each implementation."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-oop-polymorphism-1",
+    "topic": "oop",
+    "subtopic": "oop-polymorphism",
+    "difficulty": "INTERMEDIATE",
+    "question": "How does runtime polymorphism help a design, and what costs can it introduce?",
+    "shortAnswer": "Runtime polymorphism lets callers depend on a common contract while the selected implementation provides the behavior. It supports dependency injection, replaceable integrations, and focused tests. It is not automatically better than a conditional: too many tiny implementations can obscure control flow, and a weak contract merely moves complexity elsewhere.",
+    "detailedAnswer": "In Java, runtime polymorphism occurs when a call through an interface or superclass is dispatched to the implementation of the object's runtime type. For example, a service can depend on an IntegrationClient while CDI selects a Moodle or LDAP implementation. The caller owns the workflow; each implementation owns provider-specific behavior.\n\nThis can isolate change and make contract tests possible. It also has costs: selection logic still has to exist somewhere, navigating many implementations can be harder than reading a small switch, and behavior may become surprising if the contract does not state error and lifecycle semantics. Method overloading is compile-time overload resolution and should not be presented as the same mechanism. Use polymorphism when implementations share a meaningful contract and are likely to evolve independently, not simply to eliminate every conditional.",
+    "keyPoints": [
+      "Runtime dispatch selects an implementation through a shared contract",
+      "Dependency injection commonly supplies the concrete implementation",
+      "Overloading is compile-time resolution, not runtime subtype dispatch",
+      "A small stable conditional may be clearer than unnecessary indirection"
+    ],
+    "redFlags": [
+      "Confusing method overloading with overriding",
+      "Claiming polymorphism removes all selection logic",
+      "Using a common interface for implementations with incompatible semantics"
+    ],
+    "followUps": [
+      {
+        "question": "Where does implementation selection happen when dependency injection is used?",
+        "hint": "Discuss configuration, qualifiers, factories, and composition roots."
+      },
+      {
+        "question": "When could a switch over a closed set be clearer than polymorphism?",
+        "hint": "Consider small stable sets, exhaustive checking, and local behavior."
+      },
+      {
+        "question": "How would you verify that all implementations honor the same contract?",
+        "hint": "Consider shared contract tests and explicit failure semantics."
+      }
     ],
     "realExperience": {
-      "title": "SGN3 layered architecture enforcing encapsulation",
-      "description": "Entity fields are private. State transitions enforced in Business layer (not entity). ArchUnit tests prevent Repository access from WebBeans, ensuring layers respect encapsulation boundaries."
+      "title": "SGN3 CDI-based integration layer",
+      "description": "The existing project material describes business services depending on integration interfaces, with CDI selecting Moodle, LDAP, or Firebase implementations through qualifiers."
     },
     "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
@@ -79,43 +140,37 @@
     "topic": "oop",
     "subtopic": "oop-composition",
     "difficulty": "SENIOR",
-    "question": "When would you choose composition over inheritance? Give a real example.",
-    "context": "Senior-level question. Tests design judgment, not just knowledge of the concepts.",
-    "shortAnswer": "I choose composition when behaviors vary independently, when I need runtime flexibility, or when inheritance would create a rigid tree. In practice, most of the SGN3 architecture uses composition — services are composed of injected collaborators (Repository, other Business classes, JMS producers), not inheritance hierarchies.",
-    "detailedAnswer": "Inheritance creates an 'is-a' relationship that's permanent and rigid. Composition creates a 'has-a' relationship that's flexible and runtime-configurable.\n\nThe classic signal that inheritance is wrong: you need multiple orthogonal behaviors. A `FlyingFish` can't extend both `Bird` and `Fish` in Java. But with composition, a `Creature` can have a `MovementStrategy` (fly, swim, walk) and a `BreathingStrategy` (lungs, gills) — each varying independently.\n\nIn SGN3, the architecture is fundamentally compositional:\n- Business classes compose Repository + other Business + JMS producers\n- There is no deep inheritance tree of business logic\n- Entities use inheritance only for the JPA mapping hierarchy (AuditableEntity base class with shared audit fields) — which is a legitimate use of inheritance\n\nInheritance still wins for true type hierarchies where substitutability (LSP) is the goal — like JPA entity hierarchies with shared persistent fields.",
+    "question": "How do you decide between composition and inheritance for reusable behavior?",
+    "shortAnswer": "I start with the relationship and the axis of change. Inheritance fits a stable is-a relationship whose subtypes preserve the parent contract. Composition fits has-a behavior, independent capabilities, runtime replacement, and testing seams. Composition adds objects and indirection, so I do not split behavior without a reason; the goal is the clearest design that keeps likely changes local.",
+    "detailedAnswer": "Composition delegates work to collaborators instead of inheriting their implementation. It is effective when behavior varies independently: a delivery can combine a pricing policy, routing policy, and notification channel without creating a subclass for every combination. Dependency injection is a common way to assemble those collaborators.\n\nInheritance can still be appropriate for a genuine, stable type hierarchy or a carefully designed template method. The decision should account for substitutability, ownership of state, expected change, lifecycle, and operational complexity. Composition is not free: it increases wiring, can scatter a workflow across objects, and sometimes makes debugging harder. Inheritance creates tighter compile-time coupling and can expose protected internals. A useful heuristic is to begin with composition for capabilities and reserve inheritance for semantic subtyping, then validate that choice against concrete use cases.",
     "keyPoints": [
-      "Composition when behaviors vary independently (combinatorial explosion)",
-      "Composition when you need runtime flexibility (Strategy pattern)",
-      "Inheritance when LSP substitutability is the actual goal",
-      "Inheritance for stable, shallow hierarchies with shared state",
-      "'Favor composition' doesn't mean 'never use inheritance'",
-      "Design smell: override method just to disable parent behavior"
+      "Composition separates independently changing behaviors",
+      "Inheritance requires semantic substitutability, not only shared code",
+      "Dependency injection assembles compositional designs at a clear boundary",
+      "Both choices carry navigation, coupling, and lifecycle costs"
     ],
     "redFlags": [
-      "Dogmatically saying 'never use inheritance'",
-      "Cannot articulate WHEN inheritance is still appropriate",
-      "No real example — only textbook Animal/Vehicle",
-      "Confusing composition with aggregation",
-      "Not mentioning the LSP connection"
+      "Treating favor composition as a ban on inheritance",
+      "Building a subclass for every combination of independent features",
+      "Splitting simple cohesive behavior across many collaborators without evidence"
     ],
     "followUps": [
-      { "question": "Can you name a case where inheritance was the RIGHT choice?", "hint": "JPA entities with shared audit fields, or template method for a fixed algorithm with variable steps." },
-      { "question": "How does the Decorator pattern combine inheritance and composition?", "hint": "It uses inheritance for the type contract but composition for behavior layering." },
-      { "question": "What's the cost of over-using composition?", "hint": "Indirection, harder to trace flow, more objects to wire together." }
-    ],
-    "clarifyingQuestions": [
-      "Are we talking about a specific domain or general design principles?",
-      "Is this about a new design or refactoring existing inheritance?"
-    ],
-    "tradeoffs": [
-      "Composition adds indirection — harder to follow the execution flow",
-      "Inheritance gives you polymorphism for free — composition requires explicit delegation",
-      "Composition is more testable — each piece is independently mockable",
-      "Inheritance shares implementation (code reuse) — composition shares contracts (interface reuse)"
+      {
+        "question": "What is a case where inheritance remains the clearer choice?",
+        "hint": "Use a stable substitutable hierarchy or a constrained framework extension point."
+      },
+      {
+        "question": "What costs can excessive composition introduce?",
+        "hint": "Discuss wiring, object graphs, navigation, and distributed invariants."
+      },
+      {
+        "question": "How does the Decorator pattern combine subtype polymorphism and composition?",
+        "hint": "The decorator implements the contract while delegating to another instance of it."
+      }
     ],
     "realExperience": {
-      "title": "SGN3 compositional architecture",
-      "description": "The entire Business layer is compositional: each class receives collaborators via CDI injection. No deep inheritance hierarchies. Inheritance used only in JPA entities (AuditableEntity → domain entity) for shared audit fields — a legitimate and stable hierarchy."
+      "title": "SGN3 compositional service layer",
+      "description": "The existing project material describes business classes assembled from repositories, other services, and messaging collaborators through CDI, with inheritance limited to selected stable mappings."
     },
     "experienceLevel": "PRODUCTION_EXPERIENCE"
   }

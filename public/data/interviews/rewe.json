@@ -3,103 +3,224 @@
     "id": "interview-rewe-1",
     "topic": "rewe",
     "subtopic": "rewe-job",
-    "difficulty": "INTERMEDIATE",
-    "question": "Why REWE Digital specifically?",
-    "shortAnswer": "Three things attracted me: the NEO modernization (migrating a massive legacy system to microservices — I have done exactly this at scale), the TRAB team solving real logistics problems for 170,000 drivers, and the engineering culture that invests in platforms like UNIFY and event-driven architecture.",
-    "detailedAnswer": "I researched REWE Digital specifically, not just applied broadly.\n\nWhat attracted me:\n1. **NEO Program** — migrating from monolith to microservices is exactly what I did with SGN (26,705 inscriptions, 48k queries). I know the pain of legacy, the discipline of strangler pattern, and the patience required.\n2. **TRAB domain** — delivery logistics is a beautiful problem: real-time, high-concurrency, event-driven. The challenges (route optimization, driver availability, order fulfillment) are technically interesting.\n3. **Engineering investment** — UNIFY design system, Kafka as backbone, Kotlin adoption, team autonomy. These signal a company that invests in developer experience.\n4. **Scale** — 170,000 drivers, millions of deliveries. My biggest scale was 26,705 concurrent inscriptions. I want to operate at the next level.",
+    "difficulty": "BEGINNER",
+    "question": "Please introduce yourself and explain what is relevant to this role.",
+    "context": "Aim for a conversational 60–90 seconds, then let the interviewer choose the first area to explore.",
+    "shortAnswer": "I am a senior Java backend engineer with long experience in business-critical systems and, since 2021, in the SGN3 education-management platform. My strongest areas are Java and Jakarta EE, JPA/Hibernate, PostgreSQL performance, integrations and asynchronous processing with JMS. I also work across the stack when needed and use my SinapiPRO project for hands-on Spring Boot and Angular development. What I bring to this role is experience diagnosing production behavior, modernizing legacy software incrementally and translating complex operational rules into reliable code. I am now expanding my practical depth in Kotlin, Kafka and Kubernetes, and I am interested in applying that foundation to transport logistics while learning the team's actual domain and architecture.",
+    "detailedAnswer": "A good introduction follows a clear arc: current professional identity, two or three strengths supported by evidence, one relevant project, and why those experiences connect to this role. It should not be a chronological reading of the résumé.\n\nThe wording above is intended to take roughly 60–90 seconds at a natural pace. Pause after it. If the interviewer asks for detail, choose one defensible case—such as production SQL diagnosis, JMS integration or the Spring Boot and Angular work in SinapiPRO—and explain your individual contribution.\n\nKeep the experience boundary explicit: Jakarta EE, PostgreSQL and JMS are production experience; Spring Boot and Angular are hands-on project experience; Kotlin, Kafka and Kubernetes are areas being expanded rather than claimed production ownership.",
     "keyPoints": [
-      "Specific knowledge about NEO modernization",
-      "Connection between my experience and their challenges",
-      "Understanding of TRAB domain (drivers, logistics)",
-      "Appreciation for engineering culture (UNIFY, Kafka, Kotlin)",
-      "Honest about wanting to grow in scale"
+      "Target 60–90 seconds",
+      "Lead with current engineering identity",
+      "Support strengths with relevant evidence",
+      "Distinguish production, project and study experience",
+      "End with the connection to the role"
     ],
     "redFlags": [
-      "Generic answer that could apply to any company",
-      "\"I like the salary/benefits\"",
-      "No knowledge of what REWE Digital actually does",
-      "Confusing REWE Digital with REWE retail stores"
+      "Turns the introduction into a five-minute résumé recital",
+      "Lists technologies without showing how they were used",
+      "Claims production depth in the technologies currently being learned",
+      "Uses scale figures that cannot be defended in follow-up questions"
     ],
     "followUps": [
       {
-        "question": "What do you know about the TRAB team specifically?",
-        "hint": "Tour planning, driver app, delivery windows, real-time tracking."
+        "question": "Which production problem best represents your way of working?"
       },
       {
-        "question": "How does your experience prepare you for our scale?",
-        "hint": "Be honest about current scale, show readiness to learn."
+        "question": "Which part of the target stack would require the most learning at first?"
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-rewe-2",
+    "topic": "rewe",
+    "subtopic": "rewe-job",
+    "difficulty": "INTERMEDIATE",
+    "question": "Why are you interested in this REWE Digital position?",
+    "shortAnswer": "The role combines three things that fit my direction: operationally important software, a JVM stack with Spring Boot and Kotlin, and the challenge of evolving existing applications while building new capabilities. My background in enterprise Java, SQL performance, integrations and asynchronous workflows is relevant, while logistics and the advertised Kafka and Kubernetes stack would stretch me in areas I am deliberately developing.",
+    "detailedAnswer": "I would anchor the answer in the vacancy rather than speculate about internal systems. The advertised mix of development and maintenance matters to me because much of my work has been changing business-critical software without interrupting the operation. Enterprise Java and integration work are my production foundation; Spring Boot, Kotlin, Kafka and Kubernetes are framework- or platform-specific growth areas that I should not present as equivalent experience.\n\nI am also interested in the transport-logistics context because latency, traceability, partial failure and clear operational ownership have visible business consequences there. That is a domain motivation, not a claim that I already know TRAB's workflows. I would use the interview to validate which workflows and quality attributes the team actually owns.\n\nOne accuracy guardrail is essential: public material describing more than 170,000 REWE Markt employees is company headcount, not a count of drivers. It should not be presented as TRAB's user or system scale.",
+    "keyPoints": [
+      "Connect motivation to wording in the vacancy",
+      "Explain both immediate contribution and learning edge",
+      "Treat logistics examples as domain reasoning, not inside knowledge",
+      "Show interest in evolving running systems",
+      "Do not convert company headcount into platform scale"
+    ],
+    "redFlags": [
+      "Generic motivation that could name any employer",
+      "Claims knowledge of TRAB internals not present in the vacancy",
+      "Says REWE has 170,000 drivers; the cited figure refers to employees",
+      "Presents the role only as a way to learn technologies"
+    ],
+    "followUps": [
+      {
+        "question": "Which part of your current experience would help the team soonest?"
+      },
+      {
+        "question": "What do you still need to learn about the role before deciding it is a good fit?"
       }
     ],
     "experienceLevel": "INFERENCE"
   },
   {
-    "id": "interview-rewe-2",
-    "topic": "rewe",
-    "subtopic": "rewe-trab",
-    "difficulty": "SENIOR",
-    "question": "What challenges do you expect in moving from a monolith to microservices?",
-    "shortAnswer": "Distributed transactions (eventual consistency is harder than it looks), service boundaries that match the domain (wrong boundaries create distributed monoliths), operational complexity (observability, deployment, debugging across services), and the cultural shift from \"my module\" to \"my service with SLOs.\"",
-    "detailedAnswer": "Having done a partial migration in SGN (monolith + senai-services satellite), I know the real challenges are not technical — they are organizational and operational.\n\nTechnical challenges:\n- Data consistency across service boundaries (saga vs 2PC vs eventual)\n- Finding the right service boundaries (DDD bounded contexts)\n- Network reliability (timeouts, retries, circuit breakers)\n- Testing distributed systems (contract tests, chaos engineering)\n\nOperational challenges:\n- Observability (distributed tracing, correlation IDs, centralized logging)\n- Deployment complexity (independent deploys vs coordinated releases)\n- Debugging production issues across service boundaries\n\nOrganizational challenges:\n- Team ownership boundaries\n- API contracts and versioning between teams\n- The temptation to \"just call the other service\" creating coupling",
-    "keyPoints": [
-      "Eventual consistency is harder than ACID",
-      "Wrong boundaries create distributed monoliths",
-      "Operational complexity (observability, debugging)",
-      "Cultural shift is harder than technical shift",
-      "Network is not reliable — design for failure"
-    ],
-    "redFlags": [
-      "\"Microservices solve everything\"",
-      "No mention of trade-offs or challenges",
-      "Never done a migration, only read about it",
-      "\"Just use Kafka\" as answer to all consistency problems"
-    ],
-    "followUps": [
-      {
-        "question": "How would you decide where to draw service boundaries?",
-        "hint": "DDD bounded contexts, team ownership, data ownership, deployment independence."
-      },
-      {
-        "question": "What would you NOT extract as a microservice?",
-        "hint": "Shows judgment — not everything needs to be a service."
-      }
-    ],
-    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN3 + senai-services split",
-      "description": "Extracted integration logic (Moodle, LDAP, external APIs) into senai-services while keeping core domain in SGN3 monolith. Learned that wrong boundaries create more problems than they solve."
-    }
-  },
-  {
     "id": "interview-rewe-3",
     "topic": "rewe",
-    "subtopic": "rewe-job",
-    "difficulty": "BEGINNER",
-    "question": "How would you introduce yourself in the first 5 minutes of the interview?",
-    "shortAnswer": "I am a fullstack developer with 7 years of experience, currently at SENAI Santa Catarina building the SGN education management system. I specialize in Java/Jakarta EE backend with PostgreSQL, and I am expanding into Spring Boot, Kotlin, and event-driven architecture — which is exactly why REWE TRAB interests me.",
-    "detailedAnswer": "30-second version:\n\"I am Sergio, a fullstack developer based in Brazil with 7 years of experience. I currently build and maintain SGN, an education management system serving all SENAI schools in Santa Catarina — handling enrollment, grades, scheduling for thousands of students. My core stack is Java, PostgreSQL, and Jakarta EE. I am actively learning Spring Boot, Kotlin, and Kafka because I want to work with event-driven systems at scale — which is what drew me to REWE Digital and the TRAB team.\"\n\n60-second version adds:\n\"My biggest technical achievement was refactoring the enrollment system to handle 26,705 simultaneous inscriptions — which required rethinking our query strategy, adding proper indexing, and implementing async processing via JMS. I brought response times from 48 seconds to under 2 seconds.\"\n\nKey principles:\n- Specific numbers over vague claims\n- Connect past to desired future\n- Show awareness of what REWE needs",
+    "subtopic": "rewe-trab",
+    "difficulty": "INTERMEDIATE",
+    "question": "What do you understand about the TRAB context, and what remains uncertain?",
+    "shortAnswer": "The vacancy confirms that TRAB is a team of ten developing transport-logistics software for distribution to more than 5,700 German supermarkets, supporting warehouse staff, drivers and logistics planners. It also says the team is developing NEO, a unified modular communication platform. I would still ask about exact workflows, service boundaries, production load, on-call ownership and what plug-and-play means technically.",
+    "detailedAnswer": "I would explicitly separate three levels.\n\nConfirmed by the vacancy: TRAB is a ten-person product team in Transport Logistics; its solutions manage distribution to more than 5,700 supermarkets in Germany and support warehouse staff, drivers and logistics planners. The work includes web applications, APIs, backend services, integrations and analytics. The team is also developing NEO, described as a unified communication platform with a modular, plug-and-play architecture.\n\nReasonable domain hypotheses, not confirmed implementation facts: workflows may include dispatch, status updates, exceptions or delivery confirmation; availability and traceability are likely important; and Kafka may support some asynchronous flows. These are prompts for questions, not architecture facts.\n\nUnknown until the team explains it: which lifecycle steps TRAB owns, current system boundaries and load, NEO's production maturity, the technical meaning of plug-and-play, on-call expectations, and how responsibilities are divided across locations and teams.",
     "keyPoints": [
-      "Keep it under 90 seconds",
-      "Lead with role and context, not biography",
-      "Include one concrete number/achievement",
-      "Connect your experience to THEIR needs",
-      "End with why you are here (not why you left)"
+      "Label vacancy facts, domain hypotheses and unknowns separately",
+      "Keep confirmed users separate from hypothesized workflows",
+      "Use hypotheses to form questions",
+      "Ask about system ownership and operational responsibility",
+      "Avoid assuming that modular means microservices"
     ],
     "redFlags": [
-      "Starting with childhood or education history",
-      "Listing every technology ever used",
-      "Talking for 5+ minutes without pause",
-      "Not mentioning anything specific to REWE"
+      "Describes an inferred architecture as the current architecture",
+      "Invents traffic or usage volumes beyond the vacancy",
+      "Treats transport planning and execution ownership as confirmed",
+      "Cannot name any important unknowns"
     ],
     "followUps": [
       {
-        "question": "Tell me more about the 26,705 inscriptions problem.",
-        "hint": "Be ready to deep-dive into any number you mention."
+        "question": "Which uncertainty would you clarify first if you joined?"
       },
       {
-        "question": "Why are you leaving your current role?",
-        "hint": "Growth-oriented answer, never negative about current employer."
+        "question": "How would your approach change depending on which transport workflow the team owns?"
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "INFERENCE"
+  },
+  {
+    "id": "interview-rewe-4",
+    "topic": "rewe",
+    "subtopic": "rewe-problem",
+    "difficulty": "SENIOR",
+    "question": "Suppose a transport-status service can receive duplicate and out-of-order events. How would you make processing reliable?",
+    "shortAnswer": "I would first clarify the required business ordering and source of truth. I would give each event a stable identity and aggregate key, make consumers idempotent, reject or quarantine invalid transitions, and persist processing state atomically with the business update. I would monitor duplicates, stale events, retries and reconciliation gaps rather than assuming exactly-once delivery solves the workflow.",
+    "detailedAnswer": "The first question is whether every event needs global order or only order per transport, route or stop. Usually the smaller aggregate boundary is both sufficient and more scalable. I would also ask whether events carry a source sequence, version or event time and whether late corrections are valid.\n\nFor processing, I would use a unique event identifier for deduplication and a version or sequence check on the aggregate. The state transition must be validated against domain rules: a late 'departed' event should not silently overwrite a later 'delivered' state. Depending on requirements, it may be ignored, stored for audit, used to rebuild state, or sent to a reconciliation flow.\n\nRetries must be safe. The business update and processed-event marker should commit together where possible; an outbox or equivalent pattern can protect any subsequent publication. Dead-letter handling needs ownership and replay tooling. Metrics should expose consumer lag, retry rate, duplicate rate, invalid transitions and age of the oldest unprocessed event.\n\nThis is a general design response, not a statement about TRAB's current implementation.",
+    "keyPoints": [
+      "Clarify the necessary ordering boundary",
+      "Use stable event identity and aggregate versioning",
+      "Make the business transition idempotent",
+      "Handle stale and invalid events explicitly",
+      "Design reconciliation, replay and operational metrics"
+    ],
+    "redFlags": [
+      "Assumes broker delivery semantics guarantee business exactly-once behavior",
+      "Orders every event globally without a requirement",
+      "Retries state changes that are not idempotent",
+      "Sends failures to a dead-letter topic with no recovery process"
+    ],
+    "clarifyingQuestions": [
+      "What entity requires ordering?",
+      "Can a late event be a valid correction?",
+      "Which system is authoritative for current status?",
+      "What is the acceptable delay before manual intervention?"
+    ],
+    "followUps": [
+      {
+        "question": "How would you reconcile state after a consumer bug is fixed?"
+      },
+      {
+        "question": "What changes if the database update succeeds but publishing the next event fails?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "interview-rewe-5",
+    "topic": "rewe",
+    "subtopic": "rewe-neo",
+    "difficulty": "INTERMEDIATE",
+    "question": "What can you say about NEO from the vacancy, and what would you ask before discussing its design?",
+    "shortAnswer": "I can say only what the vacancy states: TRAB is developing NEO as a unified communication platform with a modular plug-and-play architecture. I do not know whether it is one deployable or many, what 'communication' means in this domain, how plugins are isolated, or its production maturity. Those are my first questions.",
+    "detailedAnswer": "The phrase 'unified communication platform' has several plausible meanings: user notifications, integration adapters, inter-service messaging or another domain-specific capability. 'Plug-and-play' could refer to in-process modules, independently deployed services, configuration-driven adapters or a combination. None of those interpretations should be presented as NEO's implementation without confirmation.\n\nBefore suggesting architecture, I would ask about producers and consumers, delivery guarantees, plugin lifecycle and compatibility, isolation between plugins, data ownership, security boundaries, observability, deployment model and current pain points. I would also ask whether NEO is already in production and which teams depend on it.\n\nOnce those answers are known, I can connect relevant patterns from my integration and messaging experience. Until then, the senior response is a precise boundary between knowledge and hypothesis.",
+    "keyPoints": [
+      "Repeat only the three confirmed descriptions from the vacancy",
+      "Show that key terms have multiple possible implementations",
+      "Ask about contracts, lifecycle, isolation and guarantees",
+      "Do not assume Kafka is part of NEO",
+      "Connect experience only after clarifying the problem"
+    ],
+    "redFlags": [
+      "Draws the NEO architecture as though it were known",
+      "Assumes a plugin is necessarily a Spring bean or a microservice",
+      "Claims specific users, channels or Kafka topics",
+      "Uses 'plug-and-play' without asking how compatibility and failure isolation work"
+    ],
+    "followUps": [
+      {
+        "question": "Which plugin contract concerns would you explore first?"
+      },
+      {
+        "question": "How would the trade-offs differ between in-process and independently deployed plugins?"
+      }
+    ],
+    "experienceLevel": "INFERENCE"
+  },
+  {
+    "id": "interview-rewe-6",
+    "topic": "rewe",
+    "subtopic": "rewe-connection",
+    "difficulty": "SENIOR",
+    "question": "Which parts of your experience transfer to this role, and where are the limits?",
+    "shortAnswer": "The strongest transfer is in reliable enterprise workflows: Java, transactions, PostgreSQL performance, REST and SOAP integrations, JMS messaging, production diagnosis and incremental legacy modernization. A measured SGN3 case reduced a request over 26,705 enrollment records in the period from about 16 minutes and 48,000 queries to about two seconds and roughly ten queries. The limit is equally clear: my production stack is mainly Jakarta EE and JMS; Spring Boot and Angular are hands-on project experience, while Kafka, Kotlin and Kubernetes are still growth areas.",
+    "detailedAnswer": "I would connect capabilities, not pretend the domains or technologies are identical. Complex education workflows and transport workflows can both demand traceability, transaction boundaries, resilience to external-system failure and careful production change. My experience diagnosing APM traces and SQL plans, designing asynchronous JMS flows and integrating external systems is directly relevant to those engineering concerns.\n\nThe performance example is evidence of method rather than claimed REWE-scale equivalence: 26,705 is the volume of enrollment records in the period, not a claim of 26,705 concurrent users or requests. The request itself generated about 48,000 queries and took about 16 minutes before the fix; pagination, query restructuring and projections reduced it to roughly ten queries and around two seconds. Every number should be used only if it can be defended from measurements.\n\nThe gaps should be named without apology. JMS concepts transfer to Kafka, but the log model, partitioning, replay and consumer-group operations require specific learning. Jakarta EE concepts transfer to Spring, but framework behavior still needs hands-on depth. That is a credible ramp-up plan, not equivalence.",
+    "keyPoints": [
+      "Connect engineering capabilities rather than claiming domain equivalence",
+      "Describe the 26,705 figure as record volume, not concurrency",
+      "Use the consistent measured path: about 16 minutes to two seconds",
+      "Separate production and project experience",
+      "Name technology-specific learning gaps"
+    ],
+    "redFlags": [
+      "Calls 26,705 records simultaneous or concurrent without evidence",
+      "Claims JMS and Kafka are interchangeable",
+      "Presents a personal project as production operation",
+      "Uses performance figures without being able to explain their measurement"
+    ],
+    "followUps": [
+      {
+        "question": "Which JMS lesson would you carry into Kafka, and what would you relearn?"
+      },
+      {
+        "question": "How were the performance numbers measured and validated?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "interview-rewe-7",
+    "topic": "rewe",
+    "subtopic": "rewe-questions",
+    "difficulty": "INTERMEDIATE",
+    "question": "What questions would you ask the team at the end of the interview?",
+    "shortAnswer": "I would ask questions that reveal the real work and success criteria: which transport capabilities TRAB owns, what I would likely change first, how NEO's modularity works in practice, which production failure is hardest today, how the team measures reliability, and what good performance after six months looks like.",
+    "detailedAnswer": "I would choose three or four questions based on what was not already answered. Useful options include:\n\n• What part of the transport lifecycle does TRAB own, and where are the boundaries with other teams?\n• Which application or capability would this role work on first?\n• What does plug-and-play mean concretely in NEO: code modules, deployed services, adapters or something else?\n• Which production failure or operational bottleneck consumes the most team attention today?\n• How are architectural decisions made and recorded?\n• How much of the work is modernization, feature development and production support?\n• What would you expect the person in this role to have achieved after six months?\n\nA follow-up based on something an interviewer said is usually stronger than reading a long prepared list. I would avoid questions whose answers are clearly public or already covered in the conversation.",
+    "keyPoints": [
+      "Ask about ownership and boundaries",
+      "Clarify the first likely work and current pain",
+      "Use NEO questions to validate, not display assumptions",
+      "Ask how success is measured",
+      "Adapt questions to the conversation"
+    ],
+    "redFlags": [
+      "Asks a long list without responding to the interview discussion",
+      "Uses a question to disguise an unsupported claim",
+      "Focuses only on technologies and not users or outcomes",
+      "Asks for information already provided"
+    ],
+    "followUps": [
+      {
+        "question": "Which one question would most affect your decision about the role?"
+      },
+      {
+        "question": "How would you follow up if the team says its biggest issue is operational reliability?"
+      }
+    ],
+    "experienceLevel": "INFERENCE"
   }
 ]

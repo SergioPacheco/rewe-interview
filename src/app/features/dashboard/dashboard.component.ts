@@ -50,6 +50,15 @@ export class DashboardComponent {
     this.topicService.topics().filter(t => this.reweIds.includes(t.id))
   );
 
+  readonly topicCount = computed(() => this.topicService.topics().length);
+
+  readonly exerciseCount = computed(() =>
+    this.topicService.topics().reduce(
+      (total, topic) => total + this.topicService.getQuestions(topic.id).length,
+      0
+    )
+  );
+
   /** Technology logo URLs */
   private readonly logos: Record<string, string> = {
     'rewe': 'assets/rewe-logo.svg',

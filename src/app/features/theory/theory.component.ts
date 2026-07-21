@@ -108,10 +108,14 @@ export class TheoryComponent {
       // Reset tab state when navigation changes
       const hasTheory = this.visibleChapters().length > 0;
       const hasExercises = this.exerciseCount() > 0;
+      const topicData = this.topic();
 
       if (!hasTheory && hasExercises) {
         this.activeTab.set('practice');
         this.startEngine();
+      } else if (!hasTheory && !hasExercises && topicData?.mode === 'interview') {
+        // Interview-only topic (e.g., software-architecture): go straight to Interview tab
+        this.activeTab.set('interview');
       } else {
         this.activeTab.set('learn');
       }

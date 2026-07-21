@@ -1,100 +1,326 @@
 [
   {
-    "id": "interview-collections-1",
+    "id": "interview-java-basics-1",
+    "topic": "collections",
+    "subtopic": "java-basics",
+    "difficulty": "BEGINNER",
+    "question": "What happens between compiling a Java source file and executing its code?",
+    "shortAnswer": "javac normally compiles source into JVM bytecode stored in class files. At runtime, class loaders load and link classes, the verifier checks bytecode constraints, and the JVM interprets or just-in-time compiles hot code to native instructions. The same class file can run on compatible JVMs, while behavior can still depend on the JDK version, native libraries, and operating environment.",
+    "detailedAnswer": "Compilation translates Java source into class files containing bytecode and metadata. The runtime loads classes on demand, verifies structural and type-safety rules, links symbolic references, initializes static state, and executes methods. Modern JVMs usually begin with interpretation or lower-tier compiled code and optimize frequently executed paths using runtime profiles. Optimized code can later be deoptimized if its assumptions stop holding.\n\nWrite once, run anywhere describes bytecode portability, not absolute environmental independence. A program may rely on a minimum class-file version, filesystem conventions, encodings, time zones, native code, or container limits. It is also useful to distinguish the language, the standard library, and the JVM: other languages can target the JVM, and Java code can behave differently across supported runtime versions without changing its source.",
+    "keyPoints": [
+      "javac produces bytecode and class metadata",
+      "Class loading, linking, initialization, and execution are distinct phases",
+      "The JVM can profile, JIT-compile, and deoptimize code",
+      "Bytecode portability does not remove runtime and environment compatibility concerns"
+    ],
+    "redFlags": [
+      "Saying Java source is directly interpreted line by line",
+      "Treating the JDK, JVM, and Java language as interchangeable terms",
+      "Claiming bytecode guarantees identical behavior on every environment"
+    ],
+    "followUps": [
+      {
+        "question": "Why can a class compiled on a newer JDK fail on an older runtime?",
+        "hint": "Consider class-file versions and APIs introduced after the older runtime."
+      },
+      {
+        "question": "What is JIT deoptimization?",
+        "hint": "Optimized code can fall back when runtime assumptions become invalid."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "interview-java-types-1",
+    "topic": "collections",
+    "subtopic": "java-types",
+    "difficulty": "BEGINNER",
+    "question": "What practical differences between primitives and wrapper types matter in production Java?",
+    "shortAnswer": "Primitives hold values and cannot be null; wrappers are objects, can be null, work with generics, and add allocation or boxing semantics. Autoboxing is convenient but can hide NullPointerException during unboxing, surprising identity comparisons, and overhead in hot paths. I use equals for wrapper value comparison and choose nullability deliberately rather than switching mechanically between the two.",
+    "detailedAnswer": "Java's eight primitive types have value semantics defined by the language. Their wrappers—Integer, Long, Boolean, and others—are reference types required for generic collections and APIs that represent absence with null. Autoboxing and unboxing make conversions implicit, but `Integer count = null; int n = count;` throws NullPointerException.\n\nThe `==` operator compares primitive values but wrapper references. Small boxed integers are commonly cached, so some identity comparisons appear to work and then fail for other values; that cache is not a reason to use `==`. Wrappers also add memory and possible allocation costs, though the JVM may optimize some allocations. In ordinary domain code clarity matters more than micro-optimization; in large numeric arrays or measured hot loops, primitive-specialized storage may matter substantially.",
+    "keyPoints": [
+      "Primitives are non-null values; wrappers are nullable references",
+      "Generics require reference types, which introduces boxing",
+      "Unboxing a null wrapper throws NullPointerException",
+      "Wrapper identity and value equality are different"
+    ],
+    "redFlags": [
+      "Comparing wrapper values with ==",
+      "Assuming autoboxing is behaviorally invisible around null",
+      "Making performance claims without considering workload or measurement"
+    ],
+    "followUps": [
+      {
+        "question": "Why can Integer comparisons with == appear inconsistent?",
+        "hint": "Discuss reference identity and the cache used for some boxed values."
+      },
+      {
+        "question": "Where can boxing become operationally significant?",
+        "hint": "Think about large collections, allocation rate, GC, and numeric hot loops."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-java-operators-1",
+    "topic": "collections",
+    "subtopic": "java-operators",
+    "difficulty": "BEGINNER",
+    "question": "What is the difference between short-circuit and non-short-circuit boolean operators in Java?",
+    "shortAnswer": "For booleans, && and || evaluate the right operand only when it can affect the result. The & and | operators evaluate both operands, and they also serve as bitwise operators for integer types. Short-circuiting is useful for guards such as value != null && value.isValid(); choosing the non-short-circuit form can trigger side effects or exceptions on the right side.",
+    "detailedAnswer": "With `a && b`, Java skips `b` when `a` is false; with `a || b`, it skips `b` when `a` is true. This allows safe guard expressions and can avoid expensive work. Boolean `&` and `|` always evaluate both operands, while on integral operands they perform bitwise operations. `^` is exclusive-or and also evaluates both boolean operands.\n\nCorrectness should not depend on obscure side effects inside boolean expressions. Even when short-circuiting is understood, extracting complex predicates into named methods often improves readability and tests. Parentheses are preferable when mixed operators make precedence hard to see. A strong answer explains both evaluation behavior and why it matters, rather than simply listing the symbols.",
+    "keyPoints": [
+      "&& and || conditionally skip the right operand",
+      "Boolean & and | evaluate both operands",
+      "The same & and | tokens are bitwise operators for integral types",
+      "Guard expressions can prevent invalid dereferences or expensive work"
+    ],
+    "redFlags": [
+      "Treating & and && as interchangeable for boolean expressions",
+      "Depending on hidden mutations inside a complex condition",
+      "Ignoring readability when mixing several operators"
+    ],
+    "followUps": [
+      {
+        "question": "What happens in obj != null && obj.isReady()?",
+        "hint": "The method is not called when obj is null."
+      },
+      {
+        "question": "When is boolean & intentional?",
+        "hint": "Rarely, when both boolean computations must run; make side effects explicit if possible."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-java-arrays-1",
     "topic": "collections",
     "subtopic": "java-arrays",
-    "difficulty": "INTERMEDIATE",
-    "question": "How does HashMap work internally in Java?",
-    "context": "Fundamental question — interviewers expect you to know bucket arrays, hashing, and collision handling.",
-    "shortAnswer": "HashMap uses an array of buckets. The key's hashCode() determines the bucket index via bitwise operation. Collisions are handled by linked lists (or trees when a bucket exceeds 8 entries in Java 8+). Get/put are O(1) average, O(n) worst case with bad hash distribution.",
-    "detailedAnswer": "Internal structure:\n1. Array of Node[] (buckets), default size 16\n2. hashCode() → hash → index = hash & (capacity - 1)\n3. Collision: linked list in the bucket (Java 7) or tree (Java 8+ when bucket > 8 nodes)\n4. Load factor 0.75 → resize (double) when 75% full\n5. Resize rehashes all entries — O(n) operation\n\nKey contract:\n- equals() and hashCode() MUST be consistent\n- If a.equals(b) then a.hashCode() == b.hashCode()\n- Violating this = silent data loss (put finds one bucket, get looks in another)\n\nPerformance:\n- Average: O(1) for get/put\n- Worst case: O(n) with all collisions in one bucket\n- Java 8 tree optimization: O(log n) worst case per bucket",
+    "difficulty": "BEGINNER",
+    "question": "When would you choose an array instead of a List in Java?",
+    "shortAnswer": "I choose an array when size is fixed, indexed storage is the natural contract, a library requires one, or primitive storage and low overhead matter. A List is usually clearer when the collection grows, exposes collection operations, or should hide its representation. Arrays are covariant and reified, while generics are invariant and erased, which creates different type-safety trade-offs.",
+    "detailedAnswer": "Arrays have fixed length and support constant-time indexed access. They can store primitives directly and carry their component type at runtime. Lists provide resizing and a richer API, and an interface such as List usually gives callers less knowledge of storage details.\n\nJava arrays are covariant: a String[] can be assigned to Object[], but storing an Integer then throws ArrayStoreException at runtime. Generic collections are invariant by default, so List<String> is not a List<Object>; this catches that category of error at compile time. Arrays and generics also interact awkwardly because generic component types are erased, which is why creating `new T[]` is generally not allowed. The decision should be based on the API contract and measured constraints, not a universal claim that one is faster.",
     "keyPoints": [
-      "Array of buckets + linked list/tree for collisions",
-      "hashCode() determines bucket, equals() finds exact entry",
-      "Load factor 0.75 triggers resize (doubles capacity)",
-      "equals/hashCode contract is critical",
-      "Java 8: tree when bucket > 8 entries"
+      "Arrays have fixed length and can store primitives directly",
+      "Lists offer resizing and collection-oriented operations",
+      "Array covariance can defer a type error until runtime",
+      "Generic collections are invariant unless variance is expressed with wildcards"
     ],
     "redFlags": [
-      "Cannot explain collision handling",
-      "Does not know about the equals/hashCode contract",
-      "\"It is just a key-value store\" without internals",
-      "Confusing HashMap with TreeMap or LinkedHashMap"
+      "Classifying HashMap as an array concept",
+      "Claiming arrays are always faster without workload evidence",
+      "Missing the runtime risk introduced by array covariance"
     ],
     "followUps": [
-      { "question": "What happens if you use a mutable object as a key?", "hint": "If hashCode changes after insertion, the entry becomes unreachable." },
-      { "question": "When would you choose TreeMap over HashMap?", "hint": "When you need sorted keys or range queries." },
-      { "question": "What is the difference between HashMap and ConcurrentHashMap?", "hint": "ConcurrentHashMap uses lock striping for thread safety without locking the entire map." }
+      {
+        "question": "Why can assigning String[] to Object[] fail later?",
+        "hint": "The runtime component type still prevents storing a non-String."
+      },
+      {
+        "question": "Why is new T[] usually illegal in a generic class?",
+        "hint": "Arrays need a reified runtime component type, while T is erased."
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN3 ConcurrentHashMap for application cache",
-      "description": "Used ConcurrentHashMap with TTL entries for caching configuration parameters (unidades, modalidades). Chose it over full cache framework because the data volume is small and the access pattern is simple (read-heavy, occasional invalidation)."
-    }
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
-    "id": "interview-collections-2",
+    "id": "interview-java-loops-1",
+    "topic": "collections",
+    "subtopic": "java-loops",
+    "difficulty": "INTERMEDIATE",
+    "question": "How can you safely remove elements while iterating over a Java collection?",
+    "shortAnswer": "For a mutable collection, use the iterator's remove method after next(), or use removeIf when a predicate expresses the operation clearly. Mutating the collection directly during a fail-fast iteration commonly causes ConcurrentModificationException, but fail-fast behavior is best-effort and is not a concurrency guarantee. For concurrent collections, iteration semantics depend on the specific implementation.",
+    "detailedAnswer": "An enhanced for loop typically uses an Iterator internally. Structural modification through the collection while that iterator is active can invalidate its state, so many general-purpose collections detect the change and throw ConcurrentModificationException. The supported mutation path is `Iterator.remove()`, subject to the iterator contract, or a collection operation such as `removeIf`.\n\nThis exception is a bug detector, not synchronization. Detection is not guaranteed, and avoiding the exception does not make concurrent access safe. ConcurrentHashMap iterators are weakly consistent: they do not throw ConcurrentModificationException and may reflect some updates during traversal. CopyOnWriteArrayList iterates over a snapshot, making reads stable but writes expensive. Choose the collection and traversal based on required consistency, mutation frequency, and ownership.",
+    "keyPoints": [
+      "Iterator.remove and removeIf are supported mutation mechanisms",
+      "Fail-fast iteration is best-effort, not a thread-safety feature",
+      "Concurrent collections define their own iteration consistency",
+      "Snapshot iteration trades write cost for stable reads"
+    ],
+    "redFlags": [
+      "Catching ConcurrentModificationException as normal control flow",
+      "Assuming fail-fast means thread-safe",
+      "Applying one iteration rule to every concurrent collection"
+    ],
+    "followUps": [
+      {
+        "question": "Why is ConcurrentModificationException described as best-effort?",
+        "hint": "Its detection mechanism is not a synchronization protocol or guaranteed race detector."
+      },
+      {
+        "question": "How do ConcurrentHashMap and CopyOnWriteArrayList iterators differ?",
+        "hint": "Compare weak consistency with snapshot semantics and write cost."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-java-methods-1",
+    "topic": "collections",
+    "subtopic": "java-methods",
+    "difficulty": "INTERMEDIATE",
+    "question": "Is Java pass-by-reference or pass-by-value, and why does the distinction matter?",
+    "shortAnswer": "Java is always pass-by-value. For an object argument, the value copied into the parameter is a reference to the same object. A method can mutate that object's state, but assigning the parameter to another object does not reassign the caller's variable. This distinction explains many API and testing surprises without calling Java pass-by-reference.",
+    "detailedAnswer": "When a method is called, each argument expression produces a value that is copied into a parameter. For a primitive, that value is the primitive value. For a reference type, it is a reference value. Both caller and callee can therefore refer to the same mutable object, but the parameter itself is a separate variable.\n\nA method such as `rename(User user)` can call `user.setName(...)` and the caller observes the mutation. If it executes `user = new User()`, only the local parameter changes. Arrays follow the same rule because an array variable is a reference. Clear ownership and immutability reduce confusion: methods can return a new value instead of mutating shared input, and APIs should document whether arguments are retained or modified.",
+    "keyPoints": [
+      "Every Java argument is passed by copying its value",
+      "An object variable contains a reference value",
+      "Mutating the referenced object differs from reassigning the parameter",
+      "Ownership and mutation contracts should be explicit"
+    ],
+    "redFlags": [
+      "Calling Java pass-by-reference because object mutation is visible",
+      "Assuming reassigning a parameter changes the caller's variable",
+      "Leaving argument mutation undocumented"
+    ],
+    "followUps": [
+      {
+        "question": "Why can a method mutate an object but not replace the caller's variable?",
+        "hint": "The copied reference points to the same object, while the variables remain distinct."
+      },
+      {
+        "question": "Do arrays use different parameter-passing semantics?",
+        "hint": "No; the copied value is an array reference."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-java-inheritance-1",
+    "topic": "collections",
+    "subtopic": "java-inheritance",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you choose between an interface and an abstract class in modern Java?",
+    "shortAnswer": "I use an interface to define a role that unrelated types can implement and when multiple inheritance of contracts is useful. I use an abstract class when subtypes share protected state, construction rules, or a deliberate partial implementation. Interface default methods can evolve behavior, but they do not turn an interface into a good place for shared mutable state or lifecycle coupling.",
+    "detailedAnswer": "Interfaces define capabilities and allow a class to implement several roles. They can contain static, private, and default methods, but instance state remains with implementations. Abstract classes support constructors, instance fields, protected members, and a controlled template shared by related subtypes. A class can extend only one class, so that relationship consumes its inheritance choice and creates tighter coupling.\n\nDefault methods were introduced partly to evolve interfaces compatibly, yet adding one can still cause conflicts or behavioral surprises. Abstract classes can suffer from the fragile base-class problem if subtypes depend on undocumented internals. Choose based on the semantic relationship and required state, not on the outdated rule that interfaces contain no implementation. For reusable orthogonal behavior, composition may be clearer than either form of inheritance.",
+    "keyPoints": [
+      "Interfaces model roles and support multiple contract inheritance",
+      "Abstract classes can own construction, state, and partial implementation",
+      "Default methods do not provide shared instance state",
+      "Composition remains an alternative for orthogonal reusable behavior"
+    ],
+    "redFlags": [
+      "Saying interfaces cannot contain implemented methods",
+      "Choosing an abstract class solely to avoid a small amount of duplication",
+      "Ignoring the semantic contract and single-class-inheritance constraint"
+    ],
+    "followUps": [
+      {
+        "question": "What happens when two implemented interfaces provide the same default method?",
+        "hint": "The implementing class must resolve the conflict explicitly."
+      },
+      {
+        "question": "When is composition preferable to an abstract base class?",
+        "hint": "Consider independently varying behavior and avoiding protected-state coupling."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-java-exceptions-1",
     "topic": "collections",
     "subtopic": "java-exceptions",
-    "difficulty": "BEGINNER",
-    "question": "Explain the difference between checked and unchecked exceptions.",
-    "context": "Tests understanding of Java's exception design philosophy, not just the syntax.",
-    "shortAnswer": "Checked exceptions must be declared or caught — they represent recoverable conditions like IOException. Unchecked (RuntimeException) represent programming errors like NullPointerException — forcing callers to handle them would pollute every method signature. In SGN3, business rule violations use unchecked SenaiException because callers should prevent the violation, not catch and recover from it.",
-    "detailedAnswer": "Checked exceptions (extends Exception, not RuntimeException):\n- Compiler forces you to handle them (try/catch or throws)\n- Represent conditions the caller CAN reasonably recover from\n- Examples: IOException, SQLException, FileNotFoundException\n\nUnchecked exceptions (extends RuntimeException):\n- No compiler enforcement\n- Represent programming errors that SHOULD be fixed in code\n- Examples: NullPointerException, IllegalArgumentException, IndexOutOfBoundsException\n\nDesign decision for custom exceptions:\n- Business rule violations → RuntimeException (caller should prevent, not catch)\n- External system failures → can be checked or wrapped in unchecked with context\n\nSGN3 strategy:\n- SenaiException extends RuntimeException — business rule violations\n- Wraps a Mensagem object with i18n key for user-facing error messages\n- Propagates naturally through EJB stack without declaring throws everywhere\n- Caught at WebBean layer for FacesMessage display",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do checked and unchecked exceptions differ, and how do you choose between them?",
+    "shortAnswer": "Checked exceptions must be caught or declared; RuntimeException and its subclasses do not. I choose based on the API contract, not on whether an error is common: a checked exception can make a recoverable condition explicit, while an unchecked exception suits programming errors or failures callers cannot reasonably handle locally. At boundaries I translate low-level exceptions without losing the cause or useful context.",
+    "detailedAnswer": "The compiler enforces handling of checked Throwable subtypes other than RuntimeException and Error. This can document a recovery path, but it can also create noisy propagation through layers that cannot act on the failure. Unchecked exceptions reduce signature friction, but they should still be documented when they form part of a public contract.\n\nThe choice depends on expected callers and recovery. A parser API may use a checked exception when clients can correct input; a violated invariant is normally unchecked. Infrastructure failures often need translation into a domain-meaningful exception at an architectural boundary. Preserve the original cause, avoid logging the same failure at every layer, use try-with-resources for deterministic cleanup, and do not catch Exception merely to return a neutral value. Error generally represents serious JVM or environment conditions and is rarely something application code should absorb.",
     "keyPoints": [
-      "Checked = compile-time enforced, recoverable conditions",
-      "Unchecked = programming errors, should fix not catch",
-      "Custom exceptions: business rules → unchecked is common in modern Java",
-      "Checked exceptions for external/IO failures",
-      "Over-using checked exceptions pollutes APIs (Spring learned this)"
+      "Checked exceptions are enforced by catch-or-declare rules",
+      "Exception type should reflect the caller's realistic recovery options",
+      "Boundary translation should preserve cause and context",
+      "try-with-resources handles cleanup and suppressed exceptions"
     ],
     "redFlags": [
-      "Cannot explain the design rationale for the distinction",
-      "\"I always use RuntimeException\" without justification",
-      "Catching Exception everywhere and swallowing",
-      "Not knowing that Error is different from Exception"
+      "Catching Exception and silently continuing",
+      "Logging and rethrowing the same failure at every layer",
+      "Discarding the original cause during exception translation"
     ],
     "followUps": [
-      { "question": "Why did Spring choose unchecked exceptions for DataAccessException?", "hint": "Because callers rarely can recover from DB errors at the point of the call." },
-      { "question": "When would you create a checked exception?", "hint": "When the caller has a meaningful recovery action (retry, fallback, alternative path)." }
+      {
+        "question": "When can a checked exception become harmful to an API?",
+        "hint": "Consider callers that cannot recover and multi-layer propagation."
+      },
+      {
+        "question": "What happens when both a try block and resource close operation fail?",
+        "hint": "try-with-resources keeps the primary exception and records close failures as suppressed."
+      },
+      {
+        "question": "Where should an infrastructure exception become a domain exception?",
+        "hint": "Translate at the boundary that understands both vocabularies."
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN3 SenaiException (unchecked) strategy",
-      "description": "All business rule violations throw SenaiException (unchecked, wraps Mensagem with i18n key). Propagates through EJB without throws declarations. Caught at WebBean layer for user-facing error display. Clean separation: fix the logic (unchecked) vs handle the external failure (retry/fallback)."
-    }
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
-    "id": "interview-collections-3",
+    "id": "interview-java-api-hashmap-1",
+    "topic": "collections",
+    "subtopic": "java-api",
+    "difficulty": "SENIOR",
+    "question": "How does HashMap work in current Java implementations, and which details are contractual?",
+    "shortAnswer": "HashMap uses hashCode to choose a bucket and equals to find the matching key within that bucket. In current OpenJDK implementations, buckets start as linked nodes and may become balanced trees after enough collisions and sufficient table capacity; resizing occurs after a load threshold. Those tree thresholds are implementation details, while null support, key semantics, and lack of thread safety are API concerns.",
+    "detailedAnswer": "A HashMap computes a spread hash from the key's hashCode and maps it to an index in a power-of-two table. Colliding entries share a bucket. In modern OpenJDK, a sufficiently crowded bucket can be treeified, normally at eight entries and only when the table has reached a minimum capacity of 64; otherwise resizing is preferred. The default load factor is 0.75, and crossing capacity multiplied by load factor triggers a resize. These numbers describe an implementation and should not be treated as the Map contract.\n\nCorrectness depends on equals and hashCode: equal keys must have equal hashes, and fields involved in them should not change while the key is stored. Average get and put are expected constant time with a good distribution, but complexity and memory behavior depend on collisions and resizing. HashMap allows one null key and null values and is not thread-safe. Use ConcurrentHashMap or explicit ownership when concurrent mutation is required; wrapping individual calls does not automatically make compound actions atomic.",
+    "keyPoints": [
+      "hashCode narrows the search; equals establishes key equality",
+      "Tree bins and threshold values are OpenJDK implementation details",
+      "Mutable key fields can make an entry effectively unreachable",
+      "HashMap is not safe for unsynchronized concurrent mutation"
+    ],
+    "redFlags": [
+      "Classifying HashMap under the Arrays subtopic",
+      "Claiming collision treeification always happens at exactly eight entries",
+      "Claiming worst-case lookup is universally O(1)",
+      "Using mutable business fields in equals and hashCode while the object is a key"
+    ],
+    "followUps": [
+      {
+        "question": "Why must equal objects have equal hash codes?",
+        "hint": "Otherwise lookup may search a different bucket and never call equals on the stored key."
+      },
+      {
+        "question": "Why might HashMap resize instead of treeifying a crowded bucket?",
+        "hint": "At small capacities, spreading entries across a larger table is preferred."
+      },
+      {
+        "question": "Is Collections.synchronizedMap enough for compute-if-absent workflows?",
+        "hint": "Check the wrapper's compound-operation contract and compare it with ConcurrentHashMap."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-java-api-streams-1",
     "topic": "collections",
     "subtopic": "java-api",
     "difficulty": "INTERMEDIATE",
-    "question": "What is the Stream API and when would you NOT use it?",
-    "context": "Tests practical judgment — not just knowing streams, but knowing their limits.",
-    "shortAnswer": "Stream API enables declarative data processing pipelines (filter, map, reduce). I would NOT use it when: the operation has side effects, when debugging is important (harder to step through), when performance is critical in tight loops, or when the logic is simple enough that a for loop is clearer.",
-    "detailedAnswer": "Stream API provides a functional approach to collection processing:\n- Declarative: WHAT to compute, not HOW\n- Lazy: intermediate operations only execute when a terminal operation is called\n- Parallelizable: .parallelStream() for CPU-bound operations\n\nWhen to use:\n- Transforming collections (map, filter, reduce)\n- Aggregations (count, sum, groupBy)\n- When pipeline makes intent clearer than loops\n\nWhen NOT to use:\n- Operations with side effects (modifying external state)\n- Simple iterations where for-each is clearer\n- When you need to break/return early (streams process all elements)\n- Performance-critical tight loops (stream overhead matters at scale)\n- When debugging is important (harder to set breakpoints)\n\nAnti-patterns:\n- stream().forEach() that modifies external state → just use for-each\n- Overly complex streams that need comments to explain → extract methods or use loops\n- Collecting to list just to iterate again → use the stream directly",
+    "question": "How are Java Stream pipelines executed, and when would you prefer a loop?",
+    "shortAnswer": "A stream describes a one-use pipeline: intermediate operations are generally lazy, and a terminal operation drives traversal. The implementation can fuse stages and short-circuit, so code should avoid interfering with the source or relying on side-effect order. I prefer a loop when mutation, checked-error handling, early debugging, or a stateful algorithm is clearer; parallel streams require measurement and a suitable workload.",
+    "detailedAnswer": "A Stream is not a collection and normally does not store elements. It wraps a source and a sequence of intermediate operations such as map or filter. These operations are lazy; a terminal operation such as collect, reduce, findFirst, or count initiates processing. A stream cannot be reused after a terminal operation. Encounter order, short-circuiting, and statefulness depend on both source and operations.\n\nBehavioral parameters should be non-interfering and usually stateless. Mutating shared collections in forEach, especially in a parallel stream, creates ordering and thread-safety hazards; prefer collectors designed for reduction. Parallel streams use a shared ForkJoinPool by default and help only for suitable, sufficiently large, splittable, CPU-oriented work after measurement. Blocking I/O, small inputs, ordered pipelines, and application-server context can make them worse. A conventional loop is often the more maintainable answer when control flow or mutation is central.",
     "keyPoints": [
-      "Declarative, lazy, composable pipelines",
-      "Do NOT use for side effects",
-      "Simple loops are sometimes clearer",
-      "Cannot break early from a stream",
-      "Parallel streams only for CPU-bound + large data",
-      ".forEach with side effects is an anti-pattern"
+      "Intermediate operations are generally lazy; terminal operations drive traversal",
+      "Streams are single-use pipeline abstractions, not data structures",
+      "Non-interference and limited side effects support correct optimization",
+      "Parallel execution is a measured trade-off, not a free speedup"
     ],
     "redFlags": [
-      "\"Streams are always better than loops\"",
-      "Using parallel streams everywhere without measuring",
-      "Cannot name a case where streams are inappropriate",
-      "Confusing lazy evaluation with eager evaluation"
+      "Reusing a stream after a terminal operation",
+      "Mutating shared state from a parallel forEach",
+      "Choosing parallelStream for blocking I/O without controlling execution resources",
+      "Claiming streams are categorically faster or more readable than loops"
     ],
     "followUps": [
-      { "question": "What is the difference between map() and flatMap()?", "hint": "map transforms 1:1, flatMap transforms 1:many and flattens." },
-      { "question": "When would parallelStream() actually help?", "hint": "CPU-bound operations on large collections with no shared mutable state." }
+      {
+        "question": "Why can peek appear not to run for every source element?",
+        "hint": "Laziness, short-circuiting, and implementation optimizations affect traversal."
+      },
+      {
+        "question": "What makes a collector safe for parallel reduction?",
+        "hint": "Its supplier, accumulator, combiner, and characteristics must form a valid reduction."
+      },
+      {
+        "question": "When is Optional preferable to null, and where is it awkward?",
+        "hint": "It is useful as a return type; fields, parameters, and serialization need context-specific judgment."
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN3 practical stream usage",
-      "description": "Used streams for DTO transformations and filtering in business layer (clear, functional). Used traditional for-loops for batch processing that needs early exit, transaction boundaries per iteration, and progress tracking. Pragmatic choice based on the operation semantics."
-    }
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

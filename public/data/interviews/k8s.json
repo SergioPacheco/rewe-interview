@@ -4,36 +4,36 @@
     "topic": "k8s",
     "subtopic": "k8s-pods",
     "difficulty": "INTERMEDIATE",
-    "question": "What is a Pod and why doesn't Kubernetes just run containers directly?",
-    "shortAnswer": "A Pod is the smallest deployable unit — one or more containers sharing network and storage. Kubernetes wraps containers in Pods because some containers need to be co-located (sidecar pattern: main app + log collector sharing filesystem). In practice, most Pods have one container. SGN3 runs in OKD (OpenShift) with single-container pods.",
-    "detailedAnswer": "Pod:\n- One or more containers sharing network namespace (same IP, localhost communication)\n- Shared storage volumes\n- Same lifecycle (start/stop together)\n- Scheduled together on the same node\n\nWhy not just containers:\n- Some workloads need tightly-coupled helpers (sidecars)\n- Shared volumes between containers (log shipping, config)\n- Init containers (run before main container — DB migrations, config fetching)\n\nIn SGN3 (OKD/OpenShift):\n- Single-container pods: WildFly + SGN3 WAR\n- Multiple replicas for horizontal scaling\n- Liveness/readiness probes for health checking\n- Rolling updates for zero-downtime deploys",
+    "question": "What is a Pod, what lifecycle does it provide, and what does a Deployment add?",
+    "shortAnswer": "A Pod is Kubernetes' smallest schedulable unit: one or more co-located containers that share a network namespace and can share volumes. Containers in a Pod are scheduled together, but an individual container can restart within the same Pod. A Deployment manages ReplicaSets and replaces Pods to maintain replica count and roll out a new Pod template; it does not turn a Pod into durable state.",
+    "detailedAnswer": "A Pod defines a shared execution context:\n\n- Containers use the same Pod IP and can reach one another over `localhost`.\n- They can mount shared volumes and are always scheduled onto the same node.\n- Regular init containers run to completion in sequence before ordinary app containers start. A native sidecar is declared in `initContainers` with `restartPolicy: Always` and continues running for the Pod lifetime. Sidecars or helper containers fit only when they genuinely share the workload's lifecycle and resources.\n- The kubelet can restart a failed container according to the Pod's restart policy without creating a new Pod. The container's writable layer is replaced on restart, while Pod-scoped volumes such as `emptyDir` survive container restarts but disappear with the Pod.\n\nA Pod is not self-healing at the application-replica level. A Deployment declares a desired replica count and Pod template through ReplicaSets. If a managed Pod is deleted or a node is lost, the controllers arrange a replacement Pod, which gets a new identity and usually a new IP. Stable discovery belongs to a Service; durable data belongs to persistent storage or an external data service.",
     "keyPoints": [
-      "Pod = smallest unit. Contains 1+ containers sharing network/storage",
-      "Most Pods have 1 container in practice",
-      "Sidecar pattern: main + helper containers in same Pod",
-      "Pods are ephemeral — can be killed/rescheduled anytime",
-      "Init containers run before main (migrations, setup)"
+      "A Pod is a schedulable group of one or more containers",
+      "Pod containers share networking and may share volumes",
+      "A container can restart without the Deployment creating a new Pod",
+      "A Deployment manages replica replacement and rolling Pod templates",
+      "Pod identity and writable container layers are not durable storage"
     ],
     "redFlags": [
-      "\"Pod is just another name for container\"",
-      "Not knowing about multi-container pods",
-      "Cannot explain why Pods exist (vs running containers directly)",
-      "Not understanding Pod ephemerality"
+      "Using Pod and container as interchangeable terms",
+      "Saying every container crash creates a new Pod",
+      "Putting unrelated applications in one Pod merely to reduce object count",
+      "Depending on a Pod IP or container layer as durable state"
     ],
     "followUps": [
       {
-        "question": "What is a sidecar container and when would you use it?",
-        "hint": "Helper container: log collector, proxy (Envoy/Istio), config reloader. Same pod, shared resources."
+        "question": "What survives an application-container restart within the same Pod?",
+        "hint": "The Pod identity and Pod-scoped volumes can survive; the restarted container gets a new writable layer. A replacement Pod is a different lifecycle."
       },
       {
-        "question": "What happens when a Pod crashes?",
-        "hint": "Deployment controller creates a new Pod. Old Pod's writable layer is lost. Persistent data must be in volumes or external DB."
+        "question": "When should two containers share a Pod?",
+        "hint": "When they must be co-scheduled and communicate through localhost or shared volumes, and should scale and be replaced as one unit."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 in OKD (OpenShift)",
-      "description": "SGN3 runs as single-container pods in OKD. Multiple replicas with rolling updates. Liveness/readiness probes configured for health monitoring. Experience with pod scheduling, resource limits, and container lifecycle."
+      "title": "Application-level exposure to an OKD workload",
+      "description": "SGN3 runs in an OKD-managed workload, providing exposure to Pods, replicas, resource settings and health probes from the application side. This should not be presented as ownership of Kubernetes cluster administration."
     }
   },
   {
@@ -41,36 +41,36 @@
     "topic": "k8s",
     "subtopic": "k8s-services",
     "difficulty": "INTERMEDIATE",
-    "question": "Explain liveness vs readiness probes. What happens if you configure them wrong?",
-    "shortAnswer": "Liveness: 'is the app alive?' — failure triggers restart. Readiness: 'can it accept traffic?' — failure removes from load balancer. Wrong liveness (too aggressive or includes external deps) = restart loops. Wrong readiness (too permissive) = traffic to unhealthy instance.",
-    "detailedAnswer": "Liveness probe:\n- Question: \"Is this container in an unrecoverable state?\"\n- Failure action: Kubernetes KILLS and RESTARTS the container\n- Should check: internal health only (not external dependencies)\n- ❌ Never include DB check (DB down → all pods restart → makes it worse)\n\nReadiness probe:\n- Question: \"Can this instance handle requests right now?\"\n- Failure action: Removes from Service (no traffic sent)\n- CAN include critical dependencies (DB, required cache)\n- Pod stays alive, just doesn't receive traffic\n\nCommon mistakes:\n1. Liveness includes DB check → DB blip → all pods restart → cascading failure\n2. Liveness timeout too short → slow startup → kill loop\n3. No readiness → traffic sent to starting pods → errors\n4. Same endpoint for both → cannot differentiate internal vs external health\n\nSGN3 in OKD:\n- Liveness: simple internal check (app is responding)\n- Readiness: includes database connectivity (no point accepting traffic if DB is down)",
+    "question": "How do startup, readiness and liveness probes differ, and how can they make an outage worse?",
+    "shortAnswer": "A startup probe gives a slow application time to initialize and gates both liveness and readiness until it succeeds. Readiness decides whether the Pod endpoint should receive Service traffic; failure does not restart the container. Liveness detects an unrecoverable container condition and repeated failure causes a restart. Aggressive timeouts or shared-dependency checks can remove or restart every replica during the same incident.",
+    "detailedAnswer": "The probes answer different operational questions:\n\n- **Startup**: has this container completed startup? Until it succeeds, Kubernetes does not run liveness or readiness probes. If it exhausts its failure threshold, the container is killed and handled by its restart policy.\n- **Readiness**: should this Pod receive traffic now? A failed readiness probe marks it unready and excludes it from regular Service traffic. Its EndpointSlice entry can remain present with a non-ready condition. The container keeps running.\n- **Liveness**: is this container stuck in a state that only restart is expected to fix? Repeated failure makes the kubelet restart that container.\n\nA liveness probe should not fail merely because a shared database or remote service is unavailable; restarting every healthy application process adds load and cannot repair the dependency. Readiness may include a critical dependency when the instance truly cannot serve any useful request, but that is not automatic: if every replica checks the same failed dependency, all endpoints can become ineligible. Sometimes keeping the API reachable to return controlled errors, serve unaffected routes or shed load is better.\n\nTune thresholds from observed startup and response distributions. Keep checks cheap, protect probe endpoints from expensive work, and monitor probe failures and restart counts.",
     "keyPoints": [
-      "Liveness: alive? Failure = restart. NO external deps.",
-      "Readiness: ready for traffic? Failure = remove from LB. CAN include DB.",
-      "Wrong liveness = restart loops (cascading failure)",
-      "Different endpoints for liveness vs readiness",
-      "Startup probe for slow-starting apps (prevents premature kill)"
+      "Startup probes protect slow initialization and gate other probes",
+      "Readiness changes traffic eligibility without restarting the container",
+      "Liveness failure restarts the container, not the whole Deployment",
+      "Shared dependencies generally do not belong in liveness",
+      "Dependency checks in readiness require a system-level failure analysis"
     ],
     "redFlags": [
-      "Same check for both liveness and readiness",
-      "Including database in liveness probe",
-      "Not knowing the consequence of probe failure",
-      "\"I've never configured probes\""
+      "Using one dependency-heavy endpoint for every probe without analysis",
+      "Setting liveness thresholds below normal tail latency",
+      "Assuming a readiness failure restarts a Pod",
+      "Adding a database check to every replica without considering total endpoint loss"
     ],
     "followUps": [
       {
-        "question": "What is a startup probe and when do you need it?",
-        "hint": "For slow-starting apps (JVM warmup). Disables liveness checks until startup completes."
+        "question": "What happens if all replicas fail readiness at once?",
+        "hint": "Their endpoints are marked unready, so the Service may have no regular backends; decide whether that failure mode is preferable to controlled degraded responses."
       },
       {
-        "question": "Your database goes down. What happens to your pods?",
-        "hint": "Readiness fails → pods removed from LB. Liveness passes → pods stay alive. When DB returns → readiness passes → traffic resumes."
+        "question": "When might an application not need an HTTP liveness probe?",
+        "hint": "If fatal conditions already crash the process and there is no detectable stuck state that a restart can repair."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 OKD health probes",
-      "description": "Configured MicroProfile Health probes for SGN3 in OKD. Liveness: internal only (no external deps). Readiness: includes database check. Learned the hard way that liveness + DB check = restart cascade during DB maintenance."
+      "title": "MicroProfile Health exposed through OKD",
+      "description": "Production application work with MicroProfile Health transfers to startup, readiness and liveness reasoning in OKD. The evidence is application health behavior, not cluster administration ownership."
     }
   },
   {
@@ -78,36 +78,45 @@
     "topic": "k8s",
     "subtopic": "k8s-pods",
     "difficulty": "SENIOR",
-    "question": "How do you achieve zero-downtime deployments?",
-    "shortAnswer": "Rolling update strategy: new pods start, pass readiness probe, then old pods terminate. Combined with: graceful shutdown (finish in-flight requests), preStop hook (delay to let LB update), and proper readiness probes. Result: users never see downtime during deploy.",
-    "detailedAnswer": "Zero-downtime deployment:\n\n1. **Rolling Update** (default Deployment strategy):\n   - maxSurge: how many extra pods during update (e.g., 1)\n   - maxUnavailable: how many can be down (e.g., 0)\n   - New pod starts → passes readiness → old pod terminates\n\n2. **Graceful shutdown:**\n   - Container receives SIGTERM\n   - App finishes in-flight requests (within terminationGracePeriodSeconds)\n   - Stops accepting new connections\n   - After grace period: SIGKILL\n\n3. **preStop hook:**\n   - Small delay (5-10s) before SIGTERM\n   - Gives load balancer time to update routing\n   - Prevents \"connection refused\" during deregistration\n\n4. **Readiness probe:**\n   - New pod only receives traffic AFTER it's fully ready\n   - Prevents routing to still-warming-up JVM\n\nFor JVM apps (SGN3/WildFly):\n- Startup can take 30-60s (class loading, cache warming)\n- Use startupProbe to prevent premature liveness kill\n- readinessProbe confirms the app can serve requests",
+    "question": "How do you design a rolling deployment for service availability, and what happens when the new Pods never become ready?",
+    "clarifyingQuestions": [
+      "How many replicas and how much temporary cluster capacity are available?",
+      "Are old and new versions compatible with the same API, events and database schema?",
+      "What availability signal triggers a halt or rollback?"
+    ],
+    "shortAnswer": "I combine a RollingUpdate budget, sufficient surge capacity, truthful readiness, a startup allowance and graceful termination, then verify old/new version compatibility. `maxUnavailable: 0` helps preserve ready replicas but does not guarantee zero user-visible errors. If new Pods never become ready, the rollout stalls and Kubernetes records a `ProgressDeadlineExceeded` condition; `progressDeadlineSeconds` does not automatically roll it back.",
+    "detailedAnswer": "Availability during a rollout is a service-level outcome:\n\n1. **Capacity budget**: choose `maxUnavailable` and `maxSurge` from replica count, cluster quota and traffic headroom. With one replica, even `maxUnavailable: 0` depends on enough capacity to start the surge Pod.\n2. **Admission to traffic**: startup/readiness probes should reflect when the new version can serve. `minReadySeconds` can require it to remain ready before being considered available.\n3. **Termination**: when a Pod terminates, endpoint readiness is updated and the kubelet runs any `preStop` hook before sending TERM. The application should stop accepting new work and finish or transfer in-flight work within `terminationGracePeriodSeconds`. A fixed sleep hook can sometimes bridge load-balancer propagation, but it is not a universal requirement and consumes the grace period.\n4. **Compatibility**: use backward/forward-compatible database migrations, event schemas and API behavior so old and new versions can coexist. Infrastructure settings cannot repair an incompatible release.\n5. **Detection and response**: watch rollout status, request errors and saturation. If progress exceeds `progressDeadlineSeconds`, the Deployment gets a failed-progress condition, but its controller continues processing; a human, CI/CD controller or GitOps/rollout operator must decide to pause or roll back.\n\nPodDisruptionBudgets constrain voluntary evictions through the Eviction API; they do not constrain a Deployment or StatefulSet's own rolling update. `maxUnavailable` and `maxSurge` govern that rollout, and none of these settings alone guarantees service availability.",
     "keyPoints": [
-      "Rolling update: new up, then old down (never both down)",
-      "maxUnavailable: 0 for true zero-downtime",
-      "Graceful shutdown: finish in-flight, stop accepting new",
-      "preStop hook: delay for LB deregistration",
-      "Readiness prevents traffic to warming-up pods"
+      "RollingUpdate budgets need real cluster and traffic headroom",
+      "Readiness controls traffic but cannot guarantee application correctness",
+      "Graceful termination must fit within the Pod grace period",
+      "Old and new versions need compatible contracts and migrations",
+      "Progress deadline reports failure; rollback requires another actor"
     ],
     "redFlags": [
-      "\"We just restart all pods\" (downtime)",
-      "Not knowing about graceful shutdown",
-      "No preStop hook (brief connection errors during deploy)",
-      "Not considering JVM warmup time"
+      "Claiming maxUnavailable zero guarantees zero downtime",
+      "Treating a fixed preStop sleep as mandatory for every platform",
+      "Ignoring database and event compatibility during overlap",
+      "Claiming progressDeadlineSeconds performs an automatic rollback"
     ],
     "followUps": [
       {
-        "question": "What happens if the new version fails readiness?",
-        "hint": "Rollout pauses. Old pods keep running. Automatic rollback via progressDeadlineSeconds."
+        "question": "What exactly happens when the rollout exceeds `progressDeadlineSeconds`?",
+        "hint": "The Deployment status gets a ProgressDeadlineExceeded condition. Kubernetes does not automatically roll back; delivery automation must act on it."
       },
       {
-        "question": "How do you handle long-running requests during deployment?",
-        "hint": "terminationGracePeriodSeconds must be long enough. Alternatively, drain connections via LB."
+        "question": "Why can a preStop hook reduce the time available for graceful shutdown?",
+        "hint": "The termination grace-period countdown begins before the hook runs; hook time and application shutdown share that budget."
+      },
+      {
+        "question": "How do you make a destructive database migration safe for a rolling deployment?",
+        "hint": "Use expand-and-contract: add compatible structures first, migrate usage/data, then remove old structures in a later release."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 zero-downtime in OKD",
-      "description": "Rolling updates with maxUnavailable=0 in OKD. Readiness probe ensures new WildFly pod is fully started (30-60s JVM warmup) before receiving traffic. Graceful shutdown handles in-flight JSF requests."
+      "title": "Application behavior during OKD rollouts",
+      "description": "Exposure to SGN3 releases on OKD provides application-side context for readiness, startup time and graceful handling. Detailed rollout-controller or cluster-operation ownership should not be claimed without direct evidence."
     }
   }
 ]

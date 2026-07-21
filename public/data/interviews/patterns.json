@@ -1,95 +1,144 @@
 [
   {
-    "id": "interview-patterns-1",
+    "id": "interview-patterns-strategy-1",
     "topic": "patterns",
     "subtopic": "pat-strategy",
     "difficulty": "INTERMEDIATE",
-    "question": "Explain the Strategy pattern and give a production example.",
-    "shortAnswer": "Strategy encapsulates interchangeable algorithms behind a common interface. The client chooses which strategy to use at runtime without modifying its code. In SGN3, validation logic uses this — different enrollment types (regular, scholarship, transfer) have different validation rules, each in its own class implementing a common Validacao interface.",
-    "detailedAnswer": "Strategy pattern:\n- Define a family of algorithms (strategies)\n- Encapsulate each in its own class implementing a common interface\n- Client delegates to the strategy without knowing which one\n\nStructure:\n```\nContext → Strategy interface → ConcreteStrategyA, ConcreteStrategyB\n```\n\nBenefits:\n- Open/Closed: add new strategies without modifying context\n- Testable: test each strategy in isolation\n- Eliminates conditional logic (if/else chains)\n\nWhen to use:\n- Multiple variants of the same algorithm\n- Need to switch behavior at runtime\n- if/else chain based on type is growing\n\nWhen NOT to use:\n- Only 2 simple, stable variants (if/else is fine)\n- Strategies share significant state (might need different pattern)\n- Adds indirection without real benefit (YAGNI)",
+    "question": "When does the Strategy pattern improve a design, and when is a conditional clearer?",
+    "shortAnswer": "Strategy is useful when several algorithms implement the same meaningful contract and evolve, deploy, or test independently. The context delegates to the selected strategy, often chosen by configuration or a registry. A small exhaustive conditional can be clearer when the alternatives are closed, stable, and share one cohesive change. I choose based on the actual axis of variation, not the pattern name.",
+    "detailedAnswer": "Strategy encapsulates interchangeable behavior behind a common contract. A routing service might delegate cost calculation to policies for bicycle, van, and refrigerated delivery while keeping orchestration stable. Selection can happen in a composition root, DI configuration, factory, or typed map; it should not be scattered across callers. Each strategy needs the same input and output semantics, including errors and side effects.\n\nThe pattern costs extra types, registration, and navigation. If there are two simple cases that always change together, an exhaustive switch may communicate the whole decision more directly. Strategy also becomes strained when implementations need incompatible inputs, which can lead to a vague context object or casts. Refactor when change history shows independent variants or when conditional branches have become difficult to test—not solely because any if statement exists.",
     "keyPoints": [
-      "Encapsulates interchangeable algorithms behind interface",
-      "Eliminates type-based if/else chains",
-      "Open/Closed — add strategies without modifying context",
-      "Each strategy independently testable",
-      "Know when NOT to use (YAGNI for 2 simple cases)"
+      "Strategies share one behavioral contract and vary independently",
+      "Selection belongs at an explicit boundary or registry",
+      "Error and side-effect semantics are part of interchangeability",
+      "A small closed conditional may be the simpler design"
     ],
     "redFlags": [
-      "Cannot give a real example beyond textbook sorting",
-      "Over-applying it to every conditional",
-      "Confusing Strategy with Template Method",
-      "Not knowing the relationship to OCP"
+      "Creating a strategy class for every trivial conditional",
+      "Passing a generic context bag because implementations do not share a real contract",
+      "Moving rather than eliminating scattered selection logic"
     ],
     "followUps": [
-      { "question": "How do you select the right strategy at runtime?", "hint": "Factory method, DI container qualifier, Map<Type, Strategy>, or configuration." },
-      { "question": "What is the difference between Strategy and Template Method?", "hint": "Strategy: composition (HAS-A behavior). Template Method: inheritance (IS-A with hooks)." }
+      {
+        "question": "How would you select a strategy without a growing switch in every caller?",
+        "hint": "Use a factory, DI qualifiers, configuration, or a validated map from type to strategy."
+      },
+      {
+        "question": "How does Strategy differ from Template Method?",
+        "hint": "Strategy composes behavior; Template Method varies steps through inheritance."
+      },
+      {
+        "question": "What contract tests would all strategies share?",
+        "hint": "Test domain invariants, error semantics, and outputs common to every implementation."
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN3 validation strategies per enrollment type",
-      "description": "Different enrollment types (regular, transfer, scholarship) have different validation rules. Each implemented as a separate Validacao class. The Business layer selects the correct validator based on the enrollment type — no giant if/else."
-    }
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
-    "id": "interview-patterns-2",
+    "id": "interview-patterns-factory-1",
     "topic": "patterns",
-    "subtopic": "pat-builder",
-    "difficulty": "BEGINNER",
-    "question": "When would you use the Builder pattern?",
-    "shortAnswer": "When constructing an object with many optional parameters, or when construction is complex (multi-step, validation needed). Builder makes construction readable (named methods instead of positional args) and can enforce invariants at build time. I use it for DTOs with 10+ fields and for test data factories.",
-    "detailedAnswer": "Builder pattern solves:\n1. Telescoping constructor problem (10+ params, hard to read)\n2. Complex construction logic (validation, defaults, derived values)\n3. Immutable objects with many fields\n\nWhen to use:\n- Object has many optional parameters\n- Construction has steps (set A, derive B from A, validate)\n- You want readable, self-documenting construction\n- Immutable objects (build once, don't modify)\n\nWhen NOT to use:\n- Simple objects with 2-3 fields (just use constructor)\n- Mutable objects where setters are fine\n- Adds boilerplate without real benefit\n\nIn Java: Lombok @Builder reduces boilerplate. Without Lombok, static inner class pattern.\n\nIn tests: Builder pattern for test data factories — readable, reusable, with sensible defaults:\n```java\nTurma turma = TurmaBuilder.umaTurma()\n    .comSituacao(ATIVA)\n    .comModalidade(TECNICO)\n    .build();\n```",
+    "subtopic": "pat-factory",
+    "difficulty": "INTERMEDIATE",
+    "question": "What problem should a factory solve, and how can dependency injection change its role?",
+    "shortAnswer": "A factory centralizes a creation decision that callers should not know: selecting an implementation, validating construction inputs, or assembling an object graph. Dependency injection can perform static application wiring, but a factory remains useful when selection depends on runtime data or construction has domain semantics. It should return a truthful contract and avoid becoming a service locator with hidden dependencies.",
+    "detailedAnswer": "Factories separate use from creation. A `CarrierClientFactory.forRegion(region)` might validate configuration and select an adapter, while callers work with CarrierClient. A named static factory can also improve a constructor by expressing intent, caching instances, or returning a subtype. Factory Method delegates creation through an overridable method; Abstract Factory creates related families. In interviews, describing the force matters more than reciting every pattern variant.\n\nA DI container already assembles long-lived components from known configuration, so adding a hand-written factory around every injected service is redundant. Runtime selection, short-lived domain objects, multi-tenant configuration, or construction invariants can still justify one. Avoid factories that expose the container, accept arbitrary class tokens, or accumulate unrelated creation logic. Dependencies should remain explicit, and unknown selections should fail with a domain-meaningful error rather than a late null.",
     "keyPoints": [
-      "Solves telescoping constructor (many optional params)",
-      "Readable construction with named methods",
-      "Can enforce invariants at build() time",
-      "Essential for test data factories",
-      "Lombok @Builder reduces boilerplate in production code"
+      "Factories hide a meaningful creation or selection decision",
+      "DI handles composition but not every runtime construction problem",
+      "Named factories can clarify intent without a hierarchy",
+      "A factory should not become a global service locator"
     ],
     "redFlags": [
-      "Using Builder for 2-field objects (overkill)",
-      "Cannot explain when NOT to use it",
-      "Not mentioning the immutability connection",
-      "Never used it in tests (missed biggest use case)"
+      "Adding a factory that only calls one public constructor with no policy",
+      "Looking up arbitrary application services through a static global registry",
+      "Returning null for an unsupported creation request"
     ],
     "followUps": [
-      { "question": "How does Builder relate to immutability?", "hint": "Builder collects params, build() creates an immutable instance. Only way to construct complex immutable objects." },
-      { "question": "When would a record be better than Builder?", "hint": "When all fields are required and the object is simple. Records are constructors + immutability built-in." }
+      {
+        "question": "How is a factory different from a builder?",
+        "hint": "A factory owns selection or creation policy; a builder accumulates construction parameters or steps."
+      },
+      {
+        "question": "When can a static factory method be better than a constructor?",
+        "hint": "It can have a name, return a subtype, cache, or validate before construction."
+      },
+      {
+        "question": "What makes a factory turn into a service locator?",
+        "hint": "Callers pull hidden dependencies from it instead of declaring them."
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN3 test data builders",
-      "description": "Used Builder pattern extensively for test data factories (TurmaBuilder, MatriculaBuilder). Each builder provides sensible defaults — tests only specify what they care about. Makes tests readable and maintainable."
-    }
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
-    "id": "interview-patterns-3",
+    "id": "interview-patterns-observer-1",
     "topic": "patterns",
     "subtopic": "pat-observer",
     "difficulty": "SENIOR",
-    "question": "How do you decide which design pattern to apply? What is your process?",
-    "shortAnswer": "I don't start from patterns — I start from the problem. Patterns are names for recurring solutions. My process: identify the force (what varies? what is coupled? what changes?), recall if a known pattern addresses that force, then evaluate if the pattern's trade-offs are acceptable for the context. Most of the time, simple composition with clear interfaces is enough.",
-    "detailedAnswer": "Pattern selection process:\n\n1. **Identify the design force** (the tension):\n   - What varies? → Strategy, Template Method\n   - What is created differently? → Factory, Builder\n   - What needs to notify others? → Observer, Event\n   - What should have one instance? → Singleton (via DI container)\n   - What needs decoration? → Decorator\n\n2. **Evaluate trade-offs**:\n   - Does it add justified complexity?\n   - Will the team understand it?\n   - Is it solving a real problem or hypothetical one?\n\n3. **Consider simpler alternatives**:\n   - Sometimes a clear interface + DI is all you need\n   - Not everything needs a named pattern\n   - YAGNI: don't pattern for hypothetical future\n\nIn practice, 90% of SGN3 design decisions use three things:\n- Interfaces + CDI injection (covers Strategy, Factory, Observer)\n- Composition over inheritance\n- Clear layer separation (WebBean → Service → Business → Repository)\n\nNamed patterns are vocabulary for communication, not a checklist to apply.",
+    "question": "What trade-offs appear when using Observer for domain events?",
+    "shortAnswer": "Observer decouples a publisher from subscribers, but it also makes control flow, ordering, failure, and lifecycle less explicit. For in-process observers I define synchronous versus asynchronous delivery, subscriber registration and cleanup, exception isolation, and reentrancy. For durable cross-service events, a broker adds persistence and retries but also duplicates, eventual consistency, schema evolution, and observability concerns.",
+    "detailedAnswer": "In the classic Observer pattern, a subject notifies registered observers when state changes. This can support UI updates or in-process extension points, but synchronous callbacks extend the publisher's call stack: a slow or failing observer can delay or fail the original operation, and an observer can trigger reentrant updates. Long-lived publishers can also retain forgotten subscribers and create memory leaks.\n\nAn event bus changes syntax more than semantics unless delivery guarantees are explicit. Moving to a message broker crosses a reliability boundary. Delivery may be at least once, ordering is scoped, consumers need idempotency, schemas need compatibility, and publishing atomically with a database update may require an outbox or another consistency strategy. Observer is appropriate when decoupling subscribers is worth these costs. For one required collaborator with immediate success semantics, a direct method call may be clearer and easier to reason about.",
     "keyPoints": [
-      "Start from the PROBLEM, not from the pattern",
-      "Identify the design force (what varies? what changes?)",
-      "Evaluate trade-offs for the specific context",
-      "Simple interface + DI covers most pattern use cases",
-      "Patterns are vocabulary, not a checklist"
+      "Observer hides subscriber knowledge but also makes control flow indirect",
+      "Delivery timing, ordering, errors, and subscription lifecycle need contracts",
+      "A broker introduces durability and distributed-systems trade-offs",
+      "Required synchronous behavior may be clearer as a direct dependency"
     ],
     "redFlags": [
-      "\"I always apply X pattern\" without context",
-      "Cannot explain WHEN a pattern is inappropriate",
-      "Naming patterns without real examples",
-      "Over-engineering simple code with unnecessary patterns"
+      "Assuming an event bus automatically makes work asynchronous or reliable",
+      "Ignoring subscriber cleanup in a long-lived in-process publisher",
+      "Publishing a database-derived event without considering atomicity",
+      "Treating duplicate broker delivery as impossible"
     ],
     "followUps": [
-      { "question": "Give an example of a pattern you decided NOT to apply.", "hint": "Shows restraint and judgment. YAGNI in practice." },
-      { "question": "What pattern do you see most abused?", "hint": "Singleton (global state), or over-applied Strategy for 2 simple cases." }
+      {
+        "question": "How would you prevent a failing in-process observer from corrupting publisher behavior?",
+        "hint": "Define isolation, ordering, transaction, and error-reporting semantics explicitly."
+      },
+      {
+        "question": "When would you use an outbox pattern?",
+        "hint": "When a database change and durable event publication must not diverge."
+      },
+      {
+        "question": "How is Observer different from a direct callback interface?",
+        "hint": "Multiplicity, discovery, lifecycle, and whether the dependency is required are key differences."
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN3 pragmatic pattern usage",
-      "description": "Most design in SGN3 is solved by: interfaces + CDI injection + layer separation. Named patterns appear naturally (Repository, Strategy for validators, Observer via CDI events) but are not forced. The architecture IS the pattern."
-    }
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-patterns-builder-1",
+    "topic": "patterns",
+    "subtopic": "pat-builder",
+    "difficulty": "INTERMEDIATE",
+    "question": "When does Builder improve object construction, and what invariants must it preserve?",
+    "shortAnswer": "Builder helps when construction has many optional values, named steps improve readability, or validation must occur before producing a complex object. build() should reject incomplete or inconsistent state and usually create an object that no longer depends on the mutable builder. For a small value with a few required components, a constructor, named factory, or record is often simpler.",
+    "detailedAnswer": "A builder accumulates construction choices and creates the target in one controlled step. It avoids positional telescoping constructors and is useful for immutable configuration, request objects, and test fixtures with sensible defaults. Required values can be accepted by the builder's factory or constructor, while `build()` validates cross-field invariants. If collections or other mutable values are accepted, the target may need defensive copies so later builder or caller mutation does not alter the built instance.\n\nBuilders add boilerplate and can weaken compile-time guarantees if every field is optional until build. Staged builders can encode ordering in types, but their complexity is justified only for important protocols. Lombok-generated builders reduce code but do not automatically validate, deeply copy, or make a class immutable. A Java record is concise and has final component fields, yet components may still reference mutable objects and a long canonical constructor can remain unreadable.",
+    "keyPoints": [
+      "Builder makes multi-parameter construction readable and controlled",
+      "build should validate invariants and detach from mutable builder state",
+      "Generated builders do not automatically provide deep immutability",
+      "Simple constructors, factories, or records are preferable for simple values"
+    ],
+    "redFlags": [
+      "Using Builder for a value with two obvious required parameters",
+      "Allowing build to produce an invalid partially configured object",
+      "Sharing mutable collection references between builder and target",
+      "Assuming a record or Lombok annotation guarantees deep immutability"
+    ],
+    "followUps": [
+      {
+        "question": "How would you represent required builder fields?",
+        "hint": "Accept them up front, validate at build, or use staged construction when justified."
+      },
+      {
+        "question": "When is a record preferable to a builder?",
+        "hint": "A small transparent value with a clear set of required components often needs no builder."
+      },
+      {
+        "question": "What makes a test-data builder valuable?",
+        "hint": "Stable valid defaults let each test state only the property relevant to its behavior."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

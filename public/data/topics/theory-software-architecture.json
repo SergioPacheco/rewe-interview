@@ -1,0 +1,242 @@
+[
+  {
+    "id": "arch-foundations-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-foundations",
+    "title": "What Is Software Architecture?",
+    "sections": [
+      {
+        "heading": "Definition",
+        "content": "Software architecture is the set of significant design decisions that shape the structure, non-functional characteristics, and constraints of a system. It defines component boundaries, communication patterns, and the principles guiding evolution. Architecture is not a one-time diagram — it is a living set of decisions that evolve with requirements."
+      },
+      {
+        "heading": "Architecture vs Design",
+        "content": "Architecture addresses decisions that are costly to reverse: technology choices, deployment topology, module boundaries, data ownership. Design covers implementation within those boundaries: class hierarchies, patterns inside a service, local data structures. The boundary is fuzzy — a decision is architectural when changing it ripples across team or deployment boundaries."
+      },
+      {
+        "heading": "The architect's role",
+        "content": "An architect balances competing quality attributes, communicates trade-offs to stakeholders, and ensures the team can deliver incrementally. They make the hard decisions early and defer the rest. In agile teams the architect is often a senior developer who guides rather than dictates — writing code, reviewing PRs, and validating assumptions with prototypes."
+      },
+      {
+        "heading": "Key principles",
+        "content": "Favour simplicity over cleverness. Delay irreversible decisions until the last responsible moment. Make constraints explicit through documentation (ADRs). Validate assumptions with working software rather than upfront speculation. Every architectural decision has a cost — the goal is not perfection but fitness for purpose."
+      }
+    ]
+  },
+  {
+    "id": "arch-quality-attributes-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-quality-attributes",
+    "title": "Quality Attributes",
+    "sections": [
+      {
+        "heading": "What are quality attributes?",
+        "content": "Quality attributes (also called non-functional requirements or -ilities) define how a system behaves under specific conditions: performance under load, availability during failures, security against threats, maintainability over years. They drive architectural decisions more than features do — features tell you what, quality attributes tell you how well."
+      },
+      {
+        "heading": "Key quality attributes",
+        "content": "Performance (response time, throughput), Scalability (handle growth), Availability (uptime, failover), Reliability (correct results), Security (confidentiality, integrity), Maintainability (ease of change), Testability (ease of verification), Observability (understanding runtime behaviour). Each attribute needs measurable scenarios, not vague adjectives."
+      },
+      {
+        "heading": "Trade-offs are inevitable",
+        "content": "Optimising for one attribute often degrades another. High consistency reduces availability (CAP theorem). Strong security adds latency. Maximum flexibility reduces simplicity. The architect's job is to make these trade-offs explicit, document them, and align with business priorities. There is no universally correct balance — context decides."
+      },
+      {
+        "heading": "Quality attribute scenarios",
+        "content": "A measurable scenario has: stimulus (1000 concurrent users), environment (normal operation), response (page loads), measure (under 200ms at p95). Without measurable scenarios, quality requirements remain subjective. 'The system must be fast' is useless; 'checkout completes in under 500ms at p99 under 2000 rps' is actionable."
+      }
+    ]
+  },
+  {
+    "id": "arch-styles-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-styles",
+    "title": "Architectural Styles",
+    "sections": [
+      {
+        "heading": "Monolith",
+        "content": "A single deployable unit containing all business logic. Advantages: simple deployment, local method calls, single database transaction, easy debugging. Disadvantages: tight coupling risk, single scaling unit, long build times at scale. A well-structured modular monolith with clear internal boundaries is often the right starting point."
+      },
+      {
+        "heading": "Microservices",
+        "content": "Independently deployable services owning their data and communicating via network. Advantages: independent scaling, team autonomy, technology diversity, isolated failures. Disadvantages: distributed complexity (partial failures, eventual consistency, network latency), operational overhead (service mesh, tracing, deployment pipelines per service)."
+      },
+      {
+        "heading": "When to choose which",
+        "content": "Start with a monolith unless you have a proven need for independent deployment or scaling. Microservices make sense when: teams need to deploy independently, domains have genuinely different scaling profiles, or organisational boundaries naturally separate concerns. The question is not 'monolith or microservices' but 'where should the boundaries be and how coupled are they?'"
+      },
+      {
+        "heading": "Other styles",
+        "content": "Event-driven architecture decouples producers from consumers via asynchronous events. Service-oriented architecture (SOA) shares infrastructure (ESB) between services. Serverless delegates infrastructure to the cloud provider at function granularity. Space-based architecture distributes processing and data across nodes. Each style trades different attributes."
+      }
+    ]
+  },
+  {
+    "id": "arch-application-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-application",
+    "title": "Application Architecture",
+    "sections": [
+      {
+        "heading": "Layered architecture",
+        "content": "Traditional: Presentation → Business Logic → Data Access. Simple and well-understood, but creates tight coupling between layers. Changes in the data model ripple upward. Suitable for CRUD-heavy applications with stable requirements. Most Jakarta EE and Spring applications start here."
+      },
+      {
+        "heading": "Hexagonal (Ports & Adapters)",
+        "content": "The domain sits at the centre, protected by ports (interfaces). Adapters implement ports for specific technologies (HTTP controller, JPA repository, messaging consumer). The dependency rule: everything points inward. The domain never imports framework classes. This makes the core testable without infrastructure and technology-swappable at the edges."
+      },
+      {
+        "heading": "Clean Architecture",
+        "content": "Extends hexagonal with explicit layers: Entities (enterprise rules), Use Cases (application rules), Interface Adapters (controllers, presenters, gateways), Frameworks & Drivers (DB, web). The dependency rule is the same — inner layers never know about outer layers. Useful as a mental model; applying every layer rigidly in a small service adds ceremony without benefit."
+      },
+      {
+        "heading": "Pragmatic application",
+        "content": "In real Jakarta EE or Spring Boot projects: keep the domain model free of framework annotations where practical, use interfaces for repository contracts, inject dependencies rather than instantiating them. You do not need perfect hexagonal purity — the goal is testability, replaceability, and clarity of where business logic lives versus infrastructure concerns."
+      }
+    ]
+  },
+  {
+    "id": "arch-modularity-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-modularity",
+    "title": "Modularity & Boundaries",
+    "sections": [
+      {
+        "heading": "Why boundaries matter",
+        "content": "Without clear boundaries, a codebase becomes a distributed monolith or a big ball of mud. Boundaries enable independent development, testing, and reasoning. A good boundary minimises the interface surface area — few, well-defined interactions between modules. The cost of a wrong boundary is high: cross-boundary refactoring is expensive."
+      },
+      {
+        "heading": "Bounded contexts (DDD)",
+        "content": "A bounded context defines where a particular model is valid. 'Order' means something different in checkout vs fulfilment vs billing. Each context owns its model and its data. Communication between contexts happens through well-defined contracts (APIs, events). Do not share database tables across bounded contexts — that creates hidden coupling."
+      },
+      {
+        "heading": "Finding boundaries",
+        "content": "Look for natural seams: different business capabilities, different rates of change, different team ownership, different scaling needs, different data lifecycles. If two modules always change together, they probably belong together. If they have independent release cycles and different stakeholders, separation pays off."
+      },
+      {
+        "heading": "Module communication",
+        "content": "Synchronous (REST, gRPC): simple, immediate response, but creates temporal coupling. Asynchronous (events, messages): decoupled in time, enables eventual consistency, but adds complexity in ordering, error handling and debugging. Choose based on whether the caller needs an immediate answer and whether failure of the callee should block the caller."
+      }
+    ]
+  },
+  {
+    "id": "arch-distributed-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-distributed",
+    "title": "Distributed Architecture",
+    "sections": [
+      {
+        "heading": "Fallacies of distributed computing",
+        "content": "The network is not reliable, latency is not zero, bandwidth is not infinite, the topology changes, there are multiple administrators. Every network call can fail, be slow, or return stale data. Design for failure by default: timeouts, retries with backoff, circuit breakers, fallback responses, and graceful degradation."
+      },
+      {
+        "heading": "Partial failures",
+        "content": "In a distributed system, part of the system can fail while the rest continues. A payment service timeout does not mean the order failed — it means you do not know. Use idempotency keys to safely retry. Use the saga pattern or compensation to handle multi-step processes that span services. Design for 'what if this step fails after the previous succeeded?'"
+      },
+      {
+        "heading": "Consistency models",
+        "content": "Strong consistency: every read returns the latest write (expensive, limits availability). Eventual consistency: replicas converge over time (scalable, but stale reads possible). Causal consistency: preserves happens-before ordering. Choose per operation — checkout needs stronger guarantees than product recommendations. Do not default to strong consistency everywhere."
+      },
+      {
+        "heading": "Resilience patterns",
+        "content": "Circuit breaker: stop calling a failing service to let it recover. Bulkhead: isolate failures to prevent cascading. Timeout + retry with exponential backoff and jitter: handle transient failures without thundering herd. Dead letter queue: park failed messages for later investigation. Health checks and readiness probes: remove unhealthy instances from load balancing."
+      }
+    ]
+  },
+  {
+    "id": "arch-integration-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-integration",
+    "title": "API & Integration",
+    "sections": [
+      {
+        "heading": "API design principles",
+        "content": "Design APIs for consumers, not for your internal model. Use resource-oriented design for REST. Version APIs to evolve without breaking clients. Document contracts explicitly (OpenAPI, AsyncAPI). Apply the robustness principle: be conservative in what you send, liberal in what you accept. Pagination, rate limiting and proper HTTP status codes are non-negotiable."
+      },
+      {
+        "heading": "Synchronous integration",
+        "content": "REST over HTTP is the most common. Use it when the caller needs an immediate response and can tolerate the coupling. gRPC offers better performance with binary protocol and streaming but adds tooling complexity. Always define timeouts, handle failures, and consider caching. A synchronous call creates a runtime dependency — if the callee is down, the caller is impacted."
+      },
+      {
+        "heading": "Asynchronous integration",
+        "content": "Message brokers (Kafka, ActiveMQ, RabbitMQ) decouple producers from consumers in time and space. The producer does not wait for processing. Benefits: absorb load spikes, retry without blocking, independent scaling. Challenges: message ordering, exactly-once semantics, consumer lag monitoring, dead letter handling, schema evolution."
+      },
+      {
+        "heading": "Anti-corruption layer",
+        "content": "When integrating with a legacy system or external API whose model does not match yours, introduce a translation layer. This adapter converts between the external model and your domain model, preventing external concepts from polluting your core. It isolates change — when the external system evolves, only the adapter needs updating."
+      }
+    ]
+  },
+  {
+    "id": "arch-data-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-data",
+    "title": "Data Architecture",
+    "sections": [
+      {
+        "heading": "Database per service",
+        "content": "Each service owns its data — no shared databases. This enables independent schema evolution, technology choice per service, and clear ownership. The trade-off is that cross-service queries require API calls or event-driven materialised views. Start with a shared database if you are in a monolith and split only when service boundaries are proven."
+      },
+      {
+        "heading": "Event sourcing and CQRS",
+        "content": "Event sourcing stores every state change as an immutable event. Replaying events reconstructs state. CQRS separates the write model (commands) from the read model (queries), allowing independent optimisation. Powerful for audit trails and complex domains, but adds significant complexity. Use only when the domain genuinely benefits from full history or separate read/write scaling."
+      },
+      {
+        "heading": "Data consistency strategies",
+        "content": "Saga pattern: sequence of local transactions with compensating actions on failure. Outbox pattern: persist domain event in the same transaction as the state change, relay it asynchronously. Change Data Capture (CDC): stream database changes to consumers. Two-phase commit: strong consistency but poor performance and availability — avoid in microservices."
+      },
+      {
+        "heading": "Choosing storage",
+        "content": "Relational (PostgreSQL): strong consistency, complex queries, ACID transactions — default choice. Document (MongoDB): flexible schema, nested data, horizontal scaling. Key-value (Redis): caching, sessions, counters. Search (Elasticsearch): full-text search, log aggregation. Graph (Neo4j): relationships-heavy queries. Choose based on access patterns, not hype."
+      }
+    ]
+  },
+  {
+    "id": "arch-evolution-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-evolution",
+    "title": "Evolution & Legacy",
+    "sections": [
+      {
+        "heading": "Strangler Fig pattern",
+        "content": "Gradually replace legacy functionality by routing new traffic to new implementations while the old system remains operational. Over time, more routes point to the new system until the legacy can be decommissioned. This avoids big-bang rewrites which historically fail due to scope creep, hidden requirements, and parallel maintenance burden."
+      },
+      {
+        "heading": "Incremental modernisation",
+        "content": "Extract one bounded context at a time. Start with the area that changes most frequently or has the worst pain (performance, bugs, team contention). Use an anti-corruption layer to isolate the new service from legacy data models. Keep the legacy stable while proving the new approach in production. Modernisation is a marathon, not a sprint."
+      },
+      {
+        "heading": "Managing technical debt",
+        "content": "Not all technical debt is bad — some is deliberate and enables speed. Track it visibly (backlog items, ADRs). Prioritise debt that blocks feature development or causes incidents. Pay it down incrementally alongside feature work — dedicated 'debt sprints' rarely survive business pressure. Make the cost of debt visible to stakeholders in terms they care about."
+      },
+      {
+        "heading": "Migration strategies",
+        "content": "Feature flags enable gradual rollout and instant rollback. Parallel running compares old and new implementations side by side. Database migrations must be backward-compatible (expand-contract pattern). Blue-green or canary deployments reduce blast radius. The key insight: every migration step must be independently deployable and reversible."
+      }
+    ]
+  },
+  {
+    "id": "arch-documentation-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-documentation",
+    "title": "Documentation & Decisions",
+    "sections": [
+      {
+        "heading": "Architecture Decision Records (ADRs)",
+        "content": "An ADR captures a single decision: context (why this decision is needed), decision (what was chosen), consequences (trade-offs accepted). Keep them short, immutable (supersede rather than edit), and stored alongside code. ADRs prevent re-litigating past decisions and onboard new team members by explaining the 'why' behind the architecture."
+      },
+      {
+        "heading": "C4 model",
+        "content": "Four levels of abstraction: Context (system in its environment), Container (deployable units and data stores), Component (major building blocks within a container), Code (class-level, rarely maintained manually). Each level answers different stakeholder questions. Most teams benefit most from Context and Container diagrams kept up to date."
+      },
+      {
+        "heading": "Living documentation",
+        "content": "Documentation that is never updated is worse than no documentation — it misleads. Keep diagrams close to code (docs-as-code). Generate what you can from the system itself (OpenAPI specs, dependency graphs). Review documentation in PRs alongside code. A simple README with 'how to run, how to deploy, where to find things' is more valuable than a 50-page design document nobody reads."
+      },
+      {
+        "heading": "Communicating architecture",
+        "content": "Different audiences need different views. Developers need component diagrams and ADRs. Operations needs deployment topology and runbooks. Business stakeholders need context diagrams and capability maps. Use the simplest notation that conveys the message. A whiteboard sketch that the team understands beats a UML diagram nobody reads."
+      }
+    ]
+  }
+]

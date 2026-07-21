@@ -2,86 +2,167 @@
   {
     "id": "interview-behavioral-1",
     "topic": "behavioral",
-    "subtopic": "beh-pressure",
-    "difficulty": "INTERMEDIATE",
-    "question": "Tell me about a time you had to deliver under pressure with a tight deadline.",
-    "shortAnswer": "The enrollment period at SENAI is time-boxed — 26,705 inscriptions had to work within a 2-week window. When the system was taking 16 minutes per page load, I had 3 days to fix it before the enrollment closed. I analyzed with Glowroot, identified the root cause (N+1 + cartesian product), and delivered the fix in 2 days. Tested with real production data before deploying.",
-    "detailedAnswer": "Situation: SENAI enrollment period is fixed (2 weeks). System was unusable — 16-minute page loads.\n\nTask: Fix it before enrollment closes. ~3 days available.\n\nAction:\n1. Day 1: Instrumented with Glowroot. Found 48,000 queries. Identified root cause: N+1 + cartesian product in matrícula→estudante→pessoa chain.\n2. Day 1-2: Implemented fix: separate COUNT, pagination, LATERAL JOIN, DTO projections.\n3. Day 2: Tested with production data clone. Verified ~2 seconds.\n4. Day 3: Deployed. Monitored. Confirmed fix held under real load.\n\nResult: 16 minutes → 2 seconds. Zero data loss. Enrollment period completed successfully.\n\nKey lesson: under pressure, measure FIRST (1 hour of Glowroot analysis saved days of guessing). Don't optimize blindly.",
+    "subtopic": "beh-adaptability",
+    "difficulty": "BEGINNER",
+    "question": "Tell me about a time you had to become productive with an unfamiliar technology.",
+    "shortAnswer": "When I decided to build SinapiPRO, my production background was mainly Java and Jakarta EE, while the project required Spring Boot, Angular, TypeScript and PrimeNG. I learned around one vertical business flow at a time: API, routed screen, form, validation and persistence. That produced working feedback quickly and exposed gaps that isolated tutorials would not have shown.",
+    "detailedAnswer": "Situation: I wanted a practical environment for a modern full-stack architecture, but my strongest production experience was in a different enterprise stack.\n\nTask: become productive enough with Spring Boot and Angular to build a modular construction-management ERP rather than a tutorial exercise.\n\nAction: I mapped familiar concepts to the new stack without assuming equivalence, read official documentation for framework-specific behavior, and implemented thin end-to-end slices. Each slice forced me to address routing, forms, REST contracts, persistence and error handling together. I kept the scope small enough to revisit decisions as my understanding improved.\n\nResult: SinapiPRO now contains Spring Boot and PostgreSQL business modules and an Angular/PrimeNG frontend with routed screens, forms, CRUD flows and reusable services. The honest boundary is that this is substantial hands-on project experience, not the same as operating that stack in a company production environment.\n\nLesson: learn against a real outcome, seek feedback early and state the experience boundary precisely.",
     "keyPoints": [
-      "Specific timeline and constraint (3 days, enrollment closing)",
-      "Measured before optimizing (Glowroot analysis first)",
-      "Systematic approach even under pressure",
-      "Tested with production-scale data before deploying",
-      "Concrete result with numbers (16min → 2s)"
+      "Uses a real project with a meaningful outcome",
+      "Explains the learning method, not only the technologies",
+      "Builds thin end-to-end slices for fast feedback",
+      "Transfers concepts while checking framework-specific differences",
+      "Distinguishes project experience from production ownership"
     ],
     "redFlags": [
-      "Vague story without numbers or timeline",
-      "\"I worked overtime\" (effort, not strategy)",
-      "No mention of how you prioritized under pressure",
-      "Story where pressure led to cutting quality"
+      "Calls tutorial completion mastery",
+      "Lists courses but no applied result",
+      "Claims the new framework behaves exactly like the familiar one",
+      "Hides the difference between personal project and production experience"
     ],
     "followUps": [
-      { "question": "What would you have done if the fix didn't work in time?", "hint": "Contingency: temporary workaround (export CSV, limit results), communicate to stakeholders." },
-      { "question": "How did you test under production-like conditions?", "hint": "Cloned production data to test environment. Ran the same queries with real volume." }
+      {
+        "question": "Which assumption from Jakarta EE did not transfer cleanly to Spring or Angular?"
+      },
+      {
+        "question": "How did you decide that you were ready to move beyond the first vertical slice?"
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Learning through SinapiPRO",
+      "description": "Built a personal construction-management ERP with a Spring Boot/PostgreSQL backend and Angular/PrimeNG frontend to gain applied experience beyond tutorials."
+    }
   },
   {
     "id": "interview-behavioral-2",
     "topic": "behavioral",
-    "subtopic": "beh-leadership",
-    "difficulty": "SENIOR",
-    "question": "How do you influence technical decisions when you are not the decision maker?",
-    "shortAnswer": "Data, not authority. I present evidence: benchmarks, prototypes, production metrics. I ask questions that expose trade-offs rather than stating opinions. When I disagreed on caching approach, I measured both options and presented results. Data ended the debate without hierarchy.",
-    "detailedAnswer": "My approach to influencing without authority:\n\n1. **Lead with questions, not opinions:**\n   - \"What happens when we have 10x more users?\" (exposes scalability gap)\n   - \"How would we test this?\" (exposes testability issues)\n   - \"What is the rollback plan?\" (exposes risk)\n\n2. **Build evidence:**\n   - Quick prototype or benchmark (2-4 hours)\n   - Production metrics showing the current problem\n   - Example from another module where it worked/failed\n\n3. **Present trade-offs, not conclusions:**\n   - \"Option A gives us X but costs Y. Option B gives us Z but risks W.\"\n   - Let the decision maker choose with full information\n\n4. **Know when to commit:**\n   - Voice concerns clearly and once\n   - If overruled with good reasons, commit fully\n   - Document the decision and rationale (not to blame later, but to revisit if needed)\n\nThis works because it's collaborative, not adversarial.",
+    "subtopic": "beh-conflict",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you handle a technical disagreement when both options are defensible?",
+    "shortAnswer": "I begin by restating the shared outcome and the strongest concern behind each option. Then I identify what evidence can distinguish them, time-box the investigation, and make the decision owner and review point explicit. I argue the trade-off without making it personal. Once a reasonable decision is made, I support it unless new evidence changes the risk—including when my preferred option is not selected.",
+    "detailedAnswer": "I first check whether the disagreement is about facts, priorities, risk tolerance, or ownership. Two people can agree on the technical evidence and still rank delivery speed, operability, consistency, or future flexibility differently. Restating the other position fairly often exposes the real decision.\n\nNext I choose the smallest useful evidence: a representative query plan, prototype, compatibility test, incident data, cost estimate, or risk review. The investigation needs a time box; not every disagreement deserves a benchmark project. I write down the options and consequences, clarify who decides, and define what future signal would cause a review.\n\nAfter the decision, I commit to implementation and do not undermine it through passive resistance. If I still believe there is a material safety or compliance risk, I use the appropriate escalation path and document it. Resolution is not synonymous with winning: being persuaded by better evidence, or helping improve a compromise, is a strong engineering outcome.",
     "keyPoints": [
-      "Data over opinions — prototype and measure",
-      "Questions that expose trade-offs (not criticisms)",
-      "Present options with honest trade-offs",
-      "Commit once the decision is made",
-      "Document decisions for future reference"
+      "Identify whether facts, priorities, risk, or ownership differ",
+      "Describe the other position fairly",
+      "Tie the disagreement to a shared outcome",
+      "Use evidence and explicit decision ownership",
+      "Show commitment and reflection after the decision"
     ],
     "redFlags": [
-      "\"I just do what they say\" — no technical ownership",
-      "\"I always fight for my opinion\" — adversarial",
-      "Escalating disagreements instead of resolving them",
-      "Passive-aggressive compliance (doing it \"their way\" badly)"
+      "Treats a normal technical disagreement as a personal conflict",
+      "Frames the colleague as the problem",
+      "Equates resolution with getting the preferred solution",
+      "Cannot explain the concern behind the other position"
     ],
     "followUps": [
-      { "question": "Tell me about a time you were overruled and it turned out they were right.", "hint": "Shows humility and learning from disagreement." },
-      { "question": "How do you handle a decision you disagree with that affects quality?", "hint": "Voice concern, propose mitigation, document risk, commit if overruled." }
+      {
+        "question": "What evidence would have changed your mind?"
+      },
+      {
+        "question": "What happened to the working relationship afterward?"
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "INFERENCE"
   },
   {
     "id": "interview-behavioral-3",
     "topic": "behavioral",
-    "subtopic": "beh-adaptability",
-    "difficulty": "INTERMEDIATE",
-    "question": "Describe a situation where you had to learn a new technology quickly.",
-    "shortAnswer": "When we needed to integrate SGN3 with Moodle's REST API, I had 1 week to learn MicroProfile RestClient, configure timeouts, handle authentication, and build the integration layer. I started with the documentation, built a minimal working call in 2 hours, then incrementally added error handling, retry, and timeout configuration. Delivered on time with proper resilience.",
-    "detailedAnswer": "Situation: SGN3 needed Moodle integration for virtual classrooms. No one on the team had experience with MicroProfile RestClient or Moodle's API.\n\nApproach:\n1. **Day 1**: Read MicroProfile RestClient spec (2 hours). Built minimal GET call to Moodle (working in 2 hours). Understood the pattern.\n2. **Day 2-3**: Implemented full CRUD operations. Added authentication (token-based).\n3. **Day 4-5**: Added resilience: connect timeout (5s), read timeout (60s — Moodle is slow), proper exception handling, logging.\n4. **Day 5-6**: Integration tests against Moodle sandbox.\n5. **Day 7**: Code review, deployed to HML, validated.\n\nKey learning strategy:\n- Start with smallest working example (not theory-first)\n- Incrementally add complexity (not big-bang)\n- Read source/spec when something doesn't work (not only Stack Overflow)\n- Ask in the team chat if blocked for >30 minutes",
+    "subtopic": "beh-leadership",
+    "difficulty": "SENIOR",
+    "question": "How do you influence an important engineering decision when you do not have formal authority?",
+    "shortAnswer": "I make the decision easier for the owner: clarify the outcome, surface risks, gather proportionate evidence and present viable options with consequences. I involve the people who will build and operate the result. I state my recommendation clearly, but I also say what evidence would change it and support the final decision once concerns have been heard.",
+    "detailedAnswer": "Influence starts before a design meeting. I talk to product, QA, database or infrastructure colleagues to understand constraints that a code-only view might miss. I frame the discussion around the shared outcome and decision criteria rather than around who proposed each idea.\n\nThe evidence should match the decision: an execution plan and representative data for a database concern; a small compatibility test for a migration; production traces for a performance issue; or an operational failure scenario for a resilience decision. I summarize the options, recommendation, assumptions and consequences in a form the decision owner can review.\n\nIf the team chooses another reasonable option, I commit to making it work and preserve the rationale so the decision can be revisited if assumptions change. If the issue is a material safety, legal or data-integrity risk, I escalate through the appropriate channel rather than treating 'disagree and commit' as unconditional.",
     "keyPoints": [
-      "Start with minimal working example (not theory overload)",
-      "Incrementally add complexity",
-      "Specific timeline with daily milestones",
-      "Delivered with quality (resilience, tests, not just 'works')",
-      "Honest about what was hard and how you unblocked"
+      "Frames the decision around a shared outcome",
+      "Includes cross-functional constraints",
+      "Uses proportionate evidence",
+      "Makes a clear recommendation and its assumptions",
+      "Distinguishes normal disagreement from material risk"
     ],
     "redFlags": [
-      "\"I watched YouTube tutorials for a week\" (no hands-on)",
-      "Vague about timeline and deliverable",
-      "Learned technology but delivered nothing",
-      "No mention of quality/resilience in the result"
+      "Relies on title, persistence or meeting dominance",
+      "Presents only one acceptable option",
+      "Collects evidence selectively to win",
+      "Commits publicly but undermines the decision afterward"
     ],
     "followUps": [
-      { "question": "What was the hardest part of learning it?", "hint": "Be specific — a particular API quirk, an unclear spec, a silent failure mode." },
-      { "question": "How would you approach learning Kafka for our team?", "hint": "Same pattern: minimal consumer/producer first, then add complexity (partitions, exactly-once, DLQ)." }
+      {
+        "question": "Tell me about a time someone else's concern improved your proposal."
+      },
+      {
+        "question": "When would you escalate instead of accepting the decision?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "interview-behavioral-4",
+    "topic": "behavioral",
+    "subtopic": "beh-pressure",
+    "difficulty": "SENIOR",
+    "question": "Tell me about diagnosing an operationally urgent production problem.",
+    "shortAnswer": "During a high-volume enrollment period, a listing over 26,705 records in the period took about 16 minutes and issued roughly 48,000 database queries per request. I used Glowroot and SQL analysis to locate repeated ORM work, then restructured the count and data queries, added deterministic pagination and projected only required fields. The request fell to roughly ten queries and around two seconds.",
+    "detailedAnswer": "Situation: an enrollment workflow was operationally time-sensitive, and a request over a period containing 26,705 enrollment records had become unusable. The 26,705 figure describes data volume, not 26,705 simultaneous requests.\n\nTask: restore usable response time without changing the business result or guessing under pressure.\n\nAction: I traced the request with Glowroot, correlated application spans with database activity and found approximately 48,000 queries, including repeated relationship loading and an expensive count path. I separated the count from the result query, introduced deterministic pagination, used DTO projection for the listing and changed the relationship access so the request no longer expanded into repeated ORM queries. I compared results on representative data and watched the production behavior after release.\n\nResult: approximately 48,000 queries became roughly ten, and response time moved from about 16 minutes to around two seconds. These are measured case figures and should be quoted only with the supporting evidence available.\n\nLesson: time pressure increases the value of instrumentation, a narrow blast radius and explicit validation; it is not a reason to optimize blindly.",
+    "keyPoints": [
+      "Describes 26,705 as record volume, not concurrency",
+      "Uses the consistent baseline of about 16 minutes",
+      "Diagnoses with APM and database evidence before changing code",
+      "Preserves behavior while reducing query work",
+      "Validates with representative data and release monitoring"
+    ],
+    "redFlags": [
+      "Calls the 26,705 records concurrent users or requests",
+      "Uses a contradictory 48-second baseline",
+      "Claims an exact deadline or zero failures without evidence",
+      "Cannot explain how the query count was measured"
+    ],
+    "followUps": [
+      {
+        "question": "How did you verify that pagination did not change the returned business result?"
+      },
+      {
+        "question": "What containment option would you have used if the full fix was not ready?"
+      },
+      {
+        "question": "Which production metrics did you watch after deployment?"
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 Moodle integration via MicroProfile RestClient",
-      "description": "Learned MicroProfile RestClient in 1 week. Delivered full Moodle integration: room creation, enrollment sync, grade retrieval. With timeouts (5s connect, 60s read), retry, and proper error handling."
+      "title": "Enrollment listing performance recovery",
+      "description": "Used Glowroot and SQL analysis to reduce a high-volume listing from about 48,000 queries and 16 minutes to roughly ten queries and two seconds."
     }
+  },
+  {
+    "id": "interview-behavioral-5",
+    "topic": "behavioral",
+    "subtopic": "beh-culture",
+    "difficulty": "INTERMEDIATE",
+    "question": "What kind of engineering culture helps you do your best work, and how do you contribute to it?",
+    "shortAnswer": "I do my best work where people can question decisions respectfully, production evidence matters, and ownership includes operability and business outcomes. I contribute by making risks and unknowns visible, sharing context through reviews and documentation, involving QA and infrastructure early, and raising bad news soon enough for the team to act.",
+    "detailedAnswer": "I value a culture that combines autonomy with accountability. Engineers should have room to propose solutions, but decisions should be connected to user outcomes, supported by evidence and revisited when assumptions change. Psychological safety matters because production risks, mistakes and knowledge gaps need to be raised early.\n\nMy contribution is practical: I clarify requirements with product and business colleagues; work with QA on observable acceptance behavior; involve database and infrastructure specialists when their constraints matter; and use code reviews and documentation to distribute context instead of becoming a single point of knowledge. I also try to distinguish a healthy technical disagreement from a personal conflict.\n\nCulture fit is two-way. I would ask how the team handles incidents, design disagreement, feedback and ownership rather than claiming alignment from company values alone.",
+    "keyPoints": [
+      "Connects culture to concrete engineering behavior",
+      "Values evidence, respectful challenge and early risk communication",
+      "Shows cross-functional collaboration",
+      "Contributes to shared context and ownership",
+      "Treats culture fit as mutual evaluation"
+    ],
+    "redFlags": [
+      "Describes culture only as personal comfort or benefits",
+      "Says 'no politics' without explaining constructive disagreement",
+      "Expects autonomy without accountability",
+      "Cannot name any behavior used to improve team culture"
+    ],
+    "followUps": [
+      {
+        "question": "How do you respond when the team's normal process differs from your preference?"
+      },
+      {
+        "question": "What would you want to learn about our incident culture?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   }
 ]

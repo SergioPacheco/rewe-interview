@@ -2,94 +2,252 @@
   {
     "id": "interview-angular-1",
     "topic": "angular",
-    "subtopic": "ng-signals",
-    "difficulty": "INTERMEDIATE",
-    "question": "What are Angular Signals and how do they improve over RxJS for component state?",
-    "shortAnswer": "Signals are synchronous, fine-grained reactive primitives. Unlike BehaviorSubject, they don't need subscription management (no memory leaks), are synchronously readable (no async pipe), and integrate with Angular's change detection (OnPush-friendly). I use them for component/service state. RxJS remains for async streams (HTTP, WebSocket, complex event composition).",
-    "detailedAnswer": "Angular Signals (introduced in Angular 16+):\n\n**What they are:**\n- `signal(value)` — writable reactive value\n- `computed(() => ...)` — derived value (lazy, cached)\n- `effect(() => ...)` — side effect when signals change\n\n**Advantages over RxJS for state:**\n- Synchronous read: `mySignal()` — no subscribe, no async pipe\n- No memory leaks: no subscription to forget cleaning up\n- Fine-grained: Angular re-renders only components that read changed signals\n- Simpler mental model for state management\n\n**When to still use RxJS:**\n- HTTP calls (Observable-based HttpClient)\n- WebSocket streams\n- Complex async composition (debounce, switchMap, merge)\n- Event streams from DOM or external sources\n\n**In this project (REWE Interview Prep):**\nAll services use signals for state (TopicService, QuizEngineService, InterviewService). RxJS only for route params (toSignal() bridge). Zero BehaviorSubjects.",
+    "subtopic": "ng-basics",
+    "difficulty": "BEGINNER",
+    "question": "How do standalone components and NgModules coexist, and how would you choose between them?",
+    "shortAnswer": "A standalone component declares the components, directives and pipes it uses through its own imports and can be routed or bootstrapped directly. NgModules group declarations and providers and remain supported, especially in existing applications and some libraries. For new code on a supported Angular version I prefer the standalone defaults, while migrating stable module-based features only when the change has clear value and tests.",
+    "detailedAnswer": "Standalone is a composition model, not a claim that modules disappeared from Angular. A standalone component imports its template dependencies directly; application providers can be configured during bootstrap; and routes can lazy-load the component with loadComponent. This reduces declaration and export indirection and makes a component's dependencies easier to inspect.\n\nNgModules still work. A mature application may contain module-based features, a third-party library may expose an NgModule, and a gradual migration can mix both models. The decision is contextual: new code can use the current standalone defaults, while stable module-based code should be migrated only when the change has value and adequate tests.\n\nThis interview-preparation project provides hands-on evidence for the composition model: it uses Angular 19 standalone components, application configuration providers and route-level loadComponent. Angular 19 is now outside official support, so the project version is upgrade debt rather than a current-version recommendation. The architectural example remains useful, but an interview answer should distinguish the pattern from the repository's version lifecycle.",
     "keyPoints": [
-      "Signals: synchronous, no subscription management, no leaks",
-      "computed(): lazy, cached derived values",
-      "RxJS still needed for async streams (HTTP, WebSocket, complex composition)",
-      "Signals + OnPush = optimal change detection",
-      "toSignal() bridges RxJS observables to signals"
+      "Explains what a standalone component owns",
+      "States that NgModules remain supported",
+      "Uses loadComponent and bootstrap providers as concrete examples",
+      "Prefers incremental migration for existing applications",
+      "Avoids equating standalone with automatic performance gains"
     ],
     "redFlags": [
-      "\"Signals replace RxJS entirely\" (wrong — async streams still need RxJS)",
-      "Not knowing when to use which",
-      "\"I don't know what signals are\" (Angular 19 position!)",
-      "Using BehaviorSubject for simple component state"
+      "Says NgModules no longer exist or never have a use",
+      "Claims standalone alone guarantees tree-shaking or a smaller bundle",
+      "Recommends a rewrite without migration value",
+      "Cannot explain where application-wide providers are configured"
     ],
     "followUps": [
-      { "question": "When would you still use BehaviorSubject over a signal?", "hint": "Interop with libraries expecting Observable, or complex async pipelines." },
-      { "question": "What is the difference between computed() and effect()?", "hint": "computed: derives a VALUE (pure, cached). effect: performs SIDE EFFECT (imperative, for DOM, logging)." }
+      {
+        "question": "How would you consume an NgModule-based library from a standalone application?"
+      },
+      {
+        "question": "What would you test before migrating a routed feature to standalone?"
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "This project: 100% signals for state management",
-      "description": "Built REWE Interview Prep with Angular 19 signals throughout: TopicService (topics, questions, theory), QuizEngineService (session state), InterviewService (lazy loading per topic). Zero BehaviorSubjects. RxJS only for route params via toSignal()."
+      "title": "Standalone application on an upgrade-pending Angular version",
+      "description": "This project uses Angular 19 standalone components, application-level provider configuration and route-level lazy loading without an application NgModule. Angular 19 is outside official support, so upgrading and retesting are part of the honest project assessment."
     }
   },
   {
     "id": "interview-angular-2",
     "topic": "angular",
-    "subtopic": "ng-basics",
+    "subtopic": "ng-services",
     "difficulty": "INTERMEDIATE",
-    "question": "How do standalone components work and why are NgModules no longer needed?",
-    "shortAnswer": "Standalone components declare their own imports directly (what they use: other components, pipes, directives). No NgModule needed to declare/export them. Benefits: simpler mental model, tree-shakeable, easier lazy loading (loadComponent instead of loadChildren with module). In Angular 19, standalone is the default.",
-    "detailedAnswer": "Before standalone (NgModules era):\n- Every component must be declared in exactly ONE NgModule\n- NgModule imports other NgModules to get their components\n- Circular dependency issues, unclear ownership\n- Lazy loading requires a separate NgModule (route → loadChildren → module)\n\nWith standalone components:\n- Component declares its own dependencies: `imports: [CommonModule, RouterLink, MyPipe]`\n- No NgModule needed — component is self-contained\n- Lazy loading is direct: `loadComponent: () => import('./my.component')`\n- Tree-shaking: unused components not bundled\n\nIn practice (this project):\n```typescript\n@Component({\n  selector: 'app-interview',\n  standalone: true,\n  imports: [MarkdownPipe],\n  template: '...'\n})\nexport class InterviewComponent { }\n```\n\nRoutes:\n```typescript\n{ path: 'topic/:id', loadComponent: () => import('./theory.component').then(m => m.TheoryComponent) }\n```\n\nNo app.module.ts exists. Zero NgModules in the entire project.",
+    "question": "How do Angular provider scopes affect service lifetime and state ownership?",
+    "shortAnswer": "A service provided in root normally has one application-wide instance, while a route or component provider creates an instance for that injector subtree and its lifetime. I choose the narrowest scope that matches the state: stateless shared clients can be root-scoped; workflow state may belong to a route; component-specific state should not become global by convenience.",
+    "detailedAnswer": "Angular dependency injection is hierarchical. The environment injector contains application and route providers; element injectors can provide dependencies for a component subtree. Providing the same service at a lower level creates a different instance, which can be intentional isolation or a subtle bug when developers expected shared state.\n\nI separate service responsibilities. API clients and cross-cutting facilities are often stateless root services. A route-scoped facade can own state that should reset when a feature is left. Local presentation state can remain in the component. The choice between constructor injection and inject() is mostly about context and style; it does not change provider scope.\n\nFor stateful services, I expose a read-only state surface and methods that express allowed transitions rather than letting every component mutate fields. I also check whether a singleton stores user- or request-specific data that should have a shorter lifecycle.",
     "keyPoints": [
-      "standalone: true — component declares its own imports",
-      "No NgModule declaration/export ceremony",
-      "loadComponent for lazy loading (simpler than loadChildren + module)",
-      "Tree-shakeable — unused code not bundled",
-      "Angular 19: standalone is the default"
+      "Understands hierarchical injectors",
+      "Connects provider location to instance lifetime",
+      "Chooses scope based on state ownership",
+      "Separates injection syntax from provider semantics",
+      "Avoids accidental duplicate or global state"
     ],
     "redFlags": [
-      "Still creating NgModules for everything in Angular 19",
-      "Not knowing what standalone means",
-      "Cannot explain the migration path from NgModules",
-      "\"I always use SharedModule\" (often unnecessary with standalone)"
+      "Assumes every service is automatically a singleton",
+      "Provides a stateful service in multiple components unintentionally",
+      "Places all state in root services",
+      "Says inject() and constructor injection create different lifetimes"
     ],
     "followUps": [
-      { "question": "How do you share components across features without NgModule?", "hint": "Import the component directly where needed. Barrel exports (index.ts) for organization." },
-      { "question": "When might you still want an NgModule?", "hint": "Third-party libraries that haven't migrated yet. Legacy code. Almost never for new code." }
+      {
+        "question": "When would route-scoped state be preferable to a root singleton?"
+      },
+      {
+        "question": "How would you diagnose two components receiving different service instances?"
+      },
+      {
+        "question": "What state should reset when the user leaves a feature?"
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "This project: zero NgModules",
-      "description": "REWE Interview Prep has zero NgModules. Every component is standalone with explicit imports. Lazy loading via loadComponent in routes. app.config.ts replaces app.module.ts for providers."
-    }
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
     "id": "interview-angular-3",
     "topic": "angular",
-    "subtopic": "ng-services",
-    "difficulty": "SENIOR",
-    "question": "How do you structure a medium-to-large Angular application?",
-    "shortAnswer": "Feature-based structure: core/ (singletons), shared/ (reusable components), features/ (lazy-loaded by route). Each feature is self-contained — imports only from shared/ and core/, never between features. Services in core/ manage global state. Communication between features via services, not direct imports.",
-    "detailedAnswer": "Structure:\n```\nsrc/app/\n├── core/        ← Singletons (services, guards, interceptors)\n├── shared/      ← Reusable (components, pipes, directives)\n├── features/    ← Lazy-loaded per route\n│   ├── dashboard/\n│   ├── theory/\n│   ├── interview/\n│   └── quiz/\n└── models/      ← Pure interfaces (zero runtime)\n```\n\nRules:\n1. **Features never import from other features** — communication via core services\n2. **Core services are singletons** — providedIn: 'root'\n3. **Shared components are stateless** — inputs/outputs, no global state\n4. **Models are pure TypeScript** — no Angular dependencies\n5. **Each feature lazy-loaded** — only loads when route is accessed\n\nThis scales because:\n- Adding a feature doesn't affect existing code\n- Each feature can be developed independently\n- Bundle size stays controlled (lazy loading)\n- Testing is easy (features are self-contained)",
+    "subtopic": "ng-rxjs",
+    "difficulty": "INTERMEDIATE",
+    "question": "How would you implement a search experience where new input should cancel an older HTTP request?",
+    "shortAnswer": "I would model the input as an Observable, normalize it, debounce user typing, ignore unchanged terms and use switchMap to the HTTP call so a new term unsubscribes from the previous request. I would handle loading, empty and error states explicitly and use takeUntilDestroyed or an Angular-managed subscription boundary when subscribing imperatively.",
+    "detailedAnswer": "The operator choice comes from the concurrency requirement. switchMap keeps only the latest inner subscription, which fits typeahead search. concatMap would queue requests in order, exhaustMap would ignore new input while one request is active, and mergeMap would allow concurrent results that could arrive out of order. None is universally better.\n\nCancellation has limits: unsubscribing can abort Angular's HTTP request where supported and prevents an obsolete response from updating the view, but it does not guarantee that a server operation already received has been undone. Search should be side-effect free; a command such as payment or enrollment needs different semantics.\n\nThe stream should also define errors and state. An inner catchError can keep the outer input stream alive. Loading can be derived carefully so a canceled request does not leave stale UI state. In a template, the async pipe manages subscription lifetime; in code, takeUntilDestroyed provides a lifecycle boundary.\n\nThis project uses RxJS for router-derived values and interceptor behavior, but a production typeahead implementation should be claimed only if demonstrated in the relevant application.",
     "keyPoints": [
-      "core/ (global singletons), shared/ (reusable), features/ (lazy-loaded)",
-      "Features never import between each other",
-      "Communication via core services (global state)",
-      "Lazy loading per route (code splitting)",
-      "Models are pure interfaces (zero runtime cost)"
+      "Chooses switchMap from the latest-request requirement",
+      "Compares flattening operators by concurrency semantics",
+      "Distinguishes client unsubscribe from undoing server work",
+      "Keeps the outer stream alive after request errors",
+      "Uses an explicit subscription lifecycle"
     ],
     "redFlags": [
-      "Everything in one big module",
-      "Features importing directly from other features",
-      "No lazy loading strategy",
-      "Services with state in shared/ (should be in core/)"
+      "Memorizes switchMap without explaining the cancellation requirement",
+      "Uses switchMap for non-idempotent commands without analysis",
+      "Catches errors only at the outermost level and ends future searches",
+      "Creates unmanaged imperative subscriptions"
     ],
     "followUps": [
-      { "question": "How do you handle state that multiple features need?", "hint": "Core service with signals. Features read via inject(). Single source of truth." },
-      { "question": "When would you use a monorepo with Nx?", "hint": "Multiple apps sharing code, or very large teams needing build boundaries." }
+      {
+        "question": "When would concatMap be the safer choice?"
+      },
+      {
+        "question": "What does unsubscribe guarantee about the server request?"
+      },
+      {
+        "question": "How would you test that an older result cannot replace a newer one?"
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "interview-angular-4",
+    "topic": "angular",
+    "subtopic": "ng-signals",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you decide whether a piece of Angular state should use Signals, RxJS or both?",
+    "shortAnswer": "I use Signals for synchronously readable state and derived values consumed by Angular views, and RxJS for asynchronous streams where time, cancellation, backpressure-like coordination or event composition matters. They are complementary: an Observable can be bridged with toSignal at the view boundary, while an API that consumers need to compose may remain an Observable.",
+    "detailedAnswer": "The decision follows behavior, not a claim that one API replaces the other. A signal has a current value and works well for local state, service state and computed derivations. An Observable represents values over time and has operators for cancellation, concurrency, timing and combining independent sources.\n\nFor example, route parameters or an HTTP stream can remain RxJS while being converted with toSignal for synchronous template consumption. Conversely, an Observable API may be more appropriate when downstream callers need to compose it with other asynchronous work. Bridges need lifecycle and initial-value decisions; conversion is not free of semantics.\n\nEffects are for genuine side effects, not a default way to copy one signal into another. Derived state should normally use computed, which keeps ownership clear and avoids update loops. Signals also do not make memory or logic problems impossible: long-lived effects, retained objects and poorly scoped services can still cause issues.\n\nThis project uses signals and computed state extensively and bridges router observables with toSignal, providing direct project evidence for the mixed approach.",
+    "keyPoints": [
+      "Chooses by synchronous state versus temporal stream behavior",
+      "Treats Signals and RxJS as complementary",
+      "Uses computed for derived state and effect for side effects",
+      "Recognizes lifecycle and initial-value semantics at bridges",
+      "Avoids absolute memory-leak or replacement claims"
+    ],
+    "redFlags": [
+      "Says Signals replace RxJS",
+      "Says RxJS is always preferable because it is more powerful",
+      "Uses effects to synchronize duplicated state",
+      "Claims Signals eliminate memory leaks"
+    ],
+    "followUps": [
+      {
+        "question": "Why would computed be preferable to an effect that writes another signal?"
+      },
+      {
+        "question": "What initial-value decision must you make when using toSignal?"
+      },
+      {
+        "question": "Which state in this project benefits from remaining an Observable?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "This project: feature-based architecture",
-      "description": "core/services/ (TopicService, QuizEngine, Interview, Progress), shared/ (MarkdownPipe, CodeBlock), features/ (dashboard, theory, interview, quiz, resume). Each feature lazy-loaded. Zero cross-feature imports."
+      "title": "Signals with RxJS interop",
+      "description": "This Angular project uses signals and computed values for UI and service state and toSignal to consume router-derived Observables."
+    }
+  },
+  {
+    "id": "interview-angular-5",
+    "topic": "angular",
+    "subtopic": "ng-forms",
+    "difficulty": "INTERMEDIATE",
+    "question": "How would you design a complex Angular form with cross-field and server-side validation?",
+    "shortAnswer": "I would use a typed reactive form, keep control-level validators close to controls and place cross-field rules on the smallest group that owns all required values. Async validators should be used only for validation-style reads with cancellation and throttling. On submit, I map server validation errors to controls when possible and keep backend business validation authoritative.",
+    "detailedAnswer": "Typed reactive forms make the form model, disabled controls and submitted payload easier to reason about. I separate three kinds of validation: local format constraints, cross-field consistency and authoritative server rules. A date-range validator belongs on the group containing both dates; putting it on one control makes the dependency hidden.\n\nAsync validation needs care. It can create a request per keystroke, race with newer input and conflate connectivity failures with invalid data. I use update strategy or debouncing where appropriate, cancel obsolete checks and reserve async validators for questions that fit field validation. Some business checks are clearer during submit.\n\nThe UI should show errors after an appropriate interaction and preserve server details that help correction. A route guard or disabled button is not security; the backend must enforce authorization and invariants.\n\nThe current interview-preparation project does not provide meaningful complex-form evidence, so this answer is classified as studied knowledge. A production claim should come from SinapiPRO or another repository only after demonstrating the actual form and tests.",
+    "keyPoints": [
+      "Uses typed reactive forms",
+      "Places cross-field validation on the owning group",
+      "Controls async validation traffic and races",
+      "Maps actionable server errors back to the form",
+      "Keeps backend validation authoritative"
+    ],
+    "redFlags": [
+      "Treats client validation as a security boundary",
+      "Runs an async request on every keystroke without cancellation",
+      "Puts a multi-field rule on an arbitrary single control",
+      "Drops server validation into a generic error with no recovery path"
+    ],
+    "followUps": [
+      {
+        "question": "When should a business check happen on submit instead of in an async validator?"
+      },
+      {
+        "question": "How would you represent a server error involving multiple fields?"
+      },
+      {
+        "question": "What changes when part of the form is dynamically disabled?"
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-angular-6",
+    "topic": "angular",
+    "subtopic": "ng-routing",
+    "difficulty": "INTERMEDIATE",
+    "question": "What responsibilities belong in Angular routes, guards and resolvers, and what should stay elsewhere?",
+    "shortAnswer": "Routes define navigation and lazy-loading boundaries. Guards decide whether navigation should proceed or redirect, and resolvers can prepare data required before activation. They improve flow and user experience, but they are not authorization enforcement; the backend must protect data and operations. Heavy business logic and long-running orchestration belong in services, not routing hooks.",
+    "detailedAnswer": "I use route configuration to express application navigation, feature boundaries and parameters. loadComponent supports route-level code splitting for standalone features. A guard is appropriate for a navigation precondition, such as redirecting when required local state is absent, but it can be bypassed by calling an API directly and therefore cannot secure that API.\n\nA resolver is useful when a route should not render until essential data is available and when loading or navigation errors have a deliberate policy. It is less suitable for every optional request, because blocking activation can make navigation feel slow. Some screens benefit from rendering a shell immediately and loading independent sections afterward.\n\nThis project uses lazy-loaded standalone routes, functional guards and a topic resolver, so the answer can be grounded in actual code. I would explain one route and why each hook exists rather than claiming guards and resolvers are always needed.",
+    "keyPoints": [
+      "Uses routes as navigation and loading boundaries",
+      "Explains guards as UX flow, not backend security",
+      "Uses resolvers selectively for activation-critical data",
+      "Keeps business orchestration out of routing hooks",
+      "Grounds the answer in an actual project route"
+    ],
+    "redFlags": [
+      "Calls a route guard an authorization boundary",
+      "Blocks every route on all page data",
+      "Puts domain mutations inside a resolver",
+      "Cannot explain navigation behavior on guard or resolver failure"
+    ],
+    "followUps": [
+      {
+        "question": "When would rendering a shell be better than using a resolver?"
+      },
+      {
+        "question": "How should a guard return a redirect without triggering navigation as a side effect?"
+      },
+      {
+        "question": "How would you test a functional guard?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Lazy routes, functional guards and resolver",
+      "description": "This project configures standalone route lazy loading and uses functional guards and a resolver for specific navigation behavior."
+    }
+  },
+  {
+    "id": "interview-angular-7",
+    "topic": "angular",
+    "subtopic": "ng-testing",
+    "difficulty": "SENIOR",
+    "question": "How do you choose what to test in an Angular application without coupling tests to implementation details?",
+    "shortAnswer": "I start from observable behavior and risk. Pure transformations can be tested without Angular; stateful services need transition and boundary tests; components should be tested through inputs, user actions and rendered output; HTTP clients need request and response behavior; and a few end-to-end tests cover critical flows. I avoid asserting private fields or exact internal method calls unless the interaction itself is the contract.",
+    "detailedAnswer": "The test boundary should match the failure. A pure mapper or validator does not need TestBed. A signal-based service can be tested by invoking its public methods and observing public computed state. A component test should interact with the DOM or harness and verify what the user can see or do. HttpTestingController can verify URL, method, payload and error handling without a live backend.\n\nI keep tests deterministic: no arbitrary sleeps, explicit control over asynchronous completion, and cleanup of shared state. For Signals, reading a computed value after the public transition is usually enough; effects and rendered updates may require the Angular test environment to stabilize. For RxJS, marble tests are useful only when temporal operator behavior is genuinely complex.\n\nThis project contains focused tests for the application component, progress and quiz-engine services, and a syntax-highlighting pipe. That is real evidence, but not a claim of comprehensive frontend coverage. The strongest portfolio discussion includes what remains untested and why that risk is next.",
+    "keyPoints": [
+      "Matches test level to the risk and boundary",
+      "Tests public behavior rather than private structure",
+      "Avoids TestBed for pure logic",
+      "Controls asynchronous work deterministically",
+      "Describes existing tests without overstating coverage"
+    ],
+    "redFlags": [
+      "Asserts private fields and exact internal call order by default",
+      "Uses arbitrary timeouts to make async tests pass",
+      "Calls a few unit tests comprehensive coverage",
+      "Mocks so much that no user-visible behavior remains"
+    ],
+    "followUps": [
+      {
+        "question": "Which current user flow deserves the next integration or end-to-end test?"
+      },
+      {
+        "question": "How would you test a service whose state is exposed as read-only Signals?"
+      },
+      {
+        "question": "When is a marble test worth its maintenance cost?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Focused Angular tests in this project",
+      "description": "The repository includes tests for application behavior, signal-based services and a shared pipe; coverage is useful but not presented as comprehensive."
     }
   }
 ]

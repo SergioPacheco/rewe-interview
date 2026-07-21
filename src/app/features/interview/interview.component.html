@@ -73,7 +73,7 @@
           <button class="interview-section__toggle" (click)="toggleSection('short')"
                   [class.interview-section__toggle--open]="isExpanded('short')">
             <span class="interview-section__icon">💬</span>
-            <span class="interview-section__title">Short Answer (30-60s)</span>
+            <span class="interview-section__title">Core Answer</span>
             <span class="interview-section__arrow">{{ isExpanded('short') ? '▼' : '▶' }}</span>
           </button>
           @if (isExpanded('short')) {
@@ -178,7 +178,10 @@
                   <div class="follow-up">
                     <p class="follow-up__question">{{ fu.question }}</p>
                     @if (fu.hint) {
-                      <p class="follow-up__hint">💡 {{ fu.hint }}</p>
+                      <details class="follow-up__hint-details">
+                        <summary class="follow-up__hint-toggle">Show answer cue</summary>
+                        <p class="follow-up__hint">{{ fu.hint }}</p>
+                      </details>
                     }
                   </div>
                 }
@@ -193,7 +196,7 @@
             <button class="interview-section__toggle" (click)="toggleSection('redflags')"
                     [class.interview-section__toggle--open]="isExpanded('redflags')">
               <span class="interview-section__icon">🚩</span>
-              <span class="interview-section__title">Red Flags (avoid these)</span>
+              <span class="interview-section__title">Pitfalls to Avoid</span>
               <span class="interview-section__arrow">{{ isExpanded('redflags') ? '▼' : '▶' }}</span>
             </button>
             @if (isExpanded('redflags')) {
@@ -214,7 +217,7 @@
             <button class="interview-section__toggle" (click)="toggleSection('experience')"
                     [class.interview-section__toggle--open]="isExpanded('experience')">
               <span class="interview-section__icon">🏢</span>
-              <span class="interview-section__title">Real Experience</span>
+              <span class="interview-section__title">Evidence &amp; Experience</span>
               <span class="interview-section__arrow">{{ isExpanded('experience') ? '▼' : '▶' }}</span>
             </button>
             @if (isExpanded('experience')) {

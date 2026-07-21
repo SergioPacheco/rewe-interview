@@ -4,36 +4,36 @@
     "topic": "sql",
     "subtopic": "sql-indexes",
     "difficulty": "INTERMEDIATE",
-    "question": "How do you decide what columns to index?",
-    "shortAnswer": "Index columns that appear in WHERE clauses of frequent queries, JOIN conditions, and ORDER BY. Consider selectivity (high cardinality = good index). Composite indexes: leftmost prefix matters. Do NOT index everything — each index costs write performance and storage.",
-    "detailedAnswer": "Index decision framework:\n\n1. Look at query patterns (EXPLAIN ANALYZE):\n- WHERE clause columns (most impactful)\n- JOIN conditions\n- ORDER BY columns (avoids filesort)\n- Covering indexes (include all SELECT columns)\n\n2. Consider selectivity:\n- High cardinality (email, ID) → good index candidate\n- Low cardinality (boolean, status with 3 values) → usually not worth it alone\n- Exception: partial index on low-cardinality (WHERE status = 'ACTIVE')\n\n3. Composite index rules:\n- Leftmost prefix: (A, B, C) serves queries on A, (A,B), (A,B,C) but NOT (B,C)\n- Most selective column first (usually)\n- Equality columns before range columns\n\n4. Trade-offs:\n- Each index: +read speed, -write speed, +storage\n- Too many indexes: INSERT/UPDATE become slow\n- Missing indexes: SELECT becomes slow\n\n5. PostgreSQL specifics:\n- Partial indexes: WHERE clause in CREATE INDEX\n- Expression indexes: index on function result\n- GIN for JSONB, full-text search\n- BRIN for time-series data (sorted tables)",
+    "question": "How do you decide whether a query needs an index, and what should that index contain?",
+    "shortAnswer": "I start from a measured query and its access pattern, not from a rule such as ‘index every WHERE column’. I inspect the plan, row counts, selectivity, joins and ordering, then design the smallest index that supports the important predicates. I also account for write cost, storage and duplicate indexes, and verify the result with representative data.",
+    "detailedAnswer": "A useful index is shaped by a workload:\n\n1. Identify an important query: frequency, latency objective and rows returned.\n2. Inspect `EXPLAIN`; use `EXPLAIN (ANALYZE, BUFFERS)` only where executing the statement is safe.\n3. Match the index to equality/range predicates, join keys and any ordering that can avoid a sort.\n4. For a composite B-tree, constraints on leading columns are normally the most efficient way to limit the scanned range, but later-column predicates can still be applied. Current PostgreSQL can choose skip scan for some non-leading predicates when its cost model expects that to help. Verify the actual version and plan; ‘most selective first’ is not a universal rule.\n5. Consider a covering index with `INCLUDE`, a partial index for a stable subset, or an expression index when the query uses the same expression.\n6. Measure reads and writes after the change and remove redundant indexes.\n\nA sequential scan is not proof of a missing index. PostgreSQL can correctly prefer it for a small table, a query returning a large fraction of the table, or when random heap reads would cost more. An index is justified by the observed plan and workload, not by the node name alone.",
     "keyPoints": [
-      "Index WHERE, JOIN, ORDER BY columns",
-      "High selectivity = good index candidate",
-      "Composite index: leftmost prefix rule",
-      "Every index costs write performance",
-      "EXPLAIN ANALYZE is the source of truth"
+      "Design indexes from measured query patterns",
+      "Leading columns usually matter most, but planner features and the actual plan decide usage",
+      "A sequential scan can be the cheapest correct plan",
+      "Partial, expression and covering indexes solve different access patterns",
+      "Every index adds write, maintenance and storage cost"
     ],
     "redFlags": [
-      "\"Index every column\"",
-      "Not knowing the leftmost prefix rule",
-      "Never using EXPLAIN ANALYZE",
-      "Ignoring write performance impact"
+      "Proposing indexes without seeing the query or plan",
+      "Treating every sequential scan as a defect",
+      "Ignoring write amplification and redundant indexes",
+      "Claiming one composite-index ordering rule works for every query"
     ],
     "followUps": [
       {
-        "question": "When would you use a partial index?",
-        "hint": "Index only active records: WHERE status = 'ACTIVE'. Smaller index, faster scans."
+        "question": "When is a partial index a good fit?",
+        "hint": "When important queries repeatedly target a stable subset and their predicate implies the index predicate, such as unprocessed rows."
       },
       {
-        "question": "How do you identify missing indexes in production?",
-        "hint": "pg_stat_user_tables seq_scan count, slow query log, EXPLAIN ANALYZE."
+        "question": "Why might PostgreSQL choose a sequential scan even when a suitable index exists?",
+        "hint": "The table may be small or the query may read enough rows that sequential I/O is cheaper than many index and heap lookups."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
       "title": "SGN3 query optimization",
-      "description": "Regularly used EXPLAIN ANALYZE to identify Seq Scans. Added composite indexes that dropped query time from 48s to 2s. Partial indexes for active-only queries."
+      "description": "Used APM traces and PostgreSQL plans to optimize an enrollment listing covering about 26,705 records in the period. N+1 removal, projections, pagination and targeted indexes reduced roughly 48,000 queries to about 10 and latency from about 16 minutes to about 2 seconds."
     }
   },
   {
@@ -41,36 +41,36 @@
     "topic": "sql",
     "subtopic": "sql-transactions",
     "difficulty": "SENIOR",
-    "question": "Explain transaction isolation levels. When would you use each?",
-    "shortAnswer": "READ COMMITTED (default, avoids dirty reads), REPEATABLE READ (snapshot at TX start, avoids non-repeatable reads), SERIALIZABLE (full isolation, detects conflicts). I use READ COMMITTED for most operations, SERIALIZABLE for critical financial calculations where phantom reads would cause errors.",
-    "detailedAnswer": "Isolation levels (PostgreSQL):\n\n1. READ COMMITTED (default):\n- Sees only committed data at statement start\n- Same query in same TX can return different results (phantom reads OK)\n- Best for: most OLTP workloads\n\n2. REPEATABLE READ:\n- Snapshot at TX start — consistent view throughout\n- Serialization failure on write conflict (must retry)\n- Best for: reports, calculations needing consistent snapshot\n\n3. SERIALIZABLE:\n- As if transactions executed sequentially\n- Detects serialization anomalies (write skew)\n- May throw serialization errors (must retry)\n- Best for: financial operations, inventory management\n\nPractical guidance:\n- READ COMMITTED: 95% of operations. Simple, fast, sufficient.\n- REPEATABLE READ: when you read data, compute, then write based on it\n- SERIALIZABLE: when correctness is more important than throughput\n\nImportant: higher isolation ≠ slower. In PostgreSQL, REPEATABLE READ uses snapshots (MVCC), not locks. But serialization failures require application-level retry.",
+    "question": "How do you choose a transaction isolation level, and what changes in PostgreSQL?",
+    "shortAnswer": "I choose the lowest level that preserves the business invariant, then design for conflicts and retries. In PostgreSQL, READ COMMITTED gives each statement a new committed snapshot; REPEATABLE READ keeps a transaction snapshot but can still allow serialization anomalies; SERIALIZABLE prevents those anomalies by aborting a conflicting transaction. READ UNCOMMITTED behaves like READ COMMITTED in PostgreSQL.",
+    "detailedAnswer": "The SQL names are portable, but exact behavior is database-specific. In PostgreSQL:\n\n- **READ COMMITTED**: each statement sees data committed before that statement began. Dirty reads are prevented, but two reads in one transaction can see different committed states. It fits many short OLTP operations whose invariant is enforced by constraints or atomic statements.\n- **REPEATABLE READ**: the transaction reads from a stable snapshot. PostgreSQL also prevents phantom reads at this level, but serialization anomalies can still occur. Concurrent updates can cause failures that require a retry.\n- **SERIALIZABLE**: transactions behave as if some serial order had executed. PostgreSQL uses Serializable Snapshot Isolation and may abort a transaction with a serialization failure; the application must retry the entire unit of work.\n- **READ UNCOMMITTED**: treated as READ COMMITTED by PostgreSQL.\n\nIsolation is only one tool. Unique/check constraints, atomic updates, row locks and optimistic versioning may express an invariant more directly. Higher isolation is not automatically the right answer: it changes contention and retry behavior, so the decision should name the anomaly being prevented.",
     "keyPoints": [
-      "READ COMMITTED = default, sufficient for most cases",
-      "REPEATABLE READ = consistent snapshot, needs retry on conflict",
-      "SERIALIZABLE = full isolation, requires retry logic",
-      "Higher isolation in PG uses MVCC, not locks",
-      "Application must handle serialization failures"
+      "Choose isolation from a concrete invariant and anomaly",
+      "PostgreSQL READ COMMITTED uses a snapshot per statement",
+      "PostgreSQL REPEATABLE READ prevents phantoms but not every serialization anomaly",
+      "SERIALIZABLE requires a retry strategy",
+      "Constraints, locks and optimistic concurrency can complement isolation"
     ],
     "redFlags": [
-      "Not knowing the default isolation level",
-      "Confusing isolation with locking",
-      "\"SERIALIZABLE is always safest\" without considering retry cost",
-      "Never having needed anything beyond READ COMMITTED"
+      "Describing isolation levels without database-specific behavior",
+      "Using SERIALIZABLE without handling serialization failures",
+      "Assuming higher isolation alone fixes every race",
+      "Holding a transaction open across slow remote calls without justification"
     ],
     "followUps": [
       {
-        "question": "What is a phantom read and when does it matter?",
-        "hint": "New rows appear between reads in same TX. Matters for aggregations."
+        "question": "What must an application retry after a serialization failure?",
+        "hint": "The complete transaction, using bounded retries and usually jitter/backoff; retrying only the final statement can violate the original decision."
       },
       {
-        "question": "How do you handle serialization failures?",
-        "hint": "Application-level retry loop. Transaction must be fully re-executed."
+        "question": "When would optimistic locking be preferable to SERIALIZABLE?",
+        "hint": "For user-driven edits where conflicts are uncommon and the application can report or retry a version mismatch explicitly."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
       "title": "SGN3 PostgreSQL transactions",
-      "description": "Used READ COMMITTED for all standard operations. Applied optimistic locking (version column) for concurrent edits instead of higher isolation levels."
+      "description": "Used READ COMMITTED for standard operations and optimistic version columns for concurrent edits, choosing explicit conflict detection instead of raising isolation globally."
     }
   },
   {
@@ -78,36 +78,74 @@
     "topic": "sql",
     "subtopic": "sql-performance",
     "difficulty": "INTERMEDIATE",
-    "question": "How do you investigate a slow query?",
-    "shortAnswer": "EXPLAIN ANALYZE first — check for Seq Scans, row estimate vs actual mismatch, nested loops over large sets. Then: check indexes (missing or unused), look for N+1 patterns (application generating many queries), verify statistics are fresh (ANALYZE), and check for lock contention.",
-    "detailedAnswer": "Slow query investigation process:\n\n1. EXPLAIN ANALYZE — the source of truth:\n- Seq Scan on large table → missing index\n- Rows estimated vs actual differ wildly → stale statistics\n- Nested Loop with many rows → consider Hash/Merge Join\n- Sort with large external sort → add index for ORDER BY\n\n2. Check for common causes:\n- Missing index on WHERE/JOIN columns\n- N+1 queries from application (check APM)\n- Lock contention (pg_stat_activity, pg_locks)\n- Stale statistics (run ANALYZE)\n- Too many columns fetched (SELECT *)\n\n3. Fix strategies:\n- Add targeted index (not \"index everything\")\n- Rewrite query (LATERAL JOIN, CTE, subquery)\n- Add LIMIT for pagination\n- Materialized view for complex aggregations\n- Partition large tables by date\n\n4. Verify fix:\n- EXPLAIN ANALYZE before/after\n- Measure in production (not just dev)\n- Monitor regression over time",
+    "question": "A production endpoint is slow. How do you determine whether SQL is the cause and improve it safely?",
+    "clarifyingQuestions": [
+      "Is the latency in one query, many repeated queries, lock waits, or another dependency?",
+      "Do we have a representative parameter set and data volume?",
+      "Can the statement be executed safely on a replica or staging copy?"
+    ],
+    "shortAnswer": "I trace the request first to separate one slow query from N+1 calls or lock waits. For a candidate statement I inspect `EXPLAIN`, and, in a safe environment, `EXPLAIN (ANALYZE, BUFFERS)`. I compare estimates with actual rows, loops, I/O and sort behavior, change one thing at a time, and verify both latency and workload impact before and after deployment.",
+    "detailedAnswer": "A disciplined investigation is broader than looking for a sequential scan:\n\n1. Use APM and database statistics to locate time: query duration, query count, connection-pool wait, locks and remote calls.\n2. Capture the actual SQL and representative bind values. Parameter distribution can change the best plan.\n3. Read `EXPLAIN` first. `EXPLAIN ANALYZE` actually executes the statement; use it cautiously on production, especially for DML, expensive functions or locks. A replica or production-like dataset is safer.\n4. Inspect total time, actual versus estimated rows, `loops`, buffers, sorts spilling to disk and time spent waiting. A nested loop or sequential scan is not inherently wrong.\n5. A large estimate mismatch can come from stale statistics, skew, correlated columns or parameter-sensitive plans—not only stale statistics.\n6. Fix the root cause: remove N+1 access, fetch fewer columns/rows, rewrite the query, update statistics, add a targeted index or shorten lock scope.\n7. Compare before/after plans and monitor throughput, writes and tail latency after release.\n\nFor reversible DML, a transaction followed by rollback can protect database state, but it does not neutralize every external side effect a function or trigger might cause.",
     "keyPoints": [
-      "EXPLAIN ANALYZE is always step 1",
-      "Check: Seq Scan, row estimates, join types",
-      "Common causes: missing index, N+1, stale stats, locks",
-      "Verify fix with before/after EXPLAIN",
-      "Monitor after deployment — do not assume fixed"
+      "Trace the whole request before blaming one query",
+      "EXPLAIN ANALYZE executes the statement",
+      "Plan nodes are evidence to interpret, not automatic diagnoses",
+      "Estimate errors may reflect statistics, skew, correlation or parameters",
+      "Verify the fix with realistic data and post-release monitoring"
     ],
     "redFlags": [
-      "\"I just add indexes until it is fast\"",
-      "Never using EXPLAIN ANALYZE",
-      "Optimizing queries without measuring",
-      "Not considering application-level causes (N+1)"
+      "Running EXPLAIN ANALYZE on unsafe production DML",
+      "Equating sequential scan with missing index",
+      "Adding indexes before measuring query count and lock waits",
+      "Benchmarking only with tiny development data"
     ],
     "followUps": [
       {
-        "question": "What does it mean when estimated rows differ greatly from actual?",
-        "hint": "Stale statistics. Run ANALYZE. May need extended statistics for correlated columns."
+        "question": "What do `rows` and `loops` tell you in an actual plan?",
+        "hint": "Actual rows and time are per loop for a repeatedly executed node; multiply by loops to understand total work."
       },
       {
-        "question": "How do you prevent slow queries from reaching production?",
-        "hint": "EXPLAIN ANALYZE in CI, query review in PR, performance testing with realistic data."
+        "question": "How can you detect an application-level N+1 problem?",
+        "hint": "Correlate one request trace with repeated similar SQL and query counts; a single query plan cannot reveal the entire call pattern."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 48k queries → 2s optimization",
-      "description": "Used Glowroot + EXPLAIN ANALYZE to find N+1 in enrollment page (48,000 queries). Fixed with LATERAL JOIN and proper indexing. 48s → 2s."
+      "title": "SGN3 enrollment performance investigation",
+      "description": "Used Glowroot and PostgreSQL plans to find repeated relationship queries in a listing over about 26,705 records in the period. Projections, pagination, query restructuring and indexes reduced roughly 48,000 queries to about 10 and response time from about 16 minutes to about 2 seconds."
     }
+  },
+  {
+    "id": "interview-sql-4",
+    "topic": "sql",
+    "subtopic": "sql-joins",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do INNER JOIN and LEFT JOIN differ, and how can predicate placement silently change the result?",
+    "shortAnswer": "INNER JOIN keeps only matching row combinations. LEFT JOIN preserves every row from the left side and fills unmatched right-side columns with NULL. With a LEFT JOIN, a predicate on the right table in `WHERE` often removes those NULL-extended rows and effectively turns the result into an inner join; put the predicate in `ON` when it defines which right-side rows may match.",
+    "detailedAnswer": "Consider customers and orders:\n\n```sql\nSELECT c.id, o.id\nFROM customer c\nLEFT JOIN orders o\n  ON o.customer_id = c.id\n AND o.status = 'OPEN';\n```\n\nThis returns every customer and only matching open orders. Moving `o.status = 'OPEN'` to `WHERE` rejects rows where `o` is NULL, so customers without an open order disappear. That may be correct, but it is then semantically close to an inner join.\n\nJoin correctness also requires reasoning about cardinality. A one-to-many join intentionally duplicates the left row once per match; adding `DISTINCT` may hide a modeling or aggregation error. Before tuning, state the intended row grain, expected optionality and whether unmatched rows must survive. Then inspect keys, foreign-key indexes and the plan.",
+    "keyPoints": [
+      "INNER JOIN requires a match; LEFT JOIN preserves the left side",
+      "A right-side WHERE predicate can null-reject a LEFT JOIN",
+      "ON filters matching rows; WHERE filters the joined result",
+      "Define the intended row grain before treating duplicates as a bug",
+      "Join type is a correctness decision before it is a performance decision"
+    ],
+    "redFlags": [
+      "Using LEFT JOIN by default without explaining preserved rows",
+      "Adding DISTINCT to hide unexplained duplication",
+      "Moving predicates between ON and WHERE without checking semantics",
+      "Discussing join speed before defining the expected result"
+    ],
+    "followUps": [
+      {
+        "question": "How would you return customers that have no orders?",
+        "hint": "LEFT JOIN and filter `WHERE o.id IS NULL`, or use `NOT EXISTS`; compare plans for the actual workload."
+      },
+      {
+        "question": "Why can joining two one-to-many relationships inflate an aggregate?",
+        "hint": "The result contains the cross-product of both child sets per parent, so aggregate each side first or query them separately."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

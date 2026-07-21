@@ -4,31 +4,40 @@
     "topic": "jpa",
     "subtopic": "jpa-basics",
     "difficulty": "INTERMEDIATE",
-    "question": "Explain the JPA entity lifecycle. What are the states and transitions?",
-    "shortAnswer": "An entity goes through: New (not managed), Managed (attached to persistence context, changes auto-tracked), Detached (was managed, now disconnected — changes not tracked), Removed (scheduled for deletion). Transitions happen via persist(), merge(), remove(), and context boundaries (transaction end, clear).",
-    "detailedAnswer": "JPA entity lifecycle states:\n\n1. **New/Transient**: created with `new`, not associated with any persistence context. Has no database row.\n\n2. **Managed**: associated with a persistence context. Changes are automatically detected (dirty checking) and synchronized to DB at flush/commit.\n\n3. **Detached**: was managed, but persistence context closed or entity was evicted. The object still has data, but changes are NOT tracked.\n\n4. **Removed**: scheduled for deletion. Will be deleted from DB at flush/commit.\n\nTransitions:\n- new → managed: `em.persist(entity)`\n- managed → detached: transaction ends, `em.detach()`, `em.clear()`\n- detached → managed: `em.merge(entity)` (returns NEW managed instance!)\n- managed → removed: `em.remove(entity)`\n\nCritical gotcha with merge(): it returns a NEW managed instance. The original detached object is NOT made managed. You must use the returned reference.",
+    "question": "Explain the JPA entity lifecycle and the mistakes developers make around `merge` and transaction boundaries.",
+    "shortAnswer": "An entity can be new, managed, detached or removed relative to a persistence context. Managed changes are detected and synchronized on flush; detached changes are not. `persist` makes a new entity managed, while `merge` copies state into a managed instance and returns that instance—the object passed to `merge` does not become managed. Transaction and persistence-context scope determine when detachment occurs.",
+    "detailedAnswer": "The states are relative to an `EntityManager`/persistence context:\n\n- **New**: not managed and without a persistent database representation.\n- **Managed**: associated with the context. Dirty checking can synchronize changes at flush, which may happen before commit.\n- **Detached**: has persistent identity but is no longer managed by that context; ordinary field changes are not tracked.\n- **Removed**: managed and scheduled for deletion at flush.\n\nImportant transitions:\n- `persist(newEntity)` associates a new entity; SQL may be issued immediately or at flush depending on mapping/provider behavior.\n- `detach`, `clear` or closing the persistence context detaches entities. A transaction-scoped context normally ends with the transaction, while an extended context has a different lifecycle.\n- `merge(detached)` copies state into an existing or newly loaded/created managed instance and returns the managed reference. Continue with the returned reference; the original remains detached.\n- `remove(managed)` marks it for deletion.\n\nLazy-loading failures are usually a boundary/design signal: map required data inside the transaction or fetch a purpose-built DTO instead of keeping a session open across presentation work.",
     "keyPoints": [
-      "New → Managed via persist()",
-      "Managed entities auto-track changes (dirty checking)",
-      "Detached entities are NOT tracked — changes are lost unless merge()",
-      "merge() returns a NEW managed copy — use the return value",
-      "Persistence context = first-level cache (L1)"
+      "Lifecycle state is relative to a persistence context",
+      "Dirty checking applies to managed entities at flush",
+      "`merge` returns the managed instance and does not attach the argument",
+      "Transaction-scoped and extended contexts have different lifecycles",
+      "Fetching should match the use case within a deliberate boundary"
     ],
     "redFlags": [
-      "Not knowing that merge() returns a different instance",
-      "Thinking detached entities still track changes",
-      "Confusing persist() with merge()",
-      "Not understanding when the persistence context ends"
+      "Continuing to modify the original object after merge",
+      "Assuming commit is the only time a flush can occur",
+      "Treating every detached graph as something to merge wholesale",
+      "Solving lazy-loading errors by leaving persistence open without considering query design"
     ],
     "followUps": [
-      { "question": "What happens if you call persist() on a detached entity?", "hint": "EntityExistsException or PersistenceException — must use merge() instead." },
-      { "question": "How does dirty checking work?", "hint": "Hibernate keeps a snapshot of the entity at load time. At flush, compares current state vs snapshot." },
-      { "question": "What is the difference between em.find() and em.getReference()?", "hint": "find() loads immediately (or null). getReference() returns a proxy (lazy, throws EntityNotFoundException on access if not found)." }
+      {
+        "question": "What can happen if you call `persist` with a detached entity?",
+        "hint": "The provider may throw EntityExistsException at that call or a PersistenceException at flush/commit; `merge` has different semantics."
+      },
+      {
+        "question": "Why can a query trigger a flush before transaction commit?",
+        "hint": "With AUTO flush mode, pending changes may need to reach the database so the query sees a consistent result."
+      },
+      {
+        "question": "What is the difference between `find` and `getReference`?",
+        "hint": "`find` obtains state or null; `getReference` may return a lazy reference whose first state access can fail if the row does not exist."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 Hibernate 5.3 persistence context",
-      "description": "Every EJB @Stateless method runs in a transaction with its own persistence context. Understanding lifecycle was critical for avoiding LazyInitializationException (accessing lazy collections after TX ends = detached entity)."
+      "title": "SGN3 Hibernate persistence contexts",
+      "description": "Transaction-scoped persistence contexts in stateless business operations made entity state and lazy-loading boundaries important when mapping data for callers."
     }
   },
   {
@@ -36,30 +45,41 @@
     "topic": "jpa",
     "subtopic": "jpa-relations",
     "difficulty": "SENIOR",
-    "question": "How do you solve the N+1 query problem?",
-    "shortAnswer": "N+1 means 1 query for parents + N queries for each child collection accessed. Solutions: JOIN FETCH in JPQL, @EntityGraph, @BatchSize, or DTO projections with custom queries. I detected a case in SGN doing ~48,000 queries for an enrollment page — fixed with proper JOINs and projections, bringing it from ~16 minutes to ~2 seconds.",
-    "detailedAnswer": "The N+1 problem:\n1. Query loads N parent entities (1 query)\n2. Accessing a lazy relationship on each parent → 1 query per parent (N queries)\n3. Total: N+1 queries instead of 1-2\n\nSolutions (in order of preference):\n\n1. **JOIN FETCH**: `SELECT t FROM Turma t JOIN FETCH t.estudantes WHERE t.id = :id`\n   - Loads relationship in same query\n   - ⚠️ Cartesian product with multiple collections\n\n2. **@BatchSize(size=50)**: Hibernate loads lazy collections in batches\n   - Less queries: N/50 instead of N\n   - Global annotation on the collection\n\n3. **DTO projection**: Custom query returning only needed fields\n   - Most efficient — no entities, no dirty checking\n   - Best for read-only operations\n\n4. **Separate queries**: Two queries (parents + children by parent IDs)\n   - Avoids cartesian product of multiple JOIN FETCHes\n\nDetection: Glowroot traces showing 1000+ queries for a single page load.",
+    "question": "How do you detect and solve N+1 queries without replacing them with an oversized join?",
+    "clarifyingQuestions": [
+      "Is this a detail view, a paginated list or a batch process?",
+      "Which relationships and fields does the response actually need?",
+      "What query count, row count and latency does the trace show?"
+    ],
+    "shortAnswer": "N+1 appears when one query loads parents and later relationship access triggers repeated queries. I confirm it with per-request SQL counts, then choose a fetch plan for that use case: fetch join or entity graph for bounded relationships, batch fetching or a two-query pattern for collections, and DTO projection for read models. I verify result-row growth because joining multiple to-many relationships can be worse than N+1.",
+    "detailedAnswer": "The issue is not simply ‘lazy is bad’. It is an access pattern whose fetch plan does not match the use case. Detection comes from an APM trace, Hibernate statistics or controlled SQL logging that shows many structurally similar statements for one operation.\n\nPossible remedies:\n\n1. **Fetch join / entity graph** for a relationship that is needed now. This is often effective for to-one associations and bounded collections.\n2. **Batch fetching** for lazy relationships when many parents need the same association type; it reduces round trips without building one huge row set.\n3. **Two-step query**: page parent IDs/entities first, then fetch required children with `WHERE parent_id IN (...)`. This preserves pagination and avoids a multi-collection cross product.\n4. **DTO projection** for a read use case that needs a known set of fields, avoiding entity graph and dirty-checking overhead.\n\nTrade-offs matter. A to-many fetch join duplicates parent columns and can make pagination incorrect or force in-memory work depending on provider/query. Fetching two independent to-many collections multiplies rows. `EAGER` on the mapping is a global default, not a per-use-case cure. Measure query count, returned rows, memory and latency together.",
     "keyPoints": [
-      "1 + N queries instead of 1-2 optimal queries",
-      "JOIN FETCH is standard fix for single relationships",
-      "Multiple JOIN FETCHes → cartesian product (use separate queries)",
-      "DTO projections avoid the problem entirely",
-      "Detection via APM tools (Glowroot, query count per request)"
+      "Confirm N+1 through query counts for one operation",
+      "Choose fetch plans per use case instead of making everything eager",
+      "To-many fetch joins can conflict with pagination",
+      "Multiple collections can create a multiplicative row set",
+      "DTO and two-step queries are often clearer for read models"
     ],
     "redFlags": [
-      "\"I just eager-load everything\" (causes different problems)",
-      "Not knowing what N+1 is",
-      "Cannot explain detection methods",
-      "Only knowing one solution"
+      "Changing all relationships to EAGER",
+      "Judging only query count while ignoring rows and memory",
+      "Fetch-joining several collections in a paginated query without verification",
+      "Optimizing before confirming which access triggers the repeated queries"
     ],
     "followUps": [
-      { "question": "What happens if you JOIN FETCH two @OneToMany collections?", "hint": "Cartesian product — M×N rows. Use @BatchSize for the second or separate queries." },
-      { "question": "How did you detect the 48,000 queries?", "hint": "Glowroot APM showed query count per trace. Also visible in Hibernate statistics." }
+      {
+        "question": "Why is a collection fetch join risky with pagination?",
+        "hint": "SQL rows represent parent-child combinations, so limiting rows may not limit distinct parents correctly; page parents first or use a two-step fetch."
+      },
+      {
+        "question": "How would you prevent this N+1 pattern from returning?",
+        "hint": "Use a representative integration test or query-count assertion for the page, keep the fetch plan explicit, and monitor request-level query count in production."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 enrollment page: 48k queries → ~10 queries",
-      "description": "Enrollment listing page was doing ~48,000 queries (N+1 on matrícula→estudante→pessoa chain for ~26,705 inscriptions). Root cause: cartesian product + N+1 in nested loops. Fixed with LATERAL JOIN, DTO projections, COUNT with pagination, and batch loading. Response time: ~16 minutes → ~2 seconds."
+      "title": "SGN3 enrollment page: about 48k to about 10 queries",
+      "description": "For a listing over about 26,705 enrollment records in the period, APM traces showed nested relationship access producing roughly 48,000 queries. Projections, pagination, query restructuring and batch loading reduced the request to about 10 queries and latency from about 16 minutes to about 2 seconds."
     }
   },
   {
@@ -67,30 +87,36 @@
     "topic": "jpa",
     "subtopic": "jpa-queries",
     "difficulty": "INTERMEDIATE",
-    "question": "When do you use JPQL vs native SQL?",
-    "shortAnswer": "JPQL for standard CRUD and simple queries (portable, type-safe, refactorable). Native SQL when I need database-specific features: LATERAL JOIN, window functions, DISTINCT ON, JSONB operators, partial indexes, or when performance requires precise control over the execution plan.",
-    "detailedAnswer": "Decision framework:\n\n**Use JPQL when:**\n- Standard CRUD operations\n- Simple JOINs and WHERE clauses\n- Portability matters (unlikely in practice)\n- Hibernate can generate efficient SQL\n- Type-safe with Criteria API\n\n**Use native SQL when:**\n- PostgreSQL-specific: LATERAL JOIN, DISTINCT ON, window functions\n- Complex aggregations that Hibernate generates poorly\n- Performance-critical queries needing exact execution plan\n- Bulk UPDATE/DELETE avoiding entity loading\n- JSONB operations\n- UNION ALL (JPQL doesn't support UNION)\n\nIn SGN3, about 40% of repository queries are native SQL. The codebase prioritizes performance and PostgreSQL features over portability (we will never switch databases).\n\nKey rule: native queries return Tuple (not entities) for read operations — avoids unnecessary dirty checking overhead.",
+    "question": "When would you choose JPQL, Criteria or native SQL, and how do you keep each option safe?",
+    "shortAnswer": "I use JPQL when the query is naturally expressed over entities and relationships, Criteria when dynamic composition or metamodel-based typing offsets its verbosity, and native SQL for database features or query shapes the provider cannot express well. The choice is per query. All three still require bound parameters for untrusted values—concatenating input into JPQL is injection-prone too.",
+    "detailedAnswer": "**JPQL** is concise for stable queries over the entity model, supports entity/DTO results and keeps most provider portability. It is string-based, so refactoring and complex dynamic predicates need care.\n\n**Criteria API** builds the same persistence query model programmatically. It is verbose but useful for optional filters and reusable predicates; generated static metamodels can improve type checking. It is not automatically faster than equivalent JPQL.\n\n**Native SQL** is appropriate when the deployed database and provider version require features such as PostgreSQL `LATERAL`, `DISTINCT ON`, JSON operators or a specialized aggregation/query shape. It gives direct control over submitted SQL, but the database still chooses the execution plan. Mapping, portability and integration-test cost increase. Native results can be scalars, DTO-oriented mappings or entities; returning `Tuple` is an option, not a universal rule.\n\nSecurity is independent of the choice:\n```java\n// Vulnerable: input changes JPQL syntax\n\"select p from Person p where p.name = '\" + input + \"'\"\n\n// Safe value binding\nquery.setParameter(\"name\", input);\n```\n\nDynamic identifiers or sort fields cannot generally be value parameters, so map them from an allow-list. Test native SQL against the real database engine and inspect the generated SQL for performance-sensitive JPQL/Criteria queries.",
     "keyPoints": [
-      "JPQL for standard CRUD (simple, type-safe)",
-      "Native for PG-specific features (LATERAL, window functions, DISTINCT ON)",
-      "Native for performance-critical queries",
-      "Return Tuple for read-only native queries (no dirty checking overhead)",
-      "JPQL doesn't support UNION — native required"
+      "JPQL fits stable entity-oriented queries",
+      "Criteria helps compose dynamic predicates but is not inherently faster",
+      "Native SQL trades portability and mapping simplicity for database capabilities",
+      "The database optimizer still chooses the plan for native SQL",
+      "JPQL concatenation is vulnerable; bind untrusted values in every query style"
     ],
     "redFlags": [
-      "\"I always use JPQL\" (ignoring performance needs)",
-      "\"I always use native\" (missing Hibernate benefits)",
-      "Not knowing what features require native SQL",
-      "Using native SQL for simple findById operations"
+      "Choosing one query language for every use case",
+      "Claiming JPQL is safe even when strings are concatenated",
+      "Assuming native SQL guarantees a particular execution plan",
+      "Testing database-specific SQL only against an in-memory substitute"
     ],
     "followUps": [
-      { "question": "What is the risk of native queries during a database migration?", "hint": "Native SQL may use syntax specific to one version. JPQL is more portable across PG versions." },
-      { "question": "How do you test native queries?", "hint": "Against real PostgreSQL (not H2). Testcontainers or shared test DB." }
+      {
+        "question": "Can you parameterize a column name or sort direction?",
+        "hint": "Usually not as a value parameter; map a constrained API option to known attributes or query fragments."
+      },
+      {
+        "question": "What should you do after a JPQL bulk update?",
+        "hint": "Bulk DML bypasses normal managed-entity state synchronization, so clear or refresh affected persistence-context state deliberately."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3: 40% native SQL in repositories",
-      "description": "Pragmatic mix: JPQL for simple entity operations, native SQL for complex reporting queries, LATERAL JOINs (pessoa→colaborador resolution), UNION ALL (produto_padronizado + produto_customizado), and bulk operations. Always return Tuple for read-only."
+      "title": "SGN3 JPQL and PostgreSQL-specific SQL",
+      "description": "Used JPQL for entity-oriented operations and native PostgreSQL queries for reporting and features such as LATERAL joins, UNION-based result sets and bulk read models, with values consistently parameterized."
     }
   }
 ]

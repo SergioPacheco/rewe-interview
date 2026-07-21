@@ -171,7 +171,8 @@ export class TopicService {
       'data/topics/theory-system-design.json',
       'data/topics/theory-behavioral.json',
       'data/topics/theory-stories.json',
-      'data/topics/theory-mindset.json'
+      'data/topics/theory-mindset.json',
+      'data/topics/theory-software-architecture.json'
     ];
 
     const results = await Promise.allSettled(

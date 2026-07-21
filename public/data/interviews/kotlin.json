@@ -1,103 +1,698 @@
 [
   {
-    "id": "interview-kotlin-1",
+    "id": "interview-kotlin-why-1",
     "topic": "kotlin",
-    "subtopic": "kotlin-basics",
+    "subtopic": "kt-why",
     "difficulty": "INTERMEDIATE",
-    "question": "What advantages does Kotlin offer over Java for backend development?",
-    "shortAnswer": "Null safety (compiler-enforced, no NPEs at runtime), conciseness (data classes, extension functions, less boilerplate), coroutines (structured concurrency without callback hell), and full Java interop. For REWE: Kotlin is used in the backend — my Java background transfers directly, and null safety alone prevents an entire class of production bugs.",
-    "detailedAnswer": "Key Kotlin advantages:\n\n1. **Null safety**: Types are non-null by default. `String` cannot be null. `String?` can. Compiler catches null issues at compile time — eliminates 90% of NPEs.\n\n2. **Conciseness**: data class replaces POJO (equals, hashCode, copy auto-generated). Extension functions add behavior without inheritance. Scope functions (let, apply, also).\n\n3. **Coroutines**: Structured concurrency. suspend functions are sequential-looking but non-blocking. No CompletableFuture chains or callback hell.\n\n4. **Full Java interop**: Call any Java library. Gradual migration possible. Spring Boot supports Kotlin natively.\n\n5. **Smart casts**: After `if (x is String)`, x is automatically treated as String.\n\nWhat transfers from my Java experience:\n- All JVM concepts (threading, GC, class loading)\n- Spring Boot works identically in Kotlin\n- Design patterns apply the same way\n- JPA/Hibernate works (with some quirks — open classes needed)",
+    "question": "What would make Kotlin a good—or poor—choice for a JVM backend service?",
+    "shortAnswer": "Kotlin can reduce boilerplate, model nullability explicitly, offer expressive sealed and data types, and use Java libraries with gradual adoption. Coroutines can simplify asynchronous code when the stack supports suspension. Costs include a second language and toolchain, slower clean builds in some projects, Java interop edge cases, and framework conventions around final classes and reflection. I would decide from team capability and workload, not syntax preference alone.",
+    "detailedAnswer": "Kotlin targets the JVM and can coexist with Java in one codebase, which lowers migration risk. Its type system, concise properties, extension functions, sealed hierarchies, and coroutines can improve domain modeling and reduce ceremony. Those benefits depend on disciplined use; dense scope-function chains or clever DSLs can make code less approachable.\n\nOperationally, assess build time, IDE and static-analysis support, library compatibility, debugging, observability, hiring, and the team's ability to review coroutine code. Spring provides strong Kotlin support, but proxy-based frameworks, Jackson, and JPA still need Kotlin-aware configuration. A good adoption case has concrete pain Kotlin addresses and measurable success criteria. A poor case adds language diversity to a stable service with no team ownership or migration plan.",
     "keyPoints": [
-      "Null safety prevents entire class of runtime errors",
-      "data class = immutable DTO in one line",
-      "Coroutines = readable async without callbacks",
-      "Full Java interop — gradual migration possible",
-      "Spring Boot natively supports Kotlin"
+      "Kotlin offers JVM interoperability and incremental adoption",
+      "Nullability and concise domain types can improve correctness and signal",
+      "Tooling, build, framework, and team costs remain part of the decision",
+      "Language choice should address measured engineering needs"
     ],
     "redFlags": [
-      "\"Kotlin is just better Java\" without specifics",
-      "Not knowing null safety system",
-      "Cannot explain coroutines vs threads",
-      "\"I don't know Kotlin\" (position requires it)"
+      "Describing Kotlin as simply better Java",
+      "Claiming null safety removes every possible NullPointerException",
+      "Ignoring team ownership, build performance, and framework integration"
     ],
     "followUps": [
       {
-        "question": "How do Kotlin coroutines differ from Java Virtual Threads?",
-        "hint": "Coroutines: cooperative multitasking with structured concurrency. VTs: preemptive, simpler but less control."
+        "question": "How would you evaluate Kotlin with a low-risk pilot?",
+        "hint": "Choose a bounded service or module and measure delivery, defects, build time, and operability."
       },
       {
-        "question": "What challenges does Kotlin have with JPA/Hibernate?",
-        "hint": "All classes final by default (need allopen plugin). Data classes and no-arg constructor (need noarg plugin)."
-      }
-    ],
-    "experienceLevel": "STUDIED_NOT_USED",
-    "realExperience": {
-      "title": "Studying Kotlin for REWE position",
-      "description": "Currently Java-focused. Studying Kotlin specifically for REWE: null safety, coroutines, Spring Boot integration. My 7 years of JVM experience (Hibernate, Spring patterns, concurrency) transfer directly. The language syntax is new; the concepts are not."
-    }
-  },
-  {
-    "id": "interview-kotlin-2",
-    "topic": "kotlin",
-    "subtopic": "kotlin-coroutines",
-    "difficulty": "SENIOR",
-    "question": "Explain Kotlin coroutines and structured concurrency.",
-    "shortAnswer": "Coroutines are lightweight concurrent units that can suspend without blocking a thread. Structured concurrency means every coroutine has a scope — if the parent scope is cancelled, all children are cancelled too. This prevents leaked background work (a common problem with unstructured threads/futures).",
-    "detailedAnswer": "Coroutines:\n- `suspend fun` can pause and resume without blocking a thread\n- Lighter than threads (can run millions concurrently)\n- Sequential-looking code that is actually non-blocking\n\nStructured concurrency:\n- Every coroutine must have a CoroutineScope\n- Parent cancellation cascades to children\n- Children failures can propagate to parent\n- No leaked background work (unlike fire-and-forget threads)\n\n```kotlin\ncoroutineScope {\n    val escola = async { escolaClient.get(id) }  // concurrent\n    val turmas = async { turmaClient.list(id) }  // concurrent\n    combine(escola.await(), turmas.await())       // wait both\n}  // If either fails, the other is cancelled\n```\n\nCompared to CompletableFuture:\n- More readable (no .thenCompose().thenApply() chains)\n- Automatic cancellation (no manual cancel propagation)\n- Exception handling is natural (try/catch works)",
-    "keyPoints": [
-      "suspend functions pause without blocking thread",
-      "Structured: parent cancellation cascades to children",
-      "No leaked work — scope defines lifetime",
-      "Sequential-looking code, concurrent execution",
-      "Natural exception handling (try/catch)"
-    ],
-    "redFlags": [
-      "Confusing coroutines with threads",
-      "Not knowing what 'structured' means in structured concurrency",
-      "\"It's just like async/await in JavaScript\" (ignores structured concurrency)",
-      "Cannot explain cancellation propagation"
-    ],
-    "followUps": [
-      {
-        "question": "What is the difference between launch and async?",
-        "hint": "launch: fire-and-forget (returns Job). async: returns Deferred with a result (await)."
+        "question": "Which Java skills transfer directly?",
+        "hint": "JVM behavior, libraries, architecture, concurrency fundamentals, testing, and operations transfer; idioms still differ."
       },
       {
-        "question": "How do you handle timeouts in coroutines?",
-        "hint": "withTimeout(5000) { ... } — cancels the coroutine if exceeded."
+        "question": "When might keeping a service in Java be the stronger choice?",
+        "hint": "Consider stable code, team expertise, tooling constraints, and absence of a concrete benefit."
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
   },
   {
-    "id": "interview-kotlin-3",
+    "id": "interview-kotlin-fundamentals-1",
     "topic": "kotlin",
-    "subtopic": "kotlin-basics",
+    "subtopic": "kt-fundamentals",
     "difficulty": "BEGINNER",
-    "question": "How does Kotlin null safety work?",
-    "shortAnswer": "Types are non-null by default. String cannot hold null — compiler error. String? is nullable — compiler forces you to handle null before using it (safe call ?., Elvis ?:, or explicit check). This eliminates NullPointerException at compile time instead of runtime.",
-    "detailedAnswer": "Kotlin null safety:\n\n```kotlin\nval name: String = \"Sergio\"     // Cannot be null — compiler enforces\nval name: String? = null         // Nullable — must handle before use\n\n// Safe call (returns null if name is null)\nval length = name?.length        // Int? — might be null\n\n// Elvis operator (default value)\nval length = name?.length ?: 0   // Int — guaranteed non-null\n\n// Smart cast (after null check, type narrows)\nif (name != null) {\n    println(name.length)  // Compiler knows it's non-null here\n}\n```\n\nIn Java, ANY reference can be null — you discover it at runtime (NPE in production). In Kotlin, the compiler tells you at write-time.\n\nThe `!!` operator forces a nullable to non-null (throws NPE if null) — using it defeats the purpose. Code reviews should flag `!!` usage.",
+    "question": "Does declaring a property with val make the referenced object immutable?",
+    "shortAnswer": "No. val means the property reference cannot be reassigned after initialization; it says nothing about whether the referenced object can change. A val MutableList can still add or remove elements. Effective immutability requires an immutable value design, controlled ownership, and no mutable aliases—not merely val or a read-only interface.",
+    "detailedAnswer": "Kotlin's `val` creates a read-only property from the caller's perspective, while `var` provides a setter. For a local or backing reference, val prevents reassignment, but methods on the object can still mutate its state. Similarly, `List<T>` is a read-only Kotlin interface, not a guarantee that no mutable owner can change the underlying collection.\n\nThis distinction matters for thread safety, data classes, and API contracts. Use immutable element types, defensive copies, persistent collections when appropriate, and narrow ownership to obtain stronger guarantees. Custom properties can also have computed getters, so a val does not necessarily return the same value each time. A strong answer separates reference reassignment, API read-only access, and deep object immutability.",
     "keyPoints": [
-      "Non-null by default — String cannot be null",
-      "? marks nullable types — compiler forces handling",
-      "Safe call (?.) and Elvis (?:) for null handling",
-      "Smart casts after null checks",
-      "!! defeats the purpose — avoid in production code"
+      "val prevents reassignment of a property, not mutation of its object",
+      "var exposes reassignment through a setter",
+      "Read-only collection interfaces are not deep immutability guarantees",
+      "Ownership and aliases determine effective mutability"
     ],
     "redFlags": [
-      "\"It's like Optional\" (not exactly — it's the type system, not a wrapper)",
-      "Using !! everywhere (defeats null safety)",
-      "Not understanding the compile-time vs runtime distinction",
-      "Cannot explain safe call vs Elvis"
+      "Using val and immutable as synonyms",
+      "Assuming List can never change behind a read-only reference",
+      "Ignoring mutable elements inside an otherwise stable collection"
     ],
     "followUps": [
       {
-        "question": "How does Kotlin null safety interact with Java libraries?",
-        "hint": "Java types are 'platform types' (String!) — Kotlin doesn't know if nullable. Risk at Java boundaries."
+        "question": "Can a val property return different values over time?",
+        "hint": "A custom getter can compute a new result on each access."
       },
       {
-        "question": "When would you use !! and when is it a code smell?",
-        "hint": "Acceptable in tests or when you've validated externally. Smell in business logic."
+        "question": "How would you expose a collection across a trust boundary?",
+        "hint": "Consider copying, immutable/persistent structures, and ownership documentation."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-null-1",
+    "topic": "kotlin",
+    "subtopic": "kt-null",
+    "difficulty": "BEGINNER",
+    "question": "How does Kotlin null safety reduce errors, and where can null-related runtime failures still occur?",
+    "shortAnswer": "Kotlin separates non-null types such as String from nullable types such as String?, so the compiler requires a safe call, Elvis default, explicit check, or another proof before dereference. This greatly reduces accidental null errors but does not eliminate them. `!!`, Java platform types, unsafe initialization or constructor escape, and explicit exceptions can still produce NullPointerException.",
+    "detailedAnswer": "A nullable receiver supports operations such as `value?.length`, and `?:` supplies a fallback. After a stable null check, smart casting often narrows the type. Safe casts with `as?` return null instead of throwing ClassCastException. These features make absence part of the type contract rather than an undocumented convention.\n\nRuntime gaps remain. `value!!` asserts a condition the compiler cannot prove and throws if wrong. Java declarations without usable nullability metadata appear as flexible platform types, so Kotlin permits choices that may fail at runtime. Initialization-order problems and leaking `this` during construction can also violate assumptions. Use explicit validation at Java, deserialization, database, and framework boundaries, and reserve `!!` for cases with a nearby enforceable invariant rather than calling the system NPE-proof.",
+    "keyPoints": [
+      "Nullable and non-null types make absence explicit",
+      "Safe calls, Elvis, checks, and smart casts express handling",
+      "Java platform types weaken compile-time null guarantees",
+      "The non-null assertion operator can still throw NullPointerException"
+    ],
+    "redFlags": [
+      "Claiming Kotlin eliminates all NullPointerException cases",
+      "Using !! repeatedly instead of modeling or validating absence",
+      "Trusting Java or deserialized values without boundary checks"
+    ],
+    "followUps": [
+      {
+        "question": "What is a Java platform type?",
+        "hint": "Kotlin has incomplete nullability information and permits both nullable and non-null use."
+      },
+      {
+        "question": "When is requireNotNull preferable to !!?",
+        "hint": "At a boundary where validation and a useful failure message establish an invariant."
+      },
+      {
+        "question": "How does a safe cast differ from a non-null assertion?",
+        "hint": "as? yields null on a type mismatch; !! throws when a nullable value is null."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-extensions-1",
+    "topic": "kotlin",
+    "subtopic": "kt-extensions",
+    "difficulty": "INTERMEDIATE",
+    "question": "What can extension functions do, and what dispatch behavior often surprises developers?",
+    "shortAnswer": "An extension function adds callable syntax for a type without modifying, inheriting from, or gaining privileged access to that type. Extensions are resolved statically from the declared receiver type and visible imports; they are not virtual overrides. A real member with the same applicable signature wins. I use extensions for cohesive transformations or adapters, not to hide unrelated business services as methods.",
+    "detailedAnswer": "`fun String.toDomainId()` can make a conversion discoverable while remaining an ordinary static-style function at the bytecode level. It can access only the receiver's visible API. Extensions can have nullable receivers, properties without backing fields, and generic constraints. Their apparent method syntax does not change ownership or encapsulation.\n\nStatic resolution means an extension selected for a Base-typed variable stays the Base extension even when the runtime object is Derived. This differs from overridden members. Imports and package scope also matter, so broad generic extensions can cause ambiguity or pollute completion. Good extensions are small, cohesive with the receiver, and unsurprising. If behavior needs dependencies, state, dynamic dispatch, or an independent domain identity, a regular collaborator is usually clearer.",
+    "keyPoints": [
+      "Extensions do not modify the receiver type or access its private state",
+      "Resolution uses the declared receiver type rather than runtime dispatch",
+      "Applicable members take precedence over extensions",
+      "Extensions work best for cohesive stateless operations"
+    ],
+    "redFlags": [
+      "Describing extensions as monkey patching or virtual methods",
+      "Hiding network, database, or global state behind innocent-looking syntax",
+      "Adding broad Any or generic extensions that create ambiguity"
+    ],
+    "followUps": [
+      {
+        "question": "What happens when a member and extension have the same signature?",
+        "hint": "The member is selected."
+      },
+      {
+        "question": "Can an extension property store state?",
+        "hint": "No backing field is added; it can only compute through accessors."
+      },
+      {
+        "question": "How does an extension on a nullable receiver help?",
+        "hint": "It can centralize null-aware behavior and explicitly inspect `this == null`."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-functional-1",
+    "topic": "kotlin",
+    "subtopic": "kt-functional",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do higher-order and inline functions support functional style in Kotlin?",
+    "shortAnswer": "Higher-order functions accept or return functions, enabling reusable transformations such as map, filter, and domain-specific policies. Inline functions can reduce lambda allocation and enable reified type parameters, but inlining increases bytecode and is not automatically a performance win. Functional style is most valuable when transformations are explicit and side effects are controlled, not when every loop becomes a dense chain.",
+    "detailedAnswer": "Function types such as `(Order) -> Money` let behavior be passed as data. Lambdas can capture surrounding variables, which may allocate or retain state, and non-local returns are permitted only in certain inline-lambda contexts. `crossinline` and `noinline` constrain or preserve lambda values when an inline function needs different behavior.\n\nPure transformations and immutable values simplify testing and concurrency, but Kotlin is multi-paradigm: local mutation inside a well-contained algorithm can be clearer and faster than creating many intermediate values. Collections operations are eager; Sequence offers lazy element-by-element processing with its own overhead. Use named functions when chains become hard to explain, isolate I/O at boundaries, and benchmark hot code before relying on inline or sequence assumptions.",
+    "keyPoints": [
+      "Function types make behavior composable and testable",
+      "Inline can remove some call and allocation overhead and support reified types",
+      "Captured state and non-local returns affect lambda behavior",
+      "Functional syntax should improve clarity and side-effect control"
+    ],
+    "redFlags": [
+      "Assuming every inline function is faster",
+      "Hiding side effects inside map or filter operations",
+      "Replacing a clear loop with an unreadable transformation chain"
+    ],
+    "followUps": [
+      {
+        "question": "What does reified enable in an inline function?",
+        "hint": "The call site can retain the concrete type for checks, casts, or class access."
+      },
+      {
+        "question": "When does a lambda capture state?",
+        "hint": "When it references variables from its enclosing scope."
+      },
+      {
+        "question": "Are collection map and Sequence map executed the same way?",
+        "hint": "Collection operations are eager; sequence operations are lazy and element-oriented."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-data-classes-1",
+    "topic": "kotlin",
+    "subtopic": "kt-data-classes",
+    "difficulty": "BEGINNER",
+    "question": "What does a Kotlin data class generate, and what does copy() not guarantee?",
+    "shortAnswer": "A data class generates equals, hashCode, toString, component functions, and copy from properties in its primary constructor. copy() is shallow: nested mutable lists or objects remain shared unless copied separately. Data classes are not automatically immutable, and properties declared only in the class body do not participate in the generated equality, copy, or destructuring contract.",
+    "detailedAnswer": "Data classes are concise value-oriented types. At least one primary-constructor parameter must be a property, and generated functions use those constructor properties. A `var` component is mutable, and a `val` component can reference mutable state, so immutability requires more than the data modifier.\n\n`copy(status = ACTIVE)` constructs a new outer instance while reusing every component not replaced. This is useful for immutable-style updates only when components themselves have appropriate value semantics. Body properties are excluded from generated equals, hashCode, toString, componentN, and copy, which can surprise caches and tests. Data classes fit DTOs and values; JPA entities with generated IDs, lazy associations, and lifecycle mutation often need explicit identity and method design instead.",
+    "keyPoints": [
+      "Generated functions use primary-constructor properties",
+      "copy creates a shallow copy",
+      "data does not imply immutable",
+      "Entity identity often differs from structural data equality"
+    ],
+    "redFlags": [
+      "Calling copy a deep clone",
+      "Expecting body properties to affect generated equality",
+      "Using a mutable data class as a map key without considering hash stability"
+    ],
+    "followUps": [
+      {
+        "question": "What happens to a MutableList component after copy()?",
+        "hint": "Both outer instances reference the same list unless it is copied explicitly."
+      },
+      {
+        "question": "Why can a data class be problematic as a JPA entity?",
+        "hint": "Consider generated equality, lazy fields, proxies, IDs, and mutation."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-sealed-1",
+    "topic": "kotlin",
+    "subtopic": "kt-sealed",
+    "difficulty": "INTERMEDIATE",
+    "question": "When would you model alternatives with a sealed hierarchy instead of an enum?",
+    "shortAnswer": "An enum fits a fixed set of singleton constants with the same basic shape. A sealed class or interface fits a closed family whose alternatives carry different data or behavior, such as Success(value), Retry(after), and Failure(reason). `when` can then be exhaustive without an else when all known direct alternatives are covered, which makes domain evolution visible to callers.",
+    "detailedAnswer": "Sealed types constrain direct subclasses to the same module and package, with additional source-set rules in multiplatform projects. Each subtype can be a data class, object, enum, or regular class with its own state. This models algebraic-style result and command types more precisely than nullable values, flags, or exception-driven expected outcomes.\n\nAn enum remains simpler when every case is one stateless constant and consumers need ordinal-independent names or properties. A sealed hierarchy is closed at its direct boundary, but non-sealed descendants can have their own extension rules. Exhaustive `when` is valuable, yet adding an alternative becomes a source-compatibility event for consumers—often desirable, but it should be planned for public libraries and separately deployed clients.",
+    "keyPoints": [
+      "Enums represent fixed singleton constants",
+      "Sealed alternatives can carry distinct state and implementations",
+      "Exhaustive when makes missing alternatives visible",
+      "Adding a subtype can intentionally require consumer changes"
+    ],
+    "redFlags": [
+      "Using an enum plus nullable payload fields for unrelated case data",
+      "Adding else to every when and hiding newly introduced sealed alternatives",
+      "Assuming sealed means no indirect subclass can ever be extended"
+    ],
+    "followUps": [
+      {
+        "question": "Why might omitting else be useful for a sealed when expression?",
+        "hint": "The compiler can report newly unhandled alternatives."
+      },
+      {
+        "question": "Can an enum implement a sealed interface?",
+        "hint": "Yes, an enum can be a direct implementation, though it cannot extend a sealed class."
+      },
+      {
+        "question": "What API compatibility concern comes with adding a sealed subtype?",
+        "hint": "Exhaustive consumers may need recompilation and a new handling decision."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-objects-1",
+    "topic": "kotlin",
+    "subtopic": "kt-objects",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do object declarations, object expressions, and companion objects differ?",
+    "shortAnswer": "An object declaration defines one lazily initialized singleton instance. An object expression creates an anonymous instance each time it is evaluated. A companion object is an object associated with a class, but its members are not Java static members unless interoperability annotations or generated accessors provide that shape. I avoid mutable global singleton state even when object syntax makes it convenient.",
+    "detailedAnswer": "Object declarations provide language-level singleton initialization with thread-safe initialization on the JVM. They work well for stateless utilities, constants grouped with behavior, or a deliberate process-wide service whose lifecycle is simple. Object expressions are Kotlin's anonymous objects and can capture local state.\n\nA companion object is one named object inside a class and can implement interfaces or hold factories. Kotlin code can call its members through the class name, but Java sees the Companion instance unless annotations such as `@JvmStatic` expose static-style methods. Singleton syntax does not solve test isolation, configuration, distributed uniqueness, or lifecycle. Prefer dependency injection for stateful services whose construction and replacement matter, and be cautious about initialization side effects.",
+    "keyPoints": [
+      "Object declarations represent one initialized singleton instance",
+      "Object expressions create anonymous instances",
+      "Companion members are not inherently JVM static methods",
+      "Singleton syntax does not justify mutable global state"
+    ],
+    "redFlags": [
+      "Treating an object declaration as one instance across multiple processes",
+      "Putting request or test state in a global object",
+      "Assuming companion methods are automatically ergonomic from Java"
+    ],
+    "followUps": [
+      {
+        "question": "How is an object declaration initialized on the JVM?",
+        "hint": "Initialization occurs on first access with JVM class-initialization safety."
+      },
+      {
+        "question": "When would dependency injection be better than object?",
+        "hint": "When lifecycle, configuration, replacement, scoping, or test isolation matters."
+      },
+      {
+        "question": "What does @JvmStatic change?",
+        "hint": "It generates a static method or accessor for Java-facing interoperability."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-collections-1",
+    "topic": "kotlin",
+    "subtopic": "kt-collections",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do Kotlin read-only collections and scope functions affect API clarity?",
+    "shortAnswer": "List exposes read operations while MutableList exposes mutation, but List is read-only rather than a deep immutability guarantee; another alias may still mutate the backing object. Scope functions differ mainly by receiver name and return value: let/run return the lambda result, while apply/also return the receiver. I use them sparingly when that distinction makes intent clearer.",
+    "detailedAnswer": "Kotlin separates read-only and mutable collection interfaces at compile time. Exposing List prevents that caller from invoking add, but a mutable owner can still change the same instance, and elements may themselves be mutable. Copy or use a persistent/immutable collection when snapshot semantics are required. Collection transformations are eager, while Sequence transformations are lazy and may avoid intermediates for suitable pipelines.\n\nFor scope functions, `let` and `also` use `it`; `run`, `apply`, and `with` use receiver-style `this`. `let`, `run`, and `with` return the block result; `apply` and `also` return the context object. Typical uses are null-scoped transformations, object configuration, and side observations, but nesting several functions obscures which receiver is active. A named variable or ordinary block is often clearer.",
+    "keyPoints": [
+      "Read-only collection APIs restrict operations but do not prove immutability",
+      "Collection operations are eager; Sequence pipelines are lazy",
+      "Scope functions differ in receiver reference and return value",
+      "Nested scope functions can reduce rather than improve readability"
+    ],
+    "redFlags": [
+      "Calling every List implementation immutable",
+      "Using apply when the intended result is the lambda value",
+      "Nesting scope functions until the active this or it is ambiguous"
+    ],
+    "followUps": [
+      {
+        "question": "What is the difference between also and let?",
+        "hint": "Both use it; also returns the receiver, while let returns the block result."
+      },
+      {
+        "question": "When can Sequence be slower than collection operations?",
+        "hint": "Small pipelines may pay iterator and lambda overhead without avoiding meaningful work."
+      },
+      {
+        "question": "How would you return a stable collection snapshot?",
+        "hint": "Create an independent copy or use a collection with explicit immutable semantics."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-generics-1",
+    "topic": "kotlin",
+    "subtopic": "kt-generics",
+    "difficulty": "SENIOR",
+    "question": "How do in, out, star projections, and reified type parameters address variance and erasure?",
+    "shortAnswer": "Kotlin generics are invariant by default. `out T` makes a producer covariant, so it can return T but not consume arbitrary T; `in T` makes a consumer contravariant. Use-site projections constrain one reference, and star projection represents an unknown safe type. JVM erasure still applies; an inline reified parameter substitutes type information at the call site for supported checks and class access.",
+    "detailedAnswer": "If Box<T> both consumes and produces T, Box<Dog> cannot safely be treated as Box<Animal>. Declaration-site `out` is appropriate for a source such as Provider<out T>; `in` fits a sink such as Comparator<in T>. Use-site forms like Array<out Animal> restrict operations for a particular use when the declaration itself must remain invariant. Star projection is not simply Any?: it exposes only operations safe for an unknown type under the declaration's variance.\n\nOn the JVM, generic arguments are generally erased, so `value is List<String>` is not available as a full runtime check. An inline `reified T` can generate checks involving the concrete call-site type, but nested generic arguments remain erased. Reification also increases generated call-site code. Variance should describe real producer/consumer roles, not be added until the compiler accepts an unsafe design.",
+    "keyPoints": [
+      "Kotlin generic types are invariant unless variance is declared or projected",
+      "out models producers and in models consumers",
+      "Star projection is safe access to an unknown type",
+      "Reified inline parameters recover selected call-site type operations, not full runtime generics"
+    ],
+    "redFlags": [
+      "Using out on a type that must consume arbitrary T values",
+      "Describing star projection as exactly the same as Any?",
+      "Claiming reified makes nested generic arguments fully available at runtime"
+    ],
+    "followUps": [
+      {
+        "question": "Why is List<Dog> usable as List<Animal> in Kotlin?",
+        "hint": "The read-only List interface declares its element type covariant with out."
+      },
+      {
+        "question": "Why is MutableList invariant?",
+        "hint": "It both reads and accepts elements, so covariance would allow unsafe insertion."
+      },
+      {
+        "question": "What can reified T do that ordinary T cannot?",
+        "hint": "At an inline call site it can support selected is checks, casts, and T::class access."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-delegation-1",
+    "topic": "kotlin",
+    "subtopic": "kt-delegation",
+    "difficulty": "INTERMEDIATE",
+    "question": "What problems do class delegation and delegated properties solve in Kotlin?",
+    "shortAnswer": "Class delegation with `by` forwards an interface implementation to a collaborator, supporting composition without repetitive forwarding methods. Delegated properties move get/set policy into an object, as with lazy, observable, or a custom persistence delegate. Both reduce ceremony, but they can hide cost and lifecycle, so a property that performs I/O or a delegate with unclear thread-safety can surprise callers.",
+    "detailedAnswer": "`class AuditedStore(delegate: Store) : Store by delegate` generates forwarding for Store members, while the class can override selected behavior. This is implementation reuse through composition, not subtype inheritance from the delegate. Be aware that calls made internally by the delegate do not dynamically route back through overrides on the wrapper in the way some developers expect.\n\nA property delegate implements `getValue` and optionally `setValue`; standard examples include `lazy`, observable, vetoable, and map-backed properties. Default `lazy` is synchronized, while other LazyThreadSafetyMode choices trade guarantees and overhead. Delegates can make cross-cutting policy reusable, but expensive work, external state, exceptions, and lifecycle should remain visible in the API. Avoid turning innocent property access into an unpredictable network call.",
+    "keyPoints": [
+      "Class delegation generates forwarding to a composed implementation",
+      "Property delegates centralize access or initialization policy",
+      "Lazy initialization has selectable thread-safety semantics",
+      "Delegation can hide behavior and cost if the contract is unclear"
+    ],
+    "redFlags": [
+      "Calling class delegation ordinary inheritance",
+      "Assuming wrapper overrides intercept every internal delegate call",
+      "Hiding slow or failure-prone I/O behind an undocumented property getter"
+    ],
+    "followUps": [
+      {
+        "question": "What guarantees does lazy provide by default?",
+        "hint": "The default synchronized mode publishes one initialized value safely."
+      },
+      {
+        "question": "Can a delegating class override one forwarded member?",
+        "hint": "Yes, it can replace selected forwarding behavior."
+      },
+      {
+        "question": "When is a custom property delegate inappropriate?",
+        "hint": "When it conceals material I/O, failure, transaction, or lifecycle semantics."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-coroutines-1",
+    "topic": "kotlin",
+    "subtopic": "kt-coroutines",
+    "difficulty": "SENIOR",
+    "question": "What does structured concurrency guarantee, and what does suspend not guarantee?",
+    "shortAnswer": "Structured concurrency ties child coroutine lifetimes to a scope: the scope does not complete until its children finish, and cancellation or failure follows defined parent-child rules. `suspend` only means a function may suspend; it does not make blocking code non-blocking or start a new coroutine. Dispatchers and the called library determine where and how work runs.",
+    "detailedAnswer": "`coroutineScope` creates a child scope and waits for all children. A failure normally cancels sibling children and propagates, while `supervisorScope` isolates sibling failures so the caller can choose how to combine results. `launch` returns a Job for work without a value; `async` returns Deferred and reports its result or failure through await. Neither should be detached into GlobalScope for request work.\n\nCancellation is cooperative: suspending functions check it, and CPU loops must reach checks or call `ensureActive`/`yield`. Catching broad exceptions must not swallow CancellationException. A suspend function can still invoke JDBC, Thread.sleep, or another blocking API and occupy its thread. Use an appropriate dispatcher or a genuinely suspending client, apply timeouts as policy rather than guaranteed remote cancellation, and keep scopes owned by application lifecycle.",
+    "keyPoints": [
+      "Structured scopes own and await their child coroutines",
+      "suspend does not imply concurrency, a dispatcher switch, or non-blocking implementation",
+      "Cancellation is cooperative and should be propagated",
+      "supervisorScope changes sibling-failure propagation deliberately"
+    ],
+    "redFlags": [
+      "Calling a blocking library directly and assuming suspend makes it non-blocking",
+      "Launching request work in GlobalScope",
+      "Catching CancellationException as an ordinary recoverable failure",
+      "Using async when work is not actually concurrent or independently useful"
+    ],
+    "followUps": [
+      {
+        "question": "How do coroutineScope and supervisorScope differ on child failure?",
+        "hint": "A regular child failure cancels siblings; a supervisor lets siblings be handled independently."
+      },
+      {
+        "question": "How would you call a blocking JDBC driver from coroutine code?",
+        "hint": "Use a dispatcher/capacity designed for blocking work and still respect the connection pool."
+      },
+      {
+        "question": "Why can a CPU loop ignore cancellation?",
+        "hint": "Cancellation is cooperative; without suspension or explicit checks, the loop keeps running."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-flow-1",
+    "topic": "kotlin",
+    "subtopic": "kt-flow",
+    "difficulty": "SENIOR",
+    "question": "How do cold Flow, StateFlow, and SharedFlow differ, and how do you manage slow collectors?",
+    "shortAnswer": "A regular Flow is usually cold: its producer runs separately for each collector. StateFlow and SharedFlow are hot and exist independently of collectors; StateFlow always exposes a current conflated state value, while SharedFlow is configurable for replay and buffering. Flow uses suspension for backpressure, and buffer, conflate, or collectLatest deliberately trade memory or completeness for throughput.",
+    "detailedAnswer": "The `flow` builder executes when collected and must respect context-preservation rules. Operators are generally cold transformations. `flowOn` changes the context of upstream execution, not the collector's downstream context. `catch` handles upstream exceptions but does not catch failures thrown later by the collector. Cancellation follows coroutine cooperation.\n\nA slow collector normally slows a cold producer through suspension. `buffer` allows producer and consumer to overlap up to a capacity; `conflate` drops intermediate values and keeps the latest; `collectLatest` cancels prior collector work when a new value arrives. These are semantic choices, not tuning switches. StateFlow is appropriate for observable current state and conflates by equality. SharedFlow represents broadcasts/events with configured replay and overflow. Avoid converting a cold flow to a long-lived hot flow without an explicitly owned scope and sharing-start policy.",
+    "keyPoints": [
+      "Cold Flow starts its upstream work for each collector",
+      "StateFlow models current state; SharedFlow models configurable broadcast",
+      "Suspension, buffering, conflation, and cancellation define slow-consumer behavior",
+      "flowOn affects upstream context rather than downstream collection"
+    ],
+    "redFlags": [
+      "Calling every Flow hot or every Flow cold without distinguishing types",
+      "Adding an unlimited buffer instead of deciding an overflow policy",
+      "Using conflate where every event must be processed",
+      "Assuming catch handles exceptions thrown by the downstream collector"
+    ],
+    "followUps": [
+      {
+        "question": "When is conflate correct?",
+        "hint": "When only the newest state matters and intermediate values may be skipped."
+      },
+      {
+        "question": "How does collectLatest differ from conflate?",
+        "hint": "collectLatest cancels the previous collector block when a new value arrives."
+      },
+      {
+        "question": "What must own a sharedIn or stateIn scope?",
+        "hint": "A lifecycle with explicit start, stop, and resource semantics."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-dsl-1",
+    "topic": "kotlin",
+    "subtopic": "kt-dsl",
+    "difficulty": "SENIOR",
+    "question": "How would you design a type-safe Kotlin DSL without making control flow obscure?",
+    "shortAnswer": "Kotlin DSLs typically combine lambdas with receiver, extension functions, builders, and sometimes operator conventions to constrain valid vocabulary. I keep the grammar small, validate required state at the boundary, and use `@DslMarker` to prevent accidental access to outer receivers. A DSL is justified when a recurring declarative structure becomes clearer—not merely to make ordinary code look magical.",
+    "detailedAnswer": "A function such as `route { get('/orders') { ... } }` passes a receiver-scoped builder into a lambda, so its members form the local vocabulary. Nested receivers can accidentally expose outer methods; a custom `@DslMarker` annotation restricts implicit receiver selection and catches ambiguous nesting. Builders should still report useful validation errors and create a stable result rather than leaking partially configured mutable state.\n\nDSL design is API design. Consider IDE completion, source compatibility, debugging, error locations, testability, and how Java callers interact. Overloaded operators, implicit globals, and hidden I/O may produce attractive syntax but poor maintenance. Prefer named functions when order and side effects matter. A configuration DSL should separate description from execution so reading the block does not unexpectedly deploy resources or perform network calls.",
+    "keyPoints": [
+      "Lambdas with receiver create a scoped vocabulary",
+      "@DslMarker limits accidental access across nested receivers",
+      "Builders should validate and produce stable results",
+      "A DSL must improve a recurring domain expression enough to justify new syntax"
+    ],
+    "redFlags": [
+      "Using operator overloads whose meaning is unrelated to the operator",
+      "Performing hidden remote side effects during configuration",
+      "Ignoring Java callers, diagnostics, and source-compatibility needs"
+    ],
+    "followUps": [
+      {
+        "question": "What bug does @DslMarker help prevent?",
+        "hint": "It prevents unintended implicit calls on an outer receiver in nested DSL scopes."
+      },
+      {
+        "question": "How would you test a DSL?",
+        "hint": "Test the produced model, validation diagnostics, and representative compile-time usage."
+      },
+      {
+        "question": "When is a normal builder API preferable?",
+        "hint": "When construction is infrequent, ordering is procedural, or cross-language use matters more."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-interop-1",
+    "topic": "kotlin",
+    "subtopic": "kt-interop",
+    "difficulty": "SENIOR",
+    "question": "Which Kotlin–Java interoperability issues would you review at a public API boundary?",
+    "shortAnswer": "I review nullability metadata and platform types, checked exceptions, generated names and overloads, default arguments, companion members, wildcards, and coroutine signatures. Kotlin can call Java naturally, but Java callers may need `@JvmOverloads`, `@JvmStatic`, `@Throws`, or a Java-friendly facade. Suspend functions compile with Continuation-style signatures and are not a natural Java API by themselves.",
+    "detailedAnswer": "Java declarations without recognized nullability annotations expose platform types, so validate values and improve annotations where the boundary is owned. Kotlin does not enforce Java checked exceptions and does not declare checked exceptions to Java unless `@Throws` is used where appropriate. Default parameters do not automatically create Java overloads; `@JvmOverloads` can generate them but may enlarge an API unnecessarily.\n\nProperties compile to accessor methods, file functions to generated facade classes, and companion members need `@JvmStatic` for static-style Java calls. Declaration-site variance may generate wildcards that need `@JvmSuppressWildcards` only after checking actual Java usability. Kotlin function types and suspend functions can be awkward from Java, so expose CompletionStage, Reactor types, or an explicit callback/facade when Java is a primary consumer. Treat binary compatibility as a separate concern from Kotlin source compatibility.",
+    "keyPoints": [
+      "Platform types require deliberate null validation and annotations",
+      "Default parameters and companion members have different Java shapes",
+      "Checked-exception contracts need explicit interoperability decisions",
+      "Suspend APIs often need a Java-friendly asynchronous facade"
+    ],
+    "redFlags": [
+      "Assuming full interoperability means identical source ergonomics",
+      "Exposing platform types internally without validation",
+      "Adding JVM annotations mechanically without inspecting generated signatures"
+    ],
+    "followUps": [
+      {
+        "question": "Why does a Kotlin default argument not automatically help a Java caller?",
+        "hint": "Java sees the generated JVM methods, not Kotlin's call-site defaulting syntax."
+      },
+      {
+        "question": "What does @Throws change?",
+        "hint": "It adds declared exceptions to the JVM method signature for Java-facing contracts."
+      },
+      {
+        "question": "How would you expose a suspend operation to Java?",
+        "hint": "Provide a facade using a Java-native async abstraction such as CompletionStage."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-spring-1",
+    "topic": "kotlin",
+    "subtopic": "kt-spring",
+    "difficulty": "SENIOR",
+    "question": "What Kotlin-specific concerns matter in a Spring Boot service?",
+    "shortAnswer": "Kotlin classes are final by default, while some Spring features rely on proxies, so the Kotlin Spring plugin opens eligible annotated classes. I also configure Jackson's Kotlin module, use constructor injection, review nullability at Java/framework boundaries, and test proxy behavior such as transactions. Coroutine endpoints help only when the full call path uses appropriate suspending or blocking-resource handling.",
+    "detailedAnswer": "Spring has first-class Kotlin APIs and nullability metadata, but framework mechanics still matter. The `kotlin-spring` compiler plugin configures all-open behavior for common Spring annotations so proxy-based AOP can work. Constructor injection aligns with non-null properties and explicit dependencies. Jackson's Kotlin module is normally needed for primary constructors and Kotlin metadata; absent versus null JSON values and default parameters should be covered by contract tests.\n\nSpring MVC and WebFlux support suspending controller functions, and WebFlux integrates Reactor with coroutines and Flow. A suspend signature does not transform a blocking JDBC or SDK call into non-blocking work. Match the web stack, client, driver, dispatcher, transaction model, and capacity limits. Also remember self-invocation can bypass proxy advice regardless of language, and final/private methods may not be interceptable under the selected proxy mechanism.",
+    "keyPoints": [
+      "The Kotlin Spring plugin supports proxyable annotated classes",
+      "Constructor injection and Kotlin nullability make dependencies explicit",
+      "Jackson needs Kotlin-aware configuration and boundary tests",
+      "Coroutine benefits depend on the behavior of the whole I/O path"
+    ],
+    "redFlags": [
+      "Assuming suspend makes JDBC or another blocking client non-blocking",
+      "Ignoring proxy limitations while relying on transactions or AOP",
+      "Skipping JSON tests for defaults, absent fields, and null values"
+    ],
+    "followUps": [
+      {
+        "question": "Why does Spring need classes to be open in some cases?",
+        "hint": "Class-based proxies subclass the target to apply advice."
+      },
+      {
+        "question": "Can a suspending controller be used with Spring MVC?",
+        "hint": "Current Spring supports suspending return values in both MVC and WebFlux, with different runtime models."
+      },
+      {
+        "question": "How would you test that @Transactional advice is active?",
+        "hint": "Use an integration test through the proxied bean and verify rollback or transaction state."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-jpa-1",
+    "topic": "kotlin",
+    "subtopic": "kt-jpa",
+    "difficulty": "SENIOR",
+    "question": "Why do Kotlin and JPA/Hibernate need special care around entities?",
+    "shortAnswer": "Kotlin classes and members are final by default, while Hibernate may use subclass proxies, and JPA expects a no-argument construction path. Kotlin JPA/all-open and no-arg plugins can bridge those mechanics. I avoid default data-class equality for entities because generated IDs, mutable fields, and lazy associations make structural equals, hashCode, copy, and toString risky.",
+    "detailedAnswer": "Entity design must align Kotlin semantics with persistence lifecycle. Compiler plugins can make entity classes and members open and synthesize a no-arg constructor without exposing boilerplate in source. The exact need for proxies depends on Hibernate configuration and association strategy, so verify generated SQL and lazy loading rather than assuming the plugin alone solves design issues.\n\nData classes generate methods from primary-constructor properties. Including a generated ID can change hashCode after persistence; including lazy collections can trigger queries, recursion, or detached-access failures during equals or toString. Define identity semantics deliberately, often using a stable business key or carefully specified entity identity. `val` is not automatically compatible with every hydration strategy, and bidirectional relationships remain mutable lifecycle structures. Keep transaction boundaries explicit, avoid accidental N+1 access, and use DTOs/value objects for structural data semantics.",
+    "keyPoints": [
+      "Final classes and no-arg construction interact with ORM proxy and instantiation strategies",
+      "Compiler plugins solve mechanics, not entity identity design",
+      "Generated data-class methods can touch IDs and lazy associations",
+      "Persistence behavior must be verified through integration tests and SQL"
+    ],
+    "redFlags": [
+      "Using a default data class for every entity",
+      "Including mutable generated IDs in hash-based identity without a plan",
+      "Triggering lazy relationships from toString or equals",
+      "Assuming val alone makes a persistent model immutable"
+    ],
+    "followUps": [
+      {
+        "question": "What can happen if hashCode changes after an entity enters a HashSet?",
+        "hint": "The set may no longer find the entity in the bucket chosen at insertion."
+      },
+      {
+        "question": "What do the Kotlin JPA and all-open plugins provide?",
+        "hint": "They supply no-arg construction support and proxy-friendly openness for configured annotations."
+      },
+      {
+        "question": "How would you detect an accidental lazy load?",
+        "hint": "Use SQL logging or query-count assertions in an integration test."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-performance-1",
+    "topic": "kotlin",
+    "subtopic": "kt-performance",
+    "difficulty": "SENIOR",
+    "question": "Which Kotlin features can affect JVM performance, and how would you measure them?",
+    "shortAnswer": "Kotlin runs on the JVM and often optimizes similarly to Java, but abstractions still have costs: boxing in nullable or generic numeric code, lambda captures, collection intermediates, sequence iterators, coroutine state machines, reflection, and generated methods. Inline functions can remove some overhead but increase bytecode. I profile the real service and use JMH for isolated hypotheses rather than inferring performance from source conciseness.",
+    "detailedAnswer": "Performance depends on generated bytecode, JIT optimization, allocation, workload, and libraries—not the language label. `Int?` generally needs boxing, generic values erase to references, and value classes may still box at generic, nullable, interface, or interoperability boundaries. Eager collection chains can allocate intermediate collections; Sequence avoids some intermediates but adds per-element iterator and lambda overhead, so it is not universally faster.\n\nSuspend functions compile to state-machine-style continuations when suspension is possible. Coroutines can improve scalability by avoiding blocked threads with suspending I/O, but scheduling and context switches cost something and blocking calls still occupy threads. Use production profiles, allocation and GC data, async-profiler/JFR, and end-to-end load tests. For microbenchmarks, JMH handles warmup, dead-code elimination, and JVM forks; still connect the result back to user-visible service metrics.",
+    "keyPoints": [
+      "JVM bytecode, JIT behavior, allocation, and libraries determine performance",
+      "Nullability, generics, and abstraction boundaries can introduce boxing",
+      "Sequence and inline are workload-dependent trade-offs",
+      "Profile end to end and use JMH for carefully isolated questions"
+    ],
+    "redFlags": [
+      "Claiming Kotlin is inherently faster or slower than Java",
+      "Assuming Sequence always avoids enough work to be faster",
+      "Publishing a hand-timed loop as a reliable JVM benchmark",
+      "Equating coroutine concurrency with CPU parallelism"
+    ],
+    "followUps": [
+      {
+        "question": "When can a value class still be boxed?",
+        "hint": "Nullable, generic, interface, and some interoperability uses require an object representation."
+      },
+      {
+        "question": "Why does JMH use warmup and forks?",
+        "hint": "To account for JIT compilation and isolate JVM state and optimization effects."
+      },
+      {
+        "question": "What service-level metrics matter beyond a microbenchmark?",
+        "hint": "Latency percentiles, throughput, allocation, GC, CPU, memory, and downstream saturation."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-pitfalls-1",
+    "topic": "kotlin",
+    "subtopic": "kt-pitfalls",
+    "difficulty": "INTERMEDIATE",
+    "question": "Which Kotlin constructs most often hide correctness or maintenance problems in backend code?",
+    "shortAnswer": "I watch for `!!` replacing null modeling, nested scope functions obscuring receivers, GlobalScope or unowned coroutines, blocking calls on unsuitable dispatchers, read-only collections mistaken for immutable ones, data-class methods touching lazy or mutable state, and platform types trusted without validation. These features are not inherently bad; the risk is when concise syntax hides ownership, lifecycle, or failure semantics.",
+    "detailedAnswer": "Kotlin makes many patterns concise, which can compress important decisions. A chain of `let`, `apply`, and `also` may conceal branching and side effects. `runBlocking` inside request handling blocks a thread and can create starvation or deadlocks depending on the surrounding runtime. `lateinit` moves initialization proof to runtime and throws UninitializedPropertyAccessException when the promise is false.\n\nEquality also deserves care: `==` delegates to structural equality, while `===` tests reference identity. Default arguments, extension resolution, and platform types behave differently from some Java expectations. The answer should avoid blanket bans. A local `!!` after an invariant enforced by a framework may be understandable, and `runBlocking` is valid at a top-level bridge or in tests. Prefer explicit contracts, static analysis, focused review rules, and tests at interop and framework boundaries.",
+    "keyPoints": [
+      "Concise syntax can hide lifecycle, mutation, and failure decisions",
+      "GlobalScope and runBlocking are context-sensitive tools, not default service patterns",
+      "lateinit defers initialization validation to runtime",
+      "Structural equality and identity use different operators"
+    ],
+    "redFlags": [
+      "Turning guidance into absolute bans without context",
+      "Using GlobalScope for request-bound work",
+      "Confusing UninitializedPropertyAccessException with compile-time null safety",
+      "Using scope functions primarily to minimize line count"
+    ],
+    "followUps": [
+      {
+        "question": "When is runBlocking appropriate?",
+        "hint": "At a controlled bridge such as main or a test—not inside suspending request code."
+      },
+      {
+        "question": "What is the difference between == and ===?",
+        "hint": "== is null-safe structural equality; === is referential identity."
+      },
+      {
+        "question": "How would you reduce risky !! usage during migration?",
+        "hint": "Improve Java annotations, validate boundaries, model nullable states, and add static-analysis rules."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-interview-1",
+    "topic": "kotlin",
+    "subtopic": "kt-interview",
+    "difficulty": "SENIOR",
+    "question": "How would you migrate part of a Java Spring service to Kotlin while controlling delivery risk?",
+    "shortAnswer": "I would begin with a bounded module whose Java contract is stable, establish build and operational baselines, and keep the first Kotlin code idiomatic but unsurprising. I would harden nullability and serialization boundaries, configure Spring/Jackson and ORM plugins only where needed, keep Java-friendly APIs for mixed callers, and roll out with the same tests, metrics, canary, and rollback discipline as any runtime change.",
+    "detailedAnswer": "First clarify the reason for migration—defect reduction, asynchronous readability, domain modeling, or hiring—and define evidence that would justify continuing. Add Kotlin to the build with explicit compiler, lint, coverage, and binary-compatibility policies. A leaf module, new endpoint, or adapter is safer than translating a central entity model line by line. Keep commits behavior-preserving before adopting coroutines or redesigning APIs.\n\nAt mixed boundaries, add nullability annotations, validate platform types, test JSON and reflection behavior, and expose Java-friendly methods where Java remains a consumer. Do not convert a blocking stack to suspend signatures without addressing the driver and resource model. Compare build time, test reliability, latency, allocation, and incident diagnostics. Train reviewers on Kotlin idioms and failure modes, canary the change, and stop or revert if the expected benefit does not materialize.",
+    "keyPoints": [
+      "Migration needs a concrete objective and measurable continuation criteria",
+      "Start at a bounded boundary and separate translation from redesign",
+      "Interop, serialization, nullability, and framework behavior need contract tests",
+      "Operational rollout and team learning are part of language adoption"
+    ],
+    "redFlags": [
+      "Rewriting a stable core solely to make syntax shorter",
+      "Changing language, concurrency model, framework, and architecture in one step",
+      "Ignoring Java consumers or assuming compilation proves runtime compatibility",
+      "Claiming Kotlin expertise that cannot be supported under follow-up"
+    ],
+    "followUps": [
+      {
+        "question": "Which module would you migrate first?",
+        "hint": "Choose a bounded, observable component with stable contracts and manageable blast radius."
+      },
+      {
+        "question": "What would make you stop the migration?",
+        "hint": "Use predefined signals such as build regression, reliability, operability, or lack of expected benefit."
+      },
+      {
+        "question": "How would you answer if you have studied Kotlin but not shipped it?",
+        "hint": "State the boundary honestly, demonstrate transferable JVM knowledge, and reason through a concrete example."
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"

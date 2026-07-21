@@ -4,40 +4,36 @@
     "topic": "spring",
     "subtopic": "spring-di",
     "difficulty": "BEGINNER",
-    "question": "What is Dependency Injection and why does Spring use it?",
-    "shortAnswer": "DI means objects receive their dependencies from outside rather than creating them. Spring uses it to decouple components, enable testability (inject mocks), and manage object lifecycle centrally. Instead of `new EmailService()`, Spring injects the right implementation.",
-    "detailedAnswer": "Dependency Injection inverts the control of object creation. Instead of a class creating its dependencies (tight coupling), they are provided externally.\n\nBenefits:\n1. Testability — inject mocks without changing production code\n2. Loose coupling — classes depend on interfaces, not implementations\n3. Single Responsibility — class does not manage lifecycle of its dependencies\n4. Configuration flexibility — swap implementations per environment\n\nSpring provides DI via:\n- Constructor injection (preferred — immutable, clear dependencies)\n- Field injection (@Autowired on field — concise but harder to test)\n- Setter injection (optional dependencies)\n\nIn Spring Boot, auto-configuration takes DI further: it automatically configures beans based on classpath dependencies.",
+    "question": "What does Dependency Injection solve, and how do you choose an injection style in Spring?",
+    "shortAnswer": "Dependency Injection means a class receives collaborators instead of locating or constructing them. Spring's container resolves the object graph and manages bean lifecycle, which makes dependencies explicit and implementations replaceable. I prefer constructor injection for required collaborators because it supports immutable fields and plain unit tests; setters can represent genuinely optional reconfiguration. Field injection works, but hides requirements and couples tests to reflection or a container.",
+    "detailedAnswer": "Dependency Injection is one form of Inversion of Control. A service declares what it needs and the composition root/container decides which objects satisfy those needs. The benefit is not the `@Autowired` annotation itself; it is separation between business behavior and object construction.\n\nIn Spring:\n- A component with one constructor can receive beans without annotating that constructor.\n- Constructor injection exposes required dependencies, permits `final` fields and fails early when the graph cannot be built.\n- Setter injection can model a dependency that is truly optional or replaceable, though optional dependencies should be used deliberately.\n- Field injection is concise but conceals the construction contract and makes non-container tests less direct.\n- `@Qualifier`, `@Primary` or an explicit `@Bean` method resolves intentional ambiguity between multiple candidates.\n\nDepending on an interface is useful when there are meaningful alternatives or a boundary to protect, but creating an interface for every class is not required for DI. Scope and lifecycle matter too: injecting a request-scoped or prototype dependency into a singleton may require a proxy/provider rather than assuming a fresh object appears on every use.",
     "keyPoints": [
-      "Inversion of Control — dependencies provided, not created",
-      "Constructor injection is preferred (immutable, testable)",
-      "Enables swapping implementations (test doubles, environments)",
-      "Spring manages bean lifecycle and scope",
-      "Auto-configuration reduces boilerplate"
+      "DI separates object construction from business behavior",
+      "Constructor injection makes required dependencies explicit",
+      "Interfaces are useful at real boundaries, not mandatory for every bean",
+      "Qualifiers and explicit configuration resolve multiple candidates",
+      "Bean scope is part of the dependency contract"
     ],
     "redFlags": [
-      "\"DI means using @Autowired\" (mechanism vs concept)",
-      "Cannot explain WHY DI matters (only knows HOW)",
-      "No mention of testability",
-      "Confusing DI with Service Locator pattern"
+      "Defining DI only as using `@Autowired`",
+      "Constructing infrastructure collaborators inside business methods",
+      "Using field injection while claiming the class is easy to instantiate in isolation",
+      "Ignoring scope when injecting shorter-lived beans into singletons"
     ],
     "followUps": [
       {
-        "question": "Constructor vs field injection — which do you prefer and why?",
-        "hint": "Constructor: immutable, clear dependencies, easier to test without Spring context."
+        "question": "What happens when two beans implement the same interface?",
+        "hint": "Make the selection explicit with a qualifier, primary bean, profile/condition or configuration method; ambiguity otherwise fails startup."
       },
       {
-        "question": "What happens when you have two beans of the same type?",
-        "hint": "@Qualifier, @Primary, or profile-based selection."
-      },
-      {
-        "question": "How does DI relate to the SOLID principles?",
-        "hint": "DIP — depend on abstractions. OCP — extend via new implementations."
+        "question": "Would you create an interface only so Mockito can mock a dependency?",
+        "hint": "Not necessarily. Define interfaces for architectural boundaries or alternatives; modern mocking can substitute classes, and a test concern alone should not dictate every production abstraction."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 CDI injection",
-      "description": "Used CDI (Jakarta EE equivalent of Spring DI) throughout SGN3. Field injection with @Inject for 800+ beans. Moving to constructor injection in new code for testability."
+      "title": "Transfer from Jakarta CDI",
+      "description": "Production CDI experience covers container-managed object graphs, scopes, qualifiers and substitution. Spring's bean-resolution rules and constructor-injection conventions are the framework-specific layer."
     }
   },
   {
@@ -45,30 +41,30 @@
     "topic": "spring",
     "subtopic": "spring-di",
     "difficulty": "INTERMEDIATE",
-    "question": "How does Spring Boot auto-configuration work?",
-    "shortAnswer": "Spring Boot scans META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports for configuration classes. Each class has @Conditional annotations that check classpath, properties, or existing beans. If conditions match, beans are created automatically.",
-    "detailedAnswer": "Auto-configuration is Spring Boot's \"opinionated defaults\" mechanism:\n\n1. Starter dependencies add JARs to classpath\n2. Spring Boot scans for AutoConfiguration classes\n3. @Conditional annotations check: Is H2 on classpath? Is DataSource bean missing? Is property set?\n4. If conditions pass → beans are created with sensible defaults\n5. You can override any auto-configured bean by defining your own\n\nExample: spring-boot-starter-data-jpa adds Hibernate + DataSource auto-config. If you define your own DataSource bean, auto-config backs off.\n\nKey annotations:\n- @ConditionalOnClass — only if class is on classpath\n- @ConditionalOnMissingBean — only if no user-defined bean exists\n- @ConditionalOnProperty — only if property is set\n\nThis is why Spring Boot \"just works\" — you add a starter and get a working configuration.",
+    "question": "How does Spring Boot auto-configuration decide what to create, and how do you debug an unexpected bean?",
+    "shortAnswer": "`@SpringBootApplication` enables auto-configuration. Boot imports candidate auto-configuration classes and evaluates conditions based on the classpath, properties, application type and existing beans. Many defaults use `@ConditionalOnMissingBean`, so user configuration can make them back off, but that is not true of every bean. I inspect the condition-evaluation report and bean origin before excluding configuration or overriding it deliberately.",
+    "detailedAnswer": "Auto-configuration is conditional configuration, not runtime magic:\n\n1. `@SpringBootApplication` includes `@EnableAutoConfiguration`.\n2. Boot discovers auto-configuration candidates registered by libraries (modern Boot libraries use `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`).\n3. Conditions such as `@ConditionalOnClass`, `@ConditionalOnProperty`, `@ConditionalOnWebApplication` and `@ConditionalOnMissingBean` decide whether a configuration or bean applies.\n4. Configuration properties bind external values into typed objects.\n5. User-defined beans make an auto-configuration back off only when its conditions say so; defining any bean does not globally override Boot.\n\nFor diagnosis, start the application with debug condition reporting or inspect the Actuator conditions endpoint in a secured environment. Check which condition matched, where the bean definition came from and whether configuration order/type information affected `@ConditionalOnMissingBean`. Prefer a targeted user bean or property first. Exclude an auto-configuration only when the whole feature is inappropriate, because exclusion also removes its other defaults.",
     "keyPoints": [
-      "Scans for AutoConfiguration classes with @Conditional",
-      "Backs off when you define your own beans",
-      "@ConditionalOnClass, @ConditionalOnMissingBean, @ConditionalOnProperty",
-      "Starter dependencies trigger specific auto-configurations",
-      "application.properties overrides defaults"
+      "Auto-configuration imports candidates and evaluates conditions",
+      "Classpath presence alone is only one possible condition",
+      "Back-off behavior depends on explicit missing-bean conditions",
+      "The condition report explains positive and negative matches",
+      "Targeted overrides are usually narrower than excluding an entire auto-configuration"
     ],
     "redFlags": [
-      "\"It is magic\" — cannot explain the mechanism",
-      "Does not know how to disable or override auto-configuration",
-      "Never created a custom auto-configuration",
-      "Confusing auto-configuration with component scanning"
+      "Calling auto-configuration magic without explaining conditions",
+      "Confusing component scanning with auto-configuration imports",
+      "Assuming every auto-configured bean backs off for any user bean",
+      "Excluding a configuration before inspecting why it matched"
     ],
     "followUps": [
       {
-        "question": "How do you disable a specific auto-configuration?",
-        "hint": "@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)"
+        "question": "How can you disable one auto-configuration?",
+        "hint": "Use the annotation exclusion or `spring.autoconfigure.exclude`, but first verify that a narrower property or bean override does not fit better."
       },
       {
-        "question": "How would you create your own auto-configuration?",
-        "hint": "Create @Configuration class, add @Conditional, register in META-INF imports file."
+        "question": "Why should `@ConditionalOnMissingBean` be used carefully in custom auto-configuration?",
+        "hint": "It sees bean definitions processed so far, so auto-configuration ordering and precise return types affect the result."
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
@@ -78,40 +74,40 @@
     "topic": "spring",
     "subtopic": "spring-transactions",
     "difficulty": "SENIOR",
-    "question": "Explain @Transactional propagation levels. When would you use REQUIRES_NEW?",
-    "shortAnswer": "Propagation defines what happens when a transactional method calls another. REQUIRED (default) joins existing TX. REQUIRES_NEW suspends the current TX and creates a new one. I use REQUIRES_NEW when an operation must commit independently — like audit logging that must persist even if the main operation rolls back.",
-    "detailedAnswer": "Propagation levels:\n- REQUIRED (default): join existing TX, or create new if none exists\n- REQUIRES_NEW: suspend current TX, create fresh one. Commits/rollbacks independently.\n- NESTED: savepoint within current TX (not all providers support)\n- SUPPORTS: join if exists, run non-transactional if not\n- NOT_SUPPORTED: suspend current TX, run non-transactional\n- MANDATORY: must have existing TX, throw if none\n- NEVER: throw if TX exists\n\nWhen to use REQUIRES_NEW:\n1. Audit logging — must persist even if business operation fails\n2. Sequence/counter generation — must commit to avoid gaps\n3. External notification records — track attempts independently\n\nPitfall: REQUIRES_NEW holds TWO connections simultaneously (outer is suspended, inner needs its own). Under high load, this can exhaust the connection pool.\n\nSelf-invocation trap: calling @Transactional method from the same class bypasses the proxy → propagation is ignored.",
+    "question": "Where should a Spring transaction boundary be, and when is `REQUIRES_NEW` justified?",
+    "shortAnswer": "I place the transaction around one database consistency boundary, usually a public service operation, and keep slow remote calls outside when possible. `REQUIRED` joins or creates the usual transaction. `REQUIRES_NEW` suspends it and starts an independent physical transaction, so I use it only when the inner result must commit independently and that partial outcome is acceptable. It needs another connection and can exhaust the pool under load.",
+    "detailedAnswer": "Propagation describes how a method participates when a transaction may already exist:\n\n- `REQUIRED` joins the current transaction or creates one. An inner scope that marks rollback-only can cause `UnexpectedRollbackException` when the outer caller tries to commit.\n- `REQUIRES_NEW` suspends the outer transaction and opens an independent physical transaction. Its commit survives an outer rollback, which is useful only when the domain accepts that split—for example, recording an attempt independently of a failed business operation. It does not guarantee that an audit survives process/database failure.\n- `NESTED` typically uses JDBC savepoints inside one physical transaction and is not equivalent to `REQUIRES_NEW`; support depends on the transaction manager/resource.\n- `SUPPORTS`, `MANDATORY`, `NOT_SUPPORTED` and `NEVER` express other participation constraints and should be used for a clear boundary, not memorized decoration.\n\nIn default proxy mode, only calls that pass through the proxy are advised; self-invocation does not start a different propagation. Imperative transactions are thread-bound and do not automatically flow to a newly created thread. By default, runtime exceptions and errors roll back, while checked exceptions require an explicit rule unless global defaults have been changed.\n\nKeep the transaction short. A remote API call inside it holds locks/connections and cannot be made atomic merely by the annotation; outbox/saga/idempotency patterns may be more appropriate.",
     "keyPoints": [
-      "REQUIRED joins existing TX (default, safest)",
-      "REQUIRES_NEW creates independent TX (use sparingly)",
-      "Self-invocation bypasses proxy — propagation ignored",
-      "REQUIRES_NEW holds 2 connections simultaneously",
-      "Audit logging is classic REQUIRES_NEW use case"
+      "Transaction boundaries follow a business consistency unit",
+      "REQUIRES_NEW commits independently and changes failure semantics",
+      "REQUIRES_NEW needs another connection while the outer one remains bound",
+      "Default proxy mode does not advise self-invocation",
+      "Remote calls are not made transactional by `@Transactional`"
     ],
     "redFlags": [
-      "Only knowing REQUIRED and REQUIRES_NEW",
-      "Not aware of self-invocation trap",
-      "Using REQUIRES_NEW everywhere \"for safety\"",
-      "Cannot explain connection pool implications"
+      "Using REQUIRES_NEW as a generic fix for rollback problems",
+      "Ignoring independent-commit inconsistency and pool sizing",
+      "Expecting self-invocation to apply a new propagation mode",
+      "Holding a database transaction open across unbounded network work"
     ],
     "followUps": [
       {
-        "question": "What is the self-invocation problem with @Transactional?",
-        "hint": "Calling @Transactional from same class skips the proxy. Solution: extract to separate bean."
+        "question": "Why can REQUIRES_NEW exhaust a connection pool?",
+        "hint": "The outer transaction keeps its connection while each thread requests another for the independent inner transaction."
       },
       {
-        "question": "What happens to REQUIRES_NEW if the outer transaction rolls back?",
-        "hint": "Inner already committed — it is independent. This can cause inconsistency."
+        "question": "What rolls back by default when a Spring transactional method throws a checked exception?",
+        "hint": "The traditional default does not roll back for checked exceptions; configure a rollback rule or a global all-exceptions policy when that is the intended contract."
       },
       {
-        "question": "How does this compare to Jakarta EE CMT?",
-        "hint": "Same concepts: REQUIRED, REQUIRES_NEW, NOT_SUPPORTED. Different mechanism (EJB interceptors vs Spring AOP)."
+        "question": "How would you publish an event only after a database change commits?",
+        "hint": "A transactional outbox is robust across crashes; an after-commit callback alone still has a publish failure window."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 CMT transaction management",
-      "description": "Used NOT_SUPPORTED for orchestrators calling external services (LDAP, Moodle) to avoid holding JDBC connections during network I/O. REQUIRES_NEW equivalent for audit trail persistence."
+      "title": "Transfer from Jakarta EE container-managed transactions",
+      "description": "Production CMT experience includes REQUIRED/REQUIRES_NEW-style propagation and using NOT_SUPPORTED around orchestration with remote systems. Spring proxy behavior and rollback configuration are framework-specific differences."
     }
   },
   {
@@ -119,69 +115,78 @@
     "topic": "spring",
     "subtopic": "spring-rest",
     "difficulty": "INTERMEDIATE",
-    "question": "How do you handle errors in a Spring Boot REST API?",
-    "shortAnswer": "I use @ControllerAdvice with @ExceptionHandler methods that map domain exceptions to appropriate HTTP status codes and a consistent error response DTO. Business rule violations → 409, validation errors → 400, not found → 404, unexpected → 500 with no stack trace exposed.",
-    "detailedAnswer": "Error handling strategy:\n\n1. Custom exception hierarchy:\n- BusinessException → 409 Conflict\n- NotFoundException → 404\n- ValidationException → 400\n- (unexpected) → 500\n\n2. @ControllerAdvice centralizes handling:\n```java\n@ControllerAdvice\npublic class GlobalExceptionHandler {\n    @ExceptionHandler(NotFoundException.class)\n    public ResponseEntity<ErrorResponse> handle(NotFoundException ex) {\n        return ResponseEntity.status(404)\n            .body(new ErrorResponse(ex.getMessage(), \"NOT_FOUND\"));\n    }\n}\n```\n\n3. Consistent error response DTO:\n```json\n{\"message\": \"Turma not found\", \"code\": \"NOT_FOUND\", \"timestamp\": \"...\"}\n```\n\n4. Never expose stack traces in production\n5. Log full details server-side for debugging\n6. Bean Validation errors → collect all violations → 400 with field-level errors",
+    "question": "How do you design consistent and safe error handling for a Spring Boot HTTP API?",
+    "shortAnswer": "I centralize transport mapping with `@RestControllerAdvice` or `ResponseEntityExceptionHandler`, while domain code throws domain-level failures rather than HTTP exceptions. Each failure maps to a status based on API semantics and a stable machine-readable problem type/code. Spring's `ProblemDetail` supports RFC 9457. I expose actionable client detail, keep stack traces and internals in secured logs, and attach a correlation identifier.",
+    "detailedAnswer": "A useful error contract has two layers:\n\n1. The domain/application layer expresses failures such as not found, invalid transition, conflict or dependency unavailable without knowing controller response types.\n2. A centralized advice maps them to HTTP status, headers and a stable body. Spring's `ProblemDetail` can represent RFC 9457 fields such as `type`, `title`, `status`, `detail` and `instance`, plus documented extensions such as validation violations or a trace ID.\n\nStatus is contextual:\n- malformed input or Bean Validation commonly maps to 400;\n- missing resource to 404;\n- an update conflicting with current resource state may map to 409;\n- authentication/authorization to 401/403;\n- an unexpected defect to 500 with a generic client message.\n\nNot every business rule is automatically 409. Define the contract and make clients depend on a stable type/code rather than parsing human text. Log exceptions once at the boundary with request correlation and safe context; avoid raw request bodies, credentials and personal data. For transient overload or dependency failures, consider 503 and a meaningful `Retry-After` only when retry guidance is honest.",
     "keyPoints": [
-      "@ControllerAdvice centralizes exception handling",
-      "Map domain exceptions to HTTP status codes semantically",
-      "Consistent error response DTO (message, code, timestamp)",
-      "Never expose stack traces to clients",
-      "Bean Validation → collect all field errors"
+      "Keep domain failures independent from HTTP transport types",
+      "Centralize mappings and use stable machine-readable problem identifiers",
+      "Choose status codes from the specific HTTP semantics",
+      "Do not expose stack traces or sensitive diagnostic data",
+      "Test status, body contract and content type for error paths"
     ],
     "redFlags": [
-      "Letting Spring default error page show stack traces",
-      "Using 500 for everything",
-      "Not having centralized error handling",
-      "Catching exceptions in every controller method individually"
+      "Returning 500 for every failure",
+      "Returning an exception message or stack trace directly",
+      "Forcing clients to parse localized human text",
+      "Catching the same exception independently in every controller"
     ],
     "followUps": [
       {
-        "question": "How do you handle validation errors with field-level detail?",
-        "hint": "MethodArgumentNotValidException → iterate FieldErrors → return map of field→message."
+        "question": "What should a validation-error response contain?",
+        "hint": "A stable problem type plus structured violations such as field/path and code; avoid exposing rejected secrets or relying only on prose."
       },
       {
-        "question": "How do you prevent leaking internal details in error messages?",
-        "hint": "Generic messages for 500s, specific only for client errors."
+        "question": "When is 409 Conflict more appropriate than 400?",
+        "hint": "When the representation is understood but cannot be applied because it conflicts with the current state, such as a stale version or invalid state transition."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transfer from production HTTP error contracts",
+      "description": "Production JAX-RS error mapping and domain-exception experience transfers to status selection, safe payloads and centralized handling. Spring ProblemDetail and controller-advice behavior are the framework-specific layer."
+    }
   },
   {
     "id": "interview-spring-5",
     "topic": "spring",
     "subtopic": "spring-data",
     "difficulty": "INTERMEDIATE",
-    "question": "What is the N+1 problem and how do you solve it in Spring Data JPA?",
-    "shortAnswer": "N+1 means loading a parent entity then issuing 1 query per child relationship. For 100 orders with items, that is 1 + 100 = 101 queries. Solutions: JOIN FETCH in JPQL, @EntityGraph on repository methods, batch fetching (@BatchSize), or DTOs with custom queries.",
-    "detailedAnswer": "The N+1 problem:\n1. Query loads N parent entities (1 query)\n2. Accessing a lazy relationship on each parent → 1 query per parent (N queries)\n3. Total: N+1 queries instead of 1-2\n\nSolutions (in order of preference):\n1. JOIN FETCH in JPQL: `SELECT o FROM Order o JOIN FETCH o.items`\n2. @EntityGraph: `@EntityGraph(attributePaths = {\"items\"})` on repository method\n3. @BatchSize(size=50): Hibernate loads lazy collections in batches\n4. DTO projection: custom query returning only needed fields (no entities)\n\nTrade-offs:\n- JOIN FETCH can cause cartesian product with multiple collections\n- @EntityGraph is cleaner but limited (one level deep easily)\n- @BatchSize is global — applies everywhere\n- DTO projection is most efficient but loses entity features\n\nDetection: enable Hibernate SQL logging in dev, use tools like p6spy, or watch slow query logs.",
+    "question": "How do you diagnose an N+1 problem in Spring Data JPA and choose a fix that still paginates correctly?",
+    "clarifyingQuestions": [
+      "Which repository call and relationship access generate the repeated queries?",
+      "Is the endpoint returning entities, projections or a paginated DTO?",
+      "How many SQL statements and result rows does one request produce?"
+    ],
+    "shortAnswer": "I confirm N+1 from one request's SQL count rather than changing mappings blindly. For a bounded to-one graph I may use an entity graph or fetch join; for paginated to-many data I often page parent IDs first and fetch children separately, use batch fetching, or return a projection. I compare query count and row multiplication because one giant fetch join can be slower or make pagination incorrect.",
+    "detailedAnswer": "Spring Data offers several fetch-plan tools, each with limits:\n\n- `@EntityGraph` or JPQL `join fetch` can load required associations for a particular repository method.\n- Batch fetching reduces repeated lazy loads without joining every child into one result.\n- Interface/class DTO projections select the fields needed by a read endpoint and avoid exposing managed entities.\n- A two-step query can fetch a page of parent IDs, then load needed relationships for those IDs.\n\nA collection fetch join with `Pageable` is risky because SQL rows represent parent-child pairs, not distinct parents. Depending on query/provider, pagination can be performed in memory or produce an unexpected page. Fetching multiple to-many collections can multiply rows and may hit provider-specific multiple-bag limits.\n\nDetection should use SQL/query counts in a test or APM trace. Add an integration regression test that executes the access pattern and, where practical, asserts a query-count budget or at least verifies the intended fetch plan. Avoid globally setting relationships to EAGER; it applies to unrelated use cases and can create a different performance problem.",
     "keyPoints": [
-      "1 + N queries instead of 1-2 optimal queries",
-      "JOIN FETCH is the standard fix for single relationships",
-      "@EntityGraph for declarative fetching",
-      "Cartesian product risk with multiple JOIN FETCHes",
-      "DTO projections avoid the problem entirely"
+      "Confirm the repeated access pattern before changing mappings",
+      "Entity graphs and fetch joins are per-use-case tools",
+      "To-many fetch joins need special care with Pageable",
+      "Batching, projections and two-step loading preserve bounded result sets",
+      "Measure result rows and memory as well as query count"
     ],
     "redFlags": [
-      "Not knowing what N+1 is",
-      "\"I just eager-load everything\" (causes different problems)",
-      "Cannot explain detection methods",
-      "Only knowing one solution"
+      "Changing every relationship to EAGER",
+      "Fetch-joining multiple collections without measuring row growth",
+      "Combining a to-many fetch join with pagination without verifying generated SQL",
+      "Claiming N+1 is fixed solely because one trace got faster"
     ],
     "followUps": [
       {
-        "question": "What happens if you JOIN FETCH two collections?",
-        "hint": "Cartesian product — use @BatchSize for the second, or separate queries."
+        "question": "Why can `join fetch` plus `Pageable` be incorrect or inefficient?",
+        "hint": "The SQL limit applies to joined rows rather than distinct parent entities, so providers may warn, paginate in memory or produce surprising pages."
       },
       {
-        "question": "How do you detect N+1 in production?",
-        "hint": "SQL logging, APM tools, Hibernate statistics, slow query logs."
+        "question": "How would you keep this performance bug from returning?",
+        "hint": "Add an integration test for the real access path, observe query count/shape, and keep APM alerts or dashboards for endpoint latency and database calls."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 N+1 detection via Glowroot",
-      "description": "Found a page doing 48,000 queries (N+1 on enrollment→student→person chain). Fixed with LATERAL JOIN and DTO projection. Response time: 48s → 2s."
+      "title": "Transfer from Hibernate/JPA performance work",
+      "description": "For about 26,705 enrollment records in a period, a listing generated roughly 48,000 relationship queries. Projections, pagination and query restructuring reduced it to about 10 queries and improved latency from about 16 minutes to about 2 seconds. The diagnosis transfers directly; Spring Data annotations are the framework-specific interface."
     }
   },
   {
@@ -189,36 +194,36 @@
     "topic": "spring",
     "subtopic": "spring-testing",
     "difficulty": "INTERMEDIATE",
-    "question": "How do you test a Spring Boot application? What is your testing strategy?",
-    "shortAnswer": "Testing pyramid: unit tests (fast, no Spring context, Mockito) for business logic, integration tests (@SpringBootTest or @DataJpaTest with Testcontainers) for persistence and API, and minimal E2E tests for critical paths. I aim for 80% coverage on business logic, not on boilerplate.",
-    "detailedAnswer": "Testing strategy (pyramid):\n\n1. Unit tests (70%) — fast, isolated:\n- Service layer with mocked repositories\n- Pure business logic, validation\n- @ExtendWith(MockitoExtension.class)\n- No Spring context needed\n\n2. Integration tests (25%) — verify wiring:\n- @DataJpaTest — JPA repositories with real DB (Testcontainers)\n- @WebMvcTest — controllers with MockMvc\n- @SpringBootTest — full context for critical flows\n\n3. E2E tests (5%) — happy paths:\n- Full application running\n- REST API calls end-to-end\n- Only critical business flows\n\nKey practices:\n- Testcontainers for real PostgreSQL (not H2)\n- Test data builders (not random data)\n- One assertion per concept\n- Test behavior, not implementation\n- @Transactional on integration tests for rollback",
+    "question": "When do you use a plain unit test, a Spring test slice and `@SpringBootTest`?",
+    "shortAnswer": "I use plain JUnit/Mockito for business logic that does not need container behavior. A slice such as `@WebMvcTest` or `@DataJpaTest` loads a focused part of Spring to verify MVC/security or persistence wiring. `@SpringBootTest` is for a smaller number of flows that need the full application context. I choose the narrowest scope that can reveal the failure and use the production database engine when database behavior matters.",
+    "detailedAnswer": "The annotations answer different questions:\n\n- **Plain unit test**: instantiate the class and supply fakes/mocks. Best for fast policy and transformation tests; loading Spring here adds time without confidence.\n- **`@WebMvcTest`**: focused MVC infrastructure such as controllers, serialization, validation and configured web security. Collaborating services are typically supplied as test doubles. It does not prove repository/database behavior.\n- **`@DataJpaTest`**: focused repositories, mappings and persistence behavior. Configure a real PostgreSQL container when dialect, native SQL or migrations matter; an embedded database is not inherently wrong for database-agnostic tests, but it cannot approve PostgreSQL-specific behavior.\n- **`@SpringBootTest`**: full application configuration, useful for selected cross-layer integration or startup checks. It is slower and a passing context-load test alone proves little.\n\nTestcontainers can provide controlled infrastructure, while Spring Boot service connections can simplify dynamic connection properties. State isolation still needs design. Transactional test rollback may not cover work performed in another thread or through a real server request using another transaction.\n\nAvoid fixed test-percentage rules. Let risk determine scope, and keep failures diagnosable by not using the full context for every case.",
     "keyPoints": [
-      "Testing pyramid: unit > integration > E2E",
-      "Mockito for unit tests (no Spring context needed)",
-      "Testcontainers for real database in integration tests",
-      "Test behavior and outcomes, not implementation details",
-      "@DataJpaTest, @WebMvcTest for sliced context"
+      "Plain unit tests do not need a Spring context",
+      "Slices verify a focused framework boundary",
+      "SpringBootTest verifies selected full-context interactions",
+      "Use the real database engine for engine-specific claims",
+      "Transactional test annotations do not roll back every cross-thread/server effect"
     ],
     "redFlags": [
-      "\"I only write integration tests\" (slow suite)",
-      "\"I use H2 for tests\" (misses PostgreSQL-specific behavior)",
-      "No clear strategy — tests are random",
-      "Testing implementation details (verify every method call)"
+      "Using SpringBootTest for every unit-level rule",
+      "Assuming WebMvcTest proves service or persistence behavior",
+      "Assuming an embedded database is identical to PostgreSQL",
+      "Relying on rollback without understanding transaction/thread boundaries"
     ],
     "followUps": [
       {
-        "question": "Why Testcontainers instead of H2?",
-        "hint": "H2 differs in SQL dialect, JSON support, window functions. Real DB catches real bugs."
+        "question": "What does a WebMvcTest give you that a direct controller unit test does not?",
+        "hint": "Real MVC request mapping, argument conversion, validation, serialization and configured filter/security behavior within the slice."
       },
       {
-        "question": "How do you handle test data setup?",
-        "hint": "Builders/factories, not random. Each test creates what it needs."
+        "question": "When can an integration test leave data behind despite `@Transactional`?",
+        "hint": "When application work runs in another transaction or thread, such as a real HTTP server request or asynchronous processing."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 testing with JUnit 5 + Mockito",
-      "description": "Unit tests for business logic (900+ tests), Weld-JUnit for CDI integration. H2 for simple JPQL, real PostgreSQL for native queries and complex scenarios."
+      "title": "Transfer from JUnit, Mockito and CDI integration testing",
+      "description": "Production tests separate plain business-unit tests, CDI wiring tests and PostgreSQL-backed query tests. Spring slices and full-context annotations apply the same scope decision through Spring-specific tooling."
     }
   },
   {
@@ -226,36 +231,36 @@
     "topic": "spring",
     "subtopic": "spring-config",
     "difficulty": "SENIOR",
-    "question": "How do you manage configuration across different environments?",
-    "shortAnswer": "Profile-based configuration (application-{profile}.yml) for environment-specific values, externalized config via environment variables for secrets (never in code), and Spring Cloud Config or Kubernetes ConfigMaps for centralized management. Sensible defaults in the base application.yml.",
-    "detailedAnswer": "Configuration hierarchy (lowest to highest priority):\n1. application.yml — sensible defaults\n2. application-{profile}.yml — environment overrides\n3. Environment variables — secrets and deployment-specific\n4. Command line arguments — emergency overrides\n\nPrinciples:\n- Secrets NEVER in source code (env vars, Vault, K8s secrets)\n- Base config has safe defaults (timeouts, pool sizes)\n- Profile activation via SPRING_PROFILES_ACTIVE env var\n- 12-factor: config in environment, not code\n\nFor microservices:\n- Spring Cloud Config Server for centralized config\n- Kubernetes ConfigMaps/Secrets mounted as files\n- Feature flags via config (not code branches)\n\nWhat I configure per environment:\n- Database URLs and credentials\n- External service endpoints\n- Log levels\n- Feature flags\n- Pool sizes and timeouts",
+    "question": "How do you make Spring Boot configuration safe and predictable across environments?",
+    "shortAnswer": "I keep non-secret defaults with the application, bind related settings into validated `@ConfigurationProperties`, and supply environment-specific values through the deployment platform. I do not summarize Spring's precedence as a four-item rule: it has a documented property-source order, and command-line, system, environment and config-data sources can override one another. I test the effective configuration and manage secrets with a dedicated secret mechanism and rotation plan.",
+    "detailedAnswer": "A robust approach separates ownership and validates the final result:\n\n- Keep safe, portable defaults in packaged configuration. Use profile-specific documents only for coherent groups of settings, not as a secret store or a copy of every environment.\n- Bind structured settings with `@ConfigurationProperties` and Bean Validation so a missing URL, invalid duration or negative pool size fails startup with a useful message.\n- Follow Spring Boot's documented property-source precedence. Command-line arguments have high precedence over config data, while system properties and environment variables can override packaged files; tests and developer tools add other sources. Diagnose the effective origin rather than relying on a simplified remembered list.\n- Use Kubernetes ConfigMaps or a config service for ordinary configuration and a secret manager/platform Secret with least privilege for credentials. A Kubernetes Secret is not encrypted merely because it is base64 encoded.\n- Decide whether changes require restart, context refresh or dynamic lookup. Environment variables do not update inside a running process; mounted files may update but the application must reload them safely.\n- Keep immutable environment differences outside the artifact and promote the same artifact digest between stages.\n\nProfiles are not a substitute for testing combinations. Add startup/contract tests for required production configuration and expose only safe diagnostic metadata.",
     "keyPoints": [
-      "Profile-based yml for environment differences",
-      "Secrets in env vars, never in code",
-      "Safe defaults in base configuration",
-      "12-factor: environment determines behavior",
-      "Spring Cloud Config or K8s ConfigMaps for centralized management"
+      "Use typed, validated configuration properties",
+      "Rely on documented property-source precedence, not an oversimplified list",
+      "Separate ordinary configuration from secret management",
+      "Define restart or reload behavior for rotated values",
+      "Promote the same artifact with externalized environment settings"
     ],
     "redFlags": [
-      "Hardcoding connection strings",
-      "Committing secrets to version control",
-      "No strategy — different config files copied manually",
-      "\"We use the same config everywhere\""
+      "Committing credentials in profile files",
+      "Using unvalidated string lookups throughout business code",
+      "Assuming changed environment variables update a running JVM",
+      "Using profiles to hide untested combinations and precedence conflicts"
     ],
     "followUps": [
       {
-        "question": "How do you handle secrets rotation without redeployment?",
-        "hint": "Spring Cloud Vault with lease renewal, or K8s secrets with pod restart policy."
+        "question": "How do you find which property source supplied an unexpected value?",
+        "hint": "Use safe configuration diagnostics/Actuator origin information in a secured environment and inspect deployment inputs; do not expose secret values."
       },
       {
-        "question": "What is your strategy for feature flags?",
-        "hint": "Property-driven, not code branches. Toggles per environment."
+        "question": "Can a Kubernetes Secret rotate without restarting the application?",
+        "hint": "It depends on delivery: environment variables require restart, mounted content may update, and the application/client must support safe reload or lease renewal."
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 MicroProfile Config",
-      "description": "Used MicroProfile Config with properties file in WAR as defaults + environment variable overrides in OKD. Same principle as Spring profiles."
+      "title": "Transfer from MicroProfile Config and OKD",
+      "description": "Production deployments combine packaged safe defaults with OKD-provided environment configuration. Spring Boot adds its own binding and precedence model, which must be learned and tested explicitly."
     }
   },
   {
@@ -263,36 +268,36 @@
     "topic": "spring",
     "subtopic": "spring-actuator",
     "difficulty": "INTERMEDIATE",
-    "question": "What is Spring Boot Actuator and how would you use it in production?",
-    "shortAnswer": "Actuator exposes operational endpoints: /health (liveness/readiness), /metrics (JVM, HTTP, custom), /info, /env. In production, I expose only /health publicly for K8s probes, secure other endpoints, and integrate /metrics with Prometheus+Grafana for monitoring.",
-    "detailedAnswer": "Spring Boot Actuator provides production-ready features:\n\n1. Health checks (/actuator/health):\n- Liveness: is the app alive? (K8s restarts if not)\n- Readiness: can it accept traffic? (K8s removes from load balancer)\n- Custom health indicators for critical dependencies\n\n2. Metrics (/actuator/metrics):\n- JVM: heap, GC, threads\n- HTTP: request count, latency percentiles\n- Custom: business metrics (orders/min, enrollments/day)\n- Export to Prometheus, Datadog, etc.\n\n3. Info (/actuator/info): build version, git commit\n\nSecurity:\n- /health/liveness and /health/readiness → public (K8s needs them)\n- Everything else → authenticated or internal network only\n- Never expose /env or /heapdump publicly\n\nKubernetes integration:\n```yaml\nlivenessProbe:\n  httpGet: { path: /actuator/health/liveness, port: 8080 }\nreadinessProbe:\n  httpGet: { path: /actuator/health/readiness, port: 8080 }\n```",
+    "question": "How would you expose Spring Boot Actuator safely and use it for Kubernetes health and observability?",
+    "shortAnswer": "I expose only the endpoints operations actually needs, secure them by network and authorization policy, and avoid publishing sensitive environment or heap data. Actuator provides health groups for liveness and readiness and Micrometer-backed metrics. Liveness should reflect internal recoverability, not a shared dependency. Readiness dependency checks need a system-level decision because making every replica unready can remove all Service endpoints.",
+    "detailedAnswer": "Actuator endpoints are operational APIs, not automatically public dashboards. By default, Spring Boot exposes only health over HTTP/JMX; additional endpoints must be enabled/exposed deliberately and secured. Defining a custom `SecurityFilterChain` also means the application owns the Actuator access rules. Endpoints such as `env`, `configprops`, loggers and heap dump can reveal or alter sensitive state even when some values are sanitized.\n\nFor Kubernetes, Boot exposes health groups such as `/actuator/health/liveness` and `/actuator/health/readiness` from application availability state. Liveness should not depend on an external database: restart cannot repair it and simultaneous restarts amplify failure. Boot does not add external health indicators to readiness by default. Add a dependency only after deciding that an instance with that dependency unavailable should receive no traffic; a shared failure can otherwise make every endpoint unready.\n\nIf management runs on a separate port/context, its probe can succeed while the main web connector is broken. Exposing additional probe paths on the main server port can test the same infrastructure.\n\nMetrics use Micrometer and can be exported to a monitoring system, where request latency distributions, errors, JVM/GC, pools and business signals need useful tags without unbounded cardinality. Health indicates current serving state; metrics and alerts explain trends and degradation. Do not include secrets, user IDs or per-request values as metric tags.",
     "keyPoints": [
-      "Health checks for K8s liveness/readiness probes",
-      "Metrics for observability (Prometheus, Grafana)",
-      "Secure sensitive endpoints (env, heapdump)",
-      "Custom health indicators for critical dependencies",
-      "Custom metrics for business KPIs"
+      "Expose and authorize only required Actuator endpoints",
+      "Liveness represents internal recoverability, not shared dependency health",
+      "Readiness dependency checks can remove every replica from traffic",
+      "Probe the main serving path when a separate management port could hide failure",
+      "Control metric-tag cardinality and sensitive data"
     ],
     "redFlags": [
-      "Exposing all actuator endpoints publicly",
-      "Not knowing the liveness vs readiness distinction",
-      "\"I never used monitoring in production\"",
-      "No custom health checks for database or external services"
+      "Exposing all Actuator endpoints publicly",
+      "Adding a shared database to liveness",
+      "Assuming the management port proves the main HTTP port is healthy",
+      "Using user IDs, URLs with identifiers or request IDs as metric tags"
     ],
     "followUps": [
       {
-        "question": "What is the difference between liveness and readiness?",
-        "hint": "Liveness: should restart. Readiness: should stop sending traffic. Different failure modes."
+        "question": "Why does Spring Boot omit extra dependency indicators from readiness by default?",
+        "hint": "A shared dependency failure could make every application instance unready and remove all routing targets; inclusion is a system-specific choice."
       },
       {
-        "question": "How would you add a custom health check?",
-        "hint": "Implement HealthIndicator, return Health.up() or Health.down() with details."
+        "question": "Which Actuator endpoints would you expose to the public internet?",
+        "hint": "Usually none directly; even health detail should be minimized and access routed through the platform's internal probe/monitoring controls."
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 health probes in OKD",
-      "description": "Configured MicroProfile Health (equivalent to Actuator) for liveness and readiness in OKD. Readiness includes database check; liveness does not include external dependencies."
+      "title": "Transfer from MicroProfile Health in OKD",
+      "description": "Production health endpoints distinguish application liveness from traffic readiness in OKD. Actuator health groups and Micrometer are the Spring-specific implementation to validate."
     }
   }
 ]

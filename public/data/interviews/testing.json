@@ -4,30 +4,36 @@
     "topic": "testing",
     "subtopic": "test-pyramid",
     "difficulty": "INTERMEDIATE",
-    "question": "Describe your testing strategy. What is the testing pyramid?",
-    "shortAnswer": "Testing pyramid: many fast unit tests (business logic, validation), fewer integration tests (DB, API), minimal E2E. In SGN3: 900+ unit tests with Mockito for Business layer, Weld-JUnit for CDI context, real PostgreSQL for native query tests. I test behavior, not implementation — verify outcomes, not internal method calls.",
-    "detailedAnswer": "Testing pyramid in practice:\n\n**Unit tests (70%)** — fast, isolated, no infrastructure:\n- Business logic: given these inputs, expect this output/exception\n- Validation rules: each rule tested independently\n- Mock repositories, mock external services\n- Run in milliseconds, can run 900+ in seconds\n\n**Integration tests (25%)** — verify wiring:\n- Repository tests with real PostgreSQL (native queries especially)\n- API endpoint tests (verifying HTTP status, response shape)\n- CDI context tests (Weld-JUnit) for injection graph\n\n**E2E tests (5%)** — critical paths only:\n- Full request flow from UI to DB\n- Only for high-value scenarios (enrollment, certification)\n\nKey principles:\n- Test behavior, not implementation (what it does, not how)\n- Each test verifies ONE scenario\n- Fast feedback: unit tests first, integration on CI\n- Test data: builders with defaults, not random data\n- No test should depend on another test's state",
+    "question": "How do you build a testing strategy for a service rather than just targeting a coverage number?",
+    "shortAnswer": "I start from risks and feedback speed. Pure business rules get many focused unit tests; persistence, serialization and framework wiring get integration tests against realistic components; a small set of end-to-end or acceptance tests protects critical journeys. The pyramid is a heuristic, not a fixed percentage. I track escaped defects, flakiness and suite duration alongside coverage, because lines executed do not prove useful assertions.",
+    "detailedAnswer": "A strategy maps failure modes to the cheapest test that can detect them with confidence:\n\n- **Unit tests**: calculations, validation, state transitions and error policy with dependencies replaced at stable boundaries. They should be fast and make failures easy to localize.\n- **Component/integration tests**: SQL mappings, migrations, HTTP serialization, security rules, dependency configuration and message contracts using the relevant framework and infrastructure.\n- **Contract tests**: assumptions between independently deployed API or event producers and consumers.\n- **End-to-end tests**: a few business-critical journeys through the deployed stack. They catch wiring and environment issues but are slower and harder to diagnose.\n- **Production verification**: health checks, synthetic probes, canaries and monitoring complement pre-release tests; they do not replace them.\n\nThe right shape depends on architecture. A transformation library can be mostly unit-tested; a service dominated by database constraints needs more integration coverage. Coverage can identify unexecuted code, but useful goals are confidence in critical behavior, fast feedback, deterministic tests and visible gaps. Flaky tests should be owned and fixed or quarantined with a deadline, not normalized.",
     "keyPoints": [
-      "Pyramid: many unit, fewer integration, minimal E2E",
-      "Unit tests: mock dependencies, verify business logic",
-      "Integration: real database for query correctness",
-      "Test behavior (outcomes), not implementation (calls)",
-      "Each test independent — no shared mutable state"
+      "Choose tests from risks and feedback needs",
+      "The testing pyramid is a heuristic, not a mandatory ratio",
+      "Integration tests cover framework and infrastructure contracts",
+      "Coverage is a diagnostic metric, not proof of quality",
+      "Flakiness and feedback time are first-class suite health signals"
     ],
     "redFlags": [
-      "\"I only write integration tests\" (slow, brittle)",
-      "\"We test in production\" (no safety net)",
-      "Testing implementation details (verify every mock call)",
-      "No strategy — random tests without purpose"
+      "Using a coverage percentage as the entire strategy",
+      "Mocking persistence behavior that the test is meant to verify",
+      "Depending only on slow end-to-end tests for business rules",
+      "Accepting flaky tests as an unavoidable normal state"
     ],
     "followUps": [
-      { "question": "When do you use a real database vs mocking the repository?", "hint": "Mock for business logic tests. Real DB for native queries, complex JOINs, PG-specific syntax." },
-      { "question": "How do you handle test data setup?", "hint": "Builder pattern with defaults. Each test creates what it needs. No shared fixtures." }
+      {
+        "question": "Where would you test an authorization rule based on object ownership?",
+        "hint": "Unit-test policy cases and add an integration test proving the real request/method security wiring cannot bypass them."
+      },
+      {
+        "question": "What metrics tell you a test suite is getting unhealthy?",
+        "hint": "Flake rate, retry count, duration, failure localization, escaped defects and time spent maintaining brittle tests."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3: 900+ unit tests, JUnit 5 + Mockito",
-      "description": "Business layer tested with @InjectMocks + @Mock. Validation logic tested as pure functions. Native queries tested against real PostgreSQL. Weld-JUnit for CDI integration tests. ArchUnit for architectural rules (enforced at build time)."
+      "title": "SGN3 automated-test portfolio",
+      "description": "The codebase uses a large JUnit/Mockito business-layer suite, CDI integration tests, database-backed query tests and ArchUnit rules, selecting different test scopes for logic, wiring and architecture."
     }
   },
   {
@@ -35,25 +41,31 @@
     "topic": "testing",
     "subtopic": "test-junit",
     "difficulty": "INTERMEDIATE",
-    "question": "How do you structure a good unit test?",
-    "shortAnswer": "AAA pattern: Arrange (set up data and mocks), Act (call the method under test), Assert (verify the outcome). One scenario per test, descriptive name (should_X_when_Y), @Nested for grouping. I verify the observable outcome — not internal implementation details.",
-    "detailedAnswer": "Structure (AAA):\n```java\n@Test\n@DisplayName(\"should reject enrollment when turma is full\")\nvoid shouldRejectEnrollment_whenTurmaIsFull() {\n    // Arrange\n    var turma = TurmaBuilder.umaTurma().comVagas(0).build();\n    when(repository.find(anyLong())).thenReturn(turma);\n\n    // Act & Assert\n    var ex = assertThrows(SenaiException.class, \n        () -> business.matricular(dto));\n    assertEquals(\"turma.sem.vagas\", ex.getMensagem().getChave());\n}\n```\n\nPrinciples:\n1. **One scenario per test** — if it fails, you know exactly what broke\n2. **Descriptive name** — reads like a spec: should_behavior_when_condition\n3. **@Nested for grouping** — all tests for one method together\n4. **Mock only external dependencies** — not the class under test\n5. **Verify outcomes, not interactions** (unless the interaction IS the outcome)\n6. **Test data builders** — readable, reusable, with sensible defaults",
+    "question": "What makes a JUnit and Mockito unit test valuable and maintainable?",
+    "shortAnswer": "A good unit test communicates one behavior: a meaningful setup, one action and observable outcomes. I use descriptive names and builders so irrelevant details stay hidden, mock only genuine boundaries, and avoid verifying every internal call. One behavior can require several related assertions; the goal is a single diagnostic reason for failure, not mechanically one assertion statement.",
+    "detailedAnswer": "A clear test often follows Arrange–Act–Assert, but readability matters more than comments naming each phase:\n\n```java\n@Test\nvoid rejectsEnrollmentWhenClassIsFull() {\n    var courseClass = aCourseClass().withAvailableSeats(0).build();\n    when(repository.findById(42L)).thenReturn(Optional.of(courseClass));\n\n    var error = assertThrows(NoSeatAvailable.class,\n        () -> service.enroll(42L, studentId));\n\n    assertAll(\n        () -> assertEquals(42L, error.courseClassId()),\n        () -> verify(repository, never()).save(any())\n    );\n}\n```\n\nGuidelines:\n- Name the behavior and condition; do not repeat implementation method names without meaning.\n- Keep fixture data minimal but valid. Builders/factories help when models are large.\n- Mock a repository, clock or remote client when the unit's contract is the focus. Do not mock value objects or chains of internals merely to force a path.\n- Assert returned state, raised errors or durable commands. Verify interactions when the interaction is an observable responsibility, such as publishing an event or not saving invalid state.\n- Avoid overspecifying call order or exact internal calls unless order is part of the contract.\n- Parameterized tests are useful for a family of equivalent examples; separate tests are clearer for different behavior.\n\nPrivate methods are normally covered through public behavior. Extraction is justified when the hidden logic is an independent concept—not simply to make a private method directly testable.",
     "keyPoints": [
-      "AAA: Arrange, Act, Assert — clear separation",
-      "One scenario per test (descriptive name)",
-      "@Nested for method grouping, @DisplayName for readability",
-      "Verify outcomes over interactions",
-      "Builders for test data (readable, maintainable)"
+      "One test should communicate one behavior and failure reason",
+      "Several cohesive assertions can describe one outcome",
+      "Mock boundaries, not the internal implementation graph",
+      "Verify interactions only when they are observable responsibilities",
+      "Use builders and parameterized tests where they improve intent"
     ],
     "redFlags": [
-      "Tests that verify every mock interaction (brittle)",
-      "Multiple scenarios in one test (which assertion failed?)",
-      "Shared mutable state between tests (@BeforeAll with state)",
-      "No assertions (test that passes by existing)"
+      "Verifying every collaborator call regardless of behavior",
+      "Using lenient stubs to hide irrelevant or stale setup",
+      "Sharing mutable fixture state between tests",
+      "Changing production visibility only so a private helper can be tested directly"
     ],
     "followUps": [
-      { "question": "When IS it appropriate to verify interactions (verify calls)?", "hint": "When the interaction IS the behavior: 'should send email when enrollment confirmed.'" },
-      { "question": "How do you test private methods?", "hint": "You don't — test through the public API. If a private method needs direct testing, it should be extracted." }
+      {
+        "question": "When is Mockito `verify` the right assertion?",
+        "hint": "When sending or not sending a command/event is part of the unit's observable contract, not merely an implementation step."
+      },
+      {
+        "question": "What is the risk of `@InjectMocks` with a class that has many dependencies?",
+        "hint": "The test may conceal a design smell and constructor ambiguity; explicit construction makes the unit boundary visible."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
@@ -62,30 +74,41 @@
     "topic": "testing",
     "subtopic": "test-integration",
     "difficulty": "SENIOR",
-    "question": "How do you test code that depends on external systems (database, APIs)?",
-    "shortAnswer": "For database: real PostgreSQL (Testcontainers or shared test instance) — H2 misses PG-specific behavior. For external APIs: mock the HTTP client interface in unit tests, use WireMock or contract tests for integration. Never call real external services in tests — they're flaky, slow, and can have side effects.",
-    "detailedAnswer": "Strategy per dependency:\n\n**Database:**\n- Unit tests: mock Repository interface (test Business logic)\n- Integration tests: real PostgreSQL (catches SQL dialect issues, native queries)\n- In SGN3: H2 for simple JPQL, real PG for native queries (LATERAL JOIN, DISTINCT ON won't work in H2)\n\n**External APIs (Moodle, LDAP, VTEX):**\n- Unit tests: mock the RestClient interface (test Business logic around the call)\n- Integration tests: WireMock or recorded responses (verify serialization, error handling)\n- NEVER call real external services in CI (flaky, slow, side effects)\n\n**Message queues (JMS):**\n- Unit tests: mock JMS producer, verify message content\n- Integration tests: embedded broker or verify message structure\n\n**Key principle:** test YOUR code, not the external system. Mock at the boundary (interface), not deep inside.",
+    "question": "How do you use Testcontainers and other test doubles to verify database and external-system integrations?",
+    "clarifyingQuestions": [
+      "Which behavior belongs to our adapter and which belongs to the external provider?",
+      "Does the test require the exact production engine or merely a relational substitute?",
+      "How will state be isolated and failures be reproduced in CI?"
+    ],
+    "shortAnswer": "For PostgreSQL-specific mappings, queries and migrations, I run the real engine version with Testcontainers, apply production migrations and isolate test state. For HTTP dependencies, unit tests mock the client boundary, stub servers verify serialization and failure handling, and contract or controlled sandbox tests check provider assumptions. I avoid making the normal CI suite depend on an uncontrolled live service, while still allowing deliberate smoke tests where they add value.",
+    "detailedAnswer": "Use the narrowest realistic boundary that tests the risk:\n\n**Database**:\n- Unit-test business policy with a repository fake/mock when SQL is irrelevant.\n- Use a PostgreSQL container for native SQL, dialect behavior, constraints, transaction semantics and migrations. A lightweight substitute can still be useful for database-agnostic tests, but it cannot validate PostgreSQL-specific behavior.\n- Pin a deliberate database version, run the same migration path as production and make failures visible rather than auto-creating a different schema.\n- Isolate state with rollback, truncate/schema reset or a fresh container according to concurrency and transaction boundaries. Container reuse speeds a suite but does not itself guarantee isolation.\n\n**HTTP/API dependency**:\n- Mock the typed client in unit tests.\n- Use a stub server such as WireMock for request/response mapping, timeouts, malformed payloads, retries and status codes.\n- Use consumer/provider contract tests for independently deployed services.\n- A controlled provider sandbox or smoke test can validate credentials and real compatibility, but keep it separate from deterministic fast CI and make side effects explicit.\n\n**Messaging**:\n- Unit-test handler behavior directly.\n- Use the actual broker/container when acknowledgement, redelivery, ordering or transaction behavior is what the test must prove.\n\nTestcontainers improves environmental fidelity, not test design: readiness, deterministic fixtures, cleanup, parallel execution and actionable failure logs still need attention.",
     "keyPoints": [
-      "Real PostgreSQL for native queries (H2 misses PG features)",
-      "Mock at the boundary interface (not deep internals)",
-      "Never call real external services in CI",
-      "WireMock for HTTP integration tests",
-      "Test YOUR logic around the dependency, not the dependency itself"
+      "Use the real database engine for engine-specific behavior",
+      "Apply production migrations rather than a test-only schema",
+      "Container lifecycle and test-state isolation are separate concerns",
+      "Stub servers exercise failure paths without an uncontrolled dependency",
+      "Contracts and deliberate sandbox tests complement local doubles"
     ],
     "redFlags": [
-      "\"I use H2 for everything\" (misses PG-specific failures)",
-      "\"We call the real API in tests\" (flaky, slow)",
-      "Not testing error paths (timeout, 500, malformed response)",
-      "No distinction between unit and integration strategies"
+      "Assuming Testcontainers automatically isolates every test",
+      "Using an in-memory database to approve PostgreSQL-specific SQL",
+      "Calling an uncontrolled production-like API from every CI run",
+      "Testing only successful dependency responses"
     ],
     "followUps": [
-      { "question": "What do you do when H2 and PostgreSQL behave differently?", "hint": "Use real PG for that test. H2 doesn't support schemas, LATERAL, DISTINCT ON, JSONB." },
-      { "question": "How do you test timeout handling?", "hint": "WireMock with delay: verify the code handles SocketTimeoutException correctly." }
+      {
+        "question": "Why should migration scripts run in integration tests?",
+        "hint": "They verify that the deployed schema path—not a test-only auto-generated schema—supports the application queries and constraints."
+      },
+      {
+        "question": "How would you test retry behavior without making the suite slow?",
+        "hint": "Inject a controllable clock/backoff policy and use a stub that fails a defined number of times; do not wait real production intervals."
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 testing strategy for external dependencies",
-      "description": "Mock RestClient interfaces in unit tests. Real PostgreSQL for native queries (H2 fails on schemas, LATERAL JOIN). Never call Moodle/LDAP in CI. ArchUnit enforces that Repositories are the only DB access point (testable boundary)."
+      "title": "Production integration tests plus project Testcontainers",
+      "description": "Production work covers mocked integration boundaries and PostgreSQL-specific tests. The SinapiPRO project provides hands-on Testcontainers and migration evidence; that project usage should not be presented as company-production Testcontainers experience."
     }
   }
 ]

@@ -6,14 +6,15 @@
  * ============================================================
  *
  * Fonts: ReweMato (display), UnitRoundedOT (headings + body)
- * Since these are proprietary, we use the closest open alternatives:
+ * Both official families are proprietary. They remain first in the stack so
+ * licensed installations work, followed by the closest open alternatives:
  * - ReweMato → "Nunito" (rounded geometric display, same x-height)
  * - UnitRoundedOT → "Nunito Sans" (rounded sans, weight 400-700)
  *
  * Colors: primary #1c1c1c, background #f1f1f1, border #cccccc
  * Spacing: 8px base grid
- * Radius: 2px (very subtle!)
- * Shadows: inset bottom border style
+ * Radius: 8px inputs, 16–24px cards, 32px+ section shells
+ * Shadows: flat cards; elevation is reserved for overlays
  * Motion: ease
  * Breakpoints: 768, 920, 1024
  * ============================================================
@@ -27,19 +28,24 @@
   --color-on-primary: #ffffff;
   --color-background: #f1f1f1;
   --color-border: #cccccc;
+  --color-border-strong: #949494;
   --color-text: #1c1c1c;
 
   /* Extended palette (observed on REWE.de) */
   --color-red: #cc071e;           /* Brand red — header, CTAs */
   --color-red-hover: #a30619;
   --color-red-light: #fef2f3;
+  --color-teal: #22786e;
+  --color-teal-hover: #195f57;
+  --color-teal-light: #d7ebe9;
+  --color-mint: #e6f2f1;
   --color-white: #ffffff;
   --color-gray-50: #fafafa;
   --color-gray-100: #f1f1f1;
   --color-gray-200: #e5e5e5;
   --color-gray-300: #cccccc;
   --color-gray-400: #999999;
-  --color-gray-600: #666666;
+  --color-gray-600: #676767;
   --color-gray-800: #333333;
   --color-gray-900: #1c1c1c;
 
@@ -58,10 +64,10 @@
   --color-code-text: #cdd6f4;
 
   /* ===== TYPOGRAPHY (REWE.de exact tokens) ===== */
-  /* ReweMato → Nunito (rounded geometric, bold display) */
-  --font-display: 'Nunito', sans-serif;
-  /* UnitRoundedOT → Nunito Sans (rounded, clean body) */
-  --font-body: 'Nunito Sans', 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Official family first; Nunito is the licensed open-source fallback. */
+  --font-display: 'ReweMato', 'Nunito', 'Trebuchet MS', Arial, sans-serif;
+  /* Official family first; Nunito Sans mirrors Unit Rounded's friendly UI. */
+  --font-body: 'UnitRoundedOT', 'Nunito Sans', 'Trebuchet MS', Arial, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   /* Type scale (from extracted tokens) */
@@ -94,16 +100,19 @@
   --sp-9: 8rem;      /* 128px */
   --sp-10: 10rem;    /* 160px */
 
-  /* ===== RADIUS (REWE: very subtle — 2px) ===== */
+  /* ===== RADIUS ===== */
   --radius-sm: 2px;
   --radius-md: 4px;
   --radius-lg: 8px;
   --radius-xl: 12px;
+  --radius-control: 16px;
+  --radius-card: 24px;
+  --radius-section: 32px;
   --radius-pill: 100px;
 
-  /* ===== SHADOWS (REWE: inset bottom border) ===== */
-  --shadow-card: rgb(204, 204, 204) 0px -1px 0px 0px inset;
-  --shadow-elevated: rgb(204, 204, 204) 0px -1px 0px 0px inset;
+  /* ===== SHADOWS ===== */
+  --shadow-card: none;
+  --shadow-elevated: 0 4px 16px rgb(28 28 28 / 12%);
   --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.06);
 
   /* ===== MOTION (REWE: ease) ===== */

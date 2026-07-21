@@ -1,95 +1,179 @@
 [
   {
-    "id": "interview-concurrency-1",
+    "id": "interview-concurrency-threads-1",
     "topic": "concurrency",
     "subtopic": "conc-threads",
     "difficulty": "INTERMEDIATE",
-    "question": "What is the difference between a thread pool and creating threads manually?",
-    "shortAnswer": "Thread pools reuse a fixed set of threads (avoiding creation overhead), limit concurrency (preventing resource exhaustion), and provide lifecycle management. Manual thread creation is uncontrolled — under load, you can create thousands of threads that exhaust memory. In Jakarta EE, you must use ManagedExecutorService (container-managed) — never raw threads.",
-    "detailedAnswer": "Thread pools (ExecutorService):\n- Fixed number of threads reused across tasks\n- Queue for pending work when all threads are busy\n- Controlled concurrency — cannot exceed pool size\n- Lifecycle: shutdown, awaitTermination\n- Context propagation in Jakarta EE (security, transactions)\n\nManual threads (new Thread()):\n- No limit — can create thousands under load\n- No reuse — each thread has creation overhead (~1MB stack)\n- No queue — all start immediately\n- No lifecycle management\n- In Jakarta EE: FORBIDDEN — loses CDI context, transaction, security\n\nIn SGN3, the ArchUnit rule blocks manual thread creation. All async work goes through:\n1. JMS/MDB (preferred — durable, retry, DLQ)\n2. ManagedExecutorService (for CompletableFuture compositions)\n\nJava 21 Virtual Threads change the economics (lightweight, millions possible) but do not eliminate the need for bounded concurrency against shared resources (database, external APIs).",
+    "question": "How would you configure an ExecutorService for a production workload?",
+    "shortAnswer": "I start from the workload and the resource being protected. CPU-bound work usually needs concurrency near available cores; blocking work may justify more threads, but downstream connection and rate limits still cap useful concurrency. I choose queue bounds, rejection behavior, thread naming, failure reporting, and shutdown deliberately, then validate with load tests rather than relying on a universal pool-size formula.",
+    "detailedAnswer": "ExecutorService separates task submission from thread management, but its configuration is part of system capacity. A fixed pool with an unbounded queue can keep accepting work after service capacity is exceeded, turning overload into high latency and memory pressure. A bounded queue plus an explicit RejectedExecutionHandler makes overload behavior visible: reject, shed, block upstream through another mechanism, or run in the caller only when that consequence is understood.\n\nEstimate concurrency from CPU utilization, blocking ratio, downstream capacity, and latency targets, then measure. Name threads and surface uncaught failures so incidents are diagnosable. Define orderly shutdown: stop accepting work, wait for a bounded period, and decide how unfinished tasks are handled. In Jakarta EE or another managed environment, use its managed executor to preserve lifecycle and context. Virtual-thread-per-task executors follow different economics and should not be pooled to limit concurrency; resource limits remain explicit.",
     "keyPoints": [
-      "Thread pools: reuse, bounded concurrency, lifecycle management",
-      "Manual threads: uncontrolled, no reuse, resource exhaustion risk",
-      "Jakarta EE: MUST use ManagedExecutorService (context propagation)",
-      "JMS/MDB preferred for durable async in SGN3",
-      "Virtual Threads (Java 21) change thread cost, not concurrency limits"
+      "Pool, queue, and rejection policy form one capacity decision",
+      "Unbounded queues can convert overload into memory use and latency",
+      "Downstream limits constrain useful concurrency",
+      "Thread observability and shutdown semantics belong in production design"
     ],
     "redFlags": [
-      "\"I use new Thread() for background tasks\"",
-      "Not knowing why Jakarta EE prohibits raw threads",
-      "Confusing thread pool sizing with \"more is better\"",
-      "Not mentioning resource limits (DB connections, external APIs)"
+      "Using an unbounded queue without an overload analysis",
+      "Applying one thread-count formula to every workload",
+      "Ignoring rejected tasks, task exceptions, or executor shutdown"
     ],
     "followUps": [
-      { "question": "How do you size a thread pool?", "hint": "CPU-bound: cores. I/O-bound: cores × (1 + wait/compute ratio). But always measure." },
-      { "question": "What are Virtual Threads and do they replace thread pools?", "hint": "Lightweight threads (Java 21). Eliminate pool sizing for I/O tasks. Still need bounded access to shared resources." }
+      {
+        "question": "What can CallerRunsPolicy achieve, and what risk does it carry?",
+        "hint": "It can slow producers, but it also runs work on a possibly unsuitable caller thread."
+      },
+      {
+        "question": "How would you size a mixed CPU and blocking workload?",
+        "hint": "Separate workload classes where possible, account for downstream capacity, and measure."
+      },
+      {
+        "question": "What metrics would you expose for a thread pool?",
+        "hint": "Queue depth, active threads, completed and rejected tasks, wait time, run time, and saturation."
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN3 ManagedExecutorService + JMS",
-      "description": "All async processing uses JMS/MDB (128 MDBs for durable retry) or ManagedExecutorService (for CompletableFuture in REST integrations with Moodle/LDAP). Never raw threads — ArchUnit enforces this."
-    }
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
-    "id": "interview-concurrency-2",
+    "id": "interview-concurrency-sync-1",
+    "topic": "concurrency",
+    "subtopic": "conc-sync",
+    "difficulty": "INTERMEDIATE",
+    "question": "What guarantees do synchronized and volatile provide, and where do they differ?",
+    "shortAnswer": "A synchronized block provides mutual exclusion for the same monitor and a happens-before edge from an unlock to a later lock. A volatile write happens-before a later read of that variable and prevents relevant reorderings, but it does not make a read-modify-write sequence such as count++ atomic. I use volatile for independent state publication and locks when an invariant spans multiple operations or fields.",
+    "detailedAnswer": "Synchronization solves both coordination and visibility. Only one thread at a time executes code guarded by the same monitor, and changes made before releasing that monitor become visible to a thread that later acquires it. The lock object must therefore be shared consistently; synchronizing on different objects provides no common protection.\n\nVolatile reads and writes have memory-ordering semantics but no general critical section. It fits flags, safely published immutable snapshots, and state where each update is a single independent assignment. `count++` is read, add, and write, so volatile alone loses updates under contention. Use synchronized, Lock, or an atomic operation depending on the invariant. ReentrantLock adds timed and interruptible acquisition and multiple conditions, at the cost of explicit try/finally discipline. Choose the simplest construct that expresses the whole invariant.",
+    "keyPoints": [
+      "synchronized combines mutual exclusion with visibility",
+      "volatile provides publication and ordering for a variable, not compound atomicity",
+      "All participants must use the same synchronization protocol",
+      "The protected invariant determines the appropriate primitive"
+    ],
+    "redFlags": [
+      "Calling a volatile increment atomic",
+      "Synchronizing reads and writes on different monitor objects",
+      "Using a lock without releasing it in a finally block"
+    ],
+    "followUps": [
+      {
+        "question": "Can double-checked locking be correct in Java?",
+        "hint": "Yes, when the shared reference is volatile and construction does not leak this."
+      },
+      {
+        "question": "When would ReentrantLock be preferable to synchronized?",
+        "hint": "Timed or interruptible acquisition, multiple conditions, or a measured need for its features."
+      },
+      {
+        "question": "Does synchronized guarantee fairness?",
+        "hint": "No; scheduling and monitor acquisition do not provide a fairness contract."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-concurrency-completable-1",
+    "topic": "concurrency",
+    "subtopic": "conc-completable",
+    "difficulty": "SENIOR",
+    "question": "How would you compose parallel API calls with CompletableFuture without losing failure and timeout control?",
+    "shortAnswer": "I launch independent calls on an explicit executor appropriate to the environment, compose results with thenCombine or allOf, and define whether one failure should fail the whole operation or degrade a component. Network connect/read timeouts protect the actual I/O; orTimeout sets a future deadline but does not guarantee that underlying work stops. I also bound concurrency and preserve request context intentionally.",
+    "detailedAnswer": "CompletableFuture is useful when genuinely independent operations can overlap. `thenCombine` directly combines two results; `allOf` waits for an array of stages but returns `CompletableFuture<Void>`, so results still have to be collected. If no executor is supplied to async methods, they normally use the common ForkJoinPool, which may be inappropriate for blocking I/O or managed application contexts.\n\nFailure policy should be explicit. `exceptionally` supplies a fallback, `handle` observes success or failure, and `whenComplete` observes without transforming the result. Avoid hiding partial failure behind an empty value unless the domain permits degradation. `orTimeout` completes the CompletableFuture exceptionally when its deadline expires, but it is not proof that a socket call or remote request was cancelled; configure timeouts and cancellation in the I/O client too. `allOf` also does not automatically cancel sibling work. Apply an overall deadline, cap fan-out, propagate tracing/security context deliberately, and test partial and simultaneous failures.",
+    "keyPoints": [
+      "Use an explicit executor for workload and environment control",
+      "allOf waits but does not aggregate typed results or cancel siblings",
+      "Future deadlines complement rather than replace I/O timeouts",
+      "Partial-failure and context-propagation policies must be deliberate"
+    ],
+    "redFlags": [
+      "Running blocking I/O on the common pool without capacity analysis",
+      "Assuming orTimeout stops the underlying network operation",
+      "Creating one future per input in an unbounded collection",
+      "Converting every failure to null and losing diagnostic context"
+    ],
+    "followUps": [
+      {
+        "question": "What does allOf return, and how do you retrieve typed results?",
+        "hint": "It returns Void; collect or join the original futures after successful completion."
+      },
+      {
+        "question": "How would you cancel sibling work after one required call fails?",
+        "hint": "Coordinate cancellation explicitly and ensure the underlying client honors it."
+      },
+      {
+        "question": "Why might thenCompose be needed instead of thenApply?",
+        "hint": "thenCompose flattens a function that already returns a CompletionStage."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-concurrency-safety-1",
     "topic": "concurrency",
     "subtopic": "conc-safety",
     "difficulty": "SENIOR",
-    "question": "How do you ensure thread safety without using synchronized everywhere?",
-    "shortAnswer": "Prefer immutability (no shared mutable state = no synchronization needed), use thread-safe data structures (ConcurrentHashMap, AtomicReference), confine state to a single thread (thread-local, request-scoped), or use lock-free patterns (CAS operations). synchronized is the last resort — it creates contention.",
-    "detailedAnswer": "Thread safety strategies (from best to worst):\n\n1. **Immutability**: no mutable shared state → inherently thread-safe\n   - Use final fields, unmodifiable collections, records\n   - Best approach when possible\n\n2. **Confinement**: state belongs to one thread only\n   - @RequestScoped, @ViewScoped in Jakarta EE (one user = one instance)\n   - ThreadLocal for per-thread state\n   - @Stateless EJB: no instance state allowed (ArchUnit enforces in SGN3)\n\n3. **Thread-safe data structures**:\n   - ConcurrentHashMap (lock striping, not global lock)\n   - AtomicInteger, AtomicReference (CAS operations)\n   - CopyOnWriteArrayList (for read-heavy, write-rare)\n\n4. **Synchronization (last resort)**:\n   - synchronized blocks (smallest scope possible)\n   - ReentrantLock (tryLock, interruptible)\n   - Creates contention — limit scope\n\nSGN3 approach: @Stateless beans have no mutable fields (ArchUnit enforces). @ApplicationScoped beans with caches use ConcurrentHashMap. No synchronized blocks needed because the architecture prevents shared mutable state.",
+    "question": "How can you design for thread safety without placing one lock around everything?",
+    "shortAnswer": "I first reduce shared mutable state through immutability, confinement, and message passing. When state must be shared, I use a primitive that matches the invariant: atomics for small independent transitions, concurrent collections for their documented atomic operations, or a focused lock for multi-field consistency. Thread-safe components still need a thread-safe composition; separate atomic calls do not make a compound workflow atomic.",
+    "detailedAnswer": "The easiest state to synchronize is state that is not shared. Immutable snapshots can be safely published, request-local values are thread-confined, and queues can transfer ownership between workers. Stateless services are safe only if their collaborators and any hidden caches are also safe.\n\nFor shared state, AtomicInteger and AtomicReference support lock-free compare-and-set transitions, but a CAS loop must recompute from the latest value and remain free of unsafe side effects. ConcurrentHashMap provides atomic methods such as compute and putIfAbsent for operations on its entries; a sequence of get followed by put is still a race. Mapping functions should be short and should not recursively modify the same mapping. LongAdder scales counters under contention, but sum is not an atomic snapshot. When an invariant spans several keys or fields, a clear lock or transactional boundary may be safer than clever atomics.",
     "keyPoints": [
-      "Immutability first — no synchronization needed",
-      "Confinement: one thread owns the state (EJB @Stateless, @RequestScoped)",
-      "ConcurrentHashMap for shared caches (lock striping, not global lock)",
-      "synchronized is last resort — creates contention",
-      "ArchUnit prevents mutable state in @Stateless beans"
+      "Immutability, confinement, and ownership reduce synchronization needs",
+      "Concurrent collections guarantee specific operations, not arbitrary workflows",
+      "CAS fits small atomic state transitions but requires retry-safe logic",
+      "Multi-field invariants may justify a focused lock or transaction"
     ],
     "redFlags": [
-      "\"I just use synchronized on every method\"",
-      "Not knowing about ConcurrentHashMap vs Collections.synchronizedMap",
-      "Ignoring immutability as a concurrency strategy",
-      "Not understanding the cost of contention"
+      "Assuming a thread-safe collection makes every compound action atomic",
+      "Putting blocking or recursive work inside a map compute function",
+      "Using atomics across several variables without one coherent invariant",
+      "Calling a service stateless while it mutates unsafe shared collaborators"
     ],
     "followUps": [
-      { "question": "What is the difference between ConcurrentHashMap.putIfAbsent and computeIfAbsent?", "hint": "putIfAbsent evaluates the value eagerly. computeIfAbsent evaluates lazily and is atomic." },
-      { "question": "When would you use ReentrantLock over synchronized?", "hint": "tryLock (non-blocking), interruptible waiting, read-write separation (ReadWriteLock)." }
+      {
+        "question": "How do putIfAbsent and computeIfAbsent differ?",
+        "hint": "One receives an already computed value; the other computes conditionally under its map contract."
+      },
+      {
+        "question": "When is LongAdder preferable to AtomicLong?",
+        "hint": "High-contention statistics where an instantaneous atomic total is not required."
+      },
+      {
+        "question": "What is an ABA problem in a compare-and-set algorithm?",
+        "hint": "A value changes away and back, hiding an intervening state transition."
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN3 concurrency via architecture",
-      "description": "Thread safety achieved by architecture, not locks: @Stateless EJBs (no state), ConcurrentHashMap for @ApplicationScoped caches, JMS for async (queue handles concurrency). ArchUnit blocks mutable fields in @Stateless."
-    }
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
-    "id": "interview-concurrency-3",
+    "id": "interview-concurrency-jmm-1",
     "topic": "concurrency",
-    "subtopic": "conc-completable",
-    "difficulty": "INTERMEDIATE",
-    "question": "How would you use CompletableFuture for parallel API calls?",
-    "shortAnswer": "Use supplyAsync with a ManagedExecutorService to launch parallel calls, then combine with allOf() or thenCombine(). Always set timeouts on the HTTP client (real protection) and use orTimeout() as a deadline safety net. Handle exceptions with exceptionally() or handle().",
-    "detailedAnswer": "Pattern for parallel REST calls:\n\n```java\n// Launch calls in parallel\nCompletableFuture<Escola> escolaFuture = \n    CompletableFuture.supplyAsync(() -> escolaClient.get(id), managedExecutor);\nCompletableFuture<Turmas> turmasFuture = \n    CompletableFuture.supplyAsync(() -> turmaClient.list(id), managedExecutor);\n\n// Wait for all and combine\nCompletableFuture.allOf(escolaFuture, turmasFuture)\n    .orTimeout(35, TimeUnit.SECONDS)\n    .join();\n\nEscola escola = escolaFuture.join();\nTurmas turmas = turmasFuture.join();\n```\n\nCritical rules:\n1. **Always use ManagedExecutorService** — not ForkJoinPool (loses CDI context)\n2. **Timeout on the HTTP client** is the REAL protection (connect + read timeout)\n3. **orTimeout()** is deadline safety net — does NOT cancel the underlying network call\n4. **Handle failures per-future** — one failure shouldn't crash all\n5. **Limit concurrency** — don't create one future per item in a 10,000-item list",
+    "subtopic": "conc-jmm",
+    "difficulty": "SENIOR",
+    "question": "What does a happens-before relationship guarantee in the Java Memory Model?",
+    "shortAnswer": "If action A happens-before action B, B must observe A's effects according to the Java Memory Model, and the ordering is transitive. Program order, monitor unlock-to-lock, volatile write-to-read, thread start, and successful join create important edges. Wall-clock order alone does not: without a synchronization edge, a data race can expose stale values or reorderings even when one thread ran first physically.",
+    "detailedAnswer": "The JMM defines which writes a read is allowed to observe across threads. Happens-before combines ordering and visibility: actions before a monitor release become visible after a later acquisition of that monitor; a volatile write precedes a later read of the same variable; actions before Thread.start become visible in the started thread; and a thread's actions become visible after another thread successfully returns from join. These edges compose transitively.\n\nA data race exists when conflicting accesses to shared data are not ordered by happens-before and at least one is a write. The program may then observe stale or unexpectedly reordered state even if tests usually pass on one machine. Final fields receive special initialization guarantees when an object is properly constructed and `this` does not escape during construction, but mutable referenced objects still require safe publication and synchronization. `sleep`, logging, or observing that a task usually finishes first do not establish a memory-ordering contract.",
     "keyPoints": [
-      "ManagedExecutorService — never ForkJoinPool in Jakarta EE",
-      "HTTP client timeout is the REAL protection",
-      "orTimeout() is deadline safety net, not cancellation",
-      "allOf() for waiting, thenCombine() for composing",
-      "Limit parallelism — don't exhaust pools"
+      "Happens-before defines visibility and ordering between actions",
+      "Monitor, volatile, start, and join operations establish common edges",
+      "Physical timing does not replace synchronization",
+      "Final-field guarantees depend on proper construction and publication"
     ],
     "redFlags": [
-      "Using CompletableFuture without specifying executor",
-      "No timeout at any level",
-      "One future per item without limit (pool exhaustion)",
-      "Not handling exceptions (silent failures)"
+      "Using Thread.sleep to make shared-memory communication correct",
+      "Assuming cache coherence alone establishes Java-level ordering",
+      "Publishing this from a constructor before final fields are safely initialized"
     ],
     "followUps": [
-      { "question": "What happens when orTimeout fires but the HTTP call is still running?", "hint": "The thread is still blocked on the socket. orTimeout completes the future but doesn't interrupt the thread." },
-      { "question": "How do you limit concurrent futures to avoid pool exhaustion?", "hint": "Semaphore, or process in batches of N." }
+      {
+        "question": "Does AtomicInteger establish happens-before relationships?",
+        "hint": "Its volatile-style reads and writes and atomic operations have specified memory effects."
+      },
+      {
+        "question": "Why can a non-volatile stop flag loop forever in principle?",
+        "hint": "There is no synchronization edge requiring repeated reads to observe the writer."
+      },
+      {
+        "question": "What does safe publication of an immutable object require?",
+        "hint": "Complete construction without escape, followed by a publication mechanism visible to readers."
+      }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN3 parallel integration calls",
-      "description": "Used CompletableFuture with ManagedExecutorService for parallel calls to Moodle + LDAP during enrollment confirmation. HTTP client has 30s read timeout. orTimeout(35s) as safety net. Reduced total time from sequential (60s) to parallel (~30s max)."
-    }
+    "experienceLevel": "STUDIED_NOT_USED"
   }
 ]

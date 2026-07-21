@@ -4,13 +4,14 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "prebuild": "node scripts/validate-content.js --warn-only",
+    "prebuild": "node scripts/validate-content.js --warn-only && node scripts/validate-interviews.js",
     "build": "ng build",
-    "build:strict": "node scripts/validate-content.js && ng build",
+    "build:strict": "node scripts/validate-content.js && node scripts/validate-interviews.js && ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "content:validate": "node scripts/validate-content.js",
-    "content:strict": "node scripts/validate-content.js"
+    "content:strict": "node scripts/validate-content.js",
+    "interview:validate": "node scripts/validate-interviews.js"
   },
   "private": true,
   "dependencies": {

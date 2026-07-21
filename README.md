@@ -1,6 +1,6 @@
 # ☕ REWE Interview Prep
 
-**Angular 19 · Signals · Standalone · Progressive Learning**
+**Angular 19 (upgrade pending) · Signals · Standalone · Progressive Learning**
 
 An interview preparation app for the **Fullstack Developer** position at REWE Digital (Team TRAB). Combines progressive learning (foundations → application → interview pressure) with honest experience classification.
 
@@ -12,15 +12,16 @@ An interview preparation app for the **Fullstack Developer** position at REWE Di
 
 ```bash
 npm install
-npx ng serve --port 4200
+npm start -- --port 4200
 # → http://localhost:4200
 ```
 
 ## 📦 Build
 
 ```bash
-npx ng build              # Production build → dist/
-npx ng test --watch=false # Unit tests
+npm run build                  # Validate content + production build → dist/
+npm test -- --watch=false      # Unit tests
+npm run interview:validate     # Interview schema, IDs and 100% subtopic coverage
 ```
 
 ---
@@ -41,13 +42,13 @@ The site separates **learning** from **interview simulation**:
 
 ## 📊 Content
 
-- **21 topics** across backend, distributed systems, frontend, and interview domains
-- **126 theory chapters** with code examples and production context
-- **695 exercises** — ORAL_ANSWER, PREDICT_OUTPUT, FILL_BLANK, PICK_INVALID, ORDER_STEPS
-- **24 senior-level questions** with follow-up pressure and experience classification
+- **24 topics / 141 subtopics** across backend, distributed systems, frontend, and interview domains
+- **154 theory chapters** with code examples and production context
+- **729 exercises** — ORAL_ANSWER, PREDICT_OUTPUT, FILL_BLANK, PICK_INVALID, ORDER_STEPS
+- **146 interview questions**, covering every indexed subtopic, with follow-ups and experience classification
 - **5 System Design pilots** (schema v2) with scoring rubric and coach debrief
 - **REWE content** classified: ✅ Confirmed | 🔶 Inferred | 🚫 Unknown
-- **My Stories** — only real cases (26,705 inscriptions, 48k queries → 2 seconds)
+- **My Stories** — measured cases where evidence exists; missing personal examples are explicitly marked as templates or inferences
 
 ---
 
@@ -75,7 +76,7 @@ src/app/
 public/data/
 ├── exercises/                    ← 24 JSON files, 695+ exercises
 ├── interviews/                   ← Interview prep questions per topic
-│   └── oop.json                  ← Pilot: 3 OOP interview questions
+│   └── *.json                   ← 24 topic files, validated for complete coverage
 └── topics/                       ← Theory files + index.json
 ```
 
@@ -98,7 +99,7 @@ Topic (e.g., "Java OOP")
 
 ---
 
-## 🎯 Angular 19 Techniques
+## 🎯 Angular Techniques Used in This v19 Codebase
 
 | Technique | Where |
 |-----------|-------|
@@ -115,10 +116,11 @@ Topic (e.g., "Java OOP")
 ## ⚠️ Honest Limitations
 
 - **Not a complete interview simulator** — no timer, no recording, no AI evaluation yet
+- **Angular 19 is outside official support** — the current codebase needs a planned framework upgrade
 - **REWE content is partially inferred** — clearly labeled, not presented as fact
-- **Experience stories are real** — but limited to cases I can defend for 10 minutes
+- **Experience evidence is scoped** — production, transferable, studied, and inferred material use distinct labels
 - **Schema v2 exercises** don't have dedicated UI yet — rendered with basic format
-- **No distributed tracing, Kafka, or WebSocket production experience** — clearly stated in experienceLevel fields
+- **No distributed tracing or Kafka production experience is claimed** — framework-specific gaps are stated in the answers and `experienceLevel` fields
 
 ---
 

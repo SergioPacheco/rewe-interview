@@ -2,69 +2,71 @@
   {
     "id": "interview-stories-1",
     "topic": "stories",
-    "subtopic": "stories-technical",
-    "difficulty": "SENIOR",
-    "question": "Tell me your most impressive technical achievement.",
-    "shortAnswer": "The 26,705 inscription optimization. System handling enrollment for all SENAI Santa Catarina schools was taking ~16 minutes per page load during peak enrollment. I identified ~48,000 queries (N+1 + cartesian product), restructured to ~10 optimized queries with LATERAL JOIN + pagination + DTO projections. Result: ~2 seconds. Zero functionality removed.",
-    "detailedAnswer": "Context:\n- SGN serves all SENAI schools in Santa Catarina state\n- Enrollment period: 2-week window, 26,705 inscriptions\n- System unusable during peak — ~16 minutes per page load\n\nDiagnosis (1 day):\n- Glowroot APM showed ~48,000 queries per request\n- Root cause: N+1 on matrícula→estudante→pessoa→colaborador chain\n- Cartesian product from multiple JOIN FETCHes\n- COUNT(*) repeating the entire complex query\n\nSolution (2 days):\n1. Separate COUNT query (simple, fast)\n2. Pagination with LIMIT/OFFSET + deterministic ORDER BY\n3. LATERAL JOIN for pessoa→colaborador (handles multiple active enrollments)\n4. DTO projections (only fields needed for listing)\n5. Batch loading for remaining relationships\n\nResult:\n- ~48,000 queries → ~10 queries\n- ~16 minutes → ~2 seconds\n- Same data, same functionality\n- Enrollment period completed successfully\n\nWhy it's impressive:\n- Under pressure (3-day deadline before enrollment closed)\n- Measured first (didn't guess — Glowroot showed the problem)\n- Clean solution (no hacks, no denormalization, no cache band-aid)",
+    "subtopic": "story-performance",
+    "difficulty": "INTERMEDIATE",
+    "question": "Tell me about a performance improvement with a measurable operational result.",
+    "shortAnswer": "A production enrollment listing operated over 26,705 records in the period and had reached about 16 minutes per request. Glowroot showed roughly 48,000 database queries. I reworked the count and result paths, added deterministic pagination and used DTO projections and targeted relationship queries. The request dropped to roughly ten queries and around two seconds without removing required data.",
+    "detailedAnswer": "Situation: a high-volume enrollment listing had become too slow for practical use. The period contained 26,705 enrollment records; this is a data-volume figure, not evidence of 26,705 concurrent users.\n\nTask: reduce response time while preserving the listing's business behavior.\n\nAction: I used Glowroot to trace the request and correlate latency with database calls. The trace showed approximately 48,000 queries, including repeated relationship access and unnecessary work in the count path. I separated the count query, paginated with a deterministic order, projected only the fields the screen required and changed the remaining relationship access to bounded queries. I compared returned results and measured the same path on representative data.\n\nResult: response time changed from about 16 minutes to around two seconds and query count from roughly 48,000 to about ten. The result is valuable because it restored an operational workflow and because each number has a measurement path.\n\nUse exact figures in the interview only if the underlying trace or test evidence can be explained.",
     "keyPoints": [
-      "26,705 inscriptions — real production scale",
-      "~48,000 queries → ~10 (measured, not estimated)",
-      "~16 minutes → ~2 seconds",
-      "Under 3-day deadline pressure",
-      "Measured first with Glowroot, then fixed systematically"
+      "26,705 is record volume for the period, not concurrency",
+      "About 16 minutes and 48,000 queries are the measured baseline",
+      "Diagnosis preceded optimization",
+      "The fix reduced data access rather than hiding it with capacity",
+      "Business behavior and representative results were checked"
     ],
     "redFlags": [
-      "Vague numbers (\"it was slow, I made it fast\")",
-      "Cannot explain the root cause technically",
-      "Solution was \"add more servers\" not fix the query",
-      "Story doesn't hold up under follow-up questions"
+      "Calls the records simultaneous requests",
+      "Uses 48 seconds as a conflicting baseline",
+      "Cannot explain where either measurement came from",
+      "Focuses on SQL techniques but not the user impact"
     ],
     "followUps": [
       {
-        "question": "Why specifically LATERAL JOIN?",
-        "hint": "Handles the case where one person has multiple active enrollments — takes only the most relevant one with LIMIT 1."
+        "question": "How did you confirm that the optimized result was functionally equivalent?"
       },
       {
-        "question": "Why not just add caching?",
-        "hint": "Caching hides the problem. 48k queries is a design issue. Caching 48k results wastes memory and still has cold-start problem."
+        "question": "Which change contributed most to the improvement?"
       },
       {
-        "question": "How did you test the fix before deploying?",
-        "hint": "Cloned production data to test environment. Ran same queries with real 26k volume. Verified with EXPLAIN ANALYZE."
+        "question": "What would make this query regress again?"
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE"
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Enrollment listing optimization",
+      "description": "Reduced a measured production request from about 16 minutes and 48,000 queries to around two seconds and roughly ten queries."
+    }
   },
   {
     "id": "interview-stories-2",
     "topic": "stories",
-    "subtopic": "stories-technical",
-    "difficulty": "INTERMEDIATE",
-    "question": "Describe a system you maintain and its complexity.",
-    "shortAnswer": "SGN3 — education management for SENAI Santa Catarina. Monolith with ~2,000 database tables across 8 schemas, 80 JMS queues, 128 MDB consumers, integrations with Moodle/LDAP/VTEX/Firebase. Handles enrollment, scheduling, grades, financial, certification for all schools in the state.",
-    "detailedAnswer": "SGN3 (Sistema de Gestão Nacional):\n\n**Scale:**\n- ~2,000 database tables (PostgreSQL)\n- 8 schemas (matricula, turma, recurso, financeiro, certificacao, senai, educacenso, questionario)\n- 80 JMS queues with 128 MDB consumers\n- Integrations: Moodle (virtual classrooms), LDAP (authentication), VTEX (e-commerce), Firebase (push), BRy (digital certificates)\n\n**Domain:**\n- Enrollment management (26,705 inscriptions/period)\n- Class scheduling and resource allocation\n- Grade management and academic diary\n- Financial (billing, payments)\n- Certification (digital certificates)\n- Census reporting (Educacenso)\n\n**Architecture:**\n- Monolith: Java 11, WildFly 26, Jakarta EE, JSF/PrimeFaces, Hibernate 5\n- Satellite: senai-services (REST API for E-commerce, mobile apps)\n- Async: ActiveMQ Artemis (JMS)\n- Containers: OKD (OpenShift)\n\nI am one of the primary developers responsible for performance, architecture decisions, and complex domain features.",
+    "subtopic": "story-n1",
+    "difficulty": "SENIOR",
+    "question": "How did you prove that repeated ORM access, rather than only one slow SQL statement, was the main bottleneck?",
+    "shortAnswer": "I correlated the end-to-end request trace with query count, repeated SQL shapes and relationship access. The issue was not simply one missing index: the request executed tens of thousands of similar statements as entities were traversed. I changed the access pattern, then compared query count, total database time and returned data before and after.",
+    "detailedAnswer": "An N+1 diagnosis needs evidence at both application and database levels. In the trace, I look for the same SQL shape repeated with different identifiers, call sites that trigger lazy relationship access and time accumulated across many individually fast queries. I compare that with the repository method and the object graph consumed by the screen.\n\nA large join is not automatically the answer. Fetching multiple collections together can create a cartesian expansion, move too much data and make pagination incorrect. For a listing, a projection plus bounded secondary queries or batch fetching can be safer. The count query should usually answer only the count question rather than reproduce every join from the data query.\n\nValidation includes query count, total database time, row volume, stable ordering and result equivalence. I also watch memory and serialization because solving N+1 by loading a huge graph can simply move the bottleneck.\n\nThis explanation is the technical deep dive behind the same performance case; it should not be presented as a second unrelated achievement.",
     "keyPoints": [
-      "~2,000 tables across 8 schemas",
-      "80 JMS queues, 128 MDB consumers",
-      "Multiple external integrations (Moodle, LDAP, VTEX, Firebase)",
-      "Education domain: enrollment, grades, scheduling, financial, certification",
-      "Monolith + satellite architecture serving multiple consumers"
+      "Identify repeated query shapes and their call sites",
+      "Distinguish cumulative database work from one slow statement",
+      "Avoid replacing N+1 with a cartesian product",
+      "Keep count and data-query responsibilities separate",
+      "Validate latency, query count, row volume and correctness"
     ],
     "redFlags": [
-      "Cannot describe system complexity beyond surface level",
-      "No concrete numbers",
-      "\"I just work on my feature\" (no system-level understanding)",
-      "Cannot explain architectural decisions"
+      "Defines every slow ORM request as N+1",
+      "Uses JOIN FETCH on multiple collections without discussing row multiplication",
+      "Measures only one SQL statement and not the whole request",
+      "Does not verify stable pagination or returned data"
     ],
     "followUps": [
       {
-        "question": "What is the biggest technical challenge in maintaining this system?",
-        "hint": "Performance at scale (enrollment peaks), legacy code evolution, PostgreSQL 10→18 migration."
+        "question": "When would batch fetching be preferable to a projection?"
       },
       {
-        "question": "If you could redesign one thing, what would it be?",
-        "hint": "Honest answer about a real limitation. Shows critical thinking."
+        "question": "How can a fetch join break pagination?"
+      },
+      {
+        "question": "Which automated check could help catch a query-count regression?"
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -72,38 +74,221 @@
   {
     "id": "interview-stories-3",
     "topic": "stories",
-    "subtopic": "stories-teamwork",
+    "subtopic": "story-legacy",
     "difficulty": "INTERMEDIATE",
-    "question": "How do you handle working with legacy code?",
-    "shortAnswer": "I treat legacy as a constraint, not an enemy. My approach: understand before changing (read the module map, trace the flow), make the smallest correct change, add tests for the behavior I'm changing (characterization tests), and leave the area slightly better than I found it. I don't rewrite without a concrete trigger.",
-    "detailedAnswer": "My legacy code philosophy:\n\n1. **Understand first**: Read existing code thoroughly. Trace data flow. Check who calls this code. Map dependencies.\n\n2. **Characterization tests**: Before changing behavior, write tests that document what the code CURRENTLY does. Even if it's wrong — first capture, then fix.\n\n3. **Smallest correct change**: Don't refactor 'while you're in there'. Fix the issue. Add the feature. Leave.\n\n4. **Boy Scout Rule**: If you must touch a file, leave it slightly better (extract a method, rename a variable, add a null check). But don't rewrite.\n\n5. **Never rewrite without trigger**: A working system that's ugly is better than a half-finished rewrite. Rewrite only when: performance is unacceptable, the module actively blocks new features, or maintenance cost exceeds rewrite cost.\n\nSGN3 is 7+ years old. Some modules are clean (recently refactored), others are legacy. I work in both comfortably.",
+    "question": "How do you improve a legacy system without stopping feature delivery?",
+    "shortAnswer": "In SGN3, modernization happens inside a long-lived education platform that still has to deliver business changes. I work incrementally: trace current behavior, protect the path with focused tests, make the smallest useful structural change, preserve contracts and monitor releases. I have contributed to evolving Java enterprise modules, persistence code and integrations while continuing production support and feature work.",
+    "detailedAnswer": "Situation: SGN3 contains long-lived Java enterprise modules and complex business rules, while users still need fixes and new capabilities. A rewrite would introduce a large period with no business value and high behavior risk.\n\nTask: improve maintainability and platform compatibility without destabilizing active workflows.\n\nAction: I start by mapping callers, transaction boundaries, data access and external integrations around the target change. Where coverage is weak, I add characterization or focused business tests before refactoring. I keep compatibility boundaries explicit, isolate framework-specific changes, and make migrations in reviewable increments. Production traces and SQL evidence guide which hotspots deserve priority; age or style alone does not.\n\nResult: the team can evolve Java, Jakarta EE, Hibernate and WildFly-related code progressively while continuing feature delivery and production support. I would use only migration versions and outcome metrics that can be confirmed from project records.\n\nLesson: modernization is a portfolio of risk-reducing changes, not a synonym for rewriting or extracting services.",
     "keyPoints": [
-      "Understand before changing (trace flow, map deps)",
-      "Characterization tests before modifying behavior",
-      "Smallest correct change (don't over-refactor)",
-      "Boy Scout Rule (small improvements, not rewrites)",
-      "Rewrite only with concrete trigger (not aesthetics)"
+      "Modernizes a running system incrementally",
+      "Protects current behavior before structural change",
+      "Prioritizes by delivery and operational pain",
+      "Preserves contracts and transaction behavior",
+      "Avoids unsupported version or outcome claims"
     ],
     "redFlags": [
-      "\"Legacy code should be rewritten\" (naive, dangerous)",
-      "Afraid to touch legacy (never improves)",
-      "Making large changes without understanding the module",
-      "No testing strategy for untested legacy code"
+      "Treats old code as justification for a rewrite",
+      "Refactors broadly without mapping callers or behavior",
+      "Claims every modernization step was personally owned",
+      "Cannot explain how releases remained safe"
     ],
     "followUps": [
       {
-        "question": "When WOULD you advocate for a rewrite?",
-        "hint": "When maintenance cost exceeds rewrite cost, or it blocks critical features. With tests and incremental migration."
+        "question": "How do you choose the next modernization target?"
       },
       {
-        "question": "How do you add tests to untested code?",
-        "hint": "Characterization tests first (document current behavior). Then refactor with safety net."
+        "question": "When would you isolate a module instead of refactoring it in place?"
+      },
+      {
+        "question": "How do you test behavior that is poorly documented?"
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 legacy module maintenance",
-      "description": "7+ year old system. Some modules well-structured, others legacy. I apply: read first, test current behavior, make minimal change, leave better. Successfully maintained and improved modules without rewrites."
+      "title": "Incremental SGN3 modernization",
+      "description": "Contributes to the progressive evolution of long-lived Java enterprise modules while delivering features, integrations, performance work and production support."
     }
+  },
+  {
+    "id": "interview-stories-4",
+    "topic": "stories",
+    "subtopic": "story-incident",
+    "difficulty": "SENIOR",
+    "question": "A production incident is unfolding with incomplete information. How do you organize diagnosis, containment and communication?",
+    "shortAnswer": "I establish user impact, severity, roles and a communication cadence first. I separate containment from root-cause work, keep a timestamped evidence log, and test the highest-risk hypotheses with observable signals. Recovery needs explicit verification and monitoring, not just a deployment. Afterward I distinguish root cause from contributing conditions and turn the learning into tests, alerts, runbooks or design changes with owners.",
+    "detailedAnswer": "I begin by naming an incident lead, technical investigators and a communication owner so diagnosis is not interrupted by duplicate requests. We define the affected workflow, start time, scope, safety or data risk, and the next update time. If a reversible action can reduce impact—disabling a feature, shedding load, pausing a consumer, or routing around a dependency—we evaluate it independently of the permanent fix.\n\nFor diagnosis, I maintain a timeline of observations, hypotheses, actions and outcomes. Logs, correlation identifiers, APM traces, query plans, dependency metrics and recent changes help narrow the fault domain. Each experiment should have an expected signal and a rollback path. I communicate facts, decisions and uncertainty separately.\n\nRecovery is complete only after the user path, backlogs, data consistency and resource saturation are verified over an observation window. The review then separates triggering event, root cause and contributing conditions; credits the actual participants; and assigns concrete prevention work. My verified production evidence includes APM- and SQL-led troubleshooting, but I should not invent incident severity, duration or sole ownership when describing a specific case.",
+    "keyPoints": [
+      "Define impact, roles and a communication cadence",
+      "State impact and individual role precisely",
+      "Show the evidence sequence and rejected hypotheses",
+      "Separate containment, recovery and prevention",
+      "Credit cross-functional contributions"
+    ],
+    "redFlags": [
+      "Invents severity, timeline or perfect outcomes",
+      "Jumps from symptom directly to root cause",
+      "Claims sole ownership of a team incident",
+      "Ends at the code fix with no prevention or learning"
+    ],
+    "followUps": [
+      {
+        "question": "Which hypothesis looked plausible but was wrong?"
+      },
+      {
+        "question": "What was the containment action before the permanent fix?"
+      },
+      {
+        "question": "Which signal would detect the same failure earlier now?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Production diagnosis with APM and database evidence",
+      "description": "Uses Glowroot traces, application logs and SQL analysis in production troubleshooting. Formal incident severity, timing and team ownership should be stated only for a documented event."
+    }
+  },
+  {
+    "id": "interview-stories-5",
+    "topic": "stories",
+    "subtopic": "story-template",
+    "difficulty": "SENIOR",
+    "question": "How would you manage shared steps and variation across document-generation workflows?",
+    "shortAnswer": "I first map the stable workflow—such as validation, data assembly, rendering, storage and audit—and identify which rules genuinely vary by document. I keep orchestration explicit and isolate variation behind a focused strategy, renderer or configuration only when several real variants justify it. Tests cover the common contract and each variant. I choose a pattern name after the boundary is clear, not before.",
+    "detailedAnswer": "I start with two or three concrete document types and compare their steps, inputs, failure behavior and transaction needs. Shared sequencing can remain in an application service or, when subclasses truly share an invariant algorithm, a template. Variable calculation, eligibility or rendering behavior can use composition behind a small interface. Configuration fits data differences, but becomes dangerous when it hides complex control flow.\n\nThe boundary must include error and side-effect semantics: whether rendering can be retried, where generated binaries are stored, how audit records are committed, and how partial output is cleaned up. A new variant should be addable through one intentional extension point and tested with contract cases plus variant-specific examples. If every new type changes the orchestrator, the abstraction is not containing variation.\n\nVerified experience with document, certification and reporting workflows transfers to this analysis, but the interview answer should name the mechanism present in the selected code. I would not claim Template Method, Strategy or a plugin architecture merely because one of those patterns could fit.",
+    "keyPoints": [
+      "Start from concrete workflows and genuine variation points",
+      "Identify stable steps and genuine variation points",
+      "Name the mechanism that was really implemented",
+      "Explain testing for a new document type",
+      "Avoid outcome metrics not present in project evidence"
+    ],
+    "redFlags": [
+      "Presents a hypothetical pattern as implemented production architecture",
+      "Starts with a pattern name instead of the problem",
+      "Cannot explain how variants are tested",
+      "Claims extensibility while core conditionals still change for every variant"
+    ],
+    "followUps": [
+      {
+        "question": "Which step was common and which behavior varied?"
+      },
+      {
+        "question": "What would force you to revise the abstraction?"
+      },
+      {
+        "question": "How would you prevent one document variant from breaking others?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Document and certification workflow experience",
+      "description": "Production work includes document, certification and reporting workflows. The exact variation mechanism must be taken from the selected implementation rather than inferred from a pattern name."
+    }
+  },
+  {
+    "id": "interview-stories-6",
+    "topic": "stories",
+    "subtopic": "story-disagreement",
+    "difficulty": "INTERMEDIATE",
+    "question": "A teammate challenges your technical recommendation after implementation has started. How do you respond?",
+    "shortAnswer": "I pause long enough to understand whether the challenge reveals a correctness, delivery or operational risk, and I restate it fairly before defending sunk work. We compare the cost of continuing, adapting or reverting, gather the smallest decisive evidence and involve the decision owner. I document the outcome and support it even if my original recommendation changes. Progress already made is a cost to manage, not proof that the design is correct.",
+    "detailedAnswer": "First I protect the working relationship and the product by treating the challenge as new information, not obstruction. I ask what changed and which failure the teammate is concerned about. If the issue could affect data, security or a difficult-to-reverse contract, I may pause rollout while we assess it; a lower-risk concern can be time-boxed without stopping all work.\n\nWe make the options explicit: continue as designed, revise the boundary, add a mitigation, or revert the incomplete work. A prototype, compatibility test, representative plan, incident record or cost estimate may distinguish them. The decision owner and deadline should be clear, especially because sunk-cost bias grows after implementation starts.\n\nAfter the decision I update the design record and implementation plan, credit the person who raised the risk, and commit to the chosen direction. If the concern is deferred, it gets an owner and review trigger. The goal is a better outcome and a trustworthy team process, not proving who was right.",
+    "keyPoints": [
+      "Treat the challenge as new risk information, not obstruction",
+      "Represent the challenge fairly",
+      "Show how evidence or constraints affected the proposal",
+      "Name decision ownership",
+      "Reflect on the relationship and outcome"
+    ],
+    "redFlags": [
+      "Uses sunk implementation effort as proof that the design must continue",
+      "Describes colleagues as resistant to change",
+      "Cannot identify anything valuable in the challenge",
+      "Treats compromise as lack of technical standards"
+    ],
+    "followUps": [
+      {
+        "question": "What part of the challenge was valid?"
+      },
+      {
+        "question": "What evidence would make you change the original recommendation?"
+      },
+      {
+        "question": "How would you preserve the decision and its review trigger?"
+      }
+    ],
+    "experienceLevel": "INFERENCE"
+  },
+  {
+    "id": "interview-stories-7",
+    "topic": "stories",
+    "subtopic": "story-ai",
+    "difficulty": "INTERMEDIATE",
+    "question": "Tell me about an AI-assisted engineering workflow you designed and the safeguards around it.",
+    "shortAnswer": "I designed MCP-based tooling that gives coding agents structured access to engineering context such as PostgreSQL metadata, SonarQube findings, Glowroot traces, Azure DevOps work items and project rules. The goal is not autonomous code generation; it is better evidence and fewer context gaps. I pair that access with scoped permissions, reviewable changes and automated checks for JPA, SQL, JSF and architectural consistency.",
+    "detailedAnswer": "Problem: a general coding model can produce plausible changes while missing enterprise constraints, database shape, current quality findings or production evidence. Copying all that context manually is slow and inconsistent.\n\nApproach: I designed TypeScript/Node.js MCP tools that expose specific, structured capabilities rather than unrestricted system access. An agent can request schema metadata, quality findings, traces or work-item context when relevant. Project rules and automated checks then evaluate areas where superficially correct code is risky, including JPA mappings, SQL access, JSF behavior and architectural boundaries.\n\nSafeguards: least-privilege and read-only access where possible, explicit scoping of the requested task, no hidden production mutations, human review of changes, ordinary tests and quality gates, and traceability of the evidence used. Sensitive data and prompt-injection risks must be handled as security concerns, not only prompt-design concerns.\n\nResult: the verified output is the tooling and workflow design. I would not claim a productivity percentage or defect reduction without a measured study.",
+    "keyPoints": [
+      "Solves a concrete context and evidence problem",
+      "Uses narrow structured tools instead of unrestricted access",
+      "Keeps human review and normal engineering gates",
+      "Treats data access and prompt injection as security risks",
+      "Avoids unmeasured productivity claims"
+    ],
+    "redFlags": [
+      "Frames AI output as trustworthy because it compiles",
+      "Grants broad production or database mutation access",
+      "Replaces code review and testing with another model",
+      "Claims large productivity gains without measurement"
+    ],
+    "followUps": [
+      {
+        "question": "How do you prevent sensitive data from entering model context?"
+      },
+      {
+        "question": "Which quality check has the highest value for this workflow?"
+      },
+      {
+        "question": "How would you evaluate whether the workflow actually improves outcomes?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "MCP-based engineering context and quality gates",
+      "description": "Designed independent TypeScript/Node.js tooling to connect coding agents with database, quality, APM and work-item context under review and quality controls."
+    }
+  },
+  {
+    "id": "interview-stories-8",
+    "topic": "stories",
+    "subtopic": "story-learning",
+    "difficulty": "BEGINNER",
+    "question": "How are you preparing to move from Jakarta EE and JMS toward Spring Boot and Kafka?",
+    "shortAnswer": "I separate transfer from new learning. I use Spring Boot hands-on in SinapiPRO, where familiar concerns such as DI, REST, persistence and transactions appear through different framework conventions. For Kafka, Kotlin and Kubernetes, I study and build focused examples, but I do not call that production experience. I prioritize the operational differences that analogy alone cannot teach.",
+    "detailedAnswer": "For Spring Boot, my learning is applied through SinapiPRO: REST APIs, PostgreSQL persistence and an Angular client provide a real project context. My Jakarta EE background helps with dependency injection, transaction boundaries and integration design, but I still verify Spring-specific proxy behavior, configuration, testing and observability rather than assuming identical semantics.\n\nFor Kafka, I start from transferable messaging concerns—idempotency, retry, poison messages and observability—then focus on what is different from JMS: an append-only log, offsets, replay, partitions, consumer groups, retention and ordering within a partition. For Kotlin, I focus on nullability, idioms and Java interop; for Kubernetes, on workload lifecycle, probes, resources, rollout behavior and operations.\n\nThe evidence level remains explicit: Spring Boot and Angular have hands-on project evidence; Kafka, Kotlin and Kubernetes are being expanded and are not claimed as production ownership. The first months in a role should include pairing, runbook study, lower-risk changes and exposure to real operational feedback.",
+    "keyPoints": [
+      "Separates transferable concepts from framework-specific behavior",
+      "Uses SinapiPRO for applied Spring Boot learning",
+      "Identifies Kafka's log, replay and partition model as new learning",
+      "Does not label study as production experience",
+      "Includes an operational ramp-up plan"
+    ],
+    "redFlags": [
+      "Says Kafka is simply modern JMS",
+      "Equates a personal project with production operation",
+      "Studies only API syntax and not failure behavior",
+      "Cannot describe how learning would continue inside the team"
+    ],
+    "followUps": [
+      {
+        "question": "Which Kafka behavior differs most from the queue model you know?"
+      },
+      {
+        "question": "Which Spring behavior did you have to verify rather than infer from Jakarta EE?"
+      },
+      {
+        "question": "What would you aim to learn in your first month on the team?"
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
   }
 ]

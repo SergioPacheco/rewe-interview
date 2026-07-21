@@ -1,110 +1,165 @@
 [
   {
-    "id": "interview-solid-1",
+    "id": "interview-solid-srp-1",
     "topic": "solid",
-    "subtopic": "solid-isp",
+    "subtopic": "solid-srp",
     "difficulty": "INTERMEDIATE",
-    "question": "Explain the Open/Closed Principle with a real example.",
-    "shortAnswer": "Open for extension, closed for modification. In SGN, adding a new notification channel (WhatsApp) required only a new class implementing NotificationSender — zero changes to existing code. The if/else version required modifying the core notification method every time.",
-    "detailedAnswer": "Open/Closed Principle: software entities should be open for extension but closed for modification.\n\nIn practice, this means you can add new behavior without changing existing, tested code. The mechanism is polymorphism — interfaces, abstract classes, strategy pattern.\n\nReal example from SGN:\nBefore: NotificationService had a switch/case with EMAIL, SMS, PUSH. Adding WhatsApp meant modifying a tested method.\nAfter: NotificationSender interface with implementations. Adding WhatsApp = new class + CDI registration. Zero modifications to existing code.\n\nWhen NOT to apply:\n- Simple code with 2-3 cases that rarely change\n- When abstraction adds complexity without real extension points\n- YAGNI — do not preemptively abstract for hypothetical extensions",
+    "question": "How do you interpret the Single Responsibility Principle in a real service?",
+    "shortAnswer": "SRP means a module should be responsible to one cohesive source of change, not that every class must contain one method. I separate concerns when they change for different reasons—for example, pricing policy, persistence, and transport formatting—but keep behavior together when it protects the same invariant. The test is cohesion and change ownership, not class size alone.",
+    "detailedAnswer": "A responsibility is better understood as an obligation to an actor or source of change. A checkout service that calculates prices, renders PDFs, stores orders, and calls a carrier changes for unrelated business, document, database, and integration reasons. Separating those policies can localize changes and tests.\n\nSRP does not prescribe tiny classes. Splitting every method creates an anemic network of objects and makes a cohesive workflow difficult to follow. A class may coordinate several steps if they belong to one use case, while delegating policies that evolve independently. Useful signals include unrelated dependencies, tests with unrelated setup, changes by different teams, and frequent edits for unrelated requirements. Apply the principle at class, module, or service level according to the boundary that owns the behavior.",
     "keyPoints": [
-      "Open for extension = new behavior via new code",
-      "Closed for modification = existing code untouched",
-      "Mechanism: interfaces + polymorphism",
-      "Know when NOT to apply (YAGNI)",
-      "Real benefit: tested code stays tested"
+      "Responsibility is a cohesive source of change, not a method count",
+      "Separate policies that evolve for independent reasons",
+      "Keep invariant-preserving behavior together",
+      "SRP can be evaluated at several architectural levels"
     ],
     "redFlags": [
-      "Only knowing the definition, no real example",
-      "Over-engineering everything \"just in case\"",
-      "Confusing OCP with \"never change code\"",
-      "Cannot name when it is NOT appropriate"
+      "Defining SRP as one method per class",
+      "Splitting a cohesive transaction across arbitrary layers",
+      "Using class length as the only measure of responsibility"
     ],
     "followUps": [
       {
-        "question": "When would applying OCP be over-engineering?",
-        "hint": "Simple switch with 2 stable cases. Abstraction cost > benefit."
+        "question": "Can a large class still satisfy SRP?",
+        "hint": "Size is a signal; cohesion and reasons to change are the deciding factors."
       },
       {
-        "question": "How does OCP relate to the Strategy pattern?",
-        "hint": "Strategy is the most common mechanism to achieve OCP."
+        "question": "What evidence would trigger an SRP refactoring?",
+        "hint": "Look at change history, dependency groups, ownership, and test setup."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN notification channels",
-      "description": "Refactored notification from switch/case to Strategy pattern. Adding WhatsApp required only a new implementation class — zero changes to existing notification logic."
-    }
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
-    "id": "interview-solid-2",
+    "id": "interview-solid-ocp-1",
+    "topic": "solid",
+    "subtopic": "solid-ocp",
+    "difficulty": "INTERMEDIATE",
+    "question": "What does the Open/Closed Principle mean, and when is applying it premature?",
+    "shortAnswer": "OCP aims to let expected variants be added through extension while stable orchestration remains unchanged. Interfaces, strategies, plugins, or data-driven rules can provide that seam. It does not mean existing code can never change. If variants are few and stable, or their common contract is not yet understood, a direct conditional may be safer than a speculative abstraction.",
+    "detailedAnswer": "Open for extension and closed for modification describes a design goal around a predicted axis of change. A notification workflow can depend on a Sender contract so a new channel is added as another implementation while retry, auditing, and orchestration remain stable. The important phrase is predicted axis: no design is closed against every possible change.\n\nOCP has a cost. Each extension point introduces contracts, registration, discovery, testing, and sometimes runtime ambiguity. A switch can be preferable for a small closed set, especially when the compiler can check exhaustiveness. Refactor toward an extension mechanism when change history, ownership, or product requirements show that variants evolve independently. The principle protects stable policy from recurring variation; it is not a requirement to abstract hypothetical futures.",
+    "keyPoints": [
+      "OCP targets a specific, expected axis of variation",
+      "Extension can use polymorphism, configuration, or data—not only inheritance",
+      "Closed does not mean immutable or never edited",
+      "A direct conditional can be appropriate for a small closed set"
+    ],
+    "redFlags": [
+      "Designing extension points without evidence of variation",
+      "Interpreting closed for modification as never changing existing code",
+      "Ignoring registration and operational costs of plugins or strategies"
+    ],
+    "followUps": [
+      {
+        "question": "How would you identify the right axis of extension?",
+        "hint": "Use concrete variants, change history, and ownership boundaries."
+      },
+      {
+        "question": "When is an exhaustive switch preferable to a strategy hierarchy?",
+        "hint": "Consider a small closed domain where all cases should change together."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-solid-lsp-1",
     "topic": "solid",
     "subtopic": "solid-lsp",
     "difficulty": "SENIOR",
-    "question": "What is the Liskov Substitution Principle and why does it matter?",
-    "shortAnswer": "Any subtype must be usable wherever the parent type is expected without breaking correctness. It matters because violations create bugs that only appear at runtime — the compiler cannot catch them. Classic violation: Square extending Rectangle breaks setWidth/setHeight expectations.",
-    "detailedAnswer": "LSP says: if S is a subtype of T, objects of type T can be replaced with objects of type S without altering the correctness of the program.\n\nWhy it matters: when you violate LSP, polymorphism becomes dangerous. Code that works with the parent type breaks silently with certain subtypes.\n\nClassic violations:\n- Square extends Rectangle (setting width changes height — breaks caller expectations)\n- ReadOnlyList extends List (add() throws UnsupportedOperationException)\n- Any override that throws where parent does not, or ignores parent contract\n\nIn practice, LSP means:\n- Subtypes must honor the contract (preconditions, postconditions, invariants)\n- Throwing unexpected exceptions = violation\n- Silently ignoring operations = violation\n- Strengthening preconditions = violation (accepting less than parent)\n- Weakening postconditions = violation (promising less than parent)",
+    "question": "How would you detect a Liskov Substitution Principle violation?",
+    "shortAnswer": "A subtype violates LSP when a caller that relies only on the parent contract must add subtype checks or gets behavior outside that contract. Typical signs are stronger preconditions, weaker guarantees, incompatible side effects, or unsupported inherited operations. I make the semantic contract explicit and run the same contract tests against every implementation.",
+    "detailedAnswer": "LSP is about behavioral substitutability, not merely compiling against the same method signatures. A subtype should accept at least the inputs promised by the base contract, preserve its postconditions and invariants, and not introduce surprising failure or side-effect semantics. A ReadOnlyRepository that inherits save() but throws UnsupportedOperationException is a common warning: the abstraction promises a capability the subtype cannot provide.\n\nDetection techniques include shared contract tests, property-based tests, reviewing exception and nullability guarantees, and looking for instanceof branches in clients. The remedy may be to split interfaces by capability, use composition, or redefine the hierarchy around a truthful common contract. Some differences are valid if the contract explicitly permits them—for example, different performance characteristics—so the interview answer should distinguish documented variation from broken promises.",
     "keyPoints": [
-      "Substitutability without breaking correctness",
-      "Violations create runtime bugs invisible to compiler",
-      "Square/Rectangle is the classic example",
-      "Strengthening preconditions = violation",
-      "Design by contract: pre/postconditions + invariants"
+      "LSP concerns observable behavior, not only type compatibility",
+      "Subtypes should not strengthen preconditions or weaken guarantees",
+      "Unsupported inherited operations often reveal a false hierarchy",
+      "Shared contract tests make substitutability executable"
     ],
     "redFlags": [
-      "Cannot explain beyond the textbook definition",
-      "No practical example of a violation",
-      "\"It means subtypes inherit from parent\" (circular)",
-      "Never mentions behavioral contracts"
+      "Explaining LSP only with a geometric example and no contract reasoning",
+      "Assuming identical implementations are required",
+      "Leaving clients to branch on concrete subtype"
     ],
     "followUps": [
       {
-        "question": "Give a real LSP violation you have seen or fixed.",
-        "hint": "Think about exceptions thrown in overrides, or methods that silently do nothing."
+        "question": "Is throwing a new exception always an LSP violation?",
+        "hint": "It depends on what failure behavior the parent contract permits."
       },
       {
-        "question": "How does LSP relate to composition over inheritance?",
-        "hint": "LSP violations are a signal that inheritance is wrong — use composition instead."
+        "question": "How can interface segregation repair an LSP problem?",
+        "hint": "Split capabilities so implementations promise only operations they support."
+      },
+      {
+        "question": "What should a contract test assert besides return values?",
+        "hint": "Include exceptions, side effects, ordering, nullability, and invariants."
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
   },
   {
-    "id": "interview-solid-3",
+    "id": "interview-solid-isp-1",
     "topic": "solid",
-    "subtopic": "solid-srp",
-    "difficulty": "SENIOR",
-    "question": "How do SOLID principles work together in a real system?",
-    "shortAnswer": "They are not independent rules — they reinforce each other. SRP creates focused classes. OCP makes them extensible via interfaces. LSP ensures subtypes are safe. ISP keeps interfaces small. DIP wires everything through abstractions. Together, they produce code that is testable, extensible, and maintainable.",
-    "detailedAnswer": "SOLID principles are a cohesive set, not a checklist:\n\n1. SRP creates small, focused classes → easier to understand and test\n2. OCP says extend via new classes, not modification → requires interfaces (ISP) and polymorphism (LSP)\n3. LSP ensures substitutability → makes OCP safe (new implementations do not break callers)\n4. ISP keeps interfaces small → clients depend only on what they use → easier DIP\n5. DIP inverts dependencies toward abstractions → enables all of the above\n\nIn SGN, the report module demonstrates all five:\n- SRP: DataSource, Formatter, Exporter are separate concerns\n- OCP: new formats added without modifying existing code\n- LSP: every Exporter is safely substitutable\n- ISP: Exporter interface has only export() — not also format()\n- DIP: ReportGenerator depends on interfaces, not concrete classes",
+    "subtopic": "solid-isp",
+    "difficulty": "INTERMEDIATE",
+    "question": "How does Interface Segregation improve an API, and when can it go too far?",
+    "shortAnswer": "ISP says clients should depend only on capabilities they use. Smaller role-based interfaces avoid dummy methods, reduce coupling, and make changes affect fewer consumers. The goal is cohesive contracts, not the smallest possible interfaces: excessive one-method interfaces can fragment a domain and make discovery and wiring harder.",
+    "detailedAnswer": "A broad interface couples every client and implementation to all of its operations. If a warehouse display only reads inventory, depending on an InventoryManager that also adjusts, imports, deletes, and audits stock grants unnecessary authority and causes unrelated changes to ripple. Separate ReadInventory from AdjustInventory when those roles have distinct consumers or implementations.\n\nSegregation should follow real client roles and security or ownership boundaries. It does not require one interface per method. Operations that form one cohesive protocol may be clearer together, and splitting them can hide lifecycle rules. Evidence includes implementations throwing unsupported-operation exceptions, clients mocking many irrelevant methods, or permissions that differ by capability. Balance narrow dependencies with a discoverable domain model.",
     "keyPoints": [
-      "SOLID principles reinforce each other",
-      "SRP enables testability",
-      "OCP + LSP = safe polymorphism",
-      "ISP prevents fat interfaces",
-      "DIP is the glue that enables the rest",
-      "Over-applying any principle is also harmful"
+      "Interfaces should reflect cohesive client capabilities",
+      "Narrow contracts reduce accidental coupling and authority",
+      "Unsupported methods often signal a contract that is too broad",
+      "Excessive fragmentation adds discovery and wiring cost"
     ],
     "redFlags": [
-      "Treating each principle in isolation",
-      "\"I always apply all SOLID principles\" (unrealistic)",
-      "Cannot give a concrete example connecting 2+ principles",
-      "Dogmatic application without pragmatism"
+      "Treating one-method interfaces as an automatic design target",
+      "Forcing implementations to provide meaningless operations",
+      "Ignoring lifecycle relationships while splitting a protocol"
     ],
     "followUps": [
       {
-        "question": "When have you intentionally violated a SOLID principle?",
-        "hint": "Shows pragmatism — sometimes a simple solution is better than a \"clean\" one."
+        "question": "What signals that an interface is too broad?",
+        "hint": "Look for unused mocks, unsupported operations, distinct permissions, and unrelated changes."
       },
       {
-        "question": "Which principle is most often violated in legacy code?",
-        "hint": "Usually SRP (god classes) or DIP (concrete dependencies everywhere)."
+        "question": "Can one class implement several segregated interfaces?",
+        "hint": "Yes; consumers can still depend on only the role they need."
       }
     ],
-    "experienceLevel": "PRODUCTION_EXPERIENCE",
-    "realExperience": {
-      "title": "SGN report module applying all 5 principles",
-      "description": "DataSource/Formatter/Exporter separation demonstrates SRP, OCP (new formats without modification), LSP (all exporters substitutable), ISP (minimal interfaces), DIP (constructor injection of abstractions)."
-    }
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-solid-dip-1",
+    "topic": "solid",
+    "subtopic": "solid-dip",
+    "difficulty": "SENIOR",
+    "question": "What is dependency inversion, and how is it different from dependency injection?",
+    "shortAnswer": "Dependency inversion is a design rule: high-level policy and low-level details depend on an abstraction owned around the policy boundary. Dependency injection is a construction technique that supplies dependencies from outside. A DI container can wire a tightly coupled design, and DIP can be implemented with plain constructors, so the two concepts support each other but are not equivalent.",
+    "detailedAnswer": "Without DIP, business policy may import a database client, HTTP SDK, or framework type directly. Changes in that detail then propagate inward. With DIP, the use-case layer defines the capability it needs—for example, LoadOrder or PublishEvent—and an adapter implements it using PostgreSQL or Kafka. Source-code dependencies point toward the stable policy even though runtime calls eventually reach infrastructure.\n\nDependency injection supplies an implementation through a constructor, factory, or container. It improves explicitness and test setup, but merely injecting a concrete vendor client does not invert ownership. Avoid abstraction for every helper; inversion is most valuable at volatile I/O, ownership, or architectural boundaries. Also keep contracts shaped around domain needs rather than mirroring the adapter API, otherwise the dependency is only cosmetically inverted.",
+    "keyPoints": [
+      "DIP controls the direction and ownership of source dependencies",
+      "DI controls object construction and dependency supply",
+      "Policy-oriented ports should not mirror vendor APIs",
+      "Inversion is most useful at meaningful volatile boundaries"
+    ],
+    "redFlags": [
+      "Using dependency inversion and dependency injection as synonyms",
+      "Injecting concrete infrastructure classes and claiming the architecture is inverted",
+      "Creating interfaces for stable internal helpers without a boundary reason"
+    ],
+    "followUps": [
+      {
+        "question": "Who should own the repository interface in a ports-and-adapters design?",
+        "hint": "Usually the policy or application side that defines the capability it needs."
+      },
+      {
+        "question": "Can you apply DIP without a DI framework?",
+        "hint": "Constructor injection and a manual composition root are sufficient."
+      },
+      {
+        "question": "When would introducing a port be unnecessary?",
+        "hint": "Consider stable local helpers with no ownership or volatility boundary."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   }
 ]

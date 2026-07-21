@@ -4,36 +4,36 @@
     "topic": "security",
     "subtopic": "security-web",
     "difficulty": "INTERMEDIATE",
-    "question": "What is SQL injection and how do you prevent it?",
-    "shortAnswer": "SQL injection is when user input is concatenated into SQL, allowing attackers to modify the query. Prevention: ALWAYS use parameterized queries (named parameters in JPA/Hibernate). Never concatenate user input into SQL strings. In SGN3, all native queries use :namedParam — ArchUnit could enforce this.",
-    "detailedAnswer": "SQL injection:\n```sql\n-- Vulnerable (string concatenation)\nString sql = \"SELECT * FROM users WHERE name = '\" + userInput + \"'\";\n-- Attack: userInput = \"'; DROP TABLE users; --\"\n```\n\nPrevention (in order of preference):\n1. **Parameterized queries (best):**\n```java\n// JPA named parameter — safe\nquery.setParameter(\"name\", userInput);\n// JDBC PreparedStatement — safe\npstmt.setString(1, userInput);\n```\n\n2. **ORM methods** (find, persist, criteria API — inherently safe)\n\n3. **Input validation** (defense in depth, not primary defense):\n   - Whitelist allowed characters\n   - Limit length\n   - Type checking (expecting Long? Parse it first)\n\nIn SGN3:\n- All native queries use `:namedParam`\n- StringBuilder for dynamic WHERE clauses still uses parameters for values\n- Code review catches string concatenation in SQL\n- SQL injection is severity CRITICAL in code review",
+    "question": "How does SQL injection happen in an ORM-based application, and how do you prevent it?",
+    "shortAnswer": "Injection happens when untrusted data becomes part of query syntax. An ORM does not remove the risk: concatenating input into JPQL/HQL is vulnerable just like concatenating native SQL. I bind values through named or positional parameters, allow-list any identifier or sort direction that cannot be parameterized, keep database privileges minimal, and use validation only as defense in depth.",
+    "detailedAnswer": "The boundary is syntax versus data. This is unsafe even though it is JPQL:\n\n```java\nvar jpql = \"select u from User u where u.name = '\" + input + \"'\";\n```\n\nThis keeps the value separate from query syntax:\n\n```java\nem.createQuery(\"select u from User u where u.name = :name\", User.class)\n  .setParameter(\"name\", input);\n```\n\nThe same rule applies to JDBC prepared statements and native queries. Parameters represent values, not identifiers such as a column name or `ASC`/`DESC`; for those dynamic parts, map a small allow-list of API values to known query fragments. Criteria APIs and generated repository methods are safer when used normally, but an ORM cannot protect a manually concatenated query.\n\nValidation, least-privilege database accounts, monitoring and safe error responses reduce impact, but they do not replace parameter binding.",
     "keyPoints": [
-      "Never concatenate user input into SQL",
-      "Parameterized queries (named params) prevent injection",
-      "ORM methods (find, persist) are inherently safe",
-      "Input validation is defense in depth, not primary defense",
-      "Severity CRITICAL in code review"
+      "Keep untrusted values separate from query syntax",
+      "Concatenated JPQL/HQL can be injectable too",
+      "Use bound parameters for both JPQL and native SQL",
+      "Allow-list identifiers and sort clauses that cannot be bound as values",
+      "Validation and least privilege are additional controls"
     ],
     "redFlags": [
-      "\"I validate the input\" as primary defense (can be bypassed)",
-      "Not knowing what parameterized queries are",
-      "Building SQL with string concatenation",
-      "\"Our ORM protects us\" (native queries can still be vulnerable)"
+      "Claiming the ORM makes every query safe",
+      "Using input validation as the primary injection defense",
+      "Concatenating values into JPQL, HQL or native SQL",
+      "Returning database error details to clients"
     ],
     "followUps": [
       {
-        "question": "Can SQL injection happen with an ORM like Hibernate?",
-        "hint": "Yes — native queries with string concatenation. JPQL is safe but native SQL needs parameters."
+        "question": "How do you implement a user-selectable sort column safely?",
+        "hint": "Map accepted API names to a fixed set of known entity attributes or SQL fragments; do not append the raw input."
       },
       {
-        "question": "What other injection types exist beyond SQL?",
-        "hint": "XSS (HTML/JS injection), LDAP injection, OS command injection, template injection."
+        "question": "Are stored procedures automatically safe from injection?",
+        "hint": "Only if their inputs are bound and they do not build dynamic SQL by concatenating untrusted values internally."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 SQL parameterization standard",
-      "description": "All 2000+ queries in SGN3 use named parameters. Dynamic WHERE clauses (StringBuilder) append parameter placeholders, never values. Code review catches injection attempts. Zero known SQL injection vulnerabilities."
+      "title": "SGN3 query parameterization",
+      "description": "Repository queries use named parameters for values, including dynamic WHERE construction that appends placeholders rather than raw values. Query construction is reviewed at the persistence boundary."
     }
   },
   {
@@ -41,36 +41,36 @@
     "topic": "security",
     "subtopic": "security-auth",
     "difficulty": "INTERMEDIATE",
-    "question": "Explain authentication vs authorization. How do you implement both?",
-    "shortAnswer": "Authentication: WHO are you? (verify identity — login, token, certificate). Authorization: WHAT can you do? (verify permissions — roles, rules, policies). In SGN3: authentication via LDAP (identity), authorization via Apache Shiro with permission-based model (227 profiles × 1279 rules).",
-    "detailedAnswer": "Authentication (AuthN):\n- Verifies identity: \"prove you are who you claim\"\n- Mechanisms: password + LDAP, JWT token, OAuth2, certificate\n- Result: confirmed identity (user ID, session)\n\nAuthorization (AuthZ):\n- Verifies permission: \"are you allowed to do this?\"\n- Mechanisms: RBAC (roles), ABAC (attributes), ACL, permission-based\n- Result: allow or deny\n\nSGN3 implementation:\n- AuthN: LDAP authentication (username + password verified against directory)\n- AuthZ: Apache Shiro with custom model:\n  - 227 profiles (role groupings)\n  - 1,279 rules (atomic permissions)\n  - Each login has N profiles → each profile has N rules\n  - Check: `identity.hasPermission(module, rule)`\n  - Authorization in Business layer (not just UI hiding)\n\nKey principle: authorization MUST be enforced server-side. UI hiding (rendered=false) is UX, not security.",
+    "question": "What is the difference between authentication and authorization, and where should each be enforced?",
+    "shortAnswer": "Authentication establishes an identity; authorization decides whether that identity may perform a specific action on a specific resource. A login, session or valid token is not permission by itself. I authenticate at the system boundary, then enforce authorization server-side at request and business-resource boundaries, including ownership or tenant checks—not only roles and never only UI visibility.",
+    "detailedAnswer": "**Authentication (AuthN)** verifies or obtains an identity through mechanisms such as a session login, an OIDC flow, a client certificate or a bearer access token. The result is a security principal with trusted attributes.\n\n**Authorization (AuthZ)** evaluates an action and resource against policy: role/authority checks, object ownership, tenant membership, attributes or explicit permissions. RBAC and permission/attribute checks can be combined; one is not universally better.\n\nEnforcement should be server-side and close to the protected resource. Request-level rules reject broad categories early, while service/method or domain checks protect operations reached through multiple entry points. The client may hide unavailable actions for usability, but that is not a security control.\n\nA strong answer also distinguishes `401 Unauthorized` (authentication is absent or invalid) from `403 Forbidden` (the authenticated caller is not allowed), while recognizing that an API may intentionally avoid revealing resource existence.",
     "keyPoints": [
-      "AuthN = who (identity). AuthZ = what (permissions).",
-      "Authorization enforced SERVER-SIDE (not UI hiding)",
-      "SGN3: LDAP for AuthN, Shiro rules for AuthZ",
-      "Permission-based > role-based (more granular)",
-      "Never rely on client-side checks for security"
+      "Authentication establishes identity; authorization evaluates permission",
+      "A valid token does not imply access to every object",
+      "Enforce authorization server-side and include object/tenant scope",
+      "Request-level and method/domain checks serve different boundaries",
+      "Client-side visibility is usability, not enforcement"
     ],
     "redFlags": [
-      "Confusing authentication with authorization",
-      "\"We hide the button\" as security (UI is not security)",
-      "Only client-side authorization",
-      "Not knowing where to enforce authorization (Business layer)"
+      "Treating authentication as sufficient authorization",
+      "Checking only whether a user has a generic role while ignoring resource ownership",
+      "Relying on hidden buttons or routes for protection",
+      "Trusting tenant or user identifiers supplied by the client without policy checks"
     ],
     "followUps": [
       {
-        "question": "Why enforce authorization in the Business layer, not just the UI?",
-        "hint": "API can be called directly (bypass UI). Business layer is the security boundary."
+        "question": "What is broken object-level authorization?",
+        "hint": "The API verifies that the caller is logged in but not that they may access the specific object ID requested."
       },
       {
-        "question": "What is the difference between RBAC and permission-based authorization?",
-        "hint": "RBAC: check role. Permission-based: check specific action. More granular, more flexible."
+        "question": "When might an API return 404 instead of 403?",
+        "hint": "To avoid disclosing that a sensitive resource exists, provided the behavior is consistent and documented."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 Apache Shiro + LDAP",
-      "description": "Built and maintained permission system: 227 profiles, 1,279 rules, 144k user-profile assignments. LDAP for authentication. Shiro for authorization. Business layer enforces permissions — UI rendered attribute is UX convenience, not security."
+      "title": "SGN3 LDAP and Apache Shiro authorization",
+      "description": "LDAP establishes user identity and Apache Shiro enforces granular rules in the business layer. UI visibility mirrors permissions for usability, while server-side checks remain the security boundary."
     }
   },
   {
@@ -78,37 +78,115 @@
     "topic": "security",
     "subtopic": "security-data",
     "difficulty": "SENIOR",
-    "question": "How do you handle sensitive data (secrets, PII) in a production system?",
-    "shortAnswer": "Secrets (passwords, API keys): never in code or config files. Use environment variables, K8s Secrets, or Vault. PII (personal data): encrypt at rest, minimize collection, restrict access, audit who accessed what, implement data retention policies. In SGN3: DB credentials via env vars in OKD, PII access restricted by Shiro rules.",
-    "detailedAnswer": "Secrets management:\n1. **Never in source code** (not even 'temporarily')\n2. **Not in config files committed to Git**\n3. **Environment variables** (minimum — visible in process list)\n4. **K8s Secrets** (base64, not encrypted by default — enable encryption at rest)\n5. **Vault** (HashiCorp Vault — dynamic secrets, rotation, audit)\n\nPII protection:\n1. **Minimize collection** — don't store what you don't need\n2. **Encrypt at rest** — database-level or column-level encryption\n3. **Restrict access** — role-based, need-to-know\n4. **Audit** — log who accessed sensitive data (not the data itself!)\n5. **Retention** — delete when no longer needed (GDPR/LGPD)\n6. **Mask in logs** — never log CPF, password, credit card\n\nSGN3:\n- DB credentials: OKD environment variables (not in application.properties)\n- PII access: Shiro rules control who sees student data\n- Logs: never log CPF or personal identifiers in full\n- No secrets in Git history (ever)",
+    "question": "How do you protect secrets and personal data throughout their lifecycle?",
+    "shortAnswer": "I treat secrets and personal data as different assets with a common lifecycle: minimize, classify, restrict, encrypt where appropriate, observe access, rotate or delete, and test recovery. Secrets belong in a managed secret store with narrow identities and rotation—not source control or image layers. For personal data, purpose, retention, field-level access and safe logging matter as much as encryption.",
+    "detailedAnswer": "For **secrets**:\n- Keep them out of source, build arguments, images and ordinary logs.\n- Prefer a secret manager or platform integration with workload identity, access policy, audit and rotation.\n- Kubernetes Secret values are base64-encoded, not thereby encrypted; cluster encryption at rest and RBAC must be configured.\n- Plan how applications reload rotated values. Environment variables commonly require a process restart; mounted files and secret agents have different update behavior.\n- If a secret is committed, rotate or revoke it immediately and audit use. History cleanup reduces future exposure but does not make the old value safe.\n\nFor **personal or regulated data**:\n- Collect only what has a defined purpose and retention period.\n- Protect data in transit and at rest according to threat model and regulation.\n- Enforce least privilege, object/field-level authorization and audited administrative access.\n- Tokenize or mask when full values are unnecessary; keep sensitive values out of logs, metrics and traces.\n- Implement deletion, correction and backup-retention procedures rather than promising immediate erasure everywhere.\n\nEncryption is important, but key management, access policy and lifecycle controls determine whether it is effective.",
     "keyPoints": [
-      "Secrets: env vars minimum, Vault ideal. Never in code.",
-      "PII: minimize, encrypt, restrict, audit, retain/delete",
-      "Never log sensitive data (CPF, passwords, tokens)",
-      "Authorization controls who accesses PII",
-      "LGPD/GDPR: data retention and deletion policies"
+      "Base64 encoding is not encryption",
+      "Rotation includes application reload and revocation behavior",
+      "Minimization and retention reduce the amount of data at risk",
+      "Logs, traces, backups and analytics are part of the data lifecycle",
+      "Encryption needs sound identity, access and key management"
     ],
     "redFlags": [
-      "Secrets in application.properties committed to Git",
-      "Logging PII in plaintext",
-      "\"We trust our developers\" as security strategy",
-      "No data retention policy",
-      "No audit trail for sensitive data access"
+      "Treating environment variables as a complete secret-management strategy",
+      "Assuming Kubernetes Secrets are encrypted by default",
+      "Logging tokens or personal identifiers for convenience",
+      "Removing a leaked secret from Git without rotating it"
     ],
     "followUps": [
       {
-        "question": "What do you do if a secret is accidentally committed to Git?",
-        "hint": "Rotate immediately (assume compromised). Remove from history (git filter-branch). Audit access logs."
+        "question": "What is the first action after discovering a committed credential?",
+        "hint": "Revoke or rotate it and assume exposure; repository-history cleanup comes after containment."
       },
       {
-        "question": "How do you handle LGPD compliance?",
-        "hint": "Data minimization, consent tracking, right to deletion, access audit, DPO."
+        "question": "How would you verify that a retention policy actually works?",
+        "hint": "Test deletion across primary data, derived stores, search indexes, exports and documented backup expiration."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN3 secrets and PII management",
-      "description": "DB credentials via OKD env vars. Application properties have safe defaults only. PII (student data) protected by Shiro rules — only authorized profiles can view personal information. No CPF in application logs."
+      "title": "SGN3 secrets and personal-data controls",
+      "description": "Deployment credentials are externalized in OKD, access to student data is restricted through server-side authorization rules, and application logging avoids full personal identifiers."
+    }
+  },
+  {
+    "id": "interview-security-4",
+    "topic": "security",
+    "subtopic": "security-spring",
+    "difficulty": "INTERMEDIATE",
+    "question": "How would you structure authentication and authorization in a Spring Security application?",
+    "shortAnswer": "I configure one or more `SecurityFilterChain` beans for request authentication, exploit protections and coarse URL rules, with an explicit deny-by-default fallback. I then use method or domain authorization for rules tied to the actual resource. I keep custom filters rare and deliberately ordered, and test unauthenticated, forbidden and allowed cases instead of assuming the configuration is active.",
+    "detailedAnswer": "Spring Security's servlet support runs through `FilterChainProxy`, which selects a `SecurityFilterChain`. Filters establish the security context, apply protections, authenticate and authorize in a defined order.\n\nA practical design:\n1. Define which requests each chain secures and use `authorizeHttpRequests` with specific rules before `anyRequest`.\n2. Choose the appropriate authentication mechanism: session/OIDC login for a browser application, or OAuth 2.0 resource-server support for bearer access tokens.\n3. Use `@EnableMethodSecurity` and `@PreAuthorize`, or a domain authorization service, when policy depends on method arguments, ownership or tenant data.\n4. Handle authentication and access-denied responses consistently and avoid leaking sensitive detail.\n5. Keep CSRF enabled for browser requests authenticated by ambient credentials such as cookies. A stateless bearer-token API has a different threat model; disabling CSRF should be a reasoned decision, not a copied snippet.\n6. Test the effective filter chain and policy with anonymous users and principals with different authorities.\n\nURL rules alone can miss alternate call paths; method rules alone may do unnecessary work before rejecting a request. The layers complement each other.",
+    "keyPoints": [
+      "SecurityFilterChain controls request-level security",
+      "Use deny-by-default and deliberate matcher ordering",
+      "Method/domain authorization handles resource-aware rules",
+      "CSRF decisions depend on how credentials are sent",
+      "Security configuration needs negative as well as positive tests"
+    ],
+    "redFlags": [
+      "Disabling CSRF solely because the application exposes JSON",
+      "Ending rules with an overly broad permitAll matcher",
+      "Adding a custom filter without understanding its chain position",
+      "Testing only successful authenticated requests"
+    ],
+    "followUps": [
+      {
+        "question": "Why can matcher order change authorization behavior?",
+        "hint": "Request authorization applies the first matching rule, so a broad rule placed early can shadow a specific rule."
+      },
+      {
+        "question": "When is method security useful in addition to URL rules?",
+        "hint": "When the decision depends on method arguments, object ownership or a service invoked through more than one transport."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transfer from Apache Shiro and Jakarta EE",
+      "description": "Production experience with filter-based authentication and business-layer permission checks transfers to Spring Security's request and method authorization model; the Spring-specific DSL and filter-chain behavior require explicit validation."
+    }
+  },
+  {
+    "id": "interview-security-5",
+    "topic": "security",
+    "subtopic": "security-api",
+    "difficulty": "SENIOR",
+    "question": "How would you secure a REST API that is called by both users and other services?",
+    "clarifyingQuestions": [
+      "Are browser cookies, bearer tokens, mutual TLS or more than one credential type in scope?",
+      "Which objects are tenant- or owner-scoped?",
+      "What availability, audit and token-revocation requirements apply?"
+    ],
+    "shortAnswer": "I start with the caller and trust boundary. I use TLS, short-lived OAuth access tokens or workload identities and validate them according to their format and authorization-server contract. Then I enforce server-side authorization for every operation and object. Input bounds, abuse controls, telemetry hygiene, rotation, revocation, audit and failure behavior matter just as much as a JWT signature or token-introspection call.",
+    "detailedAnswer": "An end-to-end API design covers several independent controls:\n\n- **Transport and identity**: TLS everywhere. User calls commonly use OAuth 2.0 access tokens after an OIDC login; service calls can use client credentials, workload identity or mTLS according to the platform. OIDC does not imply that every access token is a JWT.\n- **Token validation**: for a JWT, restrict trusted algorithms and verify its signature, expiration, issuer and audience, plus `nbf` when present or required by policy. For an opaque token, use the authorization server's introspection or another documented validation mechanism and verify that it is active and intended for this resource. A decoded token is not an authenticated identity. Plan key rotation, caching and authorization-server failure behavior.\n- **Authorization**: map scopes/authorities to operations and still verify ownership, tenant and sensitive fields for the requested object. Do not trust a user or tenant ID merely because it appears in the URL or token.\n- **Request safety**: schema and size limits, safe parsers, parameterized persistence, timeouts and bounded resource use. Rate limits and quotas should reflect abuse and availability risks rather than one universal number.\n- **Operations**: structured security events without token/PII leakage, correlation IDs, anomaly monitoring and a documented revocation/incident path.\n\nAuthentication failures are usually 401 with the appropriate challenge; an authenticated but disallowed request is usually 403. Consistent behavior may intentionally hide whether a sensitive object exists.",
+    "keyPoints": [
+      "Validate JWTs and opaque tokens with the mechanism their issuer defines",
+      "Authorize the specific action and object, not merely the route",
+      "Use separate identities and least privilege for service callers",
+      "Rate limits, input bounds and timeouts protect availability",
+      "Rotation, revocation, audit and telemetry hygiene are part of the design"
+    ],
+    "redFlags": [
+      "Trusting a decoded JWT or an opaque token that was not validated",
+      "Checking scopes but not object ownership or tenant boundaries",
+      "Using long-lived shared service credentials across environments",
+      "Logging bearer tokens to debug authentication"
+    ],
+    "followUps": [
+      {
+        "question": "How does validation differ for a JWT and an opaque access token?",
+        "hint": "A JWT is normally verified locally against trusted keys and claims; an opaque token is commonly checked through authorization-server introspection or another issuer-defined mechanism."
+      },
+      {
+        "question": "How would you test broken object-level authorization?",
+        "hint": "Authenticate as one principal and attempt to read or modify another principal's or tenant's object IDs across every relevant operation."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transfer from SGN3 service authorization",
+      "description": "Production experience enforcing granular permissions in the business layer and integrating directory authentication provides the authorization foundation; OAuth 2.0 resource-server and workload-identity details are technology-specific extensions."
     }
   }
 ]

@@ -4,36 +4,40 @@
     "topic": "rest",
     "subtopic": "rest-verbs",
     "difficulty": "BEGINNER",
-    "question": "When would you use PUT vs PATCH vs POST?",
-    "shortAnswer": "POST creates a new resource (server assigns ID). PUT replaces the entire resource (client sends full representation). PATCH partially updates specific fields. PUT is idempotent (same request twice = same result), POST is not.",
-    "detailedAnswer": "HTTP verbs have specific semantics:\n\n- POST /orders → Create new order (server assigns ID). NOT idempotent.\n- PUT /orders/123 → Replace order 123 entirely. Must send complete representation. Idempotent.\n- PATCH /orders/123 → Update specific fields of order 123. May or may not be idempotent.\n\nIdempotency matters for retries:\n- PUT: safe to retry (same result)\n- POST: retry may create duplicates (need idempotency key)\n- PATCH: depends on operation (\"set status=ACTIVE\" is idempotent, \"increment count\" is not)\n\nCommon mistakes:\n- Using POST for everything (ignores HTTP semantics)\n- Using PUT for partial updates (should send full resource)\n- Ignoring idempotency implications",
+    "question": "How do POST, PUT and PATCH differ, especially when a client retries a request?",
+    "shortAnswer": "POST asks the target resource to process a representation according to its own semantics; collection creation is common, but not its only use. PUT creates or replaces the state of the known target URI and is idempotent. PATCH applies a patch document and is not inherently idempotent, though a patch can be designed that way. Retries also need concurrency controls and, for non-idempotent operations, an idempotency strategy.",
+    "detailedAnswer": "Method semantics should match the resource model:\n\n- `POST /orders` commonly asks an order collection to create a subordinate resource and choose its URI. POST can also represent processing or commands; it is not defined only as ‘create’.\n- `PUT /orders/123` asks the server to create or replace the representation at that client-known URI. Repeating the same request has the same intended effect, so PUT is idempotent. If it creates the resource, `201 Created` is appropriate; replacement commonly returns `200` with content or `204` without it.\n- `PATCH /orders/123` sends instructions described by a patch media type. PATCH is not idempotent by definition: ‘set status’ can be idempotent, while ‘increment quantity’ is not.\n\nIdempotent does not mean ‘the response is identical’ or ‘nothing else is logged’; it means repeating the intended request has the same effect on server state. For concurrent edits, use validators such as an ETag with `If-Match` so an update based on stale state fails rather than overwriting newer data. For retried POST commands, a client-generated idempotency key can map retries to one operation and stored outcome.",
     "keyPoints": [
-      "POST creates, PUT replaces entirely, PATCH updates partially",
-      "PUT is idempotent — safe to retry",
-      "POST is not idempotent — retry may duplicate",
-      "PATCH idempotency depends on the operation",
-      "PUT requires full resource representation"
+      "POST means target-defined processing, often collection creation",
+      "PUT creates or replaces a known target and is idempotent",
+      "PATCH semantics come from its patch document and are not inherently idempotent",
+      "Idempotency describes intended server-state effect, not identical responses",
+      "Conditional requests protect against lost updates"
     ],
     "redFlags": [
-      "Using POST for everything",
-      "Confusing PUT with PATCH",
-      "Not knowing what idempotent means",
-      "\"PUT and PATCH are the same\""
+      "Defining POST only as create",
+      "Calling every PATCH idempotent because it changes one field",
+      "Equating idempotency with safety or read-only behavior",
+      "Ignoring concurrent updates while discussing retry safety"
     ],
     "followUps": [
       {
-        "question": "How do you prevent duplicate creation on POST retry?",
-        "hint": "Idempotency key in header. Server deduplicates."
+        "question": "How would you make a retried payment-creation POST safe?",
+        "hint": "Accept a stable idempotency key, atomically associate it with the operation and return the stored result for matching retries."
       },
       {
-        "question": "What status code do you return for a successful PUT?",
-        "hint": "200 with updated resource, or 204 No Content."
+        "question": "When should a PUT response be 201 rather than 200 or 204?",
+        "hint": "When the PUT successfully creates a previously nonexistent resource at the target URI."
+      },
+      {
+        "question": "How does `If-Match` help a PATCH request?",
+        "hint": "The server applies the patch only if the current representation still has the expected ETag, preventing a stale write."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "senai-services REST API design",
-      "description": "Designed REST endpoints following proper verb semantics. Used POST for creation, PUT for full replacement, custom PATCH operations for state transitions (confirm, cancel)."
+      "title": "senai-services HTTP endpoint design",
+      "description": "Designed creation and update endpoints with explicit verb semantics, including state-transition operations whose retry and concurrency behavior had to be considered separately from CRUD naming."
     }
   },
   {
@@ -41,36 +45,41 @@
     "topic": "rest",
     "subtopic": "rest-design",
     "difficulty": "INTERMEDIATE",
-    "question": "How do you design pagination for a REST API?",
-    "shortAnswer": "Offset/limit for simple cases, cursor-based for large datasets. Always include: deterministic ordering (with tiebreaker), total count as opt-in (expensive), next/prev links in response. Enforce server-side max limit to prevent abuse.",
-    "detailedAnswer": "Pagination approaches:\n\n1. Offset/Limit (simple, most common):\n```\nGET /orders?offset=20&limit=10\n```\nPros: easy to implement, random page access\nCons: slow for large offsets (DB skips rows), inconsistent under inserts/deletes\n\n2. Cursor/Keyset (scalable):\n```\nGET /orders?after=eyJpZCI6MTIzfQ&limit=10\n```\nPros: consistent performance regardless of page, stable under mutations\nCons: no random page access, cursor is opaque\n\nMandatory rules:\n- Deterministic ORDER BY with tiebreaker (id, timestamp+id)\n- Server enforces max limit (e.g., 100)\n- Response includes pagination metadata\n- Total count is opt-in (COUNT(*) is expensive)\n\nResponse format:\n```json\n{\"data\": [...], \"pagination\": {\"total\": 1523, \"limit\": 10, \"offset\": 20, \"next\": \"/orders?offset=30&limit=10\"}}\n```",
+    "question": "How do you choose between offset and cursor pagination, and what makes either design correct?",
+    "clarifyingQuestions": [
+      "Do clients need random page-number access or mostly next-page traversal?",
+      "How large and mutable is the result set?",
+      "Which ordering is meaningful and immutable enough for a cursor?"
+    ],
+    "shortAnswer": "Offset pagination is simple and supports page jumps, but large offsets require skipped work and concurrent inserts or deletes can cause gaps or duplicates. Cursor/keyset pagination compares the ordered key tuple, giving more predictable continuation cost, but it needs a deterministic order and cannot naturally jump to page N. I always add a unique tiebreaker, cap page size, and define consistency and count semantics.",
+    "detailedAnswer": "**Offset/limit**:\n- Easy to expose as page/size or offset/limit\n- Supports random page access and familiar UI counts\n- The database still finds/skips preceding rows; high offsets can become expensive\n- Rows inserted or deleted before the current offset can shift later pages\n\n**Cursor/keyset**:\n- Encodes the last ordered key tuple, for example `(created_at, id)`\n- Continues with a predicate such as `WHERE (created_at, id) < (:createdAt, :id)` using the same order\n- Avoids work proportional to a large offset when an appropriate index exists\n- Does not provide arbitrary page jumps and must handle forward/backward direction deliberately\n\nCorrectness rules:\n- Use deterministic ordering with a unique tiebreaker.\n- Keep the cursor opaque, versioned and tamper-resistant if it carries sensitive or policy-relevant state.\n- Apply the same filters and authorization on every page; never trust a cursor to grant access.\n- Cursor pagination reduces some mutation anomalies but is not a snapshot: changes to sort keys or isolation rules can still alter what the client observes.\n- Enforce a maximum page size. A total count may be cheap or expensive depending on filters, indexes and consistency needs; make its contract explicit rather than always including or always forbidding it.",
     "keyPoints": [
-      "Offset/limit for simple cases, cursor for scale",
-      "Deterministic ordering with tiebreaker column",
-      "Server enforces maximum page size",
-      "Total count is expensive — make it opt-in",
-      "Cursor-based is consistent under data mutations"
+      "Offset supports page jumps but degrades and shifts at large mutable offsets",
+      "Keyset continuation uses the complete ordered tuple",
+      "A unique tiebreaker makes ordering deterministic",
+      "A cursor is not automatically a database snapshot or authorization token",
+      "Count semantics and maximum page size belong in the API contract"
     ],
     "redFlags": [
-      "No pagination at all (returns all records)",
-      "No server-side limit enforcement",
-      "Non-deterministic ordering (random results)",
-      "\"I always use offset/limit\" without knowing cursor alternative"
+      "Paginating without a deterministic ORDER BY",
+      "Encoding only a non-unique timestamp in the cursor",
+      "Promising cursor pagination eliminates every mutation anomaly",
+      "Letting clients request an unbounded page size"
     ],
     "followUps": [
       {
-        "question": "Why is offset-based pagination slow for large offsets?",
-        "hint": "DB must skip N rows to reach the offset. Cursor uses WHERE clause — always fast."
+        "question": "Why must a cursor include both `created_at` and `id` when timestamps can repeat?",
+        "hint": "The pair provides a total order; using only the timestamp can skip or repeat rows tied at the boundary."
       },
       {
-        "question": "How do you handle pagination when data is being inserted?",
-        "hint": "Offset can show duplicates/gaps. Cursor is stable."
+        "question": "Can a cursor replace authorization checks on subsequent pages?",
+        "hint": "No. Reapply the caller's filters and policy; an opaque cursor is continuation state, not proof of access."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
       "title": "senai-services pagination",
-      "description": "Implemented offset/limit pagination with deterministic ORDER BY (always include PK as tiebreaker). Server enforces max 100 per request."
+      "description": "Implemented bounded offset/limit pagination with deterministic ordering and a primary-key tiebreaker for production endpoints."
     }
   },
   {
@@ -78,36 +87,36 @@
     "topic": "rest",
     "subtopic": "rest-versioning",
     "difficulty": "SENIOR",
-    "question": "How do you version a REST API? What is your strategy for breaking changes?",
-    "shortAnswer": "I use path-based versioning (/v1/, /v2/) for clarity. Breaking changes get a new version; additive changes (new optional fields) do not. Both versions share the same business logic — only the adapter/DTO layer differs. Deprecation with timeline, not surprise removal.",
-    "detailedAnswer": "Versioning strategies:\n\n1. Path-based: /api/v1/orders, /api/v2/orders (most common, most explicit)\n2. Header-based: Accept: application/vnd.myapp.v2+json (cleaner URLs, harder to discover)\n3. Query param: /orders?version=2 (easy but pollutes params)\n\nMy preference: path-based for external APIs (explicit, easy to route), header-based acceptable for internal.\n\nWhat constitutes a breaking change:\n- Removing a field from response\n- Changing field type\n- Making optional parameter required\n- Changing error response format\n- Changing semantic meaning of a field\n\nWhat is NOT breaking (usually):\n- Adding optional field to response\n- Adding optional parameter\n- New endpoint\n\nStrategy:\n- New version shares Business layer (DRY)\n- Only Endpoint + DTO differ per version\n- Deprecation announced with timeline\n- Old version supported for N months\n- Monitor usage of old version before removal",
+    "question": "How do you evolve an HTTP API and decide whether a change needs a new version?",
+    "shortAnswer": "I first try to evolve the existing contract compatibly. A new version is for a change whose semantics or representation cannot be introduced without breaking supported clients, not for every release. Path, media-type or header versioning can all work; I choose based on routing, caching and client tooling. I document compatibility assumptions, test consumer contracts, announce deprecation, observe usage and provide a migration window.",
+    "detailedAnswer": "Start from the published contract and real consumer behavior. Common breaking changes include removing/renaming fields, changing types or meanings, tightening previously accepted input, changing error semantics, or altering pagination/order guarantees. Adding an optional response field is usually compatible for tolerant readers, but strict deserializers or signed schemas can still break—so validate actual clients rather than treating ‘additive’ as universally safe.\n\nVersioning options:\n- **Path** (`/v2/orders`): explicit and easy to route/document, but version identity becomes part of resource paths.\n- **Media type or other header negotiation**: keeps resource paths stable but can be less visible to tools, gateways and caches unless `Vary` and routing are handled correctly.\n- **Coordinated unversioned evolution**: viable for tightly controlled internal consumers, but only with deployment coordination and contract tests.\n\nKeep domain logic shared where semantics remain the same, but do not force two genuinely different contracts through one ambiguous model. Publish migration examples and dates. The standardized `Deprecation` response header can signal that a resource is deprecated, a deprecation link can point to guidance, and `Sunset` can announce when it is expected to stop responding. Telemetry should show which consumers still use the old contract before removal.",
     "keyPoints": [
-      "Path-based versioning for clarity (/v1/, /v2/)",
-      "Breaking change = new version. Additive = same version.",
-      "Shared business logic — only adapter layer differs",
-      "Deprecation with timeline, not surprise removal",
-      "Monitor old version usage before decommissioning"
+      "Version contracts for incompatible changes, not every implementation release",
+      "Compatibility depends on documented and observed consumer behavior",
+      "Path and negotiated versions have routing/tooling trade-offs",
+      "Contract tests and usage telemetry support safe migration",
+      "Deprecation guidance, dates and a migration window precede removal"
     ],
     "redFlags": [
-      "\"We never version\" (breaks all clients on changes)",
-      "Duplicating business logic between versions",
-      "Versioning every minor change",
-      "No deprecation policy — just remove endpoints"
+      "Calling every additive response change universally safe",
+      "Creating a version for each release without a contract reason",
+      "Duplicating unchanged business logic across versions",
+      "Removing an old version without consumer usage evidence"
     ],
     "followUps": [
       {
-        "question": "How do you communicate deprecation to API consumers?",
-        "hint": "Deprecation header, documentation, changelog, direct notification."
+        "question": "When can adding a response field break a client?",
+        "hint": "A client may reject unknown properties, validate a closed schema or include the exact payload in a signature/hash."
       },
       {
-        "question": "When would you choose NOT to create a new version?",
-        "hint": "Additive changes, internal APIs with coordinated deploys."
+        "question": "What is the distinction between deprecation and sunset?",
+        "hint": "Deprecation says use is discouraged and points to migration; sunset communicates when the resource is expected to become unavailable."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "senai-services v2/v3 versioning",
-      "description": "Path-based versioning. Both versions delegate to same Business layer. Bug fixes in shared layer affect all versions. Breaking changes only in newest version."
+      "title": "senai-services API versions",
+      "description": "Maintained path-versioned endpoints that shared stable business behavior while isolating incompatible transport contracts and keeping older consumers operational during migration."
     }
   }
 ]

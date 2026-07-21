@@ -223,6 +223,18 @@
 
   <!-- Main Content -->
   <main class="main-content">
+    @if (breadcrumbs().length > 0) {
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        @for (crumb of breadcrumbs(); track $index; let last = $last) {
+          @if (!last && crumb.url) {
+            <a class="breadcrumb__link" [routerLink]="crumb.url">{{ crumb.label }}</a>
+            <span class="breadcrumb__sep">/</span>
+          } @else {
+            <span class="breadcrumb__current">{{ crumb.label }}</span>
+          }
+        }
+      </nav>
+    }
     <router-outlet />
   </main>
 </div>

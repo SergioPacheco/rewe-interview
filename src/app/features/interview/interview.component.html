@@ -47,6 +47,27 @@
           }
         </header>
 
+        <!-- Clarifying Questions -->
+        @if (q.clarifyingQuestions && q.clarifyingQuestions.length > 0) {
+          <section class="interview-section">
+            <button class="interview-section__toggle" (click)="toggleSection('clarifying')"
+                    [class.interview-section__toggle--open]="isExpanded('clarifying')">
+              <span class="interview-section__icon">❓</span>
+              <span class="interview-section__title">Before answering, clarify</span>
+              <span class="interview-section__arrow">{{ isExpanded('clarifying') ? '▼' : '▶' }}</span>
+            </button>
+            @if (isExpanded('clarifying')) {
+              <div class="interview-section__body">
+                <ul class="clarifying-questions">
+                  @for (cq of q.clarifyingQuestions; track cq) {
+                    <li class="clarifying-questions__item">{{ cq }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </section>
+        }
+
         <!-- Short Answer -->
         <section class="interview-section">
           <button class="interview-section__toggle" (click)="toggleSection('short')"

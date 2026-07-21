@@ -1,4 +1,4 @@
-import { Component, computed, inject, input, effect } from '@angular/core';
+import { Component, computed, inject, input, effect, signal } from '@angular/core';
 import { InterviewService } from '../../core/services/interview.service';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 
@@ -25,12 +25,21 @@ export class InterviewComponent {
 
   // Expose service signals
   readonly loading = this.interviewService.loading;
+
+  /** Filtered questions: excludes placeholders, respects subtopic */
   readonly questions = computed(() => {
     const sub = this.subtopicId();
-    return this.interviewService.getForSubtopic(sub ?? undefined);
+    const all = this.interviewService.getForSubtopic(sub ?? undefined);
+    // P1: Filter out placeholder content (starts with '[')
+    return all.filter(q =>
+      q.shortAnswer && !q.shortAnswer.startsWith('[')
+    );
   });
-  readonly currentQuestion = this.interviewService.currentQuestion;
-  readonly selectedIndex = this.interviewService.selectedIndex;
+
+  // P2: Local navigation state (operates on filtered list, not service-level)
+  private readonly _selectedIndex = signal(0);
+  readonly selectedIndex = this._selectedIndex.asReadonly();
+  readonly currentQuestion = computed(() => this.questions()[this._selectedIndex()] ?? null);
   readonly totalQuestions = computed(() => this.questions().length);
   readonly hasQuestions = computed(() => this.questions().length > 0);
 
@@ -42,23 +51,33 @@ export class InterviewComponent {
     effect(() => {
       const topicId = this.topicId();
       if (topicId) {
+        this._selectedIndex.set(0);
         this.interviewService.loadForTopic(topicId);
       }
     });
   }
 
   selectQuestion(index: number): void {
-    this.interviewService.selectQuestion(index);
+    const max = this.questions().length;
+    if (index >= 0 && index < max) {
+      this._selectedIndex.set(index);
+    }
     this.expandedSections.clear();
   }
 
   next(): void {
-    this.interviewService.next();
+    const idx = this._selectedIndex();
+    if (idx < this.questions().length - 1) {
+      this._selectedIndex.set(idx + 1);
+    }
     this.expandedSections.clear();
   }
 
   previous(): void {
-    this.interviewService.previous();
+    const idx = this._selectedIndex();
+    if (idx > 0) {
+      this._selectedIndex.set(idx - 1);
+    }
     this.expandedSections.clear();
   }
 

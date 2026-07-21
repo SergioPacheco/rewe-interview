@@ -63,8 +63,15 @@ export class QuizEngineService {
       allQuestions = this.topicService.getQuestions(topicId);
     }
 
+    // P3: Exclude ORAL_ANSWER and Schema V2 from Practice (they belong in Interview tab)
+    const practiceQuestions = allQuestions.filter(q =>
+      q.type !== 'ORAL_ANSWER' &&
+      q.type !== 'SYSTEM_DESIGN' &&
+      (q as any).schemaVersion !== 2
+    );
+
     // Shuffle and limit
-    const shuffled = this.shuffle([...allQuestions]);
+    const shuffled = this.shuffle([...practiceQuestions]);
     const selected = shuffled.slice(0, Math.min(maxQuestions, shuffled.length));
 
     if (selected.length === 0) {
@@ -88,7 +95,12 @@ export class QuizEngineService {
 
   /** Start a mixed practice session with questions from all topics */
   startMixed(maxQuestions = 15): void {
-    const allQuestions = this.topicService.questions();
+    const allQuestions = this.topicService.questions()
+      .filter(q =>
+        q.type !== 'ORAL_ANSWER' &&
+        q.type !== 'SYSTEM_DESIGN' &&
+        (q as any).schemaVersion !== 2
+      );
 
     // Shuffle and limit
     const shuffled = this.shuffle([...allQuestions]);

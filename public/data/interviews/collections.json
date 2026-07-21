@@ -5,7 +5,8 @@
     "subtopic": "java-arrays",
     "difficulty": "INTERMEDIATE",
     "question": "How does HashMap work internally in Java?",
-    "shortAnswer": "HashMap uses an array of buckets. The key hashCode() determines the bucket index. Collisions are handled by linked lists (or trees when a bucket exceeds 8 entries in Java 8+). Get/put are O(1) average, O(n) worst case with bad hash distribution.",
+    "context": "Fundamental question — interviewers expect you to know bucket arrays, hashing, and collision handling.",
+    "shortAnswer": "HashMap uses an array of buckets. The key's hashCode() determines the bucket index via bitwise operation. Collisions are handled by linked lists (or trees when a bucket exceeds 8 entries in Java 8+). Get/put are O(1) average, O(n) worst case with bad hash distribution.",
     "detailedAnswer": "Internal structure:\n1. Array of Node[] (buckets), default size 16\n2. hashCode() → hash → index = hash & (capacity - 1)\n3. Collision: linked list in the bucket (Java 7) or tree (Java 8+ when bucket > 8 nodes)\n4. Load factor 0.75 → resize (double) when 75% full\n5. Resize rehashes all entries — O(n) operation\n\nKey contract:\n- equals() and hashCode() MUST be consistent\n- If a.equals(b) then a.hashCode() == b.hashCode()\n- Violating this = silent data loss (put finds one bucket, get looks in another)\n\nPerformance:\n- Average: O(1) for get/put\n- Worst case: O(n) with all collisions in one bucket\n- Java 8 tree optimization: O(log n) worst case per bucket",
     "keyPoints": [
       "Array of buckets + linked list/tree for collisions",
@@ -21,19 +22,14 @@
       "Confusing HashMap with TreeMap or LinkedHashMap"
     ],
     "followUps": [
-      {
-        "question": "What happens if you use a mutable object as a key?",
-        "hint": "If hashCode changes after insertion, the entry becomes unreachable."
-      },
-      {
-        "question": "When would you choose TreeMap over HashMap?",
-        "hint": "When you need sorted keys or range queries."
-      }
+      { "question": "What happens if you use a mutable object as a key?", "hint": "If hashCode changes after insertion, the entry becomes unreachable." },
+      { "question": "When would you choose TreeMap over HashMap?", "hint": "When you need sorted keys or range queries." },
+      { "question": "What is the difference between HashMap and ConcurrentHashMap?", "hint": "ConcurrentHashMap uses lock striping for thread safety without locking the entire map." }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "HashMap misuse causing silent data loss",
-      "description": "Found a bug where a mutable entity was used as HashMap key. After modification, existing entries became unreachable. Fixed by using immutable ID as key."
+      "title": "SGN3 ConcurrentHashMap for application cache",
+      "description": "Used ConcurrentHashMap with TTL entries for caching configuration parameters (unidades, modalidades). Chose it over full cache framework because the data volume is small and the access pattern is simple (read-heavy, occasional invalidation)."
     }
   },
   {
@@ -42,14 +38,15 @@
     "subtopic": "java-exceptions",
     "difficulty": "BEGINNER",
     "question": "Explain the difference between checked and unchecked exceptions.",
-    "shortAnswer": "Checked exceptions must be declared or caught (compile-time enforcement) — they represent recoverable conditions like IOException. Unchecked (RuntimeException) represent programming errors like NullPointerException — forcing callers to handle them would pollute every method signature.",
-    "detailedAnswer": "Checked exceptions (extends Exception, not RuntimeException):\n- Compiler forces you to handle them (try/catch or throws)\n- Represent conditions the caller CAN reasonably recover from\n- Examples: IOException, SQLException, FileNotFoundException\n\nUnchecked exceptions (extends RuntimeException):\n- No compiler enforcement\n- Represent programming errors that SHOULD be fixed in code\n- Examples: NullPointerException, IllegalArgumentException, IndexOutOfBoundsException\n\nDesign decision: when creating custom exceptions:\n- Business rule violations → RuntimeException (caller should prevent, not catch)\n- External system failures → Checked (caller should decide: retry, fallback, or propagate)\n\nIn SGN: SenaiException extends RuntimeException — business rule violations propagate naturally without polluting every method signature with throws.",
+    "context": "Tests understanding of Java's exception design philosophy, not just the syntax.",
+    "shortAnswer": "Checked exceptions must be declared or caught — they represent recoverable conditions like IOException. Unchecked (RuntimeException) represent programming errors like NullPointerException — forcing callers to handle them would pollute every method signature. In SGN3, business rule violations use unchecked SenaiException because callers should prevent the violation, not catch and recover from it.",
+    "detailedAnswer": "Checked exceptions (extends Exception, not RuntimeException):\n- Compiler forces you to handle them (try/catch or throws)\n- Represent conditions the caller CAN reasonably recover from\n- Examples: IOException, SQLException, FileNotFoundException\n\nUnchecked exceptions (extends RuntimeException):\n- No compiler enforcement\n- Represent programming errors that SHOULD be fixed in code\n- Examples: NullPointerException, IllegalArgumentException, IndexOutOfBoundsException\n\nDesign decision for custom exceptions:\n- Business rule violations → RuntimeException (caller should prevent, not catch)\n- External system failures → can be checked or wrapped in unchecked with context\n\nSGN3 strategy:\n- SenaiException extends RuntimeException — business rule violations\n- Wraps a Mensagem object with i18n key for user-facing error messages\n- Propagates naturally through EJB stack without declaring throws everywhere\n- Caught at WebBean layer for FacesMessage display",
     "keyPoints": [
-      "Checked = compile-time, recoverable conditions",
+      "Checked = compile-time enforced, recoverable conditions",
       "Unchecked = programming errors, should fix not catch",
-      "Custom exceptions: business rules → unchecked",
+      "Custom exceptions: business rules → unchecked is common in modern Java",
       "Checked exceptions for external/IO failures",
-      "Over-using checked exceptions pollutes APIs"
+      "Over-using checked exceptions pollutes APIs (Spring learned this)"
     ],
     "redFlags": [
       "Cannot explain the design rationale for the distinction",
@@ -58,19 +55,13 @@
       "Not knowing that Error is different from Exception"
     ],
     "followUps": [
-      {
-        "question": "Why did Spring choose unchecked exceptions for DataAccessException?",
-        "hint": "Because callers rarely can recover from DB errors at the point of the call."
-      },
-      {
-        "question": "When would you create a checked exception?",
-        "hint": "When the caller has a meaningful recovery action (retry, fallback, alternative path)."
-      }
+      { "question": "Why did Spring choose unchecked exceptions for DataAccessException?", "hint": "Because callers rarely can recover from DB errors at the point of the call." },
+      { "question": "When would you create a checked exception?", "hint": "When the caller has a meaningful recovery action (retry, fallback, alternative path)." }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "SGN exception strategy",
-      "description": "SenaiException (unchecked) for business rules, IntegracaoIndisponivelException for external system failures. Clean separation between \"fix your code\" and \"handle external failure\"."
+      "title": "SGN3 SenaiException (unchecked) strategy",
+      "description": "All business rule violations throw SenaiException (unchecked, wraps Mensagem with i18n key). Propagates through EJB without throws declarations. Caught at WebBean layer for user-facing error display. Clean separation: fix the logic (unchecked) vs handle the external failure (retry/fallback)."
     }
   },
   {
@@ -79,8 +70,9 @@
     "subtopic": "java-api",
     "difficulty": "INTERMEDIATE",
     "question": "What is the Stream API and when would you NOT use it?",
-    "shortAnswer": "Stream API enables declarative data processing pipelines (filter, map, reduce). I would NOT use it when: the operation has side effects, when debugging is important (harder to step through), when performance is critical and the overhead matters, or when the logic is simple enough that a for loop is clearer.",
-    "detailedAnswer": "Stream API provides a functional approach to collection processing:\n- Declarative: WHAT to compute, not HOW\n- Lazy: intermediate operations only execute when a terminal operation is called\n- Parallelizable: .parallelStream() for CPU-bound operations\n\nWhen to use:\n- Transforming collections (map, filter, reduce)\n- Aggregations (count, sum, groupBy)\n- When pipeline makes intent clearer than loops\n\nWhen NOT to use:\n- Operations with side effects (modifying external state)\n- Simple iterations where for-each is clearer\n- When you need to break/return early (streams process all elements)\n- Performance-critical tight loops (stream overhead matters at scale)\n- When debugging is important (harder to set breakpoints)\n\nAnti-patterns:\n- stream().forEach() that modifies external state → just use for-each\n- Overly complex streams that need comments to explain → extract methods or use loops",
+    "context": "Tests practical judgment — not just knowing streams, but knowing their limits.",
+    "shortAnswer": "Stream API enables declarative data processing pipelines (filter, map, reduce). I would NOT use it when: the operation has side effects, when debugging is important (harder to step through), when performance is critical in tight loops, or when the logic is simple enough that a for loop is clearer.",
+    "detailedAnswer": "Stream API provides a functional approach to collection processing:\n- Declarative: WHAT to compute, not HOW\n- Lazy: intermediate operations only execute when a terminal operation is called\n- Parallelizable: .parallelStream() for CPU-bound operations\n\nWhen to use:\n- Transforming collections (map, filter, reduce)\n- Aggregations (count, sum, groupBy)\n- When pipeline makes intent clearer than loops\n\nWhen NOT to use:\n- Operations with side effects (modifying external state)\n- Simple iterations where for-each is clearer\n- When you need to break/return early (streams process all elements)\n- Performance-critical tight loops (stream overhead matters at scale)\n- When debugging is important (harder to set breakpoints)\n\nAnti-patterns:\n- stream().forEach() that modifies external state → just use for-each\n- Overly complex streams that need comments to explain → extract methods or use loops\n- Collecting to list just to iterate again → use the stream directly",
     "keyPoints": [
       "Declarative, lazy, composable pipelines",
       "Do NOT use for side effects",
@@ -96,19 +88,13 @@
       "Confusing lazy evaluation with eager evaluation"
     ],
     "followUps": [
-      {
-        "question": "What is the difference between map() and flatMap()?",
-        "hint": "map transforms 1:1, flatMap transforms 1:many and flattens."
-      },
-      {
-        "question": "When would parallelStream() actually help?",
-        "hint": "CPU-bound operations on large collections with no shared mutable state."
-      }
+      { "question": "What is the difference between map() and flatMap()?", "hint": "map transforms 1:1, flatMap transforms 1:many and flattens." },
+      { "question": "When would parallelStream() actually help?", "hint": "CPU-bound operations on large collections with no shared mutable state." }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
-      "title": "Stream vs loop decision in SGN batch processing",
-      "description": "Used traditional loops for enrollment batch processing (needed early exit, state tracking). Used streams for report data transformation (pure transformation, clear intent)."
+      "title": "SGN3 practical stream usage",
+      "description": "Used streams for DTO transformations and filtering in business layer (clear, functional). Used traditional for-loops for batch processing that needs early exit, transaction boundaries per iteration, and progress tracking. Pragmatic choice based on the operation semantics."
     }
   }
 ]

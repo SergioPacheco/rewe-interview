@@ -55,6 +55,10 @@ export class TheoryComponent {
     this.topicService.getQuestions(
       this.topicId(),
       this.selectedSubtopic() || undefined
+    ).filter(q =>
+      q.type !== 'ORAL_ANSWER' &&
+      q.type !== 'SYSTEM_DESIGN' &&
+      (q as any).schemaVersion !== 2
     ).length
   );
 

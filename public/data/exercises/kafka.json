@@ -1226,5 +1226,160 @@
     ],
     "explanation": "Log compaction transforms a topic from \"complete history\" to \"latest state per key\". Like a changelog where only the most recent entry per entity survives. Used for driver-status topics, configuration propagation, and CDC replication.",
     "topic": "kafka"
+  },
+  {
+    "id": "kafka-replication-03",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "Replication & ISR",
+    "mission": "replication.factor=3. A follower hasn't fetched for 15 seconds (replica.lag.time.max.ms=10000). What happens?",
+    "choices": [
+      "Follower is removed from ISR",
+      "Leader stops accepting writes",
+      "Follower is permanently removed from cluster",
+      "Nothing \u2014 lag is within tolerance"
+    ],
+    "answer": "Follower is removed from ISR",
+    "explain": "After replica.lag.time.max.ms (10s) without a fetch, the follower is removed from ISR. It can rejoin once it catches up. This doesn't affect writes (as long as ISR >= min.insync.replicas). The follower is still a replica, just not in-sync.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-reliability-03",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "Reliable Delivery",
+    "mission": "Producer config: acks=all, enable.idempotence=true. Network glitch causes timeout. Producer retries. What happens at the broker?",
+    "choices": [
+      "Duplicate message stored (retry = new message)",
+      "Broker detects duplicate via sequence number, discards it",
+      "Exception thrown at producer, no retry",
+      "Broker stores both but marks one as duplicate"
+    ],
+    "answer": "Broker detects duplicate via sequence number, discards it",
+    "explain": "Idempotent producer assigns a sequence number per message per partition. On retry, the broker sees the same ProducerID + sequence number and silently discards the duplicate. The producer gets a success acknowledgment. No duplicates in the log.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-reliability-04",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "Reliable Delivery",
+    "mission": "batch.size=16384, linger.ms=100. Producer sends 1 small message (200 bytes). How long before it's sent to broker?",
+    "choices": [
+      "Immediately (message is ready)",
+      "After 100ms (linger.ms timer expires)",
+      "After batch reaches 16KB",
+      "After 100ms OR when batch is full, whichever comes first"
+    ],
+    "answer": "After 100ms OR when batch is full, whichever comes first",
+    "explain": "The producer sends a batch when EITHER condition is met: batch.size bytes accumulated OR linger.ms elapsed since first message was added to batch. With only 200 bytes, the batch won't fill, so it waits the full 100ms. If more messages arrive within 100ms filling the batch, it sends earlier.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-internals-03",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "Broker Internals",
+    "mission": "Topic delivery-status has cleanup.policy=compact. You send: key=D-1 value=PLANNED, then key=D-1 value=DELIVERED. After compaction, how many records exist for D-1?",
+    "choices": [
+      "2 (both kept, compaction only removes by time)",
+      "1 (only value=DELIVERED survives)",
+      "0 (both removed after retention)",
+      "2 (compaction preserves all events)"
+    ],
+    "answer": "1 (only value=DELIVERED survives)",
+    "explain": "Log compaction keeps only the LATEST value per key. After compaction runs, only the record with value=DELIVERED (higher offset) survives for key D-1. The PLANNED record is removed. This is different from time-based retention which removes entire segments regardless of keys.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-internals-04",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "Broker Internals",
+    "mission": "You send key=D-1 value=null to a compacted topic. What does this mean?",
+    "choices": [
+      "Error \u2014 null values not allowed",
+      "Tombstone: key D-1 will be removed after compaction",
+      "Value stored as empty string",
+      "Key D-1 is immediately deleted"
+    ],
+    "answer": "Tombstone: key D-1 will be removed after compaction",
+    "explain": "A null value is called a tombstone. It marks the key for deletion. After compaction (and a configurable delay: delete.retention.ms), the key and tombstone are both removed. Not immediate \u2014 consumers have time to see the tombstone and act on it (e.g., delete from local store).",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-consumers-02",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "Consumer Groups",
+    "mission": "Topic has 6 partitions. Consumer group has 8 consumers. How many consumers are idle?",
+    "choices": [
+      "0 (Kafka splits partitions further)",
+      "2 (6 partitions, max 6 active consumers)",
+      "8 (group too large, all rejected)",
+      "Depends on partition assignment strategy"
+    ],
+    "answer": "2 (6 partitions, max 6 active consumers)",
+    "explain": "Each partition is assigned to exactly ONE consumer in a group. With 6 partitions and 8 consumers, 6 get one partition each and 2 sit idle. They serve as standby \u2014 if an active consumer fails, an idle one takes over during rebalance. To use all 8, increase partitions to >= 8.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-consumers-03",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Consumer Groups",
+    "question": "What causes a consumer group rebalance, and how do you minimize its impact?",
+    "interviewerIntent": "Tests operational understanding of consumer group coordination",
+    "keyPoints": [
+      "Triggers: consumer joins, leaves, crashes, subscription change, partition count change",
+      "During rebalance: ALL consumers stop processing (stop-the-world in eager protocol)",
+      "Cooperative rebalance (incremental): only affected partitions reassigned, others continue",
+      "session.timeout.ms (10s) and heartbeat.interval.ms (3s) control detection speed",
+      "max.poll.interval.ms (5min): if processing takes longer, consumer is considered dead"
+    ],
+    "followUps": [
+      {
+        "question": "How does static group membership help?",
+        "answerHint": "group.instance.id makes consumer sticky. On brief disconnect, its partitions wait instead of immediate rebalance. Reduces rebalance during rolling restarts."
+      },
+      {
+        "question": "What is the danger of max.poll.interval.ms being too low?",
+        "answerHint": "If processing a batch takes longer than max.poll.interval, consumer is kicked. Causes rebalance which assigns same partitions to another consumer. Can create duplicate processing."
+      }
+    ],
+    "explanation": "Rebalances are Kafka's mechanism for redistributing partitions. They pause consumption. Minimize by: using cooperative protocol, setting appropriate timeouts, using static membership for stable consumers, and ensuring processing time < max.poll.interval.ms.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-fundamentals-02",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "Kafka Basics",
+    "mission": "Producer sends 3 messages to a topic with 3 partitions. Keys: null, null, null. How are they distributed?",
+    "choices": [
+      "All go to partition 0",
+      "Round-robin: one per partition",
+      "Random partition for each",
+      "Error \u2014 key is required"
+    ],
+    "answer": "Round-robin: one per partition",
+    "explain": "With null key, Kafka's default partitioner uses round-robin (sticky partitioner in newer versions batches to same partition then rotates). Messages are evenly distributed for maximum parallelism. No ordering guarantee since they're on different partitions.",
+    "topic": "kafka"
+  },
+  {
+    "id": "kafka-fundamentals-03",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "Kafka Basics",
+    "mission": "Consumer reads offset 50, processes the message, but crashes BEFORE committing offset. What happens on restart?",
+    "choices": [
+      "Starts from offset 51 (auto-detected)",
+      "Starts from offset 50 (last committed was 49) \u2014 message reprocessed",
+      "Starts from offset 0 (reset to beginning)",
+      "Error \u2014 consumer cannot restart"
+    ],
+    "answer": "Starts from offset 50 (last committed was 49) \u2014 message reprocessed",
+    "explain": "Kafka tracks committed offsets per consumer group. If offset 50 was processed but not committed, the consumer restarts from the last committed offset (49+1=50). The message is reprocessed \u2014 this is why Kafka is 'at-least-once' by default. Consumer must be idempotent.",
+    "topic": "kafka"
   }
 ]

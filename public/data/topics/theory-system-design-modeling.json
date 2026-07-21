@@ -1,0 +1,102 @@
+[
+  {
+    "id": "theory-sdm-use-cases",
+    "title": "Use Cases & Actors \u2014 Capturing What the System Does",
+    "sections": [
+      {
+        "heading": "What is a Use Case?",
+        "content": "A use case describes a complete interaction between an <strong>actor</strong> (user, system, device) and the system to achieve a <strong>goal</strong>. It's the primary tool for communicating requirements between business and tech.\n\n<pre><code>// Use Case: Create Delivery\n// Actor: Dispatcher\n// Precondition: Driver is available, route is validated\n// Main Flow:\n//   1. Dispatcher selects driver and route\n//   2. System validates capacity and time window\n//   3. System assigns delivery and notifies driver\n//   4. System publishes DeliveryCreated event\n// Postcondition: Delivery exists in PLANNED status\n// Extensions:\n//   2a. Capacity exceeded \u2192 System suggests alternative driver\n//   3a. Driver unavailable \u2192 System returns to step 1</code></pre>\n\n<strong>Interview value:</strong> When asked \"How do you gather requirements?\" \u2014 use cases show structured thinking. When asked \"Design a delivery system\" \u2014 start with use cases before jumping to code."
+      },
+      {
+        "heading": "Actors and System Boundaries",
+        "content": "An <strong>actor</strong> is anything external that interacts with your system:\n\n\u2022 <strong>Primary actor:</strong> Initiates the use case (Dispatcher, Customer)\n\u2022 <strong>Supporting actor:</strong> Provides a service (Payment Gateway, Notification Service)\n\u2022 <strong>Offstage actor:</strong> Has interest but doesn't interact directly (Compliance Team)\n\n<pre><code>// REWE Delivery System \u2014 Actors:\n// Primary:   Dispatcher, Driver, Customer\n// Supporting: Route Optimization API, Kafka, Payment Service\n// Offstage:  Operations Manager (receives reports)\n\n// System boundary defines WHAT you're building:\n// Inside: delivery-service, route-service, notification-service\n// Outside: driver's phone app (actor), warehouse system (actor)</code></pre>\n\n<strong>Common mistake in interviews:</strong> Describing implementation details instead of user goals. Use case = WHAT the system does for the actor, not HOW it does it internally."
+      },
+      {
+        "heading": "Include and Extend relationships",
+        "content": "<strong><<include>>:</strong> Mandatory sub-behavior (always happens)\n<strong><<extend>>:</strong> Optional/conditional behavior\n\n<pre><code>// Example: Place Order\n// <<include>> Validate Payment  \u2190 always happens\n// <<include>> Check Inventory   \u2190 always happens\n// <<extend>>  Apply Coupon      \u2190 only if coupon provided\n// <<extend>>  Gift Wrap         \u2190 only if requested\n\n// In Spring Boot terms:\n// include = method call in the main service flow\n// extend = conditional logic (if/feature flag)\n\n@Service\npublic class OrderService {\n    public Order place(OrderRequest req) {\n        validate(req);                        // <<include>>\n        checkInventory(req.getItems());       // <<include>>\n        if (req.getCoupon() != null) {        // <<extend>>\n            applyCoupon(req);\n        }\n        return createOrder(req);\n    }\n}</code></pre>"
+      }
+    ],
+    "topic": "system-design-modeling",
+    "subtopic": "sdm-use-cases"
+  },
+  {
+    "id": "theory-sdm-class-diagrams",
+    "title": "Class Diagrams \u2014 Domain Model Visualization",
+    "sections": [
+      {
+        "heading": "When to use class diagrams",
+        "content": "Class diagrams are NOT just for documentation \u2014 they're a <strong>thinking tool</strong> for:\n\n\u2022 <strong>Domain modeling:</strong> Before coding, sketch entities and relationships\n\u2022 <strong>API design:</strong> Define DTOs, request/response objects\n\u2022 <strong>Interview whiteboard:</strong> Communicate your design visually\n\n<pre><code>// Domain Model: Delivery System\n//\n// \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510       \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n// \u2502  Delivery   \u2502\u2500\u2500\u2500\u2500\u2500\u2500\u25b6\u2502  Driver  \u2502\n// \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524  1..1 \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n// \u2502 id          \u2502       \u2502 id       \u2502\n// \u2502 status      \u2502       \u2502 name     \u2502\n// \u2502 scheduledAt \u2502       \u2502 license  \u2502\n// \u2502 completedAt \u2502       \u2502 status   \u2502\n// \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518       \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n//       \u2502 1..*\n//       \u25bc\n// \u250c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n// \u2502   Stop   \u2502\n// \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n// \u2502 address  \u2502\n// \u2502 sequence \u2502\n// \u2502 type     \u2502\n// \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518</code></pre>\n\n<strong>In Spring Boot:</strong> Class diagram maps directly to @Entity classes + their @ManyToOne/@OneToMany relationships."
+      },
+      {
+        "heading": "Relationships and multiplicity",
+        "content": "| Relationship | UML | Java/JPA | Example |\n|---|---|---|---|\n| Association (1:1) | \u2500\u2500\u2500 | @OneToOne | Delivery \u2192 Invoice |\n| Association (1:N) | \u2500\u2500\u25c7 | @OneToMany | Driver \u2192 List<Delivery> |\n| Association (N:M) | \u25c7\u2500\u2500\u25c7 | @ManyToMany | Driver \u2194 Zone |\n| Composition (owns) | \u2500\u2500\u25c6 | cascade=ALL, orphanRemoval | Delivery \u25c6\u2500\u2500 Stops |\n| Aggregation (uses) | \u2500\u2500\u25c7 | no cascade | Delivery \u25c7\u2500\u2500 Driver |\n| Inheritance | \u2500\u2500\u25b7 | extends | ExpressDelivery \u25b7 Delivery |\n\n<pre><code>// Composition: Delivery OWNS its stops (delete delivery = delete stops)\n@Entity\npublic class Delivery {\n    @OneToMany(cascade = ALL, orphanRemoval = true)\n    private List<Stop> stops; // composition\n\n    @ManyToOne // aggregation: delivery USES driver but doesn't own it\n    private Driver driver;\n}</code></pre>\n\n<strong>Interview tip:</strong> When drawing on whiteboard, always clarify: \"Is this composition (lifecycle dependency) or aggregation (reference only)?\" Shows you think about ownership and cascading."
+      }
+    ],
+    "topic": "system-design-modeling",
+    "subtopic": "sdm-class-diagrams"
+  },
+  {
+    "id": "theory-sdm-sequence-diagrams",
+    "title": "Sequence Diagrams \u2014 Showing How Objects Interact",
+    "sections": [
+      {
+        "heading": "Reading and creating sequence diagrams",
+        "content": "Sequence diagrams show the TIME-ORDERED interaction between objects. Essential for:\n\u2022 Explaining complex flows in interviews\n\u2022 Documenting integration between services\n\u2022 Finding design problems (too many calls, circular dependencies)\n\n<pre><code>// Sequence: Create Delivery\n//\n// Dispatcher     Controller     Service      Repository     Kafka\n//     \u2502               \u2502            \u2502             \u2502            \u2502\n//     \u2502\u2500\u2500POST /del\u2500\u2500\u25b6\u2502            \u2502             \u2502            \u2502\n//     \u2502               \u2502\u2500\u2500create()\u2500\u25b6\u2502             \u2502            \u2502\n//     \u2502               \u2502            \u2502\u2500\u2500validate()\u2500\u2510            \u2502\n//     \u2502               \u2502            \u2502\u25c0\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518            \u2502\n//     \u2502               \u2502            \u2502\u2500\u2500save()\u2500\u2500\u2500\u2500\u25b6\u2502            \u2502\n//     \u2502               \u2502            \u2502\u25c0\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2502            \u2502\n//     \u2502               \u2502            \u2502\u2500\u2500publish()\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u25b6\u2502\n//     \u2502               \u2502\u25c0\u2500\u2500\u2500dto\u2500\u2500\u2500\u2500\u2500\u2502             \u2502            \u2502\n//     \u2502\u25c0\u2500\u2500201\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2502            \u2502             \u2502            \u2502\n\n// What this reveals:\n// - Clear layering (controller\u2192service\u2192repo)\n// - Kafka publish AFTER persist (not inside transaction)\n// - Single responsibility per object</code></pre>"
+      },
+      {
+        "heading": "Async and alt fragments",
+        "content": "<pre><code>// Async messaging (Kafka/JMS):\n//\n// Service          Kafka           Consumer\n//    \u2502               \u2502               \u2502\n//    \u2502\u2500\u2500publish()\u2500\u2500\u2500\u25b6\u2502               \u2502\n//    \u2502\u25c0\u2500\u2500ack\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2502               \u2502\n//    \u2502               \u2502\u2500\u2500deliver()\u2500\u2500\u2500\u25b6\u2502  (async, later)\n//    \u2502               \u2502               \u2502\u2500\u2500process()\n//    \u2502               \u2502\u25c0\u2500\u2500commit\u2500\u2500\u2500\u2500\u2500\u2500\u2502\n\n// ALT fragment (conditional logic):\n//\n// Client        Service        PaymentGW\n//    \u2502             \u2502               \u2502\n//    \u2502\u2500\u2500pay()\u2500\u2500\u2500\u2500\u25b6\u2502               \u2502\n//    \u2502             \u2502\u2500\u2500charge()\u2500\u2500\u2500\u25b6\u2502\n//    \u2502             \u2502\u25c0\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2502\n//    \u2502             \u2502               \u2502\n//    \u250c\u2500\u2500\u2500 alt \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n//    \u2502 [success]   \u2502               \u2502  \u2502\n//    \u2502  \u2502\u25c0\u2500200\u2500\u2500\u2500\u2500\u2500\u2502               \u2502  \u2502\n//    \u251c\u2500\u2500\u2500 else \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n//    \u2502 [failed]    \u2502               \u2502  \u2502\n//    \u2502  \u2502\u25c0\u2500402\u2500\u2500\u2500\u2500\u2500\u2502               \u2502  \u2502\n//    \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518</code></pre>\n\n<strong>Interview use:</strong> Draw sequence diagram when asked \"Walk me through what happens when...\" \u2014 shows you can decompose complex flows into clear interactions."
+      }
+    ],
+    "topic": "system-design-modeling",
+    "subtopic": "sdm-sequence-diagrams"
+  },
+  {
+    "id": "theory-sdm-architecture",
+    "title": "Architecture Decisions \u2014 Why, Not Just What",
+    "sections": [
+      {
+        "heading": "Architecture Decision Records (ADR)",
+        "content": "Seniors don't just MAKE decisions \u2014 they DOCUMENT and DEFEND them.\n\n<pre><code>// ADR-014: Use Kafka for delivery events (not REST callbacks)\n//\n// Status: Accepted\n// Context: Delivery lifecycle events need to reach 5+ consumers\n//          (billing, analytics, driver-app, warehouse, customer-notify)\n//\n// Decision: Publish events to Kafka topic\n//\n// Consequences:\n//   + Decoupled: new consumers without changing producer\n//   + Reliable: persistent, replayable, ordered per delivery\n//   + Scalable: partition by delivery-id, consumers scale independently\n//   - Added infrastructure (Kafka cluster)\n//   - Eventual consistency (consumers process asynchronously)\n//\n// Alternatives rejected:\n//   REST webhooks: coupling, retry complexity, no replay\n//   Database polling: latency, load on DB, no ordering guarantee\n//   Shared database: tight coupling between services</code></pre>\n\n<strong>Interview tip:</strong> When explaining a design choice, structure as: CONTEXT \u2192 DECISION \u2192 CONSEQUENCES (pros AND cons) \u2192 ALTERNATIVES REJECTED."
+      },
+      {
+        "heading": "Architectural styles \u2014 when to use what",
+        "content": "| Style | When | Trade-off | REWE context |\n|---|---|---|---|\n| Monolith | Small team, simple domain | Fast to develop, hard to scale parts independently | Legacy systems |\n| Modular monolith | Medium complexity, one team | Best of both: modular but single deploy | Transition step |\n| Microservices | Large team, independent scaling | Operational complexity, distributed transactions | delivery-service, route-service |\n| Event-driven | Async workflows, decoupling | Eventual consistency, debugging complexity | Kafka-based architecture |\n| CQRS | Read/write with different models | Complexity, eventual consistency | Driver dashboard (read) vs commands |\n\n<pre><code>// REWE TRAB architecture (inferred):\n// Microservices + Event-driven\n//\n// delivery-service \u2500\u2500Kafka\u2500\u2500\u25b6 billing-service\n//        \u2502                    \u25b2\n//        \u2502                    \u2502\n//        \u25bc                    \u2502\n// route-service        analytics-service\n//        \u2502\n//        \u25bc\n// driver-app (mobile)\n//\n// Why microservices here:\n// - Teams work independently (TRAB owns delivery)\n// - Different scaling needs (route = CPU, delivery = I/O)\n// - Different deployment cadence</code></pre>"
+      }
+    ],
+    "topic": "system-design-modeling",
+    "subtopic": "sdm-architecture"
+  },
+  {
+    "id": "theory-sdm-data-modeling",
+    "title": "Data Modeling \u2014 Entities, Relationships, Normalization",
+    "sections": [
+      {
+        "heading": "Entity-Relationship modeling",
+        "content": "Data modeling BEFORE coding prevents expensive refactoring later.\n\n<pre><code>// Step 1: Identify entities (nouns in requirements)\n// \"A DRIVER is assigned to a DELIVERY with multiple STOPS\n//  at specific ADDRESSES in a ZONE\"\n//\n// Entities: Driver, Delivery, Stop, Address, Zone\n\n// Step 2: Identify relationships and cardinality\n// Driver (1) \u2500\u2500delivers\u2500\u2500\u25b6 (0..*) Delivery\n// Delivery (1) \u2500\u2500has\u2500\u2500\u25b6 (1..*) Stop\n// Stop (1) \u2500\u2500at\u2500\u2500\u25b6 (1) Address\n// Zone (1) \u2500\u2500contains\u2500\u2500\u25b6 (0..*) Address\n// Driver (0..*) \u2500\u2500works_in\u2500\u2500\u25b6 (1..*) Zone  [M:N]\n\n// Step 3: Define attributes\n// Delivery: id, status, scheduledAt, completedAt, priority\n// Stop: sequence, type(PICKUP|DROPOFF), estimatedArrival\n// Driver: id, name, license, vehicleType, maxCapacity</code></pre>\n\n<strong>In interview:</strong> Start with entities and relationships BEFORE discussing tables or code. Shows you think at domain level."
+      },
+      {
+        "heading": "Normalization \u2014 practical rules",
+        "content": "Full normalization theory (1NF\u21925NF) matters less than practical rules:\n\n<pre><code>// \u274c Denormalized (problematic)\n// delivery table:\n// id | driver_name | driver_license | driver_phone | stop_1 | stop_2\n// Problems: update anomaly (driver changes name \u2192 update all rows),\n//           insert anomaly (can't add driver without delivery),\n//           repeating groups (stop_1, stop_2... stop_N?)\n\n// \u2705 Normalized (3NF)\n// driver: id, name, license, phone\n// delivery: id, driver_id(FK), status, scheduled_at\n// stop: id, delivery_id(FK), sequence, address, type\n\n// When to DENORMALIZE (intentionally):\n// - Read-heavy queries joining 5+ tables \u2192 materialized view\n// - Audit/history table \u2192 snapshot all fields at point in time\n// - Event payload \u2192 self-contained (no JOINs needed to process)\n// - Reporting/analytics \u2192 star schema (fact + dimensions)</code></pre>\n\n<strong>Senior answer:</strong> \"I normalize by default (3NF), then denormalize SPECIFIC paths for performance with measured evidence, not premature optimization.\""
+      }
+    ],
+    "topic": "system-design-modeling",
+    "subtopic": "sdm-data-modeling"
+  },
+  {
+    "id": "theory-sdm-communication",
+    "title": "Communicating Design \u2014 The Senior Skill",
+    "sections": [
+      {
+        "heading": "Choosing the right diagram for the audience",
+        "content": "| Audience | Diagram | Level of detail |\n|---|---|---|\n| Business/PM | Use Case diagram | Goals, actors, no tech |\n| Other developers | Class + Sequence | Interfaces, interactions |\n| Ops/DevOps | Deployment diagram | Infrastructure, networking |\n| New team member | Component/Package | High-level structure |\n| Yourself (thinking) | Whiteboard sketch | Anything that helps |\n\n<strong>Key principle:</strong> The diagram is a COMMUNICATION TOOL, not documentation for documentation's sake. If nobody will read it, don't draw it.\n\n<pre><code>// Interview scenario:\n// \"Design a delivery assignment system\"\n//\n// Step 1: Use case (WHAT) \u2014 30 seconds\n//   \"Primary use case: Dispatcher assigns delivery to driver\"\n//\n// Step 2: Component diagram (HIGH LEVEL) \u2014 1 minute\n//   \"Three services: delivery, route-optimizer, driver-availability\"\n//\n// Step 3: Sequence diagram (HOW) \u2014 2 minutes\n//   \"Let me show how they interact for assignment...\"\n//\n// Step 4: Class diagram (DETAIL) \u2014 if asked to go deeper\n//   \"The domain model has Delivery, Driver, Route, Stop...\"\n//\n// This progression shows you can operate at multiple abstraction levels.</code></pre>"
+      },
+      {
+        "heading": "C4 Model \u2014 modern approach to architecture diagrams",
+        "content": "The C4 model (Context, Container, Component, Code) provides consistent zoom levels:\n\n<pre><code>// Level 1: System Context\n// Who uses the system? What external systems does it talk to?\n// \u2192 Dispatcher uses Delivery System, which talks to Maps API\n\n// Level 2: Container\n// What deployable units exist?\n// \u2192 delivery-service (Spring Boot), PostgreSQL, Kafka, Redis\n\n// Level 3: Component\n// What are the major parts inside a container?\n// \u2192 DeliveryController, RouteOptimizer, EventPublisher, DriverCache\n\n// Level 4: Code (rarely drawn)\n// Class-level detail \u2192 use IDE or auto-generated diagrams\n\n// Interview approach:\n// Start at Level 1 (context), zoom in when asked\n// \"Let me start with who uses this system...\"\n// \"Zooming into the delivery-service...\"\n// \"The assignment flow between these components...\"</code></pre>\n\n<strong>Why C4 matters for REWE:</strong> Their architecture docs likely use C4 or similar. Showing you know this vocabulary demonstrates enterprise readiness."
+      }
+    ],
+    "topic": "system-design-modeling",
+    "subtopic": "sdm-communication"
+  }
+]

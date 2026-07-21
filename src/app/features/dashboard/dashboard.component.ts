@@ -18,8 +18,8 @@ export class DashboardComponent {
 
   // Section definitions — which topics go in which section
   private readonly learnIds = [
-    'oop', 'solid', 'collections', 'java-modern', 'sql', 'spring',
-    'rest', 'security', 'jpa', 'concurrency', 'patterns', 'testing',
+    'oop', 'solid', 'collections', 'java-modern', 'data-persistence', 'spring',
+    'rest', 'security', 'concurrency', 'patterns', 'testing',
     'docker', 'k8s', 'kotlin', 'angular', 'kafka'
   ];
 
@@ -68,13 +68,12 @@ export class DashboardComponent {
     'oop': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original-wordmark.svg',
     'solid': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-plain.svg',
     'collections': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
-    'sql': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg',
+    'data-persistence': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg',
     'system-design': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-plain-wordmark.svg',
     'behavioral': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linkedin/linkedin-original.svg',
     'spring': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/spring/spring-original.svg',
     'rest': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/openapi/openapi-original.svg',
     'kafka': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/apachekafka/apachekafka-original.svg',
-    'jpa': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/hibernate/hibernate-original.svg',
     'concurrency': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
     'patterns': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/unifiedmodelinglanguage/unifiedmodelinglanguage-original.svg',
     'testing': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/junit/junit-original.svg',

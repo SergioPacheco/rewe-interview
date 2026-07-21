@@ -1,0 +1,333 @@
+[
+  {
+    "id": "interview-sql-1",
+    "topic": "data-persistence",
+    "subtopic": "dp-indexing",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you decide whether a query needs an index, and what should that index contain?",
+    "shortAnswer": "I start from a measured query and its access pattern, not from a rule such as ‘index every WHERE column’. I inspect the plan, row counts, selectivity, joins and ordering, then design the smallest index that supports the important predicates. I also account for write cost, storage and duplicate indexes, and verify the result with representative data.",
+    "detailedAnswer": "A useful index is shaped by a workload:\n\n1. Identify an important query: frequency, latency objective and rows returned.\n2. Inspect `EXPLAIN`; use `EXPLAIN (ANALYZE, BUFFERS)` only where executing the statement is safe.\n3. Match the index to equality/range predicates, join keys and any ordering that can avoid a sort.\n4. For a composite B-tree, constraints on leading columns are normally the most efficient way to limit the scanned range, but later-column predicates can still be applied. Current PostgreSQL can choose skip scan for some non-leading predicates when its cost model expects that to help. Verify the actual version and plan; ‘most selective first’ is not a universal rule.\n5. Consider a covering index with `INCLUDE`, a partial index for a stable subset, or an expression index when the query uses the same expression.\n6. Measure reads and writes after the change and remove redundant indexes.\n\nA sequential scan is not proof of a missing index. PostgreSQL can correctly prefer it for a small table, a query returning a large fraction of the table, or when random heap reads would cost more. An index is justified by the observed plan and workload, not by the node name alone.",
+    "keyPoints": [
+      "Design indexes from measured query patterns",
+      "Leading columns usually matter most, but planner features and the actual plan decide usage",
+      "A sequential scan can be the cheapest correct plan",
+      "Partial, expression and covering indexes solve different access patterns",
+      "Every index adds write, maintenance and storage cost"
+    ],
+    "redFlags": [
+      "Proposing indexes without seeing the query or plan",
+      "Treating every sequential scan as a defect",
+      "Ignoring write amplification and redundant indexes",
+      "Claiming one composite-index ordering rule works for every query"
+    ],
+    "followUps": [
+      {
+        "question": "When is a partial index a good fit?",
+        "hint": "When important queries repeatedly target a stable subset and their predicate implies the index predicate, such as unprocessed rows."
+      },
+      {
+        "question": "Why might PostgreSQL choose a sequential scan even when a suitable index exists?",
+        "hint": "The table may be small or the query may read enough rows that sequential I/O is cheaper than many index and heap lookups."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 query optimization",
+      "description": "Used APM traces and PostgreSQL plans to optimize an enrollment listing covering about 26,705 records in the period. N+1 removal, projections, pagination and targeted indexes reduced roughly 48,000 queries to about 10 and latency from about 16 minutes to about 2 seconds."
+    }
+  },
+  {
+    "id": "interview-sql-2",
+    "topic": "data-persistence",
+    "subtopic": "dp-transactions",
+    "difficulty": "SENIOR",
+    "question": "How do you choose a transaction isolation level, and what changes in PostgreSQL?",
+    "shortAnswer": "I choose the lowest level that preserves the business invariant, then design for conflicts and retries. In PostgreSQL, READ COMMITTED gives each statement a new committed snapshot; REPEATABLE READ keeps a transaction snapshot but can still allow serialization anomalies; SERIALIZABLE prevents those anomalies by aborting a conflicting transaction. READ UNCOMMITTED behaves like READ COMMITTED in PostgreSQL.",
+    "detailedAnswer": "The SQL names are portable, but exact behavior is database-specific. In PostgreSQL:\n\n- **READ COMMITTED**: each statement sees data committed before that statement began. Dirty reads are prevented, but two reads in one transaction can see different committed states. It fits many short OLTP operations whose invariant is enforced by constraints or atomic statements.\n- **REPEATABLE READ**: the transaction reads from a stable snapshot. PostgreSQL also prevents phantom reads at this level, but serialization anomalies can still occur. Concurrent updates can cause failures that require a retry.\n- **SERIALIZABLE**: transactions behave as if some serial order had executed. PostgreSQL uses Serializable Snapshot Isolation and may abort a transaction with a serialization failure; the application must retry the entire unit of work.\n- **READ UNCOMMITTED**: treated as READ COMMITTED by PostgreSQL.\n\nIsolation is only one tool. Unique/check constraints, atomic updates, row locks and optimistic versioning may express an invariant more directly. Higher isolation is not automatically the right answer: it changes contention and retry behavior, so the decision should name the anomaly being prevented.",
+    "keyPoints": [
+      "Choose isolation from a concrete invariant and anomaly",
+      "PostgreSQL READ COMMITTED uses a snapshot per statement",
+      "PostgreSQL REPEATABLE READ prevents phantoms but not every serialization anomaly",
+      "SERIALIZABLE requires a retry strategy",
+      "Constraints, locks and optimistic concurrency can complement isolation"
+    ],
+    "redFlags": [
+      "Describing isolation levels without database-specific behavior",
+      "Using SERIALIZABLE without handling serialization failures",
+      "Assuming higher isolation alone fixes every race",
+      "Holding a transaction open across slow remote calls without justification"
+    ],
+    "followUps": [
+      {
+        "question": "What must an application retry after a serialization failure?",
+        "hint": "The complete transaction, using bounded retries and usually jitter/backoff; retrying only the final statement can violate the original decision."
+      },
+      {
+        "question": "When would optimistic locking be preferable to SERIALIZABLE?",
+        "hint": "For user-driven edits where conflicts are uncommon and the application can report or retry a version mismatch explicitly."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 PostgreSQL transactions",
+      "description": "Used READ COMMITTED for standard operations and optimistic version columns for concurrent edits, choosing explicit conflict detection instead of raising isolation globally."
+    }
+  },
+  {
+    "id": "interview-sql-3",
+    "topic": "data-persistence",
+    "subtopic": "dp-query-optimization",
+    "difficulty": "INTERMEDIATE",
+    "question": "A production endpoint is slow. How do you determine whether SQL is the cause and improve it safely?",
+    "clarifyingQuestions": [
+      "Is the latency in one query, many repeated queries, lock waits, or another dependency?",
+      "Do we have a representative parameter set and data volume?",
+      "Can the statement be executed safely on a replica or staging copy?"
+    ],
+    "shortAnswer": "I trace the request first to separate one slow query from N+1 calls or lock waits. For a candidate statement I inspect `EXPLAIN`, and, in a safe environment, `EXPLAIN (ANALYZE, BUFFERS)`. I compare estimates with actual rows, loops, I/O and sort behavior, change one thing at a time, and verify both latency and workload impact before and after deployment.",
+    "detailedAnswer": "A disciplined investigation is broader than looking for a sequential scan:\n\n1. Use APM and database statistics to locate time: query duration, query count, connection-pool wait, locks and remote calls.\n2. Capture the actual SQL and representative bind values. Parameter distribution can change the best plan.\n3. Read `EXPLAIN` first. `EXPLAIN ANALYZE` actually executes the statement; use it cautiously on production, especially for DML, expensive functions or locks. A replica or production-like dataset is safer.\n4. Inspect total time, actual versus estimated rows, `loops`, buffers, sorts spilling to disk and time spent waiting. A nested loop or sequential scan is not inherently wrong.\n5. A large estimate mismatch can come from stale statistics, skew, correlated columns or parameter-sensitive plans—not only stale statistics.\n6. Fix the root cause: remove N+1 access, fetch fewer columns/rows, rewrite the query, update statistics, add a targeted index or shorten lock scope.\n7. Compare before/after plans and monitor throughput, writes and tail latency after release.\n\nFor reversible DML, a transaction followed by rollback can protect database state, but it does not neutralize every external side effect a function or trigger might cause.",
+    "keyPoints": [
+      "Trace the whole request before blaming one query",
+      "EXPLAIN ANALYZE executes the statement",
+      "Plan nodes are evidence to interpret, not automatic diagnoses",
+      "Estimate errors may reflect statistics, skew, correlation or parameters",
+      "Verify the fix with realistic data and post-release monitoring"
+    ],
+    "redFlags": [
+      "Running EXPLAIN ANALYZE on unsafe production DML",
+      "Equating sequential scan with missing index",
+      "Adding indexes before measuring query count and lock waits",
+      "Benchmarking only with tiny development data"
+    ],
+    "followUps": [
+      {
+        "question": "What do `rows` and `loops` tell you in an actual plan?",
+        "hint": "Actual rows and time are per loop for a repeatedly executed node; multiply by loops to understand total work."
+      },
+      {
+        "question": "How can you detect an application-level N+1 problem?",
+        "hint": "Correlate one request trace with repeated similar SQL and query counts; a single query plan cannot reveal the entire call pattern."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 enrollment performance investigation",
+      "description": "Used Glowroot and PostgreSQL plans to find repeated relationship queries in a listing over about 26,705 records in the period. Projections, pagination, query restructuring and indexes reduced roughly 48,000 queries to about 10 and response time from about 16 minutes to about 2 seconds."
+    }
+  },
+  {
+    "id": "interview-sql-4",
+    "topic": "data-persistence",
+    "subtopic": "dp-joins-patterns",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do INNER JOIN and LEFT JOIN differ, and how can predicate placement silently change the result?",
+    "shortAnswer": "INNER JOIN keeps only matching row combinations. LEFT JOIN preserves every row from the left side and fills unmatched right-side columns with NULL. With a LEFT JOIN, a predicate on the right table in `WHERE` often removes those NULL-extended rows and effectively turns the result into an inner join; put the predicate in `ON` when it defines which right-side rows may match.",
+    "detailedAnswer": "Consider customers and orders:\n\n```sql\nSELECT c.id, o.id\nFROM customer c\nLEFT JOIN orders o\n  ON o.customer_id = c.id\n AND o.status = 'OPEN';\n```\n\nThis returns every customer and only matching open orders. Moving `o.status = 'OPEN'` to `WHERE` rejects rows where `o` is NULL, so customers without an open order disappear. That may be correct, but it is then semantically close to an inner join.\n\nJoin correctness also requires reasoning about cardinality. A one-to-many join intentionally duplicates the left row once per match; adding `DISTINCT` may hide a modeling or aggregation error. Before tuning, state the intended row grain, expected optionality and whether unmatched rows must survive. Then inspect keys, foreign-key indexes and the plan.",
+    "keyPoints": [
+      "INNER JOIN requires a match; LEFT JOIN preserves the left side",
+      "A right-side WHERE predicate can null-reject a LEFT JOIN",
+      "ON filters matching rows; WHERE filters the joined result",
+      "Define the intended row grain before treating duplicates as a bug",
+      "Join type is a correctness decision before it is a performance decision"
+    ],
+    "redFlags": [
+      "Using LEFT JOIN by default without explaining preserved rows",
+      "Adding DISTINCT to hide unexplained duplication",
+      "Moving predicates between ON and WHERE without checking semantics",
+      "Discussing join speed before defining the expected result"
+    ],
+    "followUps": [
+      {
+        "question": "How would you return customers that have no orders?",
+        "hint": "LEFT JOIN and filter `WHERE o.id IS NULL`, or use `NOT EXISTS`; compare plans for the actual workload."
+      },
+      {
+        "question": "Why can joining two one-to-many relationships inflate an aggregate?",
+        "hint": "The result contains the cross-product of both child sets per parent, so aggregate each side first or query them separately."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-sql-plan-1",
+    "topic": "data-persistence",
+    "subtopic": "dp-query-optimization",
+    "difficulty": "SENIOR",
+    "question": "A query is fast with test data but times out in production. How do you use an execution plan to make a safe improvement?",
+    "shortAnswer": "I capture the real query shape, parameters and production-like statistics, then read the actual execution plan rather than guessing an index. I compare estimated with actual row counts, look for expensive scans, joins, sorts and spills, and verify selectivity and indexes. I change one cause at a time, measure under realistic load, and account for write cost and plan regressions.",
+    "detailedAnswer": "An execution plan is evidence about how the optimizer executed a particular query with particular statistics and parameters. `EXPLAIN ANALYZE`-style output reveals actual rows, timing and loops; a large estimate-versus-actual gap often points to stale statistics, correlated predicates or a skewed parameter distribution. A sequential scan is not automatically wrong: it can be cheaper when a query returns much of a small table.\n\nI check predicate and join selectivity, index order, whether a function or cast prevents index use, sort/hash memory, and whether the query fetches unnecessary columns or rows. A composite index must match the query's access path; adding every possible index slows writes and increases storage/maintenance. If a parameter-sensitive plan is involved, test representative values rather than optimizing one happy-path literal.\n\nBefore rollout I use a production-like dataset or safe replay, compare latency distribution and resource use, and make the schema/index migration reversible where practical. Monitor after release because data distribution changes over time.",
+    "keyPoints": [
+      "Use actual plans and representative parameters",
+      "Compare estimated and actual cardinality",
+      "Optimize the access path, not an assumed index",
+      "Balance read gains against write and maintenance cost"
+    ],
+    "redFlags": [
+      "Adding indexes without inspecting the plan",
+      "Calling every sequential scan a defect",
+      "Testing only a tiny uniform dataset"
+    ],
+    "followUps": [
+      {
+        "question": "Why can an index still be ignored by the optimizer?",
+        "hint": "It may be less selective or more expensive than a scan, unusable for the predicate, or based on misleading statistics."
+      },
+      {
+        "question": "What does a large estimate-versus-actual row difference tell you?",
+        "hint": "The optimizer's cardinality assumptions are inaccurate, so inspect statistics, skew and predicate correlation."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-jpa-1",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-fundamentals",
+    "difficulty": "INTERMEDIATE",
+    "question": "Explain the JPA entity lifecycle and the mistakes developers make around `merge` and transaction boundaries.",
+    "shortAnswer": "An entity can be new, managed, detached or removed relative to a persistence context. Managed changes are detected and synchronized on flush; detached changes are not. `persist` makes a new entity managed, while `merge` copies state into a managed instance and returns that instance—the object passed to `merge` does not become managed. Transaction and persistence-context scope determine when detachment occurs.",
+    "detailedAnswer": "The states are relative to an `EntityManager`/persistence context:\n\n- **New**: not managed and without a persistent database representation.\n- **Managed**: associated with the context. Dirty checking can synchronize changes at flush, which may happen before commit.\n- **Detached**: has persistent identity but is no longer managed by that context; ordinary field changes are not tracked.\n- **Removed**: managed and scheduled for deletion at flush.\n\nImportant transitions:\n- `persist(newEntity)` associates a new entity; SQL may be issued immediately or at flush depending on mapping/provider behavior.\n- `detach`, `clear` or closing the persistence context detaches entities. A transaction-scoped context normally ends with the transaction, while an extended context has a different lifecycle.\n- `merge(detached)` copies state into an existing or newly loaded/created managed instance and returns the managed reference. Continue with the returned reference; the original remains detached.\n- `remove(managed)` marks it for deletion.\n\nLazy-loading failures are usually a boundary/design signal: map required data inside the transaction or fetch a purpose-built DTO instead of keeping a session open across presentation work.",
+    "keyPoints": [
+      "Lifecycle state is relative to a persistence context",
+      "Dirty checking applies to managed entities at flush",
+      "`merge` returns the managed instance and does not attach the argument",
+      "Transaction-scoped and extended contexts have different lifecycles",
+      "Fetching should match the use case within a deliberate boundary"
+    ],
+    "redFlags": [
+      "Continuing to modify the original object after merge",
+      "Assuming commit is the only time a flush can occur",
+      "Treating every detached graph as something to merge wholesale",
+      "Solving lazy-loading errors by leaving persistence open without considering query design"
+    ],
+    "followUps": [
+      {
+        "question": "What can happen if you call `persist` with a detached entity?",
+        "hint": "The provider may throw EntityExistsException at that call or a PersistenceException at flush/commit; `merge` has different semantics."
+      },
+      {
+        "question": "Why can a query trigger a flush before transaction commit?",
+        "hint": "With AUTO flush mode, pending changes may need to reach the database so the query sees a consistent result."
+      },
+      {
+        "question": "What is the difference between `find` and `getReference`?",
+        "hint": "`find` obtains state or null; `getReference` may return a lazy reference whose first state access can fail if the row does not exist."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 Hibernate persistence contexts",
+      "description": "Transaction-scoped persistence contexts in stateless business operations made entity state and lazy-loading boundaries important when mapping data for callers."
+    }
+  },
+  {
+    "id": "interview-jpa-2",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-relations",
+    "difficulty": "SENIOR",
+    "question": "How do you detect and solve N+1 queries without replacing them with an oversized join?",
+    "clarifyingQuestions": [
+      "Is this a detail view, a paginated list or a batch process?",
+      "Which relationships and fields does the response actually need?",
+      "What query count, row count and latency does the trace show?"
+    ],
+    "shortAnswer": "N+1 appears when one query loads parents and later relationship access triggers repeated queries. I confirm it with per-request SQL counts, then choose a fetch plan for that use case: fetch join or entity graph for bounded relationships, batch fetching or a two-query pattern for collections, and DTO projection for read models. I verify result-row growth because joining multiple to-many relationships can be worse than N+1.",
+    "detailedAnswer": "The issue is not simply ‘lazy is bad’. It is an access pattern whose fetch plan does not match the use case. Detection comes from an APM trace, Hibernate statistics or controlled SQL logging that shows many structurally similar statements for one operation.\n\nPossible remedies:\n\n1. **Fetch join / entity graph** for a relationship that is needed now. This is often effective for to-one associations and bounded collections.\n2. **Batch fetching** for lazy relationships when many parents need the same association type; it reduces round trips without building one huge row set.\n3. **Two-step query**: page parent IDs/entities first, then fetch required children with `WHERE parent_id IN (...)`. This preserves pagination and avoids a multi-collection cross product.\n4. **DTO projection** for a read use case that needs a known set of fields, avoiding entity graph and dirty-checking overhead.\n\nTrade-offs matter. A to-many fetch join duplicates parent columns and can make pagination incorrect or force in-memory work depending on provider/query. Fetching two independent to-many collections multiplies rows. `EAGER` on the mapping is a global default, not a per-use-case cure. Measure query count, returned rows, memory and latency together.",
+    "keyPoints": [
+      "Confirm N+1 through query counts for one operation",
+      "Choose fetch plans per use case instead of making everything eager",
+      "To-many fetch joins can conflict with pagination",
+      "Multiple collections can create a multiplicative row set",
+      "DTO and two-step queries are often clearer for read models"
+    ],
+    "redFlags": [
+      "Changing all relationships to EAGER",
+      "Judging only query count while ignoring rows and memory",
+      "Fetch-joining several collections in a paginated query without verification",
+      "Optimizing before confirming which access triggers the repeated queries"
+    ],
+    "followUps": [
+      {
+        "question": "Why is a collection fetch join risky with pagination?",
+        "hint": "SQL rows represent parent-child combinations, so limiting rows may not limit distinct parents correctly; page parents first or use a two-step fetch."
+      },
+      {
+        "question": "How would you prevent this N+1 pattern from returning?",
+        "hint": "Use a representative integration test or query-count assertion for the page, keep the fetch plan explicit, and monitor request-level query count in production."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 enrollment page: about 48k to about 10 queries",
+      "description": "For a listing over about 26,705 enrollment records in the period, APM traces showed nested relationship access producing roughly 48,000 queries. Projections, pagination, query restructuring and batch loading reduced the request to about 10 queries and latency from about 16 minutes to about 2 seconds."
+    }
+  },
+  {
+    "id": "interview-jpa-3",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-queries",
+    "difficulty": "INTERMEDIATE",
+    "question": "When would you choose JPQL, Criteria or native SQL, and how do you keep each option safe?",
+    "shortAnswer": "I use JPQL when the query is naturally expressed over entities and relationships, Criteria when dynamic composition or metamodel-based typing offsets its verbosity, and native SQL for database features or query shapes the provider cannot express well. The choice is per query. All three still require bound parameters for untrusted values—concatenating input into JPQL is injection-prone too.",
+    "detailedAnswer": "**JPQL** is concise for stable queries over the entity model, supports entity/DTO results and keeps most provider portability. It is string-based, so refactoring and complex dynamic predicates need care.\n\n**Criteria API** builds the same persistence query model programmatically. It is verbose but useful for optional filters and reusable predicates; generated static metamodels can improve type checking. It is not automatically faster than equivalent JPQL.\n\n**Native SQL** is appropriate when the deployed database and provider version require features such as PostgreSQL `LATERAL`, `DISTINCT ON`, JSON operators or a specialized aggregation/query shape. It gives direct control over submitted SQL, but the database still chooses the execution plan. Mapping, portability and integration-test cost increase. Native results can be scalars, DTO-oriented mappings or entities; returning `Tuple` is an option, not a universal rule.\n\nSecurity is independent of the choice:\n```java\n// Vulnerable: input changes JPQL syntax\n\"select p from Person p where p.name = '\" + input + \"'\"\n\n// Safe value binding\nquery.setParameter(\"name\", input);\n```\n\nDynamic identifiers or sort fields cannot generally be value parameters, so map them from an allow-list. Test native SQL against the real database engine and inspect the generated SQL for performance-sensitive JPQL/Criteria queries.",
+    "keyPoints": [
+      "JPQL fits stable entity-oriented queries",
+      "Criteria helps compose dynamic predicates but is not inherently faster",
+      "Native SQL trades portability and mapping simplicity for database capabilities",
+      "The database optimizer still chooses the plan for native SQL",
+      "JPQL concatenation is vulnerable; bind untrusted values in every query style"
+    ],
+    "redFlags": [
+      "Choosing one query language for every use case",
+      "Claiming JPQL is safe even when strings are concatenated",
+      "Assuming native SQL guarantees a particular execution plan",
+      "Testing database-specific SQL only against an in-memory substitute"
+    ],
+    "followUps": [
+      {
+        "question": "Can you parameterize a column name or sort direction?",
+        "hint": "Usually not as a value parameter; map a constrained API option to known attributes or query fragments."
+      },
+      {
+        "question": "What should you do after a JPQL bulk update?",
+        "hint": "Bulk DML bypasses normal managed-entity state synchronization, so clear or refresh affected persistence-context state deliberately."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 JPQL and PostgreSQL-specific SQL",
+      "description": "Used JPQL for entity-oriented operations and native PostgreSQL queries for reporting and features such as LATERAL joins, UNION-based result sets and bulk read models, with values consistently parameterized."
+    }
+  },
+  {
+    "id": "interview-jpa-fetching-1",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-relations",
+    "difficulty": "SENIOR",
+    "question": "A list endpoint becomes slow after adding an association to a JPA entity. How do you diagnose and fix it without blindly changing everything to eager fetching?",
+    "shortAnswer": "I measure the actual queries and request shape first. Lazy associations can cause N+1 queries when traversed per row, while eager mappings can overfetch and create other queries or joins in unrelated use cases. I keep mappings conservative and choose fetching per use case with a fetch join, entity graph, batch fetching, or a DTO projection, then verify query count, cardinality, pagination behavior and memory use.",
+    "detailedAnswer": "The first step is evidence: enable SQL and parameter logging safely in a non-production-like environment, inspect traces/metrics, and reproduce with representative cardinality. An N+1 pattern often appears as one query for a page of parents followed by one query per parent or collection. Changing a relation to EAGER is not a general cure: it changes every loading path, can fetch data nobody needs, and may still issue secondary selects.\n\nFor a specific read use case, select the data intentionally. A JPQL fetch join or entity graph can load a to-one relation efficiently. For a to-many relation, consider batch fetching or a separate bounded query; joining a collection with pagination can multiply rows and make page semantics unreliable. If the endpoint is read-oriented, a DTO projection frequently avoids managed-entity overhead and accidental lazy traversal. Make sure indexes support the predicates and joins, and distinguish database time from serialization or mapping time.\n\nThe interview-quality answer includes a regression test or query-count assertion where useful, plus production observation. The goal is not the fewest SQL statements at any cost; it is predictable data access for the requested representation.",
+    "keyPoints": [
+      "Confirm the query pattern and cardinality before changing mappings",
+      "EAGER is a global mapping choice, not a universal N+1 fix",
+      "Choose fetch joins, entity graphs, batching or projections per read use case",
+      "Treat collection fetch joins and pagination with special care"
+    ],
+    "redFlags": [
+      "Setting every association to EAGER to silence LazyInitializationException",
+      "Fetching a collection join with pagination without checking duplicated rows and counts",
+      "Diagnosing N+1 from source code alone without observing executed queries"
+    ],
+    "followUps": [
+      {
+        "question": "Why can a fetch join over a one-to-many relation break a paged endpoint?",
+        "hint": "Each parent can appear once per child in the SQL result, so row-level limit/offset no longer corresponds cleanly to parents."
+      },
+      {
+        "question": "When is a DTO projection preferable to returning a managed entity?",
+        "hint": "When the endpoint has a specific read shape and does not need entity lifecycle or change tracking."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  }
+]

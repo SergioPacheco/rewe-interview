@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, signal, computed, effect, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal, computed, ViewEncapsulation } from '@angular/core';
 
 export interface ChoiceOption {
   label: string;
@@ -179,15 +179,6 @@ export class ChoiceListComponent {
   checked = signal(false);
 
   isCorrect = computed(() => this.selectedIndex() === this.correctIndex());
-
-  constructor() {
-    // Reset when choices change (new question)
-    effect(() => {
-      this.choices(); // track dependency
-      this.selectedIndex.set(null);
-      this.checked.set(false);
-    }, { allowSignalWrites: true });
-  }
 
   letter(index: number): string {
     return String.fromCharCode(65 + index);

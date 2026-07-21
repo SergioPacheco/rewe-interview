@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output, signal, computed, effect } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, signal, computed, effect, ViewEncapsulation } from '@angular/core';
 
 export interface ChoiceOption {
   label: string;
@@ -27,6 +27,7 @@ export interface ChoiceResult {
   selector: 'app-choice-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  encapsulation: ViewEncapsulation.None,
   template: `
     <div class="choice-list">
       @for (choice of choices(); track $index) {

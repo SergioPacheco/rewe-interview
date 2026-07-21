@@ -1,0 +1,268 @@
+[
+  {
+    "id": "interview-arch-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-foundations",
+    "difficulty": "BEGINNER",
+    "question": "What is software architecture?",
+    "shortAnswer": "Software architecture is the set of structures needed to reason about a system: the decomposition into components, their relationships, and the principles guiding their design and evolution. It is the decisions that are hard to reverse — the ones you make before writing code and live with for years.",
+    "detailedAnswer": "Software architecture is NOT:\n- A diagram\n- A technology choice\n- Something you do once at the beginning\n\nSoftware architecture IS:\n- The significant decisions about structure (how code is organized into modules/services)\n- The constraints that guide development (\"all external calls go through an integration layer\")\n- The quality attributes prioritized (\"availability > consistency for this service\")\n- The decisions hard to change later (database choice, communication style, deployment model)\n\nGrady Booch: \"Architecture represents the significant design decisions that shape a system, where significant is measured by cost of change.\"\n\nIn SGN3:\n- Architecture decision: monolith (not microservices) — because team is integrated, domain is coupled\n- Architecture decision: schemas as module boundaries — cheaper than separate services\n- Architecture decision: JMS for async — durability, retry, DLQ over sync REST\n- These decisions have lasted 7+ years and still serve the system well",
+    "keyPoints": [
+      "Decisions hard to reverse (measured by cost of change)",
+      "Structures for reasoning about the system",
+      "Not a one-time activity — architecture evolves",
+      "Prioritization of quality attributes (what matters MOST)",
+      "Constraints that guide all subsequent development"
+    ],
+    "redFlags": [
+      "\"Architecture is the diagram we draw at the beginning\"",
+      "Confusing architecture with technology stack",
+      "\"We don't have an architecture\" (every system has one, even if implicit)",
+      "Cannot name an architectural decision in their own system"
+    ],
+    "followUps": [
+      { "question": "What is the difference between architecture and design?", "hint": "Architecture = hard to reverse decisions (structure, boundaries). Design = easier to change (class design, algorithms)." },
+      { "question": "Who is responsible for architecture in your team?", "hint": "Everyone contributes, but someone must own the vision and ensure decisions are consistent." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 architectural decisions that lasted 7+ years",
+      "description": "Monolith decision (team/domain coupling), schema-based module boundaries (cheaper than microservices), JMS async (durability over simplicity). These decisions guide every feature we build. Studying architecture formally at PUC Minas gave me vocabulary for what I was already doing in practice."
+    }
+  },
+  {
+    "id": "interview-arch-2",
+    "topic": "software-architecture",
+    "subtopic": "arch-quality-attributes",
+    "difficulty": "INTERMEDIATE",
+    "question": "Which quality attributes do you consider before selecting an architecture?",
+    "shortAnswer": "Availability, scalability, performance, maintainability, testability, and deployability are my starting six. But the key insight is: you cannot optimize all of them. Architecture is choosing WHICH attributes matter most for THIS system and accepting trade-offs on the others.",
+    "detailedAnswer": "Quality attributes (non-functional requirements) drive architecture:\n\n**Must evaluate for every system:**\n- **Availability**: can users access it when needed? (99.9% = 8.7h downtime/year)\n- **Scalability**: can it handle growth? (users, data, throughput)\n- **Performance**: latency and throughput under expected load\n- **Maintainability**: cost of change (add feature, fix bug)\n- **Testability**: can we verify correctness efficiently?\n- **Deployability**: can we release safely and frequently?\n\n**Often critical:**\n- **Security**: protection against unauthorized access/modification\n- **Observability**: can we understand what's happening in production?\n- **Reliability**: does it produce correct results consistently?\n\n**The architectural trade-off:**\n- Availability vs Consistency (CAP theorem)\n- Performance vs Maintainability (optimized code is harder to change)\n- Scalability vs Simplicity (distributed = more complex)\n\nFor SGN3:\n- Maintainability > scalability (team productivity matters more than 10x scale)\n- Availability important (enrollment periods are time-boxed)\n- Performance: must handle peaks (26k inscriptions) but not millions of users",
+    "keyPoints": [
+      "You cannot optimize ALL quality attributes — trade-offs required",
+      "Availability, scalability, performance, maintainability, testability, deployability",
+      "Quality attributes DRIVE architectural decisions (not technologies)",
+      "Different systems prioritize differently (startup vs enterprise vs real-time)",
+      "Measure and set targets (SLOs) not just aspirational goals"
+    ],
+    "redFlags": [
+      "\"We optimize everything\" (impossible — trade-offs exist)",
+      "Choosing technology before understanding quality needs",
+      "Cannot name the trade-offs in their own architecture",
+      "Only thinking about functional requirements"
+    ],
+    "followUps": [
+      { "question": "How do you measure if your architecture achieves a quality attribute?", "hint": "Fitness functions, SLOs, metrics. Architecture evaluation is ongoing, not one-time." },
+      { "question": "Which quality attribute did you sacrifice in SGN3 and why?", "hint": "Scalability (monolith doesn't scale horizontally easily) in favor of maintainability (simpler, faster development)." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-arch-3",
+    "topic": "software-architecture",
+    "subtopic": "arch-styles",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you decide between a monolith and microservices?",
+    "shortAnswer": "Start with the forces: team size, domain coupling, deployment independence needs, and operational maturity. Monolith wins when: small team (<10), coupled domain (shared transactions), simple deployment. Microservices win when: large org (multiple teams), independent deployment required, different scaling needs per service. Default to monolith — extract services only when the pain of coupling exceeds the pain of distribution.",
+    "detailedAnswer": "Decision framework:\n\n**Favor monolith when:**\n- Small team (< 10 developers)\n- Domain is highly coupled (enrollment↔scheduling↔financial)\n- Shared database transactions needed\n- Simple deployment preferred\n- Team doesn't have operational maturity for distributed systems\n- Startup exploring product-market fit\n\n**Favor microservices when:**\n- Multiple teams (Conway's Law — architecture mirrors org)\n- Independent deployment required (team A deploys without team B)\n- Different scaling needs (search needs 10x compute vs catalog)\n- Fault isolation required (payment failure shouldn't break search)\n- Organizational maturity for DevOps, monitoring, incident response\n\n**The modular monolith middle ground:**\n- Clear module boundaries (SGN3 schemas)\n- Enforced dependency rules (no cross-module direct DB access)\n- Can extract to service later if needed\n- Gets 80% of the benefit with 20% of the complexity\n\nSGN3 is a modular monolith: 8 schemas as boundaries, service layer for cross-module access, JMS for async between modules. We get transactional consistency where needed and decoupling where beneficial.",
+    "keyPoints": [
+      "Default to monolith — extract only when pain exceeds benefit",
+      "Team size and org structure matter more than technical preference",
+      "Modular monolith gives 80% benefit with 20% complexity",
+      "Microservices add distributed complexity (network, consistency, debugging)",
+      "Conway's Law: architecture follows communication structure"
+    ],
+    "redFlags": [
+      "\"Microservices are always better\" (cargo culting)",
+      "\"We need microservices for scalability\" without measuring current limits",
+      "Not considering operational maturity required",
+      "Choosing architecture based on resume, not problem"
+    ],
+    "followUps": [
+      { "question": "What is a modular monolith and how does it help?", "hint": "Clear boundaries inside a single deployable. Easier to extract later if needed. SGN3's schema approach." },
+      { "question": "How does Conway's Law influence this decision?", "hint": "Architecture mirrors org structure. One team = one monolith makes sense. Multiple teams = service boundaries align to teams." }
+    ],
+    "clarifyingQuestions": [
+      "How large is the team?",
+      "How coupled is the domain?",
+      "Do different parts need independent deployment?",
+      "What is the operational maturity (monitoring, incident response)?",
+      "Is this greenfield or evolving an existing system?"
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3: modular monolith by design",
+      "description": "Chose monolith because: integrated team (<10 devs), highly coupled domain (enrollment needs scheduling needs financial), shared transactions required. Used schemas as module boundaries. Added satellite service (senai-services) only for external-facing API that needed independent lifecycle. This decision has held for 7+ years."
+    }
+  },
+  {
+    "id": "interview-arch-4",
+    "topic": "software-architecture",
+    "subtopic": "arch-application",
+    "difficulty": "INTERMEDIATE",
+    "question": "Explain Hexagonal Architecture. How does it help a Jakarta EE application?",
+    "shortAnswer": "Hexagonal Architecture separates business logic (domain) from infrastructure (DB, HTTP, messaging) through ports (interfaces) and adapters (implementations). The domain depends on nothing external. This makes the core testable without infrastructure, and infrastructure replaceable. In Jakarta EE: Business layer defines interfaces (ports), Repository/RestClient implement them (adapters).",
+    "detailedAnswer": "Hexagonal Architecture (Ports & Adapters):\n\n**Structure:**\n- Core: domain logic + application services (no framework dependencies)\n- Inbound ports: interfaces defining what the application CAN DO\n- Outbound ports: interfaces defining what the application NEEDS\n- Adapters: implementations connecting to infrastructure\n\n**In Jakarta EE / SGN3 terms:**\n```\nInbound Adapters          Core                    Outbound Adapters\n───────────────          ─────                   ─────────────────\nWebBean (JSF)     →   Business layer    →     Repository (JPA)\nREST Endpoint     →   (domain logic)    →     RestClient (Moodle)\nMDB (JMS)         →                     →     JMS Producer\n                       defines ports           implements ports\n```\n\nSGN3 approximates hexagonal:\n- Business layer doesn't depend on JSF, JPA, or JMS directly\n- Repository interface IS the outbound port\n- WebBean IS the inbound adapter\n- But: not pure hexagonal (Business uses JPA annotations via Entity)\n\n**Value for legacy Jakarta EE:**\n- Makes business logic testable (mock the ports)\n- Infrastructure replaceable (swap JPA for JDBC, or mock for tests)\n- Clear dependency direction (adapters → core, never reverse)\n- Gradual migration path (introduce ports incrementally)",
+    "keyPoints": [
+      "Domain/core depends on NOTHING external (no framework imports)",
+      "Ports = interfaces defined by the core (what it needs/offers)",
+      "Adapters = implementations connecting to infrastructure",
+      "Dependency direction: adapters → core (never reverse)",
+      "Makes core testable without infrastructure"
+    ],
+    "redFlags": [
+      "Confusing hexagonal with layered architecture",
+      "\"It's just interfaces\" (misses the dependency direction principle)",
+      "Cannot explain the benefit for testing",
+      "Over-engineering simple CRUD with hexagonal (YAGNI)"
+    ],
+    "followUps": [
+      { "question": "What is the difference between Clean Architecture and Hexagonal?", "hint": "Same principle (dependency inversion). Clean adds more layers (entities, use cases, interface adapters). Hexagonal is simpler (core + ports + adapters)." },
+      { "question": "When is Hexagonal Architecture overkill?", "hint": "Simple CRUD with no complex domain logic. The abstraction layers add cost without benefit." }
+    ],
+    "codeExamples": [
+      {
+        "language": "java",
+        "title": "Hexagonal in Jakarta EE context",
+        "code": "// Outbound port (defined by core)\npublic interface StudentRepository {\n    Optional<Student> findById(Long id);\n    void save(Student student);\n}\n\n// Core business (depends only on port)\npublic class EnrollmentBusiness {\n    @Inject private StudentRepository repository; // port\n    \n    public void enroll(Long studentId, Long turmaId) {\n        Student student = repository.findById(studentId)\n            .orElseThrow(() -> new SenaiException(\"student.not.found\"));\n        // ... business logic, no JPA/HTTP/JMS knowledge\n    }\n}\n\n// Outbound adapter (implements port with JPA)\n@Stateless\npublic class StudentJpaRepository implements StudentRepository {\n    @PersistenceContext private EntityManager em;\n    \n    public Optional<Student> findById(Long id) {\n        return Optional.ofNullable(em.find(Student.class, id));\n    }\n}"
+      }
+    ],
+    "visualBlocks": [
+      {
+        "type": "ARCHITECTURE",
+        "title": "Hexagonal in SGN3 terms",
+        "content": "        Inbound Adapters           Core              Outbound Adapters\n        ───────────────           ─────             ─────────────────\n        WebBean (JSF)      →    Business     →    Repository (JPA)\n        REST Endpoint      →    (domain)     →    RestClient (Moodle)\n        MDB (JMS)          →                 →    JMS Producer\n                                   │\n                           defines interfaces\n                           (ports = contracts)"
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 approximates hexagonal",
+      "description": "SGN3 layered architecture (WebBean→Service→Business→Repository) follows hexagonal principles: Business doesn't import JPA/JSF/JMS directly, Repository is the persistence port, WebBean is the inbound adapter. Not pure hexagonal (entities have JPA annotations) but the dependency direction is enforced by ArchUnit."
+    }
+  },
+  {
+    "id": "interview-arch-5",
+    "topic": "software-architecture",
+    "subtopic": "arch-modularity",
+    "difficulty": "SENIOR",
+    "question": "How do you define module or service boundaries?",
+    "shortAnswer": "By domain cohesion, not technical layer. A module owns: its data (schema/tables), its business rules, and its public interface. Boundaries should minimize cross-boundary communication. I use DDD heuristics: bounded context = module. In SGN3, each schema IS a module boundary (matricula, turma, financeiro) with inter-module access only through Service layer.",
+    "detailedAnswer": "Boundary definition process:\n\n1. **Identify domains** by business capability:\n   - Enrollment (matrícula)\n   - Scheduling (turma, calendário)\n   - Financial (títulos, pagamentos)\n   - Certification (certificados)\n\n2. **Apply coupling heuristics:**\n   - What changes together? → same module\n   - What can be deployed independently? → separate module\n   - What shares transactions? → same module (or accept saga complexity)\n   - What has different scaling needs? → candidate for separation\n\n3. **Validate boundaries:**\n   - Can each module be understood in isolation?\n   - Is the interface between modules small and stable?\n   - Do you get chatty communication across boundaries? → boundary is wrong\n\n4. **Enforce boundaries:**\n   - SGN3: schemas + Service layer as the only cross-module access\n   - ArchUnit rules prevent direct Repository access from other modules\n   - Write access only through owning module's Service\n\n**When to extract a service (from monolith):**\n- Independent deployment is NEEDED (not wanted)\n- Team ownership is clear and stable\n- Communication pattern is well-defined and low-frequency\n- You accept the operational complexity (monitoring, debugging, deployment)",
+    "keyPoints": [
+      "Boundaries by domain/business capability, not technical layer",
+      "Module owns: its data, its rules, its public interface",
+      "Minimize cross-boundary communication (chatty = wrong boundary)",
+      "Enforce boundaries (ArchUnit, schemas, Service layer contracts)",
+      "Extract service only when coupling pain > distribution pain"
+    ],
+    "redFlags": [
+      "Boundaries by technical layer (all controllers, all services, all repos)",
+      "\"Everything is a microservice\" without domain analysis",
+      "Cannot explain how to validate a boundary",
+      "No enforcement mechanism (boundaries exist only on paper)"
+    ],
+    "followUps": [
+      { "question": "What is an anti-corruption layer and when do you need it?", "hint": "Translation layer between modules with different models. Prevents one module's model from infecting another." },
+      { "question": "How do you handle data that two modules both need?", "hint": "Shared kernel (agreed model), or each module owns a copy (eventual consistency). Never shared mutable state." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 schema-based module boundaries",
+      "description": "8 schemas = 8 module boundaries. Each module owns its tables. Cross-module access only through Service layer (enforced by convention + code review). Write operations go through the owning module. Read JOINs across schemas allowed (pragmatic trade-off for reporting)."
+    }
+  },
+  {
+    "id": "interview-arch-6",
+    "topic": "software-architecture",
+    "subtopic": "arch-distributed",
+    "difficulty": "SENIOR",
+    "question": "How do you handle partial failures in a distributed system?",
+    "shortAnswer": "Accept that failures are normal, not exceptional. Design for them: timeouts on every external call, retry with backoff for transient errors, circuit breaker to stop cascading failures, idempotent operations for safe retries, and graceful degradation (non-critical features fail silently). The system must remain useful even when parts are broken.",
+    "detailedAnswer": "Partial failure handling strategies:\n\n1. **Timeouts** (mandatory — no infinite waits):\n   - Connect timeout: 5s\n   - Read timeout: 15-60s depending on service\n   - Without timeout → thread stuck forever → pool exhaustion → cascade\n\n2. **Retry with backoff** (only for transient errors):\n   - 502, 503, 504, timeout → retry\n   - 400, 404, 409 → do NOT retry (permanent error)\n   - Exponential backoff + jitter (prevent thundering herd)\n   - Max 2-3 retries\n\n3. **Circuit breaker** (stop cascading failures):\n   - After N failures → stop calling (fast-fail)\n   - Periodically probe to check recovery\n   - Prevents: slow dependency taking down the caller\n\n4. **Idempotency** (make retries safe):\n   - Same request twice → same result\n   - Idempotency key for creation operations\n   - INSERT ON CONFLICT DO NOTHING for message processing\n\n5. **Graceful degradation**:\n   - Non-critical fails → continue without it\n   - Email fails → enqueue for later, don't block enrollment\n   - Moodle down → enrollment succeeds, Moodle sync retries later\n\n6. **Bulkhead** (isolate failures):\n   - Separate thread pools per dependency\n   - One slow dependency doesn't exhaust all threads",
+    "keyPoints": [
+      "Timeouts mandatory on EVERY external call",
+      "Retry only transient errors, with backoff + jitter",
+      "Circuit breaker prevents cascading failures",
+      "Idempotency makes retries safe",
+      "Graceful degradation: non-critical fails silently",
+      "Bulkhead: isolate dependencies from each other"
+    ],
+    "redFlags": [
+      "No timeout strategy (\"we trust the network\")",
+      "Retrying everything including 400 errors",
+      "No idempotency (retry creates duplicates)",
+      "All-or-nothing (one service down = entire system down)"
+    ],
+    "followUps": [
+      { "question": "What is the difference between a timeout and a circuit breaker?", "hint": "Timeout: individual call protection. Circuit breaker: stops calling after repeated failures (protects the system, not just one call)." },
+      { "question": "How do you test resilience patterns?", "hint": "Chaos engineering: inject failures (kill services, add latency, corrupt responses). Verify the system degrades gracefully." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 resilience for external integrations",
+      "description": "Every external call (Moodle 60s timeout, LDAP 10s, VTEX 15s) has configured timeouts. JMS retry with Artemis redelivery (max 5 attempts, exponential delay). DLQ for permanent failures. Moodle down → enrollment succeeds, sync retries via JMS. SGN never blocks on an unavailable external service."
+    }
+  },
+  {
+    "id": "interview-arch-7",
+    "topic": "software-architecture",
+    "subtopic": "arch-evolution",
+    "difficulty": "SENIOR",
+    "question": "How do you modernise a legacy monolith incrementally?",
+    "shortAnswer": "Strangler Fig pattern: new features in new architecture, existing features migrated incrementally. Never big-bang rewrite. Steps: identify seam, build new alongside old, route traffic gradually, validate, decommission old. In SGN3, we extracted integrations to senai-services (satellite) while keeping the core monolith stable.",
+    "detailedAnswer": "Incremental modernization strategies:\n\n1. **Strangler Fig Pattern:**\n   - New functionality in new architecture\n   - Existing functionality migrated piece by piece\n   - Router/proxy directs traffic to old or new\n   - Old system shrinks until decommissioned\n\n2. **Branch by Abstraction:**\n   - Introduce interface over existing implementation\n   - Build new implementation behind same interface\n   - Switch when ready (feature flag)\n   - Remove old implementation\n\n3. **Asset Capture (what I did):**\n   - Extract integration layer to satellite service\n   - Core monolith remains stable (low risk)\n   - New consumers use new service directly\n   - Old consumers migrated gradually\n\n**Critical rules:**\n- Never big-bang rewrite (too risky, takes too long, demoralizes team)\n- Maintain backward compatibility during migration\n- Feature flags to switch between old and new\n- Data migration is the hardest part (plan it first)\n- Each step must be independently deployable and reversible\n\n**SGN3 evolution path:**\n- Phase 1 (done): Extract integrations → senai-services\n- Phase 2 (in progress): Java 11→21, Hibernate 5→6, PrimeFaces 10→15\n- Phase 3 (planned): Consider further extraction if team grows\n- Never: full rewrite (working system, active users, limited team)",
+    "keyPoints": [
+      "Strangler Fig: new alongside old, migrate incrementally",
+      "Never big-bang rewrite (too risky, too long)",
+      "Each step independently deployable and reversible",
+      "Data migration is the hardest part",
+      "Feature flags for gradual cutover"
+    ],
+    "redFlags": [
+      "\"Let's rewrite from scratch\" (almost always fails)",
+      "No incremental plan (all or nothing)",
+      "Ignoring data migration complexity",
+      "Not maintaining backward compatibility during transition"
+    ],
+    "followUps": [
+      { "question": "When IS a rewrite justified?", "hint": "When: technology is unsupported, no one understands the code, maintenance cost exceeds rewrite cost, AND you have excellent test coverage of expected behavior." },
+      { "question": "How do you handle the database during strangler migration?", "hint": "Hardest part. Options: shared DB initially, CDC for sync, or database-per-service with eventual consistency." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 incremental modernization",
+      "description": "Extracted integration layer to senai-services (strangler pattern). Now migrating Java 11→21, Hibernate 5→6, PrimeFaces 10→15 incrementally (branch by abstraction where needed). Never considered full rewrite — working system serving real users daily. Each migration step is reversible."
+    }
+  },
+  {
+    "id": "interview-arch-8",
+    "topic": "software-architecture",
+    "subtopic": "arch-documentation",
+    "difficulty": "INTERMEDIATE",
+    "question": "What is an Architecture Decision Record (ADR) and why use it?",
+    "shortAnswer": "An ADR documents a significant architectural decision: the context (why we faced this decision), the decision itself, the alternatives considered, and the consequences (trade-offs accepted). ADRs are valuable because they capture the WHY behind the architecture — something code alone cannot show. Future developers can understand the reasoning, not just the result.",
+    "detailedAnswer": "Architecture Decision Record:\n\n**Structure:**\n- Title: short description of the decision\n- Status: proposed / accepted / superseded\n- Context: what situation forced this decision\n- Decision: what we chose\n- Alternatives: what else we considered (and why not)\n- Consequences: what trade-offs we accepted\n\n**Why ADRs matter:**\n- Code shows WHAT. ADR shows WHY.\n- New team members understand reasoning without archaeology\n- Prevents re-debating settled decisions (\"we already evaluated X\")\n- Creates a decision log for architecture review\n- Makes trade-offs explicit (not hidden assumptions)\n\n**Example (SGN3):**\n```\n# ADR-001: Use JMS for async processing\n\nContext: External integrations (Moodle, LDAP) are slow and unreliable.\nDecision: Use ActiveMQ Artemis JMS for all async operations.\nAlternatives: Thread pools (not durable), REST callbacks (complex), direct sync (blocks users).\nConsequences: Added infrastructure complexity (broker), but gained durability, retry, DLQ, and decoupling.\n```\n\nEven informal ADRs (in Git commit messages, wiki, or docs) are better than nothing.",
+    "keyPoints": [
+      "Captures WHY, not just WHAT (code shows what)",
+      "Context + Decision + Alternatives + Consequences",
+      "Prevents re-debating settled decisions",
+      "New team members understand reasoning",
+      "Lightweight is better than no documentation"
+    ],
+    "redFlags": [
+      "No architectural documentation at all",
+      "Documentation that only shows the final state (no reasoning)",
+      "\"The code is the documentation\" for architectural decisions",
+      "Cannot explain why a decision was made"
+    ],
+    "followUps": [
+      { "question": "How do you keep ADRs up to date?", "hint": "Mark as superseded when decisions change. New ADR references the old one. Git history preserves the timeline." },
+      { "question": "What other architecture documentation do you use?", "hint": "C4 model (context, containers, components, code). Sequence diagrams for complex flows. Deployment diagrams." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 decision documentation via feature analysis",
+      "description": "Each feature gets an ANALISE.md with Hard Contract (constraints), decisions, and trade-offs documented. Not formal ADRs but same principle: capture WHY, not just WHAT. Studying ADRs formally at PUC Minas gave me the structured format."
+    }
+  }
+]

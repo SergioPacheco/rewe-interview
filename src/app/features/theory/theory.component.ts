@@ -143,14 +143,19 @@ export class TheoryComponent {
       } else if (requestedTab === 'practice' && hasExercises) {
         this.activeTab.set('practice');
         this.startEngine();
+      } else if (requestedTab === 'learn') {
+        this.activeTab.set('learn');
+      } else if (!hasTheory && !hasExercises && topicData?.mode === 'interview') {
+        // No learn/practice content available — fall through to Interview
+        this.activeTab.set('interview');
       } else if (!hasTheory && hasExercises) {
         this.activeTab.set('practice');
         this.startEngine();
-      } else if (!hasTheory && !hasExercises && topicData?.mode === 'interview') {
-        // Interview-only topic (e.g., software-architecture): go straight to Interview tab
-        this.activeTab.set('interview');
-      } else {
+      } else if (hasTheory) {
         this.activeTab.set('learn');
+      } else {
+        // Fallback: no content at all, try interview
+        this.activeTab.set('interview');
       }
 
       this.practiceReady.set(true);

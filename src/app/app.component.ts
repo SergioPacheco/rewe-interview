@@ -50,10 +50,15 @@ export class AppComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     await this.topicService.loadAll();
 
-    // Build breadcrumbs on navigation
+    // Build breadcrumbs on navigation + scroll to top
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd)
-    ).subscribe(() => this.updateBreadcrumbs());
+    ).subscribe(() => {
+      this.updateBreadcrumbs();
+      // Scroll main-content to top on navigation
+      const main = document.querySelector('.main-content');
+      if (main) main.scrollTop = 0;
+    });
     this.updateBreadcrumbs();
   }
 
@@ -177,7 +182,7 @@ const TOPIC_PHASES: Record<string, string[]> = {
   solid: ['Separate responsibilities', 'Manage extension and substitution', 'Invert dependencies'],
   collections: ['Language essentials', 'Flow and structure', 'Objects and standard APIs'],
   'java-modern': ['Express intent safely', 'Transform data', 'Modern concurrency and evolution'],
-  sql: ['Query data correctly', 'Protect consistency', 'Diagnose performance'],
+  sql: ['Quick reference', 'SQL fundamentals', 'How databases work (DDIA)', 'Distributed data (DDIA)', 'Production performance'],
   'system-design': ['Shape the flow', 'Protect data and scale', 'Operate the system'],
   'software-architecture': ['Start with decisions', 'Shape boundaries and communication', 'Operate, evolve, and document'],
   behavioral: ['Adapt and collaborate', 'Lead under pressure', 'Show motivation and judgement'],

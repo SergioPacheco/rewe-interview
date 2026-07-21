@@ -1,53 +1,41 @@
 :host {
   display: block;
-  width: min(100%, 1200px);
+  width: 100%;
+  max-width: 1200px;
   margin-inline: auto;
   font-family: var(--font-body);
 }
 
-/* ===== HERO ===== */
-.hero {
-  padding: clamp(2.5rem, 6vw, 4rem) 1.5rem 3rem;
-  margin-bottom: 2rem;
+/* ===== HERO BANNER (REWE.de style — image only) ===== */
+.hero-banner {
+  width: 100%;
+  margin-bottom: 0;
+  overflow: hidden;
+  background: var(--color-mint);
+  border-radius: 2rem 2rem 0 0;
+
+  &__img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: 16rem;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 2rem 2rem 0 0;
+  }
+}
+
+.hero-title {
+  margin: 0;
+  padding: 2rem 1.5rem 1.5rem;
+  color: var(--color-teal);
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 3.5vw, 2.25rem);
+  font-style: italic;
+  font-weight: 700;
+  line-height: 1.25;
   text-align: center;
-
-  &__title {
-    margin: 0 0 0.75rem;
-    color: var(--color-text);
-    font-family: var(--font-display);
-    font-size: clamp(2rem, 4vw, 2.5rem);
-    font-weight: 700;
-    line-height: 1.2;
-    letter-spacing: -0.025em;
-  }
-
-  &__subtitle {
-    max-width: 42rem;
-    margin: 0 auto 1.5rem;
-    color: var(--color-gray-600);
-    font-size: 1rem;
-    font-weight: 400;
-    line-height: 1.5;
-  }
-
-  &__stats {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem 0.75rem;
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
-
-  &__stat {
-    color: var(--color-teal);
-    font-weight: 700;
-  }
-
-  &__sep {
-    color: var(--color-gray-300);
-  }
+  background: var(--color-mint);
 }
 
 /* ===== SECTION SHELL ===== */
@@ -61,6 +49,10 @@
   overflow: hidden;
   background: var(--color-mint);
   border-radius: 2.5rem 2.5rem 1.5rem 1.5rem;
+
+  &--learn {
+    border-radius: 0;
+  }
 
   &--practice {
     --card-tag-bg: #ffdf45;
@@ -286,13 +278,13 @@
 }
 
 @media (max-width: 768px) {
-  .hero {
-    padding: 2.5rem 1rem 2rem;
+  .dashboard-section {
+    border-radius: 2rem 2rem 1.25rem 1.25rem;
+  }
 
-    &__title {
-      font-size: 2rem;
-      line-height: 2.5rem;
-    }
+  .product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
   }
 }
 

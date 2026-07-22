@@ -189,7 +189,6 @@ export class TopicService {
       ,'theory-software-architecture.json'
       ,'theory-dsa.json'
       ,'theory-system-design-modeling.json'
-      ,'theory-learning-paths.json'
       ,'theory-learning-depth.json'
       ,'theory-asd-summary.json'
     ];

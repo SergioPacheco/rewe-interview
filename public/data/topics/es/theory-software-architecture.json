@@ -3,23 +3,23 @@
     "id": "arch-foundations-1",
     "topic": "software-architecture",
     "subtopic": "arch-foundations",
-    "title": "What Is Software Architecture?",
+    "title": "¿Qué es la arquitectura de software?",
     "sections": [
       {
-        "heading": "Definition",
-        "content": "Software architecture is the set of significant design decisions that shape the structure, non-functional characteristics, and constraints of a system. It defines component boundaries, communication patterns, and the principles guiding evolution. Architecture is not a one-time diagram — it is a living set of decisions that evolve with requirements."
+        "heading": "Definición",
+        "content": "La arquitectura de software es el conjunto de decisiones de diseño significativas que dan forma a la estructura, las características no funcionales y las restricciones de un sistema. Define los límites de los componentes, los patrones de comunicación y los principios que guían su evolución. La arquitectura no es un diagrama estático; es un conjunto vivo de decisiones que evolucionan con los requisitos."
       },
       {
-        "heading": "Architecture vs Design",
-        "content": "Architecture addresses decisions that are costly to reverse: technology choices, deployment topology, module boundaries, data ownership. Design covers implementation within those boundaries: class hierarchies, patterns inside a service, local data structures. The boundary is fuzzy — a decision is architectural when changing it ripples across team or deployment boundaries."
+        "heading": "Arquitectura vs. Diseño",
+        "content": "La arquitectura aborda decisiones que son costosas de revertir: elección de tecnologías, topología de despliegue, límites de módulos y propiedad de los datos. El diseño cubre la implementación dentro de esos límites: jerarquías de clases, patrones dentro de un servicio y estructuras de datos locales. La frontera es difusa: una decisión es arquitectónica cuando su cambio afecta a varios equipos o límites de despliegue."
       },
       {
-        "heading": "The architect's role",
-        "content": "An architect balances competing quality attributes, communicates trade-offs to stakeholders, and ensures the team can deliver incrementally. They make the hard decisions early and defer the rest. In agile teams the architect is often a senior developer who guides rather than dictates — writing code, reviewing PRs, and validating assumptions with prototypes."
+        "heading": "El rol del arquitecto",
+        "content": "Un arquitecto equilibra atributos de calidad contrapuestos, comunica los compromisos (trade-offs) a los interesados y asegura que el equipo pueda realizar entregas incrementales. Toma las decisiones difíciles temprano y pospone el resto. En equipos ágiles, el arquitecto suele ser un desarrollador senior que guía en lugar de dictar: escribe código, revisa PRs y valida suposiciones mediante prototipos."
       },
       {
-        "heading": "Key principles",
-        "content": "Favour simplicity over cleverness. Delay irreversible decisions until the last responsible moment. Make constraints explicit through documentation (ADRs). Validate assumptions with working software rather than upfront speculation. Every architectural decision has a cost — the goal is not perfection but fitness for purpose."
+        "heading": "Principios clave",
+        "content": "Favorecer la simplicidad sobre la complejidad innecesaria. Retrasar las decisiones irreversibles hasta el último momento responsable. Hacer explícitas las restricciones mediante documentación (ADRs). Validar las suposiciones con software funcional en lugar de especulaciones anticipadas. Cada decisión arquitectónica tiene un coste; el objetivo no es la perfección, sino la idoneidad para el propósito."
       }
     ]
   },
@@ -27,23 +27,23 @@
     "id": "arch-quality-attributes-1",
     "topic": "software-architecture",
     "subtopic": "arch-quality-attributes",
-    "title": "Quality Attributes",
+    "title": "Atributos de calidad",
     "sections": [
       {
-        "heading": "What are quality attributes?",
-        "content": "Quality attributes (also called non-functional requirements or -ilities) define how a system behaves under specific conditions: performance under load, availability during failures, security against threats, maintainability over years. They drive architectural decisions more than features do — features tell you what, quality attributes tell you how well."
+        "heading": "¿Qué son los atributos de calidad?",
+        "content": "Los atributos de calidad (también llamados requisitos no funcionales) definen cómo se comporta un sistema bajo condiciones específicas: rendimiento bajo carga, disponibilidad durante fallos, seguridad contra amenazas y mantenibilidad a lo largo de los años. Estos impulsan las decisiones arquitectónicas más que las funcionalidades; las funcionalidades dicen qué hace el sistema, los atributos de calidad dicen qué tan bien lo hace."
       },
       {
-        "heading": "Key quality attributes",
-        "content": "Performance (response time, throughput), Scalability (handle growth), Availability (uptime, failover), Reliability (correct results), Security (confidentiality, integrity), Maintainability (ease of change), Testability (ease of verification), Observability (understanding runtime behaviour). Each attribute needs measurable scenarios, not vague adjectives."
+        "heading": "Atributos de calidad clave",
+        "content": "Rendimiento (tiempo de respuesta, throughput), escalabilidad (manejo del crecimiento), disponibilidad (tiempo de actividad, failover), fiabilidad (resultados correctos), seguridad (confidencialidad, integridad), mantenibilidad (facilidad de cambio), testeabilidad (facilidad de verificación) y observabilidad (comprensión del comportamiento en tiempo de ejecución). Cada atributo necesita escenarios medibles, no adjetivos vagos."
       },
       {
-        "heading": "Trade-offs are inevitable",
-        "content": "Optimising for one attribute often degrades another. High consistency reduces availability (CAP theorem). Strong security adds latency. Maximum flexibility reduces simplicity. The architect's job is to make these trade-offs explicit, document them, and align with business priorities. There is no universally correct balance — context decides."
+        "heading": "Los compromisos (trade-offs) son inevitables",
+        "content": "Optimizar un atributo a menudo degrada otro. Una alta consistencia reduce la disponibilidad (teorema CAP). Una seguridad robusta añade latencia. La máxima flexibilidad reduce la simplicidad. El trabajo del arquitecto es hacer explícitos estos compromisos, documentarlos y alinearlos con las prioridades del negocio. No existe un equilibrio universalmente correcto; el contexto decide."
       },
       {
-        "heading": "Quality attribute scenarios",
-        "content": "A measurable scenario has: stimulus (1000 concurrent users), environment (normal operation), response (page loads), measure (under 200ms at p95). Without measurable scenarios, quality requirements remain subjective. 'The system must be fast' is useless; 'checkout completes in under 500ms at p99 under 2000 rps' is actionable."
+        "heading": "Escenarios de atributos de calidad",
+        "content": "Un escenario medible tiene: estímulo (1000 usuarios concurrentes), entorno (operación normal), respuesta (carga de la página) y medida (menos de 200ms en el p95). Sin escenarios medibles, los requisitos de calidad siguen siendo subjetivos. 'El sistema debe ser rápido' es inútil; 'el pago se completa en menos de 500ms en el p99 bajo 2000 rps' es accionable."
       }
     ]
   },
@@ -51,23 +51,23 @@
     "id": "arch-styles-1",
     "topic": "software-architecture",
     "subtopic": "arch-styles",
-    "title": "Architectural Styles",
+    "title": "Estilos arquitectónicos",
     "sections": [
       {
-        "heading": "Monolith",
-        "content": "A single deployable unit containing all business logic. Advantages: simple deployment, local method calls, single database transaction, easy debugging. Disadvantages: tight coupling risk, single scaling unit, long build times at scale. A well-structured modular monolith with clear internal boundaries is often the right starting point."
+        "heading": "Monolito",
+        "content": "Una única unidad de despliegue que contiene toda la lógica de negocio. Ventajas: despliegue sencillo, llamadas a métodos locales, transacción única de base de datos y depuración fácil. Desventajas: riesgo de acoplamiento fuerte, unidad de escalado única y tiempos de compilación largos a gran escala. Un monolito modular bien estructurado con límites internos claros suele ser el punto de partida correcto."
       },
       {
-        "heading": "Microservices",
-        "content": "Independently deployable services owning their data and communicating via network. Advantages: independent scaling, team autonomy, technology diversity, isolated failures. Disadvantages: distributed complexity (partial failures, eventual consistency, network latency), operational overhead (service mesh, tracing, deployment pipelines per service)."
+        "heading": "Microservicios",
+        "content": "Servicios desplegables de forma independiente que poseen sus propios datos y se comunican a través de la red. Ventajas: escalado independiente, autonomía del equipo, diversidad tecnológica y aislamiento de fallos. Desventajas: complejidad distribuida (fallos parciales, consistencia eventual, latencia de red) y sobrecarga operativa (service mesh, trazado, pipelines de despliegue por servicio)."
       },
       {
-        "heading": "When to choose which",
-        "content": "Start with a monolith unless you have a proven need for independent deployment or scaling. Microservices make sense when: teams need to deploy independently, domains have genuinely different scaling profiles, or organisational boundaries naturally separate concerns. The question is not 'monolith or microservices' but 'where should the boundaries be and how coupled are they?'"
+        "heading": "Cuándo elegir cuál",
+        "content": "Comience con un monolito a menos que tenga una necesidad demostrada de despliegue o escalado independiente. Los microservicios tienen sentido cuando: los equipos necesitan desplegar de forma independiente, los dominios tienen perfiles de escalado genuinamente diferentes o los límites organizativos separan las preocupaciones de forma natural. La pregunta no es 'monolito o microservicios', sino '¿dónde deben estar los límites y qué tan acoplados están?'"
       },
       {
-        "heading": "Other styles",
-        "content": "Event-driven architecture decouples producers from consumers via asynchronous events. Service-oriented architecture (SOA) shares infrastructure (ESB) between services. Serverless delegates infrastructure to the cloud provider at function granularity. Space-based architecture distributes processing and data across nodes. Each style trades different attributes."
+        "heading": "Otros estilos",
+        "content": "La arquitectura orientada a eventos (EDA) desacopla productores de consumidores mediante eventos asíncronos. La arquitectura orientada a servicios (SOA) comparte infraestructura (ESB) entre servicios. Serverless delega la infraestructura al proveedor de la nube con granularidad de función. La arquitectura basada en el espacio distribuye el procesamiento y los datos entre nodos. Cada estilo prioriza diferentes atributos."
       }
     ]
   },
@@ -75,23 +75,23 @@
     "id": "arch-application-1",
     "topic": "software-architecture",
     "subtopic": "arch-application",
-    "title": "Application Architecture",
+    "title": "Arquitectura de la aplicación",
     "sections": [
       {
-        "heading": "Layered architecture",
-        "content": "Traditional: Presentation → Business Logic → Data Access. Simple and well-understood, but creates tight coupling between layers. Changes in the data model ripple upward. Suitable for CRUD-heavy applications with stable requirements. Most Jakarta EE and Spring applications start here."
+        "heading": "Arquitectura en capas",
+        "content": "Tradicional: Presentación → Lógica de Negocio → Acceso a Datos. Es simple y bien conocida, pero crea un acoplamiento fuerte entre capas. Los cambios en el modelo de datos se propagan hacia arriba. Es adecuada para aplicaciones centradas en CRUD con requisitos estables. La mayoría de las aplicaciones Jakarta EE y Spring comienzan aquí."
       },
       {
-        "heading": "Hexagonal (Ports & Adapters)",
-        "content": "The domain sits at the centre, protected by ports (interfaces). Adapters implement ports for specific technologies (HTTP controller, JPA repository, messaging consumer). The dependency rule: everything points inward. The domain never imports framework classes. This makes the core testable without infrastructure and technology-swappable at the edges."
+        "heading": "Arquitectura Hexagonal (Puertos y Adaptadores)",
+        "content": "El dominio se sitúa en el centro, protegido por puertos (interfaces). Los adaptadores implementan los puertos para tecnologías específicas (controlador HTTP, repositorio JPA, consumidor de mensajería). La regla de dependencia: todo apunta hacia adentro. El dominio nunca importa clases del framework. Esto hace que el núcleo sea testeable sin infraestructura y permite cambiar la tecnología en los bordes."
       },
       {
-        "heading": "Clean Architecture",
-        "content": "Extends hexagonal with explicit layers: Entities (enterprise rules), Use Cases (application rules), Interface Adapters (controllers, presenters, gateways), Frameworks & Drivers (DB, web). The dependency rule is the same — inner layers never know about outer layers. Useful as a mental model; applying every layer rigidly in a small service adds ceremony without benefit."
+        "heading": "Arquitectura Limpia (Clean Architecture)",
+        "content": "Extiende la hexagonal con capas explícitas: Entidades (reglas de empresa), Casos de Uso (reglas de aplicación), Adaptadores de Interfaz (controladores, presentadores, gateways), Frameworks y Controladores (DB, web). La regla de dependencia es la misma: las capas internas nunca conocen las externas. Es útil como modelo mental; aplicar cada capa rígidamente en un servicio pequeño añade burocracia sin beneficio."
       },
       {
-        "heading": "Pragmatic application",
-        "content": "In real Jakarta EE or Spring Boot projects: keep the domain model free of framework annotations where practical, use interfaces for repository contracts, inject dependencies rather than instantiating them. You do not need perfect hexagonal purity — the goal is testability, replaceability, and clarity of where business logic lives versus infrastructure concerns."
+        "heading": "Aplicación pragmática",
+        "content": "En proyectos reales de Jakarta EE o Spring Boot: mantenga el modelo de dominio libre de anotaciones del framework cuando sea práctico, use interfaces para los contratos de los repositorios e inyecte dependencias en lugar de instanciarlas. No necesita una pureza hexagonal perfecta; el objetivo es la testeabilidad, la capacidad de sustitución y la claridad sobre dónde reside la lógica de negocio frente a las preocupaciones de infraestructura."
       }
     ]
   },
@@ -99,23 +99,23 @@
     "id": "arch-modularity-1",
     "topic": "software-architecture",
     "subtopic": "arch-modularity",
-    "title": "Modularity & Boundaries",
+    "title": "Modularidad y límites",
     "sections": [
       {
-        "heading": "Why boundaries matter",
-        "content": "Without clear boundaries, a codebase becomes a distributed monolith or a big ball of mud. Boundaries enable independent development, testing, and reasoning. A good boundary minimises the interface surface area — few, well-defined interactions between modules. The cost of a wrong boundary is high: cross-boundary refactoring is expensive."
+        "heading": "Por qué importan los límites",
+        "content": "Sin límites claros, una base de código se convierte en un monolito distribuido o en una 'gran bola de lodo'. Los límites permiten el desarrollo, las pruebas y el razonamiento independiente. Un buen límite minimiza la superficie de la interfaz: pocas interacciones y bien definidas entre módulos. El coste de un límite erróneo es alto: la refactorización entre límites es costosa."
       },
       {
-        "heading": "Bounded contexts (DDD)",
-        "content": "A bounded context defines where a particular model is valid. 'Order' means something different in checkout vs fulfilment vs billing. Each context owns its model and its data. Communication between contexts happens through well-defined contracts (APIs, events). Do not share database tables across bounded contexts — that creates hidden coupling."
+        "heading": "Contextos acotados (Bounded Contexts - DDD)",
+        "content": "Un contexto acotado define dónde es válido un modelo particular. 'Pedido' significa algo diferente en el pago (checkout) frente al cumplimiento (fulfilment) o la facturación. Cada contexto posee su modelo y sus datos. La comunicación entre contextos ocurre a través de contratos bien definidos (APIs, eventos). No comparta tablas de base de datos entre contextos acotados; eso crea un acoplamiento oculto."
       },
       {
-        "heading": "Finding boundaries",
-        "content": "Look for natural seams: different business capabilities, different rates of change, different team ownership, different scaling needs, different data lifecycles. If two modules always change together, they probably belong together. If they have independent release cycles and different stakeholders, separation pays off."
+        "heading": "Encontrar límites",
+        "content": "Busque costuras naturales: diferentes capacidades de negocio, diferentes ritmos de cambio, diferentes propietarios de equipo, diferentes necesidades de escalado o diferentes ciclos de vida de los datos. Si dos módulos siempre cambian juntos, probablemente deban estar juntos. Si tienen ciclos de lanzamiento independientes y diferentes interesados, la separación vale la pena."
       },
       {
-        "heading": "Module communication",
-        "content": "Synchronous (REST, gRPC): simple, immediate response, but creates temporal coupling. Asynchronous (events, messages): decoupled in time, enables eventual consistency, but adds complexity in ordering, error handling and debugging. Choose based on whether the caller needs an immediate answer and whether failure of the callee should block the caller."
+        "heading": "Comunicación entre módulos",
+        "content": "Sincrónica (REST, gRPC): simple, respuesta inmediata, pero crea acoplamiento temporal. Asíncrona (eventos, mensajes): desacoplada en el tiempo, permite la consistencia eventual, pero añade complejidad en el ordenamiento, manejo de errores y depuración. Elija basándose en si el llamador necesita una respuesta inmediata y si el fallo del receptor debería bloquear al emisor."
       }
     ]
   },
@@ -123,23 +123,23 @@
     "id": "arch-distributed-1",
     "topic": "software-architecture",
     "subtopic": "arch-distributed",
-    "title": "Distributed Architecture",
+    "title": "Arquitectura distribuida",
     "sections": [
       {
-        "heading": "Fallacies of distributed computing",
-        "content": "The network is not reliable, latency is not zero, bandwidth is not infinite, the topology changes, there are multiple administrators. Every network call can fail, be slow, or return stale data. Design for failure by default: timeouts, retries with backoff, circuit breakers, fallback responses, and graceful degradation."
+        "heading": "Falacias de la computación distribuida",
+        "content": "La red no es fiable, la latencia no es cero, el ancho de banda no es infinito, la topología cambia y hay múltiples administradores. Cada llamada de red puede fallar, ser lenta o devolver datos obsoletos. Diseñe para el fallo por defecto: tiempos de espera (timeouts), reintentos con retroceso (backoff), interruptores automáticos (circuit breakers), respuestas de respaldo y degradación elegante."
       },
       {
-        "heading": "Partial failures",
-        "content": "In a distributed system, part of the system can fail while the rest continues. A payment service timeout does not mean the order failed — it means you do not know. Use idempotency keys to safely retry. Use the saga pattern or compensation to handle multi-step processes that span services. Design for 'what if this step fails after the previous succeeded?'"
+        "heading": "Fallos parciales",
+        "content": "En un sistema distribuido, parte del sistema puede fallar mientras el resto continúa. Un tiempo de espera en el servicio de pagos no significa que el pedido haya fallado; significa que no lo sabe. Use claves de idempotencia para reintentar de forma segura. Use el patrón Saga o compensaciones para manejar procesos de varios pasos que abarcan servicios. Diseñe pensando en: '¿qué pasa si este paso falla después de que el anterior tuvo éxito?'"
       },
       {
-        "heading": "Consistency models",
-        "content": "Strong consistency: every read returns the latest write (expensive, limits availability). Eventual consistency: replicas converge over time (scalable, but stale reads possible). Causal consistency: preserves happens-before ordering. Choose per operation — checkout needs stronger guarantees than product recommendations. Do not default to strong consistency everywhere."
+        "heading": "Modelos de consistencia",
+        "content": "Consistencia fuerte: cada lectura devuelve la última escritura (costosa, limita la disponibilidad). Consistencia eventual: las réplicas convergen con el tiempo (escalable, pero son posibles lecturas obsoletas). Consistencia causal: preserva el orden de causalidad. Elija por operación: el pago necesita garantías más fuertes que las recomendaciones de productos. No use consistencia fuerte por defecto en todas partes."
       },
       {
-        "heading": "Resilience patterns",
-        "content": "Circuit breaker: stop calling a failing service to let it recover. Bulkhead: isolate failures to prevent cascading. Timeout + retry with exponential backoff and jitter: handle transient failures without thundering herd. Dead letter queue: park failed messages for later investigation. Health checks and readiness probes: remove unhealthy instances from load balancing."
+        "heading": "Patrones de resiliencia",
+        "content": "Circuit breaker: deja de llamar a un servicio que falla para permitir que se recupere. Bulkhead: aísla los fallos para evitar que se propaguen en cascada. Timeout + reintento con backoff exponencial y jitter: maneja fallos transitorios sin colapsar el sistema (thundering herd). Dead letter queue: aparca mensajes fallidos para investigación posterior. Health checks y sondas de disponibilidad: elimina instancias no saludables del balanceo de carga."
       }
     ]
   },
@@ -147,23 +147,23 @@
     "id": "arch-integration-1",
     "topic": "software-architecture",
     "subtopic": "arch-integration",
-    "title": "API & Integration",
+    "title": "API e integración",
     "sections": [
       {
-        "heading": "API design principles",
-        "content": "Design APIs for consumers, not for your internal model. Use resource-oriented design for REST. Version APIs to evolve without breaking clients. Document contracts explicitly (OpenAPI, AsyncAPI). Apply the robustness principle: be conservative in what you send, liberal in what you accept. Pagination, rate limiting and proper HTTP status codes are non-negotiable."
+        "heading": "Principios de diseño de APIs",
+        "content": "Diseñe APIs para los consumidores, no para su modelo interno. Use un diseño orientado a recursos para REST. Versionar las APIs para evolucionar sin romper a los clientes. Documente los contratos explícitamente (OpenAPI, AsyncAPI). Aplique el principio de robustez: sea conservador en lo que envía y liberal en lo que acepta. La paginación, la limitación de tasa (rate limiting) y los códigos de estado HTTP adecuados son innegociables."
       },
       {
-        "heading": "Synchronous integration",
-        "content": "REST over HTTP is the most common. Use it when the caller needs an immediate response and can tolerate the coupling. gRPC offers better performance with binary protocol and streaming but adds tooling complexity. Always define timeouts, handle failures, and consider caching. A synchronous call creates a runtime dependency — if the callee is down, the caller is impacted."
+        "heading": "Integración sincrónica",
+        "content": "REST sobre HTTP es lo más común. Úselo cuando el emisor necesite una respuesta inmediata y pueda tolerar el acoplamiento. gRPC ofrece un mejor rendimiento con protocolo binario y streaming, pero añade complejidad en las herramientas. Defina siempre tiempos de espera, maneje fallos y considere el uso de caché. Una llamada sincrónica crea una dependencia en tiempo de ejecución: si el receptor está caído, el emisor se ve afectado."
       },
       {
-        "heading": "Asynchronous integration",
-        "content": "Message brokers (Kafka, ActiveMQ, RabbitMQ) decouple producers from consumers in time and space. The producer does not wait for processing. Benefits: absorb load spikes, retry without blocking, independent scaling. Challenges: message ordering, exactly-once semantics, consumer lag monitoring, dead letter handling, schema evolution."
+        "heading": "Integración asíncrona",
+        "content": "Los brokers de mensajería (Kafka, ActiveMQ, RabbitMQ) desacoplan a productores de consumidores en tiempo y espacio. El productor no espera al procesamiento. Beneficios: absorber picos de carga, reintentar sin bloquear, escalado independiente. Desafíos: orden de mensajes, semántica de entrega única (exactly-once), monitoreo del lag del consumidor, manejo de mensajes fallidos y evolución de esquemas."
       },
       {
-        "heading": "Anti-corruption layer",
-        "content": "When integrating with a legacy system or external API whose model does not match yours, introduce a translation layer. This adapter converts between the external model and your domain model, preventing external concepts from polluting your core. It isolates change — when the external system evolves, only the adapter needs updating."
+        "heading": "Capa anticorrupción (Anti-corruption Layer)",
+        "content": "Al integrar con un sistema legado o una API externa cuyo modelo no coincide con el suyo, introduzca una capa de traducción. Este adaptador convierte entre el modelo externo y su modelo de dominio, evitando que conceptos externos contaminen su núcleo. Aísla el cambio: cuando el sistema externo evoluciona, solo es necesario actualizar el adaptador."
       }
     ]
   },
@@ -171,23 +171,23 @@
     "id": "arch-data-1",
     "topic": "software-architecture",
     "subtopic": "arch-data",
-    "title": "Data Architecture",
+    "title": "Arquitectura de datos",
     "sections": [
       {
-        "heading": "Database per service",
-        "content": "Each service owns its data — no shared databases. This enables independent schema evolution, technology choice per service, and clear ownership. The trade-off is that cross-service queries require API calls or event-driven materialised views. Start with a shared database if you are in a monolith and split only when service boundaries are proven."
+        "heading": "Base de datos por servicio",
+        "content": "Cada servicio posee sus datos: nada de bases de datos compartidas. Esto permite la evolución independiente del esquema, la elección de tecnología por servicio y una propiedad clara. La contrapartida es que las consultas entre servicios requieren llamadas a APIs o vistas materializadas orientadas a eventos. Comience con una base de datos compartida si está en un monolito y divídala solo cuando los límites del servicio estén probados."
       },
       {
-        "heading": "Event sourcing and CQRS",
-        "content": "Event sourcing stores every state change as an immutable event. Replaying events reconstructs state. CQRS separates the write model (commands) from the read model (queries), allowing independent optimisation. Powerful for audit trails and complex domains, but adds significant complexity. Use only when the domain genuinely benefits from full history or separate read/write scaling."
+        "heading": "Event Sourcing y CQRS",
+        "content": "Event Sourcing almacena cada cambio de estado como un evento inmutable. Recrear los eventos reconstruye el estado. CQRS separa el modelo de escritura (comandos) del modelo de lectura (consultas), permitiendo una optimización independiente. Es potente para pistas de auditoría y dominios complejos, pero añade una complejidad significativa. Úselo solo cuando el dominio se beneficie genuinamente de un historial completo o de un escalado de lectura/escritura separado."
       },
       {
-        "heading": "Data consistency strategies",
-        "content": "Saga pattern: sequence of local transactions with compensating actions on failure. Outbox pattern: persist domain event in the same transaction as the state change, relay it asynchronously. Change Data Capture (CDC): stream database changes to consumers. Two-phase commit: strong consistency but poor performance and availability — avoid in microservices."
+        "heading": "Estrategias de consistencia de datos",
+        "content": "Patrón Saga: secuencia de transacciones locales con acciones compensatorias en caso de fallo. Patrón Outbox: persiste el evento de dominio en la misma transacción que el cambio de estado y lo transmite de forma asíncrona. Change Data Capture (CDC): transmite cambios de la base de datos a los consumidores. Commit en dos fases: consistencia fuerte pero pobre rendimiento y disponibilidad; evítelo en microservicios."
       },
       {
-        "heading": "Choosing storage",
-        "content": "Relational (PostgreSQL): strong consistency, complex queries, ACID transactions — default choice. Document (MongoDB): flexible schema, nested data, horizontal scaling. Key-value (Redis): caching, sessions, counters. Search (Elasticsearch): full-text search, log aggregation. Graph (Neo4j): relationships-heavy queries. Choose based on access patterns, not hype."
+        "heading": "Elección de almacenamiento",
+        "content": "Relacional (PostgreSQL): consistencia fuerte, consultas complejas, transacciones ACID (opción por defecto). Documental (MongoDB): esquema flexible, datos anidados, escalado horizontal. Clave-valor (Redis): caché, sesiones, contadores. Búsqueda (Elasticsearch): búsqueda de texto completo, agregación de logs. Grafos (Neo4j): consultas con muchas relaciones. Elija basándose en los patrones de acceso, no en la moda."
       }
     ]
   },
@@ -195,23 +195,23 @@
     "id": "arch-evolution-1",
     "topic": "software-architecture",
     "subtopic": "arch-evolution",
-    "title": "Evolution & Legacy",
+    "title": "Evolución y Legado",
     "sections": [
       {
-        "heading": "Strangler Fig pattern",
-        "content": "Gradually replace legacy functionality by routing new traffic to new implementations while the old system remains operational. Over time, more routes point to the new system until the legacy can be decommissioned. This avoids big-bang rewrites which historically fail due to scope creep, hidden requirements, and parallel maintenance burden."
+        "heading": "Patrón del Higo Estrangulador (Strangler Fig)",
+        "content": "Reemplace gradualmente la funcionalidad legada redirigiendo el tráfico nuevo a las nuevas implementaciones mientras el sistema antiguo sigue operativo. Con el tiempo, más rutas apuntan al nuevo sistema hasta que el legado puede ser retirado. Esto evita las reescrituras totales ('big-bang') que históricamente fallan debido al crecimiento del alcance, requisitos ocultos y la carga de mantenimiento paralelo."
       },
       {
-        "heading": "Incremental modernisation",
-        "content": "Extract one bounded context at a time. Start with the area that changes most frequently or has the worst pain (performance, bugs, team contention). Use an anti-corruption layer to isolate the new service from legacy data models. Keep the legacy stable while proving the new approach in production. Modernisation is a marathon, not a sprint."
+        "heading": "Modernización incremental",
+        "content": "Extraiga un contexto acotado a la vez. Comience con el área que cambia con más frecuencia o que presenta el mayor dolor (rendimiento, errores, conflictos de equipo). Use una capa anticorrupción para aislar el nuevo servicio de los modelos de datos legados. Mantenga el legado estable mientras prueba el nuevo enfoque en producción. La modernización es un maratón, no un esprint."
       },
       {
-        "heading": "Managing technical debt",
-        "content": "Not all technical debt is bad — some is deliberate and enables speed. Track it visibly (backlog items, ADRs). Prioritise debt that blocks feature development or causes incidents. Pay it down incrementally alongside feature work — dedicated 'debt sprints' rarely survive business pressure. Make the cost of debt visible to stakeholders in terms they care about."
+        "heading": "Gestión de la deuda técnica",
+        "content": "No toda la deuda técnica es mala; alguna es deliberada y permite velocidad. Rastréela de forma visible (items en el backlog, ADRs). Priorice la deuda que bloquea el desarrollo de funcionalidades o causa incidentes. Páguela incrementalmente junto con el trabajo de nuevas funcionalidades; los 'sprints de deuda' dedicados rara vez sobreviven a la presión del negocio. Haga visible el coste de la deuda para los interesados en términos que les importen."
       },
       {
-        "heading": "Migration strategies",
-        "content": "Feature flags enable gradual rollout and instant rollback. Parallel running compares old and new implementations side by side. Database migrations must be backward-compatible (expand-contract pattern). Blue-green or canary deployments reduce blast radius. The key insight: every migration step must be independently deployable and reversible."
+        "heading": "Estrategias de migración",
+        "content": "Las 'feature flags' permiten un despliegue gradual y una reversión instantánea. El funcionamiento en paralelo compara las implementaciones antiguas y nuevas lado a lado. Las migraciones de base de datos deben ser compatibles hacia atrás (patrón expand-contract). Los despliegues blue-green o canario reducen el radio de impacto. Idea clave: cada paso de migración debe ser desplegable y reversible de forma independiente."
       }
     ]
   },
@@ -219,23 +219,23 @@
     "id": "arch-documentation-1",
     "topic": "software-architecture",
     "subtopic": "arch-documentation",
-    "title": "Documentation & Decisions",
+    "title": "Documentación y decisiones",
     "sections": [
       {
-        "heading": "Architecture Decision Records (ADRs)",
-        "content": "An ADR captures a single decision: context (why this decision is needed), decision (what was chosen), consequences (trade-offs accepted). Keep them short, immutable (supersede rather than edit), and stored alongside code. ADRs prevent re-litigating past decisions and onboard new team members by explaining the 'why' behind the architecture."
+        "heading": "Registros de Decisiones de Arquitectura (ADRs)",
+        "content": "Un ADR captura una única decisión: contexto (por qué es necesaria esta decisión), decisión (qué se eligió) y consecuencias (compromisos aceptados). Manténgalos cortos, inmutables (reemplace en lugar de editar) y almacenados junto al código. Los ADRs evitan volver a debatir decisiones pasadas y ayudan a integrar a nuevos miembros del equipo explicando el 'porqué' detrás de la arquitectura."
       },
       {
-        "heading": "C4 model",
-        "content": "Four levels of abstraction: Context (system in its environment), Container (deployable units and data stores), Component (major building blocks within a container), Code (class-level, rarely maintained manually). Each level answers different stakeholder questions. Most teams benefit most from Context and Container diagrams kept up to date."
+        "heading": "Modelo C4",
+        "content": "Cuatro niveles de abstracción: Contexto (el sistema en su entorno), Contenedor (unidades desplegables y almacenes de datos), Componente (bloques de construcción principales dentro de un contenedor), Código (nivel de clase, rara vez mantenido manualmente). Cada nivel responde a diferentes preguntas de los interesados. La mayoría de los equipos se benefician principalmente de mantener actualizados los diagramas de Contexto y Contenedor."
       },
       {
-        "heading": "Living documentation",
-        "content": "Documentation that is never updated is worse than no documentation — it misleads. Keep diagrams close to code (docs-as-code). Generate what you can from the system itself (OpenAPI specs, dependency graphs). Review documentation in PRs alongside code. A simple README with 'how to run, how to deploy, where to find things' is more valuable than a 50-page design document nobody reads."
+        "heading": "Documentación viva",
+        "content": "La documentación que nunca se actualiza es peor que no tener documentación: induce a error. Mantenga los diagramas cerca del código (docs-as-code). Genere lo que pueda del propio sistema (especificaciones OpenAPI, grafos de dependencias). Revise la documentación en los PRs junto con el código. Un README simple con 'cómo ejecutar, cómo desplegar, dónde encontrar las cosas' es más valioso que un documento de diseño de 50 páginas que nadie lee."
       },
       {
-        "heading": "Communicating architecture",
-        "content": "Different audiences need different views. Developers need component diagrams and ADRs. Operations needs deployment topology and runbooks. Business stakeholders need context diagrams and capability maps. Use the simplest notation that conveys the message. A whiteboard sketch that the team understands beats a UML diagram nobody reads."
+        "heading": "Comunicación de la arquitectura",
+        "content": "Diferentes audiencias necesitan diferentes vistas. Los desarrolladores necesitan diagramas de componentes y ADRs. Operaciones necesita la topología de despliegue y runbooks. Los interesados del negocio necesitan diagramas de contexto y mapas de capacidades. Use la notación más simple que transmita el mensaje. Un boceto en la pizarra que el equipo entienda es mejor que un diagrama UML que nadie lee."
       }
     ]
   }

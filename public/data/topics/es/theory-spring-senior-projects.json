@@ -3,20 +3,20 @@
     "id": "theory-spring-senior-roadmap",
     "topic": "spring",
     "subtopic": "spring-di",
-    "title": "Senior Spring Boot — Learn Through One Evolving Production Project",
+    "title": "Spring Boot Senior — Aprendizaje mediante un proyecto de producción evolutivo",
     "lesson": {
-      "goal": "Learn Spring Boot as a system you can change and operate, not as a list of annotations.",
-      "outcome": "A portfolio roadmap with design, tests, operational evidence and documented trade-offs.",
-      "challenge": "For every Spring feature, explain the failure it prevents and the cost it introduces."
+      "goal": "Aprender Spring Boot como un sistema que puedes modificar y operar, no como una lista de anotaciones.",
+      "outcome": "Una hoja de ruta de portafolio con diseño, pruebas, evidencia operativa y compromisos (trade-offs) documentados.",
+      "challenge": "Para cada funcionalidad de Spring, explica el fallo que previene y el coste que introduce."
     },
     "sections": [
       {
-        "heading": "The project: Order Fulfilment Platform",
-        "content": "Build one application in deliberate slices instead of many CRUD tutorials. The project accepts orders, reserves local stock, requests payment, publishes integration events and exposes an order-status API. Each slice teaches a senior concern.\n\n<table><tr><th>Slice</th><th>What you must prove</th><th>Artifact</th></tr><tr><td>Modular order API</td><td>Where business rules, adapters and HTTP code belong</td><td>Package diagram and dependency rule</td></tr><tr><td>Order workflow</td><td>What one database transaction protects</td><td>Sequence diagram and failure tests</td></tr><tr><td>Search API</td><td>How query shape, indexes and pagination behave</td><td>SQL plan and query-count test</td></tr><tr><td>Public contract</td><td>How clients retry safely and understand errors</td><td>OpenAPI and contract tests</td></tr><tr><td>Deployment</td><td>How configuration, secrets and migrations are controlled</td><td>Configuration matrix and runbook</td></tr><tr><td>Operations</td><td>How a team detects and recovers from failure</td><td>Dashboard, alerts and incident drill</td></tr></table>\n\nThis is the standard: a senior developer can explain why a boundary exists, demonstrate it with a test or metric, and describe what happens when a dependency fails."
+        "heading": "El proyecto: Plataforma de cumplimiento de pedidos (Order Fulfilment)",
+        "content": "Construye una aplicación en fragmentos deliberados en lugar de muchos tutoriales CRUD. El proyecto acepta pedidos, reserva stock local, solicita pagos, publica eventos de integración y expone una API de estado de pedidos. Cada fragmento enseña una preocupación senior.\n\n<table><tr><th>Fragmento</th><th>Qué debes probar</th><th>Artefacto</th></tr><tr><td>API de pedidos modular</td><td>Dónde pertenecen las reglas de negocio, adaptadores y código HTTP</td><td>Diagrama de paquetes y regla de dependencia</td></tr><tr><td>Flujo de pedidos</td><td>Qué protege una transacción de base de datos</td><td>Diagrama de secuencia y pruebas de fallo</td></tr><tr><td>API de búsqueda</td><td>Cómo se comportan la forma de la consulta, índices y paginación</td><td>Plan SQL y prueba de conteo de consultas</td></tr><tr><td>Contrato público</td><td>Cómo los clientes reintentan de forma segura y entienden errores</td><td>OpenAPI y pruebas de contrato</td></tr><tr><td>Despliegue</td><td>Cómo se controlan la configuración, secretos y migraciones</td><td>Matriz de configuración y runbook</td></tr><tr><td>Operaciones</td><td>Cómo detecta y se recupera un equipo ante fallos</td><td>Dashboard, alertas y simulacro de incidente</td></tr></table>\n\nEste es el estándar: un desarrollador senior puede explicar por qué existe un límite (boundary), demostrarlo con una prueba o métrica, y describir qué sucede cuando una dependencia falla."
       },
       {
-        "heading": "The decide → prove → operate loop",
-        "content": "Before choosing a framework feature, state the business invariant and quality target. Then identify the boundary, make the smallest proof, and make the result observable.\n\nExample: do not say “I used <code>@Transactional</code>.” Say: “Creating an order and reserving local stock must either both succeed or both fail, so the use case owns one local transaction. Publishing the event is not part of that database transaction; I use an outbox and monitor unpublished events.”\n\nUseful official references: <a href=\"https://docs.spring.io/spring-boot/reference/testing/\" target=\"_blank\" rel=\"noopener\">testing</a>, <a href=\"https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html\" target=\"_blank\" rel=\"noopener\">transactions</a>, and <a href=\"https://docs.spring.io/spring-boot/reference/actuator/metrics.html\" target=\"_blank\" rel=\"noopener\">metrics</a>."
+        "heading": "El ciclo de decidir → probar → operar",
+        "content": "Antes de elegir una funcionalidad del framework, establece el invariante de negocio y el objetivo de calidad. Luego, identifica el límite, haz la prueba más pequeña posible y haz que el resultado sea observable.\n\nEjemplo: no digas “Usé <code>@Transactional</code>”. Di: “Crear un pedido y reservar stock local deben tener éxito o fallar juntos, por lo que el caso de uso posee una transacción local. Publicar el evento no es parte de esa transacción; uso un outbox y monitoreo los eventos no publicados”.\n\nReferencias oficiales útiles: <a href=\"https://docs.spring.io/spring-boot/reference/testing/\" target=\"_blank\" rel=\"noopener\">testing</a>, <a href=\"https://docs.spring.io/spring-framework/reference/data-access/transaction/declarative/annotations.html\" target=\"_blank\" rel=\"noopener\">transactions</a>, y <a href=\"https://docs.spring.io/spring-boot/reference/actuator/metrics.html\" target=\"_blank\" rel=\"noopener\">metrics</a>."
       }
     ]
   },
@@ -24,24 +24,24 @@
     "id": "theory-spring-di-senior-boundaries",
     "topic": "spring",
     "subtopic": "spring-di",
-    "title": "Project 1 — Use DI to Enforce Boundaries, Not to Hide Dependencies",
+    "title": "Proyecto 1 — Usa DI para reforzar límites, no para ocultar dependencias",
     "lesson": {
-      "goal": "Create a module that is plain Java at its core and Spring-wired at its edges.",
-      "outcome": "A testable PlaceOrder use case with replaceable payment and persistence adapters.",
-      "challenge": "Add a second payment provider without changing the order use case."
+      "goal": "Crear un módulo que sea Java puro en su núcleo y cableado por Spring en sus bordes.",
+      "outcome": "Un caso de uso PlaceOrder testeable con adaptadores reemplazables de pago y persistencia.",
+      "challenge": "Añadir un segundo proveedor de pagos sin cambiar el caso de uso de pedidos."
     },
     "sections": [
       {
-        "heading": "A useful module shape",
-        "content": "Organize by business capability, not one application-wide <code>controller</code>, <code>service</code> and <code>repository</code> package.\n\n<pre><code>order/\n├── api/          // HTTP DTOs and controller\n├── application/  // PlaceOrder, CancelOrder\n├── domain/       // Order, policies, domain events\n└── adapter/      // JPA, payment client, event publisher\n</code></pre>\n\nThe application layer depends on small interfaces such as <code>OrderRepository</code> and <code>PaymentGateway</code>. An adapter implements each interface. A Spring configuration or component scan wires them. This makes the use case easy to test with fakes and prevents controllers from reaching directly into persistence."
+        "heading": "Una forma de módulo útil",
+        "content": "Organiza por capacidad de negocio, no por paquetes globales de <code>controller</code>, <code>service</code> y <code>repository</code>.\n\n<pre><code>order/\n├── api/          // DTOs y controlador HTTP\n├── application/  // PlaceOrder, CancelOrder\n├── domain/       // Order, políticas, eventos de dominio\n└── adapter/      // JPA, cliente de pago, publicador de eventos\n</code></pre>\n\nLa capa de aplicación depende de interfaces pequeñas como <code>OrderRepository</code> y <code>PaymentGateway</code>. Un adaptador implementa cada interfaz. Una configuración de Spring o escaneo de componentes los conecta. Esto hace que el caso de uso sea fácil de probar con fakes y evita que los controladores accedan directamente a la persistencia."
       },
       {
-        "heading": "Bean mechanics that matter in production",
-        "content": "Know the path: component scanning discovers candidates; conditions decide whether auto-configuration contributes a bean; dependency resolution picks an implementation; post-processors can wrap it in a proxy. This explains failures that annotations alone do not solve.\n\n• Two implementations: choose intentionally with <code>@Qualifier</code>, <code>@Primary</code>, or a collection of strategies.\n• Missing bean: inspect the condition report and active configuration before adding annotations randomly.\n• Circular dependency: normally a design signal; extract an orchestration use case or invert a dependency.\n• Mutable state in a singleton: a concurrency bug. Keep singleton services stateless and pass request state as arguments.\n\nUse constructor injection for required dependencies. It makes the object immutable after construction, fails early and exposes a large constructor as a useful warning that a class has too many responsibilities."
+        "heading": "Mecánica de beans que importa en producción",
+        "content": "Conoce el camino: el escaneo de componentes descubre candidatos; las condiciones deciden si la auto-configuración contribuye con un bean; la resolución de dependencias elige una implementación; los post-procesadores pueden envolverlo en un proxy. Esto explica fallos que las anotaciones por sí solas no resuelven.\n\n• Dos implementaciones: elige intencionalmente con <code>@Qualifier</code>, <code>@Primary</code> o una colección de estrategias.\n• Bean faltante: inspecciona el reporte de condiciones (condition report) antes de añadir anotaciones al azar.\n• Dependencia circular: normalmente una señal de diseño; extrae un caso de uso de orquestación o invierte la dependencia.\n• Estado mutable en un singleton: un bug de concurrencia. Mantén los servicios stateless y pasa el estado de la petición como argumento.\n\nUsa inyección por constructor para dependencias requeridas. Hace que el objeto sea inmutable, falla pronto y expone un constructor grande como advertencia de que la clase tiene demasiadas responsabilidades."
       },
       {
-        "heading": "Senior proof of understanding",
-        "content": "Implement sandbox and production payment adapters. Select the environment composition with deployment configuration, then select the provider with a typed property. Validate required credentials on startup. Document the trade-off: profiles are coarse deployment modes; they are not a general feature-flag system. Add a test that starts the context with each valid combination and fails for an ambiguous or incomplete one."
+        "heading": "Prueba senior de comprensión",
+        "content": "Implementa adaptadores de pago para sandbox y producción. Selecciona la composición del entorno con configuración de despliegue, luego selecciona el proveedor con una propiedad tipada. Valida credenciales requeridas al inicio. Documenta el trade-off: los perfiles son modos de despliegue gruesos, no un sistema general de feature-flags. Añade una prueba que inicie el contexto con cada combinación válida y falle ante una ambigua o incompleta."
       }
     ]
   },
@@ -49,24 +49,24 @@
     "id": "theory-spring-transactions-senior-workflow",
     "topic": "spring",
     "subtopic": "spring-transactions",
-    "title": "Project 2 — Make the Order Workflow Correct When Dependencies Fail",
+    "title": "Proyecto 2 — Haz que el flujo de pedidos sea correcto cuando fallan las dependencias",
     "lesson": {
-      "goal": "Understand the real boundary of a local Spring transaction.",
-      "outcome": "A durable order plus outbox workflow, with a tested recovery path.",
-      "challenge": "Simulate a broker outage after the database commits."
+      "goal": "Comprender el límite real de una transacción local de Spring.",
+      "outcome": "Un flujo de pedido duradero más outbox, con una ruta de recuperación probada.",
+      "challenge": "Simular una caída del broker después de que la base de datos confirma el commit."
     },
     "sections": [
       {
-        "heading": "Draw the transaction before writing the annotation",
-        "content": "For <code>placeOrder</code>, decide which facts must change together: order status, lines and local inventory reservation. Put those writes in one local transaction. Do not hold a database transaction open while calling payment, sending email or waiting for a broker: remote calls are slow, have partial failure and consume scarce database connections.\n\nA transaction protects an invariant; it is not a decoration for every service method. State the invariant in review: “An order cannot be CONFIRMED without persisted lines and a local reservation.”"
+        "heading": "Dibuja la transacción antes de escribir la anotación",
+        "content": "Para <code>placeOrder</code>, decide qué hechos deben cambiar juntos: estado del pedido, líneas y reserva de inventario local. Pon esas escrituras en una transacción local. No mantengas abierta una transacción de BD mientras llamas a un pago, envías un correo o esperas a un broker: las llamadas remotas son lentas, tienen fallos parciales y consumen conexiones escasas.\n\nUna transacción protege un invariante; no es un adorno para cada método de servicio. Declara el invariante en la revisión: “Un pedido no puede estar CONFIRMADO sin líneas persistidas y una reserva local”."
       },
       {
-        "heading": "The outbox project teaches the important trade-off",
-        "content": "Write the order and an <code>outbox_event</code> row in the same database transaction. A publisher later sends new events and records its result. Consumers must be idempotent because a publish may succeed before the publisher records success.\n\n<pre><code>BEGIN\n  insert into orders (...);\n  insert into outbox_event(id, type, payload, status) values (...);\nCOMMIT\n\n// Publisher sends NEW events. Consumer deduplicates by event id.\n</code></pre>\n\nThis gives durable handoff, not magic “exactly once” business behavior. Add replay, duplicate handling, a metric for the oldest unpublished event and an operator-owned recovery runbook."
+        "heading": "El proyecto outbox enseña el trade-off importante",
+        "content": "Escribe el pedido y una fila en <code>outbox_event</code> en la misma transacción de BD. Un publicador envía eventos nuevos más tarde y registra su resultado. Los consumidores deben ser idempotentes porque un envío puede tener éxito antes de que el publicador registre el éxito.\n\n<pre><code>BEGIN\n  insert into orders (...);\n  insert into outbox_event(id, type, payload, status) values (...);\nCOMMIT\n\n// El publicador envía eventos NUEVOS. El consumidor desduplica por id de evento.\n</code></pre>\n\nEsto da una entrega duradera, no un comportamiento mágico de negocio de “exactamente una vez”. Añade repetición (replay), manejo de duplicados, una métrica para el evento antiguo no publicado y un runbook de recuperación."
       },
       {
-        "heading": "Proxy and rollback details that a senior must know",
-        "content": "Default declarative transactions use AOP proxies. A call through <code>this.someTransactionalMethod()</code> does not cross that proxy, so the annotation is not applied in normal proxy mode. Prefer extracting another use-case bean instead of self-injection.\n\nUse <code>REQUIRED</code> by default. Choose <code>REQUIRES_NEW</code> only for a true independent commit because it changes failure semantics and adds connection pressure. Spring rolls back unchecked exceptions by default; decide checked-exception rollback rules from the business outcome. A blanket <code>rollbackFor = Exception.class</code> is not a best practice. Test both rollback and commit paths."
+        "heading": "Detalles de proxy y rollback que un senior debe conocer",
+        "content": "Las transacciones declarativas por defecto usan proxies AOP. Una llamada mediante <code>this.someTransactionalMethod()</code> no cruza ese proxy, por lo que la anotación no se aplica. Prefiere extraer otro bean de caso de uso en lugar de auto-inyección.\n\nUsa <code>REQUIRED</code> por defecto. Elige <code>REQUIRES_NEW</code> solo para un commit independiente real, ya que cambia la semántica de fallos y añade presión a las conexiones. Spring hace rollback ante excepciones no verificadas (unchecked) por defecto; decide las reglas para excepciones verificadas basándote en el resultado de negocio. Un <code>rollbackFor = Exception.class</code> genérico no es una buena práctica. Prueba tanto las rutas de rollback como las de commit."
       }
     ]
   },
@@ -74,20 +74,20 @@
     "id": "theory-spring-data-senior-query-project",
     "topic": "spring",
     "subtopic": "spring-data",
-    "title": "Project 3 — Keep Control of SQL, Loading and Concurrency",
+    "title": "Proyecto 3 — Mantén el control de SQL, carga y concurrencia",
     "lesson": {
-      "goal": "Use Spring Data JPA without treating generated queries as magic.",
-      "outcome": "A stable order search with measured query count, pagination and conflict behavior.",
-      "challenge": "Load 100 orders with associations and prove serialization does not create N+1 queries."
+      "goal": "Usar Spring Data JPA sin tratar las consultas generadas como magia.",
+      "outcome": "Una búsqueda de pedidos estable con conteo medido, paginación y comportamiento ante conflictos.",
+      "challenge": "Cargar 100 pedidos con asociaciones y probar que la serialización no crea consultas N+1."
     },
     "sections": [
       {
-        "heading": "Repository methods are not an architecture",
-        "content": "Spring Data removes boilerplate; Hibernate still decides when SQL runs. Keep derived methods short and obvious. For important reads, make the shape explicit with a DTO projection or focused JPQL query. Do not return JPA entities directly from controllers: lazy relations, internal fields and persistence behavior then leak into your public API.\n\nReturn only the fields a screen needs. Capture generated SQL and query count in a PostgreSQL Testcontainers test. Verify the execution plan and index against the actual filter and sort order."
+        "heading": "Los métodos del repositorio no son una arquitectura",
+        "content": "Spring Data elimina el boilerplate; Hibernate sigue decidiendo cuándo se ejecuta el SQL. Mantén los métodos derivados cortos y obvios. Para lecturas importantes, haz la forma explícita con una proyección DTO o una consulta JPQL enfocada. No devuelvas entidades JPA directamente desde los controladores: las relaciones lazy, campos internos y comportamiento de persistencia se filtran a tu API pública.\n\nDevuelve solo los campos que necesita una pantalla. Captura el SQL generado y el conteo de consultas en una prueba con Testcontainers (PostgreSQL). Verifica el plan de ejecución y los índices frente al filtro y orden reales."
       },
       {
-        "heading": "Pagination, fetching and locking",
-        "content": "Offset pagination is easy but slow for deep pages and unstable when rows change. Cursor/keyset pagination is usually better for a large ordered feed when a stable sort key exists. A collection fetch join with a pageable query is a warning sign because it can multiply rows and corrupt page behavior. Use a two-step query, projection or batch loading after measuring.\n\nAdd <code>@Version</code> when concurrent updates could silently overwrite a business decision. A version conflict also needs an API decision: what does the client receive, can it retry, and what does the user see? Use pessimistic locking only when its wait, deadlock and throughput costs are justified."
+        "heading": "Paginación, fetching y bloqueo",
+        "content": "La paginación Offset es fácil pero lenta para páginas profundas e inestable cuando las filas cambian. La paginación por cursor/keyset es mejor para flujos grandes cuando existe una clave de orden estable. Un fetch join de colecciones con paginación es una señal de advertencia, ya que multiplica filas y corrompe la paginación. Usa consultas en dos pasos, proyecciones o carga por lotes (batch loading) tras medir.\n\nAñade <code>@Version</code> cuando actualizaciones concurrentes puedan sobrescribir silenciosamente una decisión. Un conflicto de versión requiere una decisión de API: ¿qué recibe el cliente, puede reintentar, qué ve el usuario? Usa bloqueo pesimista solo cuando los costes de espera, deadlocks y rendimiento estén justificados."
       }
     ]
   },
@@ -95,20 +95,20 @@
     "id": "theory-spring-rest-senior-contract-project",
     "topic": "spring",
     "subtopic": "spring-rest",
-    "title": "Project 4 — Publish a Contract That Clients Can Safely Retry",
+    "title": "Proyecto 4 — Publica un contrato que los clientes puedan reintentar de forma segura",
     "lesson": {
-      "goal": "Separate HTTP translation from business rules and make error behavior stable.",
-      "outcome": "A documented order API with validation, ProblemDetail and idempotent commands.",
-      "challenge": "Handle a duplicate POST after a client timeout without creating two orders."
+      "goal": "Separar la traducción HTTP de las reglas de negocio y estabilizar el comportamiento de errores.",
+      "outcome": "Una API de pedidos documentada con validación, ProblemDetail y comandos idempotentes.",
+      "challenge": "Manejar un POST duplicado tras un timeout del cliente sin crear dos pedidos."
     },
     "sections": [
       {
-        "heading": "Controller responsibilities",
-        "content": "A controller parses and validates HTTP input, calls a use case and translates the outcome into HTTP. It should not contain transaction rules, repository queries or business decisions. Use request and response DTOs as a compatibility boundary.\n\nFor <code>POST /orders</code>, define success status and <code>Location</code>, validation failures, business conflicts, authentication failures and unexpected errors. Use <code>ProblemDetail</code> or one consistent error schema. Include a stable error code and correlation ID; never return stack traces or database details."
+        "heading": "Responsabilidades del controlador",
+        "content": "Un controlador analiza y valida la entrada HTTP, llama a un caso de uso y traduce el resultado a HTTP. No debe contener reglas de transacción, consultas de repositorio o decisiones de negocio. Usa DTOs de petición y respuesta como límite de compatibilidad.\n\nPara <code>POST /orders</code>, define estado de éxito y <code>Location</code>, fallos de validación, conflictos de negocio, fallos de autenticación y errores inesperados. Usa <code>ProblemDetail</code> o un esquema de error consistente. Incluye un código de error estable y un ID de correlación; nunca devuelvas stack traces o detalles de BD."
       },
       {
-        "heading": "Idempotency is more than a header",
-        "content": "Accept an <code>Idempotency-Key</code> for a retryable command. Store the key, request fingerprint, state and result in the same transaction as the command. The same key and request returns the original result; the same key with different content is rejected. Define expiry and cleanup ownership.\n\nDocument pagination, sorting, filtering, time format, error schema and deprecation in OpenAPI. Test the observable contract with MockMvc or HTTP-level tests, including invalid JSON and retry paths."
+        "heading": "La idempotencia es más que un header",
+        "content": "Acepta un <code>Idempotency-Key</code> para comandos reintentables. Almacena la clave, fingerprint de la petición, estado y resultado en la misma transacción que el comando. La misma clave con petición igual devuelve el resultado original; misma clave con contenido distinto se rechaza. Define expiración y quién limpia estos registros.\n\nDocumenta paginación, orden, filtros, formato de hora, esquema de error y deprecación en OpenAPI. Prueba el contrato con MockMvc o pruebas a nivel HTTP, incluyendo JSON inválido y rutas de reintento."
       }
     ]
   },
@@ -116,20 +116,20 @@
     "id": "theory-spring-config-and-testing-senior-delivery",
     "topic": "spring",
     "subtopic": "spring-config",
-    "title": "Project 5 — Deploy the Same Artifact Safely",
+    "title": "Proyecto 5 — Despliega el mismo artefacto de forma segura",
     "lesson": {
-      "goal": "Treat configuration as validated runtime input, not as scattered string values.",
-      "outcome": "A service that fails fast on invalid setup and never logs secrets.",
-      "challenge": "Run the same artifact locally, in CI and in production without rebuilding it."
+      "goal": "Tratar la configuración como entrada de runtime validada, no como valores dispersos.",
+      "outcome": "Un servicio que falla rápido ante configuraciones inválidas y nunca registra secretos.",
+      "challenge": "Ejecutar el mismo artefacto localmente, en CI y en producción sin reconstruirlo."
     },
     "sections": [
       {
-        "heading": "Configuration belongs to a delivery design",
-        "content": "Group related values in <code>@ConfigurationProperties</code> and validate them at startup. Map the source and precedence of each critical value: defaults in version control, environment-specific non-secrets, secrets from the approved secret store, and deployment-time overrides. Profiles select a configuration group; they are not a secret store and should not encode every business-feature combination.\n\nCreate a matrix: local uses Docker Compose; tests use Testcontainers; production receives endpoints and secrets from the platform. Add startup tests for missing values and log-masking tests for passwords, tokens and authorization headers."
+        "heading": "La configuración pertenece al diseño de entrega",
+        "content": "Agrupa valores relacionados en <code>@ConfigurationProperties</code> y valídalos al inicio. Mapea el origen y precedencia de cada valor crítico: defaults en control de versiones, no secretos por entorno, secretos desde un almacén aprobado, y overrides de despliegue. Los perfiles seleccionan un grupo de configuración; no son un almacén de secretos ni deben codificar combinaciones de funcionalidades.\n\nCrea una matriz: local usa Docker Compose; las pruebas usan Testcontainers; producción recibe endpoints y secretos de la plataforma. Añade pruebas de inicio para valores faltantes y pruebas de enmascaramiento para contraseñas, tokens y cabeceras de autorización."
       },
       {
-        "heading": "Testing is the delivery gate",
-        "content": "For the same project, use plain unit tests for business rules; <code>@WebMvcTest</code> for HTTP mapping and errors; <code>@DataJpaTest</code> with PostgreSQL Testcontainers for repository behavior; and a small number of <code>@SpringBootTest</code> tests for a complete flow. Choose the smallest test that catches the risk.\n\nA senior suite also tests migrations, configuration validation, authorization boundaries and regression cases from real failures. Mock remote boundaries, not your own domain until the test becomes meaningless."
+        "heading": "Las pruebas son la puerta de entrega",
+        "content": "Para el mismo proyecto, usa pruebas unitarias para reglas de negocio; <code>@WebMvcTest</code> para mapeo HTTP y errores; <code>@DataJpaTest</code> con Testcontainers para comportamiento de repositorios; y un número pequeño de <code>@SpringBootTest</code> para flujos completos. Elige la prueba más pequeña que atrape el riesgo.\n\nUna suite senior también prueba migraciones, validación de configuración, límites de autorización y casos de regresión de fallos reales. Mockea límites remotos, no tu propio dominio hasta que la prueba pierda significado."
       }
     ]
   },
@@ -137,20 +137,20 @@
     "id": "theory-spring-testing-senior-confidence",
     "topic": "spring",
     "subtopic": "spring-testing",
-    "title": "Project 5B — Build Confidence Without Starting Spring for Every Test",
+    "title": "Proyecto 5B — Construye confianza sin iniciar Spring en cada prueba",
     "lesson": {
-      "goal": "Use tests to prove a specific risk at the lowest useful cost.",
-      "outcome": "A fast test suite with clear unit, slice, integration and contract responsibilities.",
-      "challenge": "Make a migration failure and an API-contract break reproducible in CI."
+      "goal": "Usar pruebas para probar un riesgo específico al coste más bajo útil.",
+      "outcome": "Una suite de pruebas rápida con responsabilidades claras.",
+      "challenge": "Hacer que un fallo de migración y una ruptura de contrato de API sean reproducibles en CI."
     },
     "sections": [
       {
-        "heading": "Test layers and the failure each catches",
-        "content": "<strong>Plain unit tests</strong> protect policies, calculations and state transitions. They should run with no Spring context. <strong>Slice tests</strong> protect a narrow framework boundary: <code>@WebMvcTest</code> for validation and HTTP errors; <code>@DataJpaTest</code> for query mapping. <strong>Integration tests</strong> start the needed context and real dependencies through Testcontainers. <strong>Contract tests</strong> protect APIs or events used by another component.\n\nDo not select a test because an annotation sounds senior. Start with the question: “What realistic failure would this test catch that a cheaper test cannot?”"
+        "heading": "Capas de pruebas y fallos que atrapan",
+        "content": "<strong>Las pruebas unitarias puras</strong> protegen políticas, cálculos y cambios de estado (sin Spring). <strong>Pruebas de slice</strong> protegen límites de framework: <code>@WebMvcTest</code> para validación/HTTP; <code>@DataJpaTest</code> para mapeo de consultas. <strong>Pruebas de integración</strong> inician el contexto y dependencias reales vía Testcontainers. <strong>Pruebas de contrato</strong> protegen APIs o eventos consumidos por otros.\n\nNo elijas una prueba porque la anotación suena senior. Pregúntate: “¿Qué fallo realista atraparía esta prueba que una más barata no pueda?”"
       },
       {
-        "heading": "Minimum credible suite for the order project",
-        "content": "Keep unit tests for pricing and order-state rules. Test the search projection against PostgreSQL through Testcontainers. Test invalid JSON, validation and ProblemDetail with MockMvc. Test that order and outbox record commit together. Keep one or two full-flow tests, not hundreds.\n\nAdd a regression test when you fix a production-like failure. Control time, IDs and remote boundaries so tests are deterministic. The <a href=\"https://docs.spring.io/spring-boot/reference/testing/\" target=\"_blank\" rel=\"noopener\">official Spring Boot testing reference</a> is the source for test slices and supported utilities."
+        "heading": "Suite mínima creíble para el proyecto de pedidos",
+        "content": "Mantén pruebas unitarias para precios y reglas de estado. Prueba la proyección de búsqueda contra PostgreSQL con Testcontainers. Prueba JSON inválido, validación y ProblemDetail con MockMvc. Prueba que el pedido y el registro outbox se confirmen juntos. Mantén una o dos pruebas de flujo completo, no cientos.\n\nAñade una prueba de regresión cuando arregles un fallo de producción. Controla el tiempo, IDs y límites remotos para que las pruebas sean deterministas. La <a href=\"https://docs.spring.io/spring-boot/reference/testing/\" target=\"_blank\" rel=\"noopener\">referencia oficial de pruebas de Spring Boot</a> es la fuente para slices de prueba y utilidades soportadas."
       }
     ]
   },
@@ -158,20 +158,20 @@
     "id": "theory-spring-actuator-senior-operations",
     "topic": "spring",
     "subtopic": "spring-actuator",
-    "title": "Project 6 — Make the Service Operable at 03:00",
+    "title": "Proyecto 6 — Haz que el servicio sea operable a las 03:00 am",
     "lesson": {
-      "goal": "Design health, metrics, logs and shutdown around operational decisions.",
-      "outcome": "A dashboard and runbook that tell an operator what is wrong and what to do.",
-      "challenge": "Simulate a slow dependency and decide whether traffic should stop, degrade or continue."
+      "goal": "Diseñar salud, métricas, logs y apagado en torno a decisiones operativas.",
+      "outcome": "Un dashboard y runbook que digan a un operador qué está mal y qué hacer.",
+      "challenge": "Simular una dependencia lenta y decidir si el tráfico debe parar, degradarse o continuar."
     },
     "sections": [
       {
-        "heading": "Health signals answer different questions",
-        "content": "Liveness asks whether a stuck process should restart. Readiness asks whether this instance should receive traffic. They are not generic “everything is green” endpoints. A temporary optional dependency failure may be a warning, while a required database outage can make a write service unready. Define this policy from user impact.\n\nFor every API track request rate, error rate and duration. For asynchronous work add consumer lag, oldest message age, retries and dead-letter counts. Add business metrics such as orders placed and orders stuck in pending payment. Avoid unbounded metric labels such as order IDs or user IDs."
+        "heading": "Las señales de salud responden preguntas diferentes",
+        "content": "Liveness pregunta si un proceso bloqueado debe reiniciarse. Readiness pregunta si esta instancia debe recibir tráfico. No son endpoints genéricos de “todo está verde”. Un fallo temporal en una dependencia opcional puede ser una advertencia, mientras que una caída en una BD requerida puede dejar un servicio de escritura no listo. Define esta política según el impacto al usuario.\n\nPara cada API rastrea tasa de peticiones, tasa de errores y duración. Para trabajo asíncrono añade lag de consumidor, edad del mensaje más antiguo, reintentos y mensajes muertos. Añade métricas de negocio como pedidos colocados o pedidos atascados en pago pendiente. Evita etiquetas de métricas sin límite como IDs de pedido."
       },
       {
-        "heading": "Operational acceptance criteria",
-        "content": "A project is not complete until you can demonstrate: correlation IDs in logs; a trace across HTTP, database and outbound work; latency and error metrics; tested readiness policy; graceful shutdown that stops new work and finishes in-flight work within a deadline; and a runbook for an outbox backlog. Restrict Actuator access and authorize sensitive endpoint details.\n\nThis is the shift from “I enabled Actuator” to “I can explain how the team will operate this service.”"
+        "heading": "Criterios de aceptación operativa",
+        "content": "Un proyecto no está completo hasta que puedas demostrar: IDs de correlación en logs; traza a través de HTTP, BD y trabajo saliente; métricas de latencia y errores; política de readiness probada; apagado elegante (graceful shutdown) que detenga trabajo nuevo y termine el trabajo en curso antes de una fecha límite; y un runbook para un backlog de outbox. Restringe el acceso a Actuator y autoriza detalles sensibles.\n\nEste es el cambio de “Habilité Actuator” a “Puedo explicar cómo operará el equipo este servicio”."
       }
     ]
   }

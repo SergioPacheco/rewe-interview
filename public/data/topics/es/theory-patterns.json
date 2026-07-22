@@ -1,11 +1,11 @@
 [
   {
     "id": "theory-patterns-strategy",
-    "title": "Strategy Pattern — Swappable Algorithms",
+    "title": "Patrón Strategy — Algoritmos Intercambiables",
     "sections": [
       {
-        "heading": "What it solves",
-        "content": "When you have multiple ways to do the same thing and want to select at runtime without if/else chains.\n\n<img src=\"assets/solid/o.webp\" alt=\"Open/Closed — extend without modifying\" style=\"width:100%; max-width:300px; border-radius:8px; margin: 12px 0; display:block;\">\n\n<strong>REWE example:</strong> Route optimization can use different algorithms depending on constraints (fastest, cheapest, eco-friendly). Instead of a giant switch, each algorithm implements a common interface.\n\n<pre><code>// Strategy interface\npublic interface RouteStrategy {\n    Route calculate(List&lt;Stop&gt; stops, Constraints constraints);\n}\n\n// Concrete strategies\n@Component(\"fastest\")\npublic class FastestRouteStrategy implements RouteStrategy {\n    public Route calculate(List&lt;Stop&gt; stops, Constraints c) {\n        // Dijkstra with time weights\n    }\n}\n\n@Component(\"cheapest\")\npublic class CheapestRouteStrategy implements RouteStrategy {\n    public Route calculate(List&lt;Stop&gt; stops, Constraints c) {\n        // Minimize fuel cost + tolls\n    }\n}\n\n@Component(\"eco\")\npublic class EcoRouteStrategy implements RouteStrategy {\n    public Route calculate(List&lt;Stop&gt; stops, Constraints c) {\n        // Minimize CO2 emissions\n    }\n}\n\n// Context — selects strategy at runtime\n@Service\npublic class RouteService {\n    private final Map&lt;String, RouteStrategy&gt; strategies;\n\n    public RouteService(Map&lt;String, RouteStrategy&gt; strategies) {\n        this.strategies = strategies; // Spring injects all implementations!\n    }\n\n    public Route optimize(List&lt;Stop&gt; stops, String mode) {\n        RouteStrategy strategy = strategies.get(mode);\n        return strategy.calculate(stops, Constraints.defaults());\n    }\n}</code></pre>\n\n<strong>Adding a new algorithm = one new class. Zero changes to RouteService.</strong>"
+        "heading": "Qué resuelve",
+        "content": "Cuando tienes múltiples formas de hacer lo mismo y quieres seleccionar una en tiempo de ejecución sin cadenas de if/else.\n\n<img src=\"assets/solid/o.webp\" alt=\"Open/Closed — extender sin modificar\" style=\"width:100%; max-width:300px; border-radius:8px; margin: 12px 0; display:block;\">\n\n<strong>Ejemplo de REWE:</strong> La optimización de rutas puede usar diferentes algoritmos según las restricciones (más rápido, más barato, ecológico). En lugar de un switch gigante, cada algoritmo implementa una interfaz común.\n\n<pre><code>// Interfaz Strategy\npublic interface RouteStrategy {\n    Route calculate(List&lt;Stop&gt; stops, Constraints constraints);\n}\n\n// Estrategias concretas\n@Component(\"fastest\")\npublic class FastestRouteStrategy implements RouteStrategy {\n    public Route calculate(List&lt;Stop&gt; stops, Constraints c) {\n        // Dijkstra con pesos de tiempo\n    }\n}\n\n@Component(\"cheapest\")\npublic class CheapestRouteStrategy implements RouteStrategy {\n    public Route calculate(List&lt;Stop&gt; stops, Constraints c) {\n        // Minimizar costo de combustible + peajes\n    }\n}\n\n@Component(\"eco\")\npublic class EcoRouteStrategy implements RouteStrategy {\n    public Route calculate(List&lt;Stop&gt; stops, Constraints c) {\n        // Minimizar emisiones de CO2\n    }\n}\n\n// Contexto — selecciona la estrategia en runtime\n@Service\npublic class RouteService {\n    private final Map&lt;String, RouteStrategy&gt; strategies;\n\n    public RouteService(Map&lt;String, RouteStrategy&gt; strategies) {\n        this.strategies = strategies; // ¡Spring inyecta todas las implementaciones!\n    }\n\n    public Route optimize(List&lt;Stop&gt; stops, String mode) {\n        RouteStrategy strategy = strategies.get(mode);\n        return strategy.calculate(stops, Constraints.defaults());\n    }\n}</code></pre>\n\n<strong>Añadir un nuevo algoritmo = una clase nueva. Cero cambios en RouteService.</strong>"
       }
     ],
     "topic": "patterns",
@@ -13,11 +13,11 @@
   },
   {
     "id": "theory-patterns-factory",
-    "title": "Factory Pattern — Object Creation Logic",
+    "title": "Patrón Factory — Lógica de Creación de Objetos",
     "sections": [
       {
-        "heading": "What it solves",
-        "content": "When object creation is complex or depends on runtime conditions. Centralizes the \"which class to instantiate\" decision.\n\n<pre><code>// Problem: scattered creation logic\nif (type.equals(\"STANDARD\")) {\n    delivery = new StandardDelivery(driver, route);\n} else if (type.equals(\"EXPRESS\")) {\n    delivery = new ExpressDelivery(driver, route, priorityFee);\n} else if (type.equals(\"SAME_DAY\")) {\n    delivery = new SameDayDelivery(driver, route, deadline);\n}\n\n// Solution: Factory\n@Component\npublic class DeliveryFactory {\n\n    public Delivery create(DeliveryType type, Driver driver, Route route) {\n        return switch (type) {\n            case STANDARD -> new StandardDelivery(driver, route);\n            case EXPRESS -> new ExpressDelivery(driver, route, calculatePriorityFee(route));\n            case SAME_DAY -> new SameDayDelivery(driver, route, calculateDeadline());\n        };\n    }\n}\n\n// Usage — clean and centralized\nDelivery delivery = deliveryFactory.create(request.getType(), driver, route);</code></pre>\n\n<strong>When to use:</strong>\n• Object creation involves conditional logic\n• You want to hide implementation classes from the caller\n• Creation requires external dependencies or calculations\n\n<strong>When NOT to use:</strong>\n• Simple `new ClassName()` — don't over-engineer"
+        "heading": "Qué resuelve",
+        "content": "Cuando la creación de objetos es compleja o depende de condiciones en tiempo de ejecución. Centraliza la decisión de \"qué clase instanciar\".\n\n<pre><code>// Problema: lógica de creación dispersa\nif (type.equals(\"STANDARD\")) {\n    delivery = new StandardDelivery(driver, route);\n} else if (type.equals(\"EXPRESS\")) {\n    delivery = new ExpressDelivery(driver, route, priorityFee);\n} else if (type.equals(\"SAME_DAY\")) {\n    delivery = new SameDayDelivery(driver, route, deadline);\n}\n\n// Solución: Factory\n@Component\npublic class DeliveryFactory {\n\n    public Delivery create(DeliveryType type, Driver driver, Route route) {\n        return switch (type) {\n            case STANDARD -> new StandardDelivery(driver, route);\n            case EXPRESS -> new ExpressDelivery(driver, route, calculatePriorityFee(route));\n            case SAME_DAY -> new SameDayDelivery(driver, route, calculateDeadline());\n        };\n    }\n}\n\n// Uso — limpio y centralizado\nDelivery delivery = deliveryFactory.create(request.getType(), driver, route);</code></pre>\n\n<strong>Cuándo usar:</strong>\n• La creación de objetos involucra lógica condicional\n• Quieres ocultar las clases de implementación al llamador\n• La creación requiere dependencias externas o cálculos\n\n<strong>Cuándo NO usar:</strong>\n• Un simple `new ClassName()` — no sobre-ingenierices"
       }
     ],
     "topic": "patterns",
@@ -25,11 +25,11 @@
   },
   {
     "id": "theory-patterns-observer",
-    "title": "Observer Pattern — Event Notification",
+    "title": "Patrón Observer — Notificación de Eventos",
     "sections": [
       {
-        "heading": "What it solves",
-        "content": "When one event needs to trigger multiple reactions without the source knowing about the listeners.\n\n<pre><code>// In Spring Boot — ApplicationEvent (built-in observer)\npublic class DeliveryCompletedEvent extends ApplicationEvent {\n    private final Delivery delivery;\n    public DeliveryCompletedEvent(Object source, Delivery delivery) {\n        super(source);\n        this.delivery = delivery;\n    }\n}\n\n// Publisher (doesn't know who listens)\n@Service\npublic class DeliveryService {\n    private final ApplicationEventPublisher events;\n\n    public void complete(Long id) {\n        Delivery d = repo.findById(id).orElseThrow();\n        d.complete();\n        repo.save(d);\n        events.publishEvent(new DeliveryCompletedEvent(this, d));\n    }\n}\n\n// Listener 1 — billing\n@Component\npublic class BillingListener {\n    @EventListener\n    public void onDeliveryCompleted(DeliveryCompletedEvent e) {\n        invoiceService.createInvoice(e.getDelivery());\n    }\n}\n\n// Listener 2 — notification\n@Component\npublic class NotificationListener {\n    @EventListener\n    public void onDeliveryCompleted(DeliveryCompletedEvent e) {\n        smsService.notifyCustomer(e.getDelivery());\n    }\n}\n// Adding a new listener = one new class. Publisher unchanged.</code></pre>\n\n<strong>Spring vs Kafka for observer:</strong>\n• Spring @EventListener: within same JVM, same transaction context\n• Kafka: across services, persistent, replayable, independent failure"
+        "heading": "Qué resuelve",
+        "content": "Cuando un evento necesita disparar múltiples reacciones sin que la fuente conozca a los suscriptores (listeners).\n\n<pre><code>// En Spring Boot — ApplicationEvent (observer integrado)\npublic class DeliveryCompletedEvent extends ApplicationEvent {\n    private final Delivery delivery;\n    public DeliveryCompletedEvent(Object source, Delivery delivery) {\n        super(source);\n        this.delivery = delivery;\n    }\n}\n\n// Publicador (no sabe quién escucha)\n@Service\npublic class DeliveryService {\n    private final ApplicationEventPublisher events;\n\n    public void complete(Long id) {\n        Delivery d = repo.findById(id).orElseThrow();\n        d.complete();\n        repo.save(d);\n        events.publishEvent(new DeliveryCompletedEvent(this, d));\n    }\n}\n\n// Suscriptor 1 — facturación\n@Component\npublic class BillingListener {\n    @EventListener\n    public void onDeliveryCompleted(DeliveryCompletedEvent e) {\n        invoiceService.createInvoice(e.getDelivery());\n    }\n}\n\n// Suscriptor 2 — notificación\n@Component\npublic class NotificationListener {\n    @EventListener\n    public void onDeliveryCompleted(DeliveryCompletedEvent e) {\n        smsService.notifyCustomer(e.getDelivery());\n    }\n}\n// Añadir un nuevo suscriptor = una clase nueva. Publicador sin cambios.</code></pre>\n\n<strong>Spring vs Kafka para observer:</strong>\n• Spring @EventListener: dentro de la misma JVM, mismo contexto transaccional.\n• Kafka: entre servicios, persistente, repetible, fallos independientes."
       }
     ],
     "topic": "patterns",
@@ -37,31 +37,90 @@
   },
   {
     "id": "theory-patterns-builder",
-    "title": "Builder Pattern — Complex Object Construction",
+    "title": "Patrón Builder — Construcción de Objetos Complejos",
     "sections": [
       {
-        "heading": "What it solves",
-        "content": "When an object has many optional parameters and telescoping constructors become unreadable.\n\n<pre><code>// Problem: constructor with 8 parameters\nnew Delivery(driverId, routeId, scheduledAt, priority, maxStops, vehicleType, notes, customerId);\n// Which parameter is which? Easy to swap two strings by mistake.\n\n// Solution: Builder\nDelivery delivery = Delivery.builder()\n    .driverId(\"D-42\")\n    .routeId(\"R-7\")\n    .scheduledAt(LocalDateTime.now().plusHours(2))\n    .priority(Priority.HIGH)\n    .maxStops(15)\n    .vehicleType(VehicleType.VAN)\n    .notes(\"Fragile items\")\n    .build();\n\n// Implementation (or use Lombok @Builder)\npublic class Delivery {\n    private final String driverId;\n    private final String routeId;\n    // ... all fields final\n\n    private Delivery(Builder builder) {\n        this.driverId = builder.driverId;\n        this.routeId = builder.routeId;\n        // ...\n    }\n\n    public static Builder builder() { return new Builder(); }\n\n    public static class Builder {\n        private String driverId;\n        private String routeId;\n        // ...\n        public Builder driverId(String id) { this.driverId = id; return this; }\n        public Builder routeId(String id) { this.routeId = id; return this; }\n        public Delivery build() { return new Delivery(this); }\n    }\n}</code></pre>\n\n<strong>In practice:</strong> Use Lombok's `@Builder` or Java records (for simple cases). Hand-write only when you need validation in `build()`."
+        "heading": "Qué resuelve",
+        "content": "Cuando un objeto tiene muchos parámetros opcionales y los constructores telescópicos se vuelven ilegibles.\n\n<pre><code>// Problema: constructor con 8 parámetros\nnew Delivery(driverId, routeId, scheduledAt, priority, maxStops, vehicleType, notes, customerId);\n// ¿Qué parámetro es cuál? Es fácil intercambiar dos strings por error.\n\n// Solución: Builder\nDelivery delivery = Delivery.builder()\n    .driverId(\"D-42\")\n    .routeId(\"R-7\")\n    .scheduledAt(LocalDateTime.now().plusHours(2))\n    .priority(Priority.HIGH)\n    .maxStops(15)\n    .vehicleType(VehicleType.VAN)\n    .notes(\"Artículos frágiles\")\n    .build();\n\n// Implementación (o usar Lombok @Builder)\npublic class Delivery {\n    private final String driverId;\n    private final String routeId;\n    // ... todos los campos final\n\n    private Delivery(Builder builder) {\n        this.driverId = builder.driverId;\n        this.routeId = builder.routeId;\n        // ...\n    }\n\n    public static Builder builder() { return new Builder(); }\n\n    public static class Builder {\n        private String driverId;\n        private String routeId;\n        // ...\n        public Builder driverId(String id) { this.driverId = id; return this; }\n        public Builder routeId(String id) { this.routeId = id; return this; }\n        public Delivery build() { return new Delivery(this); }\n    }\n}</code></pre>\n\n<strong>En la práctica:</strong> Usa `@Builder` de Lombok o Java Records (para casos simples). Escríbelo a mano solo cuando necesites validación en el método `build()`."
       },
       {
-        "heading": "Senior Perspective",
-        "content": "Senior engineers know design patterns as vocabulary for communication, not as mandatory architecture.\n\nKey distinctions:\n• The value of knowing patterns is recognizing WHEN a problem calls for one — not applying them preemptively\n• Every pattern has a cost (indirection, complexity) — justify it with a real extensibility need\n• In interview scenarios, explain WHY you chose the pattern and what alternative you rejected\n• The most commonly asked patterns in Senior interviews: Strategy, Observer, Template Method, Builder, Factory\n• Framework patterns (Dependency Injection, Proxy, Template Method) are more relevant than GoF trivia"
+        "heading": "Perspectiva Senior",
+        "content": "Los ingenieros senior conocen los patrones de diseño como vocabulario para la comunicación, no como una arquitectura obligatoria.\n\nDistinciones clave:\n• El valor de conocer patrones es reconocer CUÁNDO un problema pide uno, no aplicarlos de forma preventiva.\n• Cada patrón tiene un costo (indirección, complejidad); justifícalo con una necesidad real de extensibilidad.\n• En escenarios de entrevista, explica POR QUÉ elegiste el patrón y qué alternativa rechazaste.\n• Los patrones más preguntados en entrevistas Senior: Strategy, Observer, Template Method, Builder, Factory.\n• Los patrones del framework (Inyección de Dependencias, Proxy, Template Method) son más relevantes que la trivia de GoF."
       },
       {
-        "heading": "REWE Perspective",
-        "content": "Patterns in TRAB logistics:\n\n• Strategy: different routing algorithms (shortest, cheapest, greenest) selected per delivery type\n• Observer: delivery status changes notify warehouse, driver app, customer portal, and analytics\n• Template Method: document generation (delivery note, invoice, return label) — same workflow, different content\n• Builder: complex Route objects with many optional parameters (time windows, vehicle constraints, priority)\n• Factory: creating appropriate Carrier implementation based on delivery destination and service level"
+        "heading": "Perspectiva de REWE",
+        "content": "Patrones en la logística de TRAB:\n\n• Strategy: diferentes algoritmos de ruteo (más corto, más barato, más ecológico) seleccionados por tipo de entrega.\n• Observer: los cambios de estado de entrega notifican al almacén, la app del conductor, el portal del cliente y analíticas.\n• Template Method: generación de documentos (albarán, factura, etiqueta de devolución); mismo flujo, diferente contenido.\n• Builder: objetos Route complejos con muchos parámetros opcionales (ventanas de tiempo, restricciones de vehículo, prioridad).\n• Factory: creación de la implementación de Transportista (Carrier) adecuada basada en el destino y nivel de servicio."
       },
       {
-        "heading": "When NOT to use",
-        "content": "When NOT to use patterns:\n\n• When the simple solution (if/else, direct method call) is clear and unlikely to change\n• When introducing a pattern for a single implementation (no variation = no pattern needed)\n• When the team doesn't recognize the pattern — it becomes obfuscation, not communication\n• When you're adding patterns to impress rather than to solve a real extensibility problem"
+        "heading": "Cuándo NO usar",
+        "content": "Cuándo NO usar patrones:\n\n• Cuando la solución simple (if/else, llamada directa a método) es clara y es poco probable que cambie.\n• Al introducir un patrón para una única implementación (sin variación = no hace falta patrón).\n• Cuando el equipo no reconoce el patrón; se convierte en ofuscación en lugar de comunicación.\n• Cuando añades patrones para impresionar en lugar de resolver un problema real de extensibilidad."
       }
     ],
     "topic": "patterns",
     "subtopic": "pat-builder"
   },
-  {"id":"theory-patterns-template","topic":"patterns","subtopic":"pat-strategy","title":"Template Method — Workflow Fixed, Steps Variable","sections":[{"heading":"When the sequence is stable","content":"Template Method keeps a workflow in one base class while allowing selected steps to vary. Use it when the algorithm order is genuinely stable; use Strategy when the whole algorithm should be interchangeable.\n\n<pre><code>abstract class DocumentGenerator {\n  public final byte[] generate(Order order) {\n    validate(order);\n    return render(buildModel(order));\n  }\n  protected abstract byte[] render(DocumentModel model);\n}</code></pre>\n\nKeep hooks small and document invariants. Deep inheritance and many optional hooks are signs that composition is the better design."}]},
-  {"id":"theory-patterns-adapter-decorator","topic":"patterns","subtopic":"pat-factory","title":"Adapter and Decorator — Integrate or Add Behavior","sections":[{"heading":"Different problems, similar shape","content":"<table><thead><tr><th>Pattern</th><th>Purpose</th><th>Typical example</th></tr></thead><tbody><tr><td>Adapter</td><td>Translate an external API to your contract</td><td>Carrier SDK → Carrier interface</td></tr><tr><td>Decorator</td><td>Add behavior around the same contract</td><td>Metrics/retry around a Carrier</td></tr></tbody></table>\n\nUse an Adapter to prevent vendor types from leaking into business code. Use a Decorator for composable concerns such as metrics, retries or authorization. Do not stack decorators until failures and ordering become impossible to understand."}]},
-  {"id":"theory-patterns-command","topic":"patterns","subtopic":"pat-observer","title":"Command and Specification — Intent and Business Rules","sections":[{"heading":"Model actions and rules explicitly","content":"A Command represents an intention such as <code>DispatchDelivery</code>; it can be validated, authorized, retried and audited. A Specification represents a composable business predicate such as “delivery is eligible for dispatch”.\n\nUse them when actions or rules have independent lifecycle and testing needs. They are unnecessary for a small local method where a clear conditional is easier to read."}]},
-  {"id":"theory-patterns-selection","topic":"patterns","subtopic":"pat-builder","title":"Pattern Selection Guide","sections":[{"heading":"Choose from the changing thing","content":"<table><thead><tr><th>If this varies…</th><th>Consider</th><th>Avoid when…</th></tr></thead><tbody><tr><td>Algorithm</td><td>Strategy</td><td>one stable conditional</td></tr><tr><td>Construction policy</td><td>Factory / Builder</td><td>a direct constructor is clear</td></tr><tr><td>Event reactions</td><td>Observer</td><td>ordering must remain synchronous</td></tr><tr><td>External API shape</td><td>Adapter</td><td>the API already is your contract</td></tr><tr><td>Optional behavior</td><td>Decorator</td><td>wiring obscures the request path</td></tr><tr><td>Workflow step</td><td>Template Method</td><td>the sequence changes independently</td></tr></tbody></table>\n\nName the changing axis and the cost of indirection; then choose the smallest pattern that keeps that change local."}]},
-  {"id":"theory-patterns-guru-java","topic":"patterns","subtopic":"pat-strategy","title":"Java Pattern Examples — Guided by Refactoring.Guru","sections":[{"heading":"Read an example for its roles, not its names","content":"The Refactoring.Guru Java catalog is an excellent companion because each example separates the <em>client</em>, <em>abstraction</em> and <em>concrete implementations</em>. The examples below are intentionally adapted to logistics, rather than copied verbatim.\n\n• <a href=\"https://refactoring.guru/design-patterns/strategy/java/example\" target=\"_blank\" rel=\"noopener\">Strategy in Java</a>: compare payment strategies in the reference example with routing or pricing policies.\n• <a href=\"https://refactoring.guru/design-patterns/factory-method/java/example\" target=\"_blank\" rel=\"noopener\">Factory Method in Java</a>: study how the creator depends on a product interface, not a concrete button.\n• <a href=\"https://refactoring.guru/design-patterns/observer/java/example\" target=\"_blank\" rel=\"noopener\">Observer in Java</a>: follow subscription, unsubscription and notification responsibilities.\n• <a href=\"https://refactoring.guru/design-patterns/adapter/java/example\" target=\"_blank\" rel=\"noopener\">Adapter in Java</a> and <a href=\"https://refactoring.guru/design-patterns/decorator/java/example\" target=\"_blank\" rel=\"noopener\">Decorator in Java</a>: compare translating an interface with wrapping the same interface.\n• <a href=\"https://refactoring.guru/design-patterns/template-method/java/example\" target=\"_blank\" rel=\"noopener\">Template Method in Java</a>: identify the fixed algorithm skeleton and overridable steps.\n• <a href=\"https://refactoring.guru/design-patterns/builder/java/example\" target=\"_blank\" rel=\"noopener\">Builder in Java</a>: distinguish staged construction from a fluent convenience builder."},{"heading":"A practice routine","content":"For each example, draw three boxes: client, shared contract and concrete classes. Then change one requirement: add a new strategy, replace a vendor API, add logging around a service, or introduce a new event listener. If the change stays local, the pattern is helping; if it requires edits across every class, revisit the boundary."}]}
+  {
+    "id": "theory-patterns-template",
+    "topic": "patterns",
+    "subtopic": "pat-strategy",
+    "title": "Template Method — Flujo Fijo, Pasos Variables",
+    "sections": [
+      {
+        "heading": "Cuando la secuencia es estable",
+        "content": "Template Method mantiene el esqueleto de un flujo en una clase base permitiendo que pasos específicos varíen. Úsalo cuando el orden del algoritmo es realmente estable; usa Strategy cuando todo el algoritmo deba ser intercambiable.\n\n<pre><code>abstract class DocumentGenerator {\n  public final byte[] generate(Order order) {\n    validate(order);\n    return render(buildModel(order));\n  }\n  protected abstract byte[] render(DocumentModel model);\n}</code></pre>\n\nMantén los ganchos (hooks) pequeños y documenta los invariantes. La herencia profunda y muchos hooks opcionales son señales de que la composición es un mejor diseño."
+      }
+    ]
+  },
+  {
+    "id": "theory-patterns-adapter-decorator",
+    "topic": "patterns",
+    "subtopic": "pat-factory",
+    "title": "Adapter y Decorator — Integrar o Añadir Comportamiento",
+    "sections": [
+      {
+        "heading": "Diferentes problemas, forma similar",
+        "content": "<table><thead><tr><th>Patrón</th><th>Propósito</th><th>Ejemplo típico</th></tr></thead><tbody><tr><td>Adapter</td><td>Traducir una API externa a tu contrato</td><td>SDK de Transportista → Interfaz Carrier</td></tr><tr><td>Decorator</td><td>Añadir comportamiento sobre el mismo contrato</td><td>Métricas/reintentos alrededor de un Carrier</td></tr></tbody></table>\n\nUsa un Adapter para evitar que los tipos del proveedor se filtren en el código de negocio. Usa un Decorator para preocupaciones combinables como métricas, reintentos o autorización. No apiles decoradores hasta que los fallos y el orden sean imposibles de entender."
+      }
+    ]
+  },
+  {
+    "id": "theory-patterns-command",
+    "topic": "patterns",
+    "subtopic": "pat-observer",
+    "title": "Command y Specification — Intención y Reglas de Negocio",
+    "sections": [
+      {
+        "heading": "Modelar acciones y reglas explícitamente",
+        "content": "Un Command representa una intención como <code>DispatchDelivery</code>; puede ser validado, autorizado, reintentado y auditado. Una Specification representa un predicado de negocio combinable como “la entrega es apta para despacho”.\n\nÚsalos cuando las acciones o reglas tengan ciclos de vida y necesidades de prueba independientes. Son innecesarios para un método local pequeño donde un condicional claro es más fácil de leer."
+      }
+    ]
+  },
+  {
+    "id": "theory-patterns-selection",
+    "topic": "patterns",
+    "subtopic": "pat-builder",
+    "title": "Guía de Selección de Patrones",
+    "sections": [
+      {
+        "heading": "Elige según lo que cambia",
+        "content": "<table><thead><tr><th>Si esto varía…</th><th>Considera</th><th>Evítalo cuando…</th></tr></thead><tbody><tr><td>Algoritmo</td><td>Strategy</td><td>un condicional estable sea suficiente</td></tr><tr><td>Política de construcción</td><td>Factory / Builder</td><td>un constructor directo sea claro</td></tr><tr><td>Reacciones a eventos</td><td>Observer</td><td>el orden deba seguir siendo sincrónico</td></tr><tr><td>Forma de API externa</td><td>Adapter</td><td>la API ya sea tu contrato</td></tr><tr><td>Comportamiento opcional</td><td>Decorator</td><td>el cableado oculte la ruta de la petición</td></tr><tr><td>Paso de un flujo</td><td>Template Method</td><td>la secuencia cambie de forma independiente</td></tr></tbody></table>\n\nIdentifica el eje de cambio y el costo de la indirección; luego elige el patrón más pequeño que mantenga ese cambio localizado."
+      }
+    ]
+  },
+  {
+    "id": "theory-patterns-guru-java",
+    "topic": "patterns",
+    "subtopic": "pat-strategy",
+    "title": "Ejemplos de Patrones en Java — Guía de Refactoring.Guru",
+    "sections": [
+      {
+        "heading": "Lee un ejemplo por sus roles, no por sus nombres",
+        "content": "El catálogo de Java de Refactoring.Guru es un excelente compañero porque cada ejemplo separa el <em>cliente</em>, la <em>abstracción</em> y las <em>implementaciones concretas</em>. Los ejemplos de abajo están adaptados intencionalmente a la logística.\n\n• <a href=\"https://refactoring.guru/design-patterns/strategy/java/example\" target=\"_blank\" rel=\"noopener\">Strategy en Java</a>: compara estrategias de pago en el ejemplo con políticas de ruteo o precios.\n• <a href=\"https://refactoring.guru/design-patterns/factory-method/java/example\" target=\"_blank\" rel=\"noopener\">Factory Method en Java</a>: estudia cómo el creador depende de una interfaz de producto, no de un botón concreto.\n• <a href=\"https://refactoring.guru/design-patterns/observer/java/example\" target=\"_blank\" rel=\"noopener\">Observer en Java</a>: sigue las responsabilidades de suscripción, cancelación y notificación.\n• <a href=\"https://refactoring.guru/design-patterns/adapter/java/example\" target=\"_blank\" rel=\"noopener\">Adapter en Java</a> y <a href=\"https://refactoring.guru/design-patterns/decorator/java/example\" target=\"_blank\" rel=\"noopener\">Decorator en Java</a>: compara traducir una interfaz con envolver la misma interfaz.\n• <a href=\"https://refactoring.guru/design-patterns/template-method/java/example\" target=\"_blank\" rel=\"noopener\">Template Method en Java</a>: identifica el esqueleto fijo del algoritmo y los pasos sobrescribibles.\n• <a href=\"https://refactoring.guru/design-patterns/builder/java/example\" target=\"_blank\" rel=\"noopener\">Builder en Java</a>: distingue la construcción por etapas de un builder fluido por conveniencia."
+      },
+      {
+        "heading": "Una rutina de práctica",
+        "content": "Para cada ejemplo, dibuja tres cajas: cliente, contrato compartido y clases concretas. Luego cambia un requisito: añade una nueva estrategia, reemplaza una API de proveedor, añade logs alrededor de un servicio o introduce un nuevo escuchador de eventos. Si el cambio se mantiene localizado, el patrón está ayudando; si requiere editar todas las clases, revisa los límites."
+      }
+    ]
+  }
 ]

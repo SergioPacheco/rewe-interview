@@ -1,68 +1,351 @@
 [
-  {"id":"arch-foundations-day-to-day","topic":"software-architecture","subtopic":"arch-foundations","title":"The real job: turn uncertainty into decisions","lesson":{"goal":"Decide what is significant before choosing technology.","outcome":"A one-page decision brief for the ParcelFlow delivery request.","challenge":"Write one constraint that rules out a tempting technology choice."},"visual":{"src":"assets/images/architecture/decision-tradeoffs.png","alt":"Illustration of a business goal branching into a modular monolith, event-driven services, and a cloud function, each showing speed, cost, and reliability trade-offs.","caption":"Architecture decisions begin with a business goal and make trade-offs visible before implementation."},"sections":[
-    {"heading":"Start with a decision, not a diagram","content":"Architecture reduces risks that can cost money, time, or trust. Before choosing technology, state the business outcome, non-negotiable constraints, and unproven hypothesis. For example: a payment confirmation may be delayed for two minutes, but duplicate charges are unacceptable. That drives idempotency and reconciliation; it does not automatically require Kafka or microservices.\n\nUse this sequence: context → functional requirements → measurable quality attributes → options → POC for uncertainty → ADR → observable delivery. If a choice does not affect cost, risk, delivery time, or evolvability, it is probably an implementation detail."},
-    {"heading":"The minimum useful artefacts","content":"Keep a small set of living artefacts: a C4 context diagram for users and integrations; a container diagram for runtime, data, and responsibilities; API/event contracts; ADRs for significant choices; runbooks for incidents; and a risk register with owner and review date. Architecture that exists only in slides does not survive its first incident."},
-    {"heading":"A hands-on architecture rhythm","content":"Before refinement, turn vague statements such as “it must scale” into measurable scenarios. During refinement, expose dependencies, sensitive data, failure paths, and irreversible decisions. During delivery, review boundaries, contracts, telemetry, and rollout. Before release, verify SLOs, alerts, rollback, data migration, and operational ownership. After incidents, improve the system and the runbook rather than blaming people."},
-    {"heading":"POCs have an exit decision","content":"A POC must answer one specific question. Record the hypothesis, test environment, load or injected failure, metrics, result, and decision. “Does provider X keep p99 below 300 ms at 200 requests/s and recover after a timeout without duplicating an order?” is a POC. A technology demo is not. The output is a reproducible repository, results, limitations, estimated cost, and an ADR to adopt, reject, or investigate further."}
-  ]},
-  {"id":"arch-quality-day-to-day","topic":"software-architecture","subtopic":"arch-quality-attributes","title":"Quality attributes, SLOs, and error budgets","lesson":{"goal":"Turn “fast and reliable” into promises the team can test and operate.","outcome":"Three measurable quality scenarios and one SLO for ParcelFlow.","challenge":"Choose the one failure the business must never accept."},"sections":[
-    {"heading":"Replace adjectives with testable scenarios","content":"“Fast”, “secure”, and “scalable” do not guide implementation. A useful scenario specifies stimulus, environment, response, and measure: “at peak, 95% of order lookups finish below 250 ms, 99% below 600 ms, with less than 0.1% errors.” Prioritize at most three attributes per journey. Claiming maximum consistency, availability, performance, flexibility, and low cost simultaneously hides the trade-off."},
-    {"heading":"An SLO is an operating agreement","content":"Define an SLI (what is measured), SLO (target), and error budget (acceptable failure). Example: successful order confirmations must reach 99.9% over 28 days; the budget is roughly 43 minutes of equivalent unavailability. When the budget is spent, reliability work takes priority over new features. Measure from the user journey, not only CPU or memory."},
-    {"heading":"Make the trade-off explicit","content":"<table><thead><tr><th>Choice</th><th>Gain</th><th>Cost</th><th>Validation</th></tr></thead><tbody><tr><td>Cache</td><td>lower read latency</td><td>stale data</td><td>hit rate and data age</td></tr><tr><td>Async queue</td><td>isolation and burst absorption</td><td>eventual consistency</td><td>lag and duplicates</td></tr><tr><td>Multi-zone replicas</td><td>availability</td><td>cost and complexity</td><td>controlled failover</td></tr><tr><td>Extra validation</td><td>integrity and security</td><td>latency and friction</td><td>p95 and rejection rate</td></tr></tbody></table>"},
-    {"heading":"Capacity and failure POC","content":"Choose a critical journey, generate realistic load, and measure p50/p95/p99, errors, pool saturation, and external calls. Then make a dependency slow or unavailable and repeat. Approve the POC only if the service stays within agreed limits or fails in a visible, recoverable way. k6 or Gatling, OpenTelemetry, and controlled feature flags are sufficient tools."}
-  ]},
-  {"id":"arch-styles-day-to-day","topic":"software-architecture","subtopic":"arch-styles","title":"Choose the smallest style that solves the problem","lesson":{"goal":"Choose a structure that fits the team and problem instead of copying a fashionable style.","outcome":"A written decision: modular monolith now, with measurable extraction triggers.","challenge":"Name the evidence that would justify splitting one ParcelFlow module later."},"sections":[
-    {"heading":"Default to a modular monolith","content":"For most products, a single deployable with well-isolated business modules, internal contracts, and boundary tests is the cheapest start. It keeps transactions and debugging simple while domain boundaries mature. Extract services only for observable reasons: genuinely independent teams, different release cadence, failure isolation, radically different scale, or regulatory separation. “We want microservices” is not a reason."},
-    {"heading":"Decision tree: keep, modularise, or extract","content":"Do modules always change and deploy together? Keep them together. Do they have separate data, lifecycle, team ownership, and a stable business boundary? Consider extraction. Does the caller need an answer now? Use a synchronous contract with a timeout; otherwise consider an event. Can its failure block the core flow? Isolate it with a queue, bulkhead, or deferred work. “Not yet” is a valid decision."},
-    {"heading":"Cloud-native and serverless without tool worship","content":"Cloud-native means external configuration, automated delivery, disposable processes, structured logs, metrics, and predictable recovery. Kubernetes is one possible implementation, not the goal. Serverless fits short, elastic, event-driven work, but introduces cold starts, execution limits, observability constraints, and provider coupling. Choose the execution model from load profile, operations capability, networking requirements, and unit cost."},
-    {"heading":"Warning sign: complexity without autonomy","content":"If every change requires changing and deploying several services, databases are shared, incidents cannot be traced end to end, or no team owns a service, you have the cost of distribution without its benefits. Stop extracting. Stabilize contracts, ownership, and observability first."}
-  ]},
-  {"id":"arch-application-day-to-day","topic":"software-architecture","subtopic":"arch-application","title":"Application architecture, clients, and BFFs","lesson":{"goal":"Keep business rules testable while clients and infrastructure change.","outcome":"A vertical-slice sketch from customer screen to delivery-request use case.","challenge":"Define what happens when the driver app is offline during confirmation."},"sections":[
-    {"heading":"Keep business rules away from edges","content":"HTTP, queues, databases, frameworks, and UI are changing details. Put business rules in explicit use cases and adapt those edges around them. This does not require rigid Clean Architecture ceremony; it requires testing price, authorization, or state-transition rules without starting a server, database, or broker. Use ports for dependencies and adapters for JPA, REST, messaging, and other infrastructure."},
-    {"heading":"Front end is an architectural boundary","content":"Decide where rendering happens (SPA, SSR, SSG), where state lives, how authentication reaches the browser, and how the app behaves on slow or absent networks. Use a BFF when different clients need their own aggregation, authorization, or release cadence — not merely to forward calls. Mobile and field clients require local queues, explicit sync and conflict rules, idempotent retries, and a supported-version policy."},
-    {"heading":"Vertical journey POC","content":"Choose a risky journey such as login, order creation, or offline capture. Implement client → contract → use case → persistence → telemetry. Measure loading time, slow-network behaviour, token expiry, API errors, and recovery after restart. The question is not whether a screen can call a local API, but whether real users and devices can complete the work safely."},
-    {"heading":"What not to elevate to architecture","content":"A CSS convention, framework name, or bundler choice is not automatically architectural. It becomes one only when it materially changes security, perceived performance, accessibility, cost, cross-team coordination, or delivery strategy."}
-  ]},
-  {"id":"arch-boundaries-day-to-day","topic":"software-architecture","subtopic":"arch-modularity","title":"Domain boundaries and ownership","lesson":{"goal":"Make ownership and change boundaries explicit before extracting services.","outcome":"A capability map assigning delivery, billing, and notification ownership.","challenge":"Find one shared table or model that must stop being a cross-team contract."},"visual":{"src":"assets/images/architecture/domain-boundaries.png","alt":"Illustration of separated business contexts with independently owned data stores, an API connection, and an asynchronous event connection.","caption":"Good boundaries make ownership explicit and let each domain evolve without leaking its internal data model."},"sections":[
-    {"heading":"Boundaries follow business capability","content":"Find boundaries by asking who decides a rule, owns the data, uses the language, and changes at what rate. A sales “order” does not need to be the same model as a billing or fulfilment “order”. The goal is not more models; it is preventing a local change from forcing enterprise-wide change. Each module publishes a small contract and hides its internals. Tables and entities are not integration contracts."},
-    {"heading":"Test whether coupling is real","content":"Map code, data, and runtime dependencies. Can one module be released without the other? Can it change schema without breaking a consumer? Can it operate while its neighbour is slow? If all answers are no, the boundary is cosmetic. Enforce rules: do not import another module’s internals, do not read another domain’s database, version contracts, and name one owning team."},
-    {"heading":"Integrate contexts deliberately","content":"Use a synchronous query for an answer needed now; use an event for a fact that other contexts can process later. Do not disguise commands as events: OrderCreated is a past fact, while CreateInvoice is a request with a clear owner. Use an anti-corruption layer around legacy or third-party integrations so foreign concepts do not leak into the domain."},
-    {"heading":"Boundary workshop","content":"Run a lightweight event-storming session: list business events, commands, policies, actors, and aggregates; group them by language and responsibility; mark disputes and shared data. The output is a hypothesis to validate through real changes and coupling metrics, not a permanent truth."}
-  ]},
-  {"id":"arch-distributed-day-to-day","topic":"software-architecture","subtopic":"arch-distributed","title":"Distributed systems: failure, consistency, and recovery","lesson":{"goal":"Design for unknown outcomes instead of assuming remote calls are reliable.","outcome":"A timeout, retry, idempotency, and recovery policy for delivery confirmation.","challenge":"Simulate a response that is lost after the payment provider completed the operation."},"visual":{"src":"assets/images/architecture/distributed-system-model.png","alt":"Layered distributed system model showing applications and services, middleware, operating system, and computer and network hardware.","caption":"A distributed system is more than application code: every layer contributes to availability, latency, and failure behaviour.","attribution":"Jelle Smets via Wikimedia Commons","attributionUrl":"https://commons.wikimedia.org/wiki/File:Ubiquitous_-_Distributed_System_Model.png","license":"CC BY-SA 3.0"},"sections":[
-    {"heading":"Assume every remote call can fail","content":"A timeout means “unknown”, not “failed”: the server may have completed the operation and lost the response. Every API or message-driven mutation needs an operation identity, idempotency, and a way to query final state. Set per-dependency timeouts, cap retries, add backoff with jitter, and never endlessly retry a non-idempotent operation."},
-    {"heading":"Patterns that protect the core flow","content":"Circuit breakers stop pressure on a failing dependency; bulkheads limit blast radius; queues absorb bursts; DLQs preserve failed messages; rate limits protect capacity; caches and fallbacks must state acceptable data age. Apply a pattern only to a failure mode you can explain. A health endpoint returning 200 does not prove a customer journey is working."},
-    {"heading":"Choose consistency per operation","content":"Classify data: what must never be duplicated, what may be delayed, what may be stale, and what needs reconciliation. Use an outbox for local state plus an event. Use a saga with compensations or an explicit manual process for multi-step business workflows. Use materialized views where delayed cross-domain reads are acceptable. Avoid two-phase commit across services: it couples availability and operations without removing all failure modes."},
-    {"heading":"Run a game day","content":"Simulate a broker outage, consumer restart during processing, duplicate response, slow database, and unavailable zone. Verify loss, duplication, delay, alerts, and recovery. If the team cannot explain what happens, the architecture remains theoretical."}
-  ]},
-  {"id":"arch-integration-day-to-day","topic":"software-architecture","subtopic":"arch-integration","title":"API and event contracts that survive change","lesson":{"goal":"Choose communication based on a consumer’s real need, not a protocol preference.","outcome":"One API contract and one OrderCreated-style event contract.","challenge":"Add a consumer without changing the delivery-request service."},"sections":[
-    {"heading":"A contract is a product","content":"Publish OpenAPI for HTTP and AsyncAPI or a versioned schema for events. Specify authentication, authorization, required fields, validation, errors, pagination, limits, idempotency, compatibility, and observability. An endpoint exposing an internal entity is quick to create and expensive to maintain. Run contract tests in the pipeline so consumers detect breaking changes before production."},
-    {"heading":"Synchronous versus asynchronous","content":"REST or gRPC fits when a user or orchestrator needs an immediate answer and accepts temporal coupling. Events fit independent consumers, deferred work, bursts, and replay. WebSocket is for continuous client updates; it is not a replacement for a domain API. Do not hide an immediate confirmation requirement in a queue, and do not use synchronous cascades for side effects that can wait."},
-    {"heading":"Evolve without breaking consumers","content":"Prefer additive changes, new event versions, and a coexistence period. Never silently change a field’s meaning. Events are immutable facts: publish a correction event rather than rewriting history. Define retention, partition key, required ordering, and replay strategy before publishing."},
-    {"heading":"Integration POC","content":"Implement one producer, two independent consumers, and a versioned contract. Simulate consumer lag, duplicate messages, and an additive schema change. Measure lag, errors, replay duration, and compatibility. This is more useful than a slide comparing REST with Kafka."}
-  ]},
-  {"id":"arch-data-day-to-day","topic":"software-architecture","subtopic":"arch-data","title":"Data, governance, and consistency without fantasy","lesson":{"goal":"Make data ownership and acceptable inconsistency explicit.","outcome":"A source-of-truth map and migration plan for ParcelFlow orders.","challenge":"Describe exactly what a customer can see while billing is delayed."},"sections":[
-    {"heading":"Ownership before technology","content":"Define who creates, updates, and retains every data set; its source of truth; its regulatory classification; and how stale a replica may be. Without that, selecting PostgreSQL, MongoDB, a lakehouse, or data mesh is just tool shopping. Independent services control their own storage and integrate by contract or projection, not by querying another domain’s tables."},
-    {"heading":"Choose from access patterns","content":"Relational storage is the default for invariants, transactions, and relational queries. Cache serves repeated reads with an invalidation policy. Search serves specialised text and filter queries, not source-of-truth writes. Warehouses and lakes serve analytics and history, not product transactions. Event sourcing and CQRS are specialised tools for full audit history or radically different read/write needs."},
-    {"heading":"Migrate without downtime","content":"Use expand-contract: add compatible structure, deploy code that understands old and new data, backfill in observable batches, switch readers, and remove the old structure only later. Every migration needs backup, rollback, count/checksum validation, and limits on database impact. Never couple a release to a destructive schema change that cannot be reversed."},
-    {"heading":"Consistency POC","content":"Model a local write plus an external effect. Test outbox publication, redelivery, idempotency, ordering, reconciliation, and status queries. The decision must say exactly what inconsistency a user can see, for how long, and how support corrects it."}
-  ]},
-  {"id":"arch-evolution-day-to-day","topic":"software-architecture","subtopic":"arch-evolution","title":"Platform: delivery, security, observability, and evolution","lesson":{"goal":"Make change safe and make customer impact visible to the team.","outcome":"A release checklist with one SLO, alert, rollback path, and threat scenario.","challenge":"Define the alert that proves customers are harmed, not merely that a machine is busy."},"sections":[
-    {"heading":"DevSecOps is delivery capability","content":"Every service needs a repeatable pipeline: build, tests, source and dependency analysis, signed image, versioned infrastructure, progressive deployment, and audit evidence. Shift security left: keep secrets out of code, use least privilege, review dependencies, scan appropriately, and define promotion policies. Do not add SAST, DAST, IAST, and RASP indiscriminately; every control needs a threat, cost, and owner."},
-    {"heading":"Zero Trust in practice","content":"Do not trust the internal network. Authenticate people and workloads, authorize each resource and action, limit privilege, protect and rotate secrets, segment traffic, and audit access. API gateways, WAFs, IAM, mTLS, and policy-as-code are means; reducing the reach of a compromise is the goal. Threat-model each flow: assets, actors, trust boundaries, plausible abuse, controls, and evidence."},
-    {"heading":"Observability that speeds diagnosis","content":"Instrument structured logs with correlation IDs, service and business metrics, and distributed traces through OpenTelemetry. Use dashboards for request rate, errors, duration, saturation, queues, cache, databases, and business outcomes. Alerts must be actionable and link to a runbook. CPU alone creates alert fatigue; error-budget burn connects operations to customer impact."},
-    {"heading":"Modernisation is reversible sequencing","content":"Use strangler fig, feature flags, canary, blue-green, and backward-compatible contracts to reduce blast radius. Extract a flow with concrete pain and an understandable boundary; reconcile old and new behaviour until confidence is earned. A total rewrite often replaces known technical risk with unknown scope risk."}
-  ]},
-  {"id":"arch-documentation-day-to-day","topic":"software-architecture","subtopic":"arch-documentation","title":"ADRs, C4, and decision governance","lesson":{"goal":"Communicate decisions so another engineer can safely operate and change the system.","outcome":"A C4 container view, ADR, event contract, and incident runbook.","challenge":"Explain a rejected alternative and the trigger that would make you revisit it."},"sections":[
-    {"heading":"Short, traceable, honest ADRs","content":"An ADR contains context and competing forces, the decision, alternatives considered, positive and negative consequences, date, owner, and review trigger. Do not write “we chose X because it is modern”. State which requirement it meets, what is being sacrificed, and how failure will be detected. Preserve history: a new ADR supersedes an old one rather than erasing why change happened."},
-    {"heading":"Diagrams answer questions","content":"C4 Context explains users and integrations; Container explains runtime, storage, and communication; Component explains internal responsibilities only when it helps. Add sequence diagrams for critical flows, deployment diagrams for operations, and data ownership/flow diagrams for governance. Do not produce detailed UML when the team simply needs to locate a dependency. Every diagram should have scope, date, and links to code or ADRs."},
-    {"heading":"Applied AI governance","content":"For AI or LLM solutions, document data origin and retention, quality evaluation, usage limits, cost, privacy, prompt-injection risk, tool authorization, auditing, and human intervention. A convincing demo can still fail through hallucination, data leakage, or unpredictable cost. Use AI to generate alternatives and accelerate analysis, never as authority that removes evidence and accountability."},
-    {"heading":"Capstone: a defensible decision","content":"Choose a system with users, sensitive data, external integration, and peak load. Deliver quality scenarios; C4 Context and Container; an API or event contract; an integration/data ADR; a POC for the primary risk; dashboard and SLO; threat model; rollout and rollback plan. Defend why rejected alternatives were worse under the same constraints. That is evidence of architectural reasoning."}
-  ]},
-  {"id":"arch-documentation-examples","topic":"software-architecture","subtopic":"arch-documentation","title":"Documentation pack: working examples","visuals":[{"src":"assets/architecture-examples/visualizations/system-context.svg","alt":"System context diagram showing customers and drivers using ParcelFlow and its external carrier and payment integrations.","caption":"Context view: who uses the system and which external systems constrain it."},{"src":"assets/architecture-examples/visualizations/container-view.svg","alt":"Container diagram showing client, order API, PostgreSQL, outbox relay, event broker, workers, and OpenTelemetry collector.","caption":"Container view: runtime responsibilities, data ownership, and telemetry."},{"src":"assets/architecture-examples/visualizations/event-recovery.svg","alt":"Event recovery flow from committed delivery and outbox through publish, processing, retry, dead-letter queue, and corrected replay.","caption":"Recovery view: at-least-once delivery needs idempotency, retry, and investigation."}],"sections":[
-    {"heading":"ADR: choose asynchronous order notifications","content":"This is short enough to maintain and specific enough to defend in a design review.\n\n```markdown\n# ADR-014 — Publish OrderCreated asynchronously\n**Status:** Accepted · 2026-07-21 · Owner: Commerce team\n\n## Context\nOrder creation must succeed even when notifications are unavailable.\nNew consumers (billing, analytics) are expected.\n\n## Decision\nPersist the order and an outbox record in one transaction.\nA relay publishes `OrderCreated`; consumers process it idempotently.\n\n## Alternatives\n1. Synchronous REST notification — rejected: temporal coupling.\n2. Direct broker publish — rejected: event can be lost after DB commit.\n\n## Consequences\n+ Order flow stays available; consumers can replay.\n- Eventual consistency; monitor lag, retries, and DLQ.\n\n## Review trigger\nRevisit if notification delivery becomes a synchronous business requirement.\n```"},
-    {"heading":"C4: a container document people can use","content":"The point of a C4 container view is to answer where a request goes, where data lives, and who owns each runtime unit. Keep the diagram file near the code; keep this companion document in the repository README.\n\n```markdown\n# Order platform — Container view\n\n| Container | Responsibility | Owns | Interfaces | SLO owner |\n|---|---|---|---|---|\n| Web app | Customer order journey | Browser state | HTTPS → Order API | Web team |\n| Order API | Validate and create orders | Orders + outbox | REST, OrderCreated | Commerce team |\n| Billing worker | Create invoices | Invoices | Consumes OrderCreated | Finance team |\n| PostgreSQL | Transactional source of truth | Order schema | JDBC, backups | Platform team |\n\n**Critical path:** Web app → Order API → PostgreSQL.\n**Degraded path:** notification or billing delay does not block order creation.\n**Links:** ADR-014 · OpenAPI · dashboard · runbook.\n```"},
-    {"heading":"Contract: an event that can evolve","content":"A contract must be explicit about ownership, compatibility, and consumer expectations. This concise AsyncAPI-style example is more useful than saying that “Kafka is used”.\n\n```yaml\nchannel: commerce.order.created.v1\nowner: commerce-team\nkey: orderId\nretention: 14d\ncompatibility: BACKWARD\npayload:\n  required: [eventId, occurredAt, orderId, customerId, total]\n  properties:\n    eventId:    { type: string, format: uuid }\n    occurredAt: { type: string, format: date-time }\n    orderId:    { type: string }\n    customerId: { type: string }\n    total:      { type: number, minimum: 0 }\nconsumer-rules:\n  - Process at least once; deduplicate by eventId.\n  - Do not depend on field order.\n  - Unknown fields must be ignored.\n```"},
-    {"heading":"Runbook: make an alert actionable","content":"A runbook turns an alert into a safe first response. It should name customer impact, first checks, mitigation boundaries, escalation, and evidence to retain.\n\n```markdown\n# Runbook — OrderCreated consumer lag\n\n## Alert\nConsumer lag > 10,000 messages for 10 minutes.\n\n## Customer impact\nOrders are accepted. Billing and notifications may be delayed.\n\n## First checks\n1. Open the trace and consumer dashboard.\n2. Check consumer health, error rate, and recent deploys.\n3. Check broker capacity and DLQ growth.\n\n## Safe mitigation\n- Scale consumers only if partition count permits.\n- Pause a faulty consumer; do not reset offsets without approval.\n- Do not replay messages until idempotency is verified.\n\n## Escalate\nCommerce on-call → Platform on-call if broker or database is saturated.\nRecord incident ID, lag peak, root cause, and follow-up ADR.\n```"}
-  ]}
+  {
+    "id": "arch-foundations-day-to-day",
+    "topic": "software-architecture",
+    "subtopic": "arch-foundations",
+    "title": "El trabajo real: convertir la incertidumbre en decisiones",
+    "lesson": {
+      "goal": "Decidir qué es significativo antes de elegir la tecnología.",
+      "outcome": "Un informe de decisión de una página para la solicitud de entrega de ParcelFlow.",
+      "challenge": "Escribir una restricción que descarte una elección tecnológica tentadora."
+    },
+    "visual": {
+      "src": "assets/images/architecture/decision-tradeoffs.png",
+      "alt": "Ilustración de un objetivo de negocio que se ramifica en un monolito modular, servicios orientados a eventos y una función en la nube, cada uno mostrando compromisos de velocidad, costo y confiabilidad.",
+      "caption": "Las decisiones de arquitectura comienzan con un objetivo de negocio y hacen visibles los compromisos (trade-offs) antes de la implementación."
+    },
+    "sections": [
+      {
+        "heading": "Empieza con una decisión, no con un diagrama",
+        "content": "La arquitectura reduce los riesgos que pueden costar dinero, tiempo o confianza. Antes de elegir una tecnología, establece el resultado de negocio, las restricciones no negociables y las hipótesis no probadas. Por ejemplo: una confirmación de pago puede retrasarse dos minutos, pero los cargos duplicados son inaceptables. Eso impulsa la idempotencia y la reconciliación; no requiere automáticamente Kafka o microservicios.\n\nUsa esta secuencia: contexto → requisitos funcionales → atributos de calidad medibles → opciones → POC para la incertidumbre → ADR → entrega observable. Si una elección no afecta al costo, riesgo, tiempo de entrega o capacidad de evolución, probablemente sea un detalle de implementación."
+      },
+      {
+        "heading": "Los artefactos mínimos útiles",
+        "content": "Mantén un conjunto pequeño de artefactos vivos: un diagrama de contexto C4 para usuarios e integraciones; un diagrama de contenedores para el tiempo de ejecución (runtime), datos y responsabilidades; contratos de API/eventos; ADRs para elecciones significativas; runbooks para incidentes; y un registro de riesgos con propietario y fecha de revisión. La arquitectura que solo existe en diapositivas no sobrevive a su primer incidente."
+      },
+      {
+        "heading": "Un ritmo de arquitectura práctico",
+        "content": "Antes del refinamiento, convierte declaraciones vagas como “debe escalar” en escenarios medibles. Durante el refinamiento, expón dependencias, datos sensibles, rutas de fallo y decisiones irreversibles. Durante la entrega, revisa límites, contratos, telemetría y despliegue (rollout). Antes del lanzamiento, verifica SLOs, alertas, rollback, migración de datos y propiedad operativa. Después de los incidentes, mejora el sistema y el runbook en lugar de culpar a las personas."
+      },
+      {
+        "heading": "Las POC tienen una decisión de salida",
+        "content": "Una POC debe responder a una pregunta específica. Registra la hipótesis, el entorno de prueba, la carga o el fallo inyectado, las métricas, el resultado y la decisión. “¿Mantiene el proveedor X el p99 por debajo de 300 ms a 200 peticiones/s y se recupera tras un timeout sin duplicar un pedido?” es una POC. Una demostración tecnológica no lo es. El resultado es un repositorio reproducible, resultados, limitaciones, costo estimado y un ADR para adoptar, rechazar o investigar más a fondo."
+      }
+    ]
+  },
+  {
+    "id": "arch-quality-day-to-day",
+    "topic": "software-architecture",
+    "subtopic": "arch-quality-attributes",
+    "title": "Atributos de calidad, SLOs y presupuestos de errores",
+    "lesson": {
+      "goal": "Convertir “rápido y confiable” en promesas que el equipo pueda probar y operar.",
+      "outcome": "Tres escenarios de calidad medibles y un SLO para ParcelFlow.",
+      "challenge": "Elegir el fallo que el negocio nunca debe aceptar."
+    },
+    "sections": [
+      {
+        "heading": "Reemplaza los adjetivos por escenarios probables",
+        "content": "“Rápido”, “seguro” y “escalable” no guían la implementación. Un escenario útil especifica el estímulo, el entorno, la respuesta y la medida: “en hora pico, el 95% de las búsquedas de pedidos terminan por debajo de 250 ms, el 99% por debajo de 600 ms, con menos del 0.1% de errores”. Prioriza como máximo tres atributos por flujo. Reclamar máxima consistencia, disponibilidad, rendimiento, flexibilidad y bajo costo simultáneamente oculta los compromisos reales (trade-offs)."
+      },
+      {
+        "heading": "Un SLO es un acuerdo operativo",
+        "content": "Define un SLI (qué se mide), SLO (objetivo) y presupuesto de errores (error budget - fallo aceptable). Ejemplo: las confirmaciones de pedidos exitosas deben alcanzar el 99.9% durante 28 días; el presupuesto es de aproximadamente 43 minutos de indisponibilidad equivalente. Cuando se agota el presupuesto, el trabajo de confiabilidad tiene prioridad sobre las nuevas funcionalidades. Mide desde el recorrido del usuario, no solo la CPU o la memoria."
+      },
+      {
+        "heading": "Haz explícito el compromiso (trade-off)",
+        "content": "<table><thead><tr><th>Elección</th><th>Ganancia</th><th>Costo</th><th>Validación</th></tr></thead><tbody><tr><td>Caché</td><td>menor latencia de lectura</td><td>datos obsoletos</td><td>tasa de acierto y antigüedad de datos</td></tr><tr><td>Cola asíncrona</td><td>aislamiento y absorción de ráfagas</td><td>consistencia eventual</td><td>lag y duplicados</td></tr><tr><td>Réplicas multizona</td><td>disponibilidad</td><td>costo y complejidad</td><td>conmutación por error controlada</td></tr><tr><td>Validación extra</td><td>integridad y seguridad</td><td>latencia y fricción</td><td>p95 y tasa de rechazo</td></tr></tbody></table>"
+      },
+      {
+        "heading": "POC de capacidad y fallo",
+        "content": "Elige un flujo crítico, genera una carga realista y mide p50/p95/p99, errores, saturación del pool y llamadas externas. Luego haz que una dependencia sea lenta o no esté disponible y repite. Aprueba la POC solo si el servicio se mantiene dentro de los límites acordados o falla de una manera visible y recuperable. k6 o Gatling, OpenTelemetry y feature flags controladas son herramientas suficientes."
+      }
+    ]
+  },
+  {
+    "id": "arch-styles-day-to-day",
+    "topic": "software-architecture",
+    "subtopic": "arch-styles",
+    "title": "Elige el estilo más pequeño que resuelva el problema",
+    "lesson": {
+      "goal": "Elegir una estructura que se adapte al equipo y al problema en lugar de copiar un estilo de moda.",
+      "outcome": "Una decisión escrita: monolito modular ahora, con disparadores de extracción medibles.",
+      "challenge": "Nombrar la evidencia que justificaría dividir un módulo de ParcelFlow más adelante."
+    },
+    "sections": [
+      {
+        "heading": "Por defecto, usa un monolito modular",
+        "content": "Para la mayoría de los productos, un único desplegable con módulos de negocio bien aislados, contratos internos y pruebas de límites es el comienzo más económico. Mantiene las transacciones y la depuración simples mientras los límites del dominio maduran. Extrae servicios solo por razones observables: equipos genuinamente independientes, diferente cadencia de lanzamiento, aislamiento de fallos, escala radicalmente diferente o separación regulatoria. “Queremos microservicios” no es una razón."
+      },
+      {
+        "heading": "Árbol de decisión: mantener, modularizar o extraer",
+        "content": "¿Los módulos siempre cambian y se despliegan juntos? Manténlos juntos. ¿Tienen datos, ciclo de vida y propiedad de equipo separados, y un límite de negocio estable? Considera la extracción. ¿El llamador necesita una respuesta ahora? Usa un contrato sincrónico con un timeout; de lo contrario, considera un evento. ¿Su fallo puede bloquear el flujo principal? Aísla con una cola, mamparo (bulkhead) o trabajo diferido. “Todavía no” es una decisión válida."
+      },
+      {
+        "heading": "Nativo de la nube y serverless sin adorar las herramientas",
+        "content": "Nativo de la nube significa configuración externa, entrega automatizada, procesos desechables, logs estructurados, métricas y recuperación predecible. Kubernetes es una implementación posible, no el objetivo. Serverless encaja en trabajos cortos, elásticos y orientados a eventos, pero introduce arranques en frío (cold starts), límites de ejecución, restricciones de observabilidad y acoplamiento al proveedor. Elige el modelo de ejecución basándote en el perfil de carga, capacidad de operaciones, requisitos de red y costo unitario."
+      },
+      {
+        "heading": "Señal de advertencia: complejidad sin autonomía",
+        "content": "Si cada cambio requiere modificar y desplegar varios servicios, las bases de datos son compartidas, los incidentes no pueden rastrearse de extremo a extremo o ningún equipo es dueño de un servicio, tienes el costo de la distribución sin sus beneficios. Deja de extraer. Estabiliza primero los contratos, la propiedad y la observabilidad."
+      }
+    ]
+  },
+  {
+    "id": "arch-application-day-to-day",
+    "topic": "software-architecture",
+    "subtopic": "arch-application",
+    "title": "Arquitectura de aplicación, clientes y BFFs",
+    "lesson": {
+      "goal": "Mantener las reglas de negocio probables mientras los clientes y la infraestructura cambian.",
+      "outcome": "Un boceto de una 'rebanada vertical' (vertical slice) desde la pantalla del cliente hasta el caso de uso de solicitud de entrega.",
+      "challenge": "Definir qué sucede cuando la aplicación del conductor está desconectada durante la confirmación."
+    },
+    "sections": [
+      {
+        "heading": "Mantén las reglas de negocio alejadas de los bordes",
+        "content": "HTTP, colas, bases de datos, frameworks y la interfaz de usuario son detalles cambiantes. Pon las reglas de negocio en casos de uso explícitos y adapta esos bordes a su alrededor. Esto no requiere la ceremonia rígida de la Arquitectura Limpia; requiere probar las reglas de precio, autorización o transición de estado sin iniciar un servidor, base de datos o broker. Usa puertos para las dependencias y adaptadores para JPA, REST, mensajería y otra infraestructura."
+      },
+      {
+        "heading": "El front-end es un límite arquitectónico",
+        "content": "Decide dónde ocurre el renderizado (SPA, SSR, SSG), dónde reside el estado, cómo llega la autenticación al navegador y cómo se comporta la aplicación en redes lentas o ausentes. Usa un BFF (Backend for Frontend) cuando diferentes clientes necesiten su propia agregación, autorización o cadencia de lanzamiento, no meramente para reenviar llamadas. Los clientes móviles y de campo requieren colas locales, sincronización explícita y reglas de conflicto, reintentos idempotentes y una política de versiones soportadas."
+      },
+      {
+        "heading": "POC de flujo vertical",
+        "content": "Elige un flujo de riesgo como el inicio de sesión, la creación de pedidos o la captura fuera de línea. Implementa cliente → contrato → caso de uso → persistencia → telemetría. Mide el tiempo de carga, el comportamiento en redes lentas, la expiración de tokens, los errores de API y la recuperación tras el reinicio. La pregunta no es si una pantalla puede llamar a una API local, sino si los usuarios y dispositivos reales pueden completar el trabajo de forma segura."
+      },
+      {
+        "heading": "Qué no elevar a arquitectura",
+        "content": "Una convención de CSS, el nombre de un framework o la elección de un empaquetador (bundler) no es automáticamente arquitectura. Se convierte en una solo cuando cambia materialmente la seguridad, el rendimiento percibido, la accesibilidad, el costo, la coordinación entre equipos o la estrategia de entrega."
+      }
+    ]
+  },
+  {
+    "id": "arch-boundaries-day-to-day",
+    "topic": "software-architecture",
+    "subtopic": "arch-modularity",
+    "title": "Límites de dominio y propiedad (ownership)",
+    "lesson": {
+      "goal": "Hacer explícitos los límites de propiedad y cambio antes de extraer servicios.",
+      "outcome": "Un mapa de capacidades asignando la propiedad de entrega, facturación y notificación.",
+      "challenge": "Encontrar una tabla o modelo compartido que deba dejar de ser un contrato entre equipos."
+    },
+    "visual": {
+      "src": "assets/images/architecture/domain-boundaries.png",
+      "alt": "Ilustración de contextos de negocio separados con almacenes de datos de propiedad independiente, una conexión de API y una conexión de eventos asíncronos.",
+      "caption": "Los buenos límites hacen explícita la propiedad y permiten que cada dominio evolucione sin filtrar su modelo de datos interno."
+    },
+    "sections": [
+      {
+        "heading": "Los límites siguen la capacidad del negocio",
+        "content": "Encuentra los límites preguntando quién decide una regla, quién posee los datos, quién usa el lenguaje y a qué ritmo cambia. Un “pedido” de ventas no tiene por qué ser el mismo modelo que un “pedido” de facturación o cumplimiento. El objetivo no es tener más modelos; es evitar que un cambio local fuerce un cambio en toda la empresa. Cada módulo publica un contrato pequeño y oculta sus detalles internos. Las tablas y entidades no son contratos de integración."
+      },
+      {
+        "heading": "Prueba si el acoplamiento es real",
+        "content": "Mapea las dependencias de código, datos y tiempo de ejecución. ¿Se puede lanzar un módulo sin el otro? ¿Puede cambiar su esquema sin romper a un consumidor? ¿Puede operar mientras su vecino es lento? Si todas las respuestas son no, el límite es cosmético. Aplica reglas: no importes internos de otro módulo, no leas la base de datos de otro dominio, versiona los contratos y asigna un equipo propietario."
+      },
+      {
+        "heading": "Integra contextos deliberadamente",
+        "content": "Usa una consulta sincrónica para una respuesta que se necesita ahora; usa un evento para un hecho que otros contextos puedan procesar más tarde. No disfraces comandos como eventos: OrderCreated es un hecho pasado, mientras que CreateInvoice es una solicitud con un propietario claro. Usa una capa anticorrupción (anti-corruption layer) alrededor de integraciones heredadas o de terceros para que los conceptos foráneos no se filtren en el dominio."
+      },
+      {
+        "heading": "Taller de límites (Boundary workshop)",
+        "content": "Realiza una sesión ligera de event-storming: enumera eventos de negocio, comandos, políticas, actores y agregados; agrúpalos por lenguaje y responsabilidad; marca las disputas y los datos compartidos. El resultado es una hipótesis para validar mediante cambios reales y métricas de acoplamiento, no una verdad permanente."
+      }
+    ]
+  },
+  {
+    "id": "arch-distributed-day-to-day",
+    "topic": "software-architecture",
+    "subtopic": "arch-distributed",
+    "title": "Sistemas distribuidos: fallo, consistencia y recuperación",
+    "lesson": {
+      "goal": "Diseñar para resultados desconocidos en lugar de asumir que las llamadas remotas son confiables.",
+      "outcome": "Una política de timeout, reintento, idempotencia y recuperación para la confirmación de entrega.",
+      "challenge": "Simular una respuesta que se pierde después de que el proveedor de pago completó la operación."
+    },
+    "visual": {
+      "src": "assets/images/architecture/distributed-system-model.png",
+      "alt": "Modelo de sistema distribuido por capas que muestra aplicaciones y servicios, middleware, sistema operativo y hardware de computadora y red.",
+      "caption": "Un sistema distribuido es más que el código de la aplicación: cada capa contribuye a la disponibilidad, la latencia y el comportamiento ante fallos.",
+      "attribution": "Jelle Smets vía Wikimedia Commons",
+      "attributionUrl": "https://commons.wikimedia.org/wiki/File:Ubiquitous_-_Distributed_System_Model.png",
+      "license": "CC BY-SA 3.0"
+    },
+    "sections": [
+      {
+        "heading": "Asume que cada llamada remota puede fallar",
+        "content": "Un timeout significa “desconocido”, no “fallido”: el servidor puede haber completado la operación y haber perdido la respuesta. Cada API o mutación dirigida por mensajes necesita una identidad de operación, idempotencia y una forma de consultar el estado final. Establece timeouts por dependencia, limita los reintentos, añade retroceso (backoff) con jitter y nunca reintentes infinitamente una operación que no sea idempotente."
+      },
+      {
+        "heading": "Patrones que protegen el flujo principal",
+        "content": "Los interruptores automáticos (circuit breakers) detienen la presión sobre una dependencia que falla; los mamparos (bulkheads) limitan el radio de impacto; las colas absorben picos; las DLQ (dead-letter queues) preservan los mensajes fallidos; los límites de tasa protegen la capacidad; las cachés y los respaldos (fallbacks) deben establecer la antigüedad aceptable de los datos. Aplica un patrón solo a un modo de fallo que puedas explicar. Un endpoint de salud que devuelve 200 no prueba que el flujo del usuario esté funcionando."
+      },
+      {
+        "heading": "Elige la consistencia por operación",
+        "content": "Clasifica los datos: qué no debe duplicarse nunca, qué puede retrasarse, qué puede estar obsoleto y qué necesita reconciliación. Usa un outbox para el estado local más un evento. Usa una saga con compensaciones o un proceso manual explícito para flujos de trabajo de negocio de varios pasos. Usa vistas materializadas donde las lecturas retrasadas entre dominios sean aceptables. Evita el commit en dos fases entre servicios: acopla la disponibilidad y las operaciones sin eliminar todos los modos de fallo."
+      },
+      {
+        "heading": "Ejecuta un 'Game Day'",
+        "content": "Simula una caída del broker, el reinicio de un consumidor durante el procesamiento, una respuesta duplicada, una base de datos lenta y una zona no disponible. Verifica la pérdida, duplicación, retraso, alertas y recuperación. Si el equipo no puede explicar qué sucede, la arquitectura sigue siendo teórica."
+      }
+    ]
+  },
+  {
+    "id": "arch-integration-day-to-day",
+    "topic": "software-architecture",
+    "subtopic": "arch-integration",
+    "title": "Contratos de API y eventos que sobreviven al cambio",
+    "lesson": {
+      "goal": "Elegir la comunicación basada en la necesidad real del consumidor, no en una preferencia de protocolo.",
+      "outcome": "Un contrato de API y un contrato de evento estilo OrderCreated.",
+      "challenge": "Añadir un consumidor sin cambiar el servicio de solicitud de entrega."
+    },
+    "sections": [
+      {
+        "heading": "Un contrato es un producto",
+        "content": "Publica OpenAPI para HTTP y AsyncAPI o un esquema versionado para eventos. Especifica la autenticación, autorización, campos requeridos, validación, errores, paginación, límites, idempotencia, compatibilidad y observabilidad. Un endpoint que expone una entidad interna es rápido de crear y costoso de mantener. Ejecuta pruebas de contrato en el pipeline para que los consumidores detecten cambios disruptivos antes de producción."
+      },
+      {
+        "heading": "Sincrónico versus asincrónico",
+        "content": "REST o gRPC encajan cuando un usuario u orquestador necesita una respuesta inmediata y acepta el acoplamiento temporal. Los eventos encajan en consumidores independientes, trabajo diferido, ráfagas y repetición (replay). WebSocket es para actualizaciones continuas del cliente; no es un reemplazo para una API de dominio. No ocultes un requisito de confirmación inmediata en una cola, y no uses cascadas sincrónicas para efectos secundarios que pueden esperar."
+      },
+      {
+        "heading": "Evolucionar sin romper a los consumidores",
+        "content": "Prefiere cambios aditivos, nuevas versiones de eventos y un periodo de coexistencia. Nunca cambies silenciosamente el significado de un campo. Los eventos son hechos inmutables: publica un evento de corrección en lugar de reescribir la historia. Define la retención, la clave de partición, el orden requerido y la estrategia de repetición antes de publicar."
+      },
+      {
+        "heading": "POC de integración",
+        "content": "Implementa un productor, dos consumidores independientes y un contrato versionado. Simula el lag del consumidor, mensajes duplicados y un cambio de esquema aditivo. Mide el lag, los errores, la duración de la repetición y la compatibilidad. Esto es más útil que una diapositiva comparando REST con Kafka."
+      }
+    ]
+  },
+  {
+    "id": "arch-data-day-to-day",
+    "topic": "software-architecture",
+    "subtopic": "arch-data",
+    "title": "Datos, gobernanza y consistencia sin fantasía",
+    "lesson": {
+      "goal": "Hacer explícita la propiedad de los datos y la inconsistencia aceptable.",
+      "outcome": "Un mapa de la fuente de verdad y un plan de migración para los pedidos de ParcelFlow.",
+      "challenge": "Describir exactamente qué puede ver un cliente mientras la facturación está retrasada."
+    },
+    "sections": [
+      {
+        "heading": "Propiedad antes que tecnología",
+        "content": "Define quién crea, actualiza y retiene cada conjunto de datos; su fuente de verdad; su clasificación regulatoria; y qué tan obsoleta puede estar una réplica. Sin eso, seleccionar PostgreSQL, MongoDB, un lakehouse o data mesh es solo ir de compras de herramientas. Los servicios independientes controlan su propio almacenamiento e integran por contrato o proyección, no consultando las tablas de otro dominio."
+      },
+      {
+        "heading": "Elige según los patrones de acceso",
+        "content": "El almacenamiento relacional es el estándar para invariantes, transacciones y consultas relacionales. El caché sirve lecturas repetidas con una política de invalidación. La búsqueda sirve consultas especializadas de texto y filtros, no escrituras de fuente de verdad. Los almacenes (warehouses) y lagos (lakes) sirven para analítica e historia, no para transacciones de productos. Event sourcing y CQRS son herramientas especializadas para historial de auditoría completo o necesidades de lectura/escritura radicalmente diferentes."
+      },
+      {
+        "heading": "Migrar sin tiempo de inactividad",
+        "content": "Usa expandir-contraer (expand-contract): añade estructura compatible, despliega código que entienda datos viejos y nuevos, rellena en lotes observables, cambia los lectores y elimina la estructura antigua solo después. Cada migración necesita respaldo, rollback, validación de conteo/checksum y límites de impacto en la base de datos. Nunca acoples un lanzamiento a un cambio de esquema destructivo que no se pueda revertir."
+      },
+      {
+        "heading": "POC de consistencia",
+        "content": "Modela una escritura local más un efecto externo. Prueba la publicación del outbox, reenvío, idempotencia, ordenamiento, reconciliación y consultas de estado. La decisión debe decir exactamente qué inconsistencia puede ver un usuario, por cuánto tiempo y cómo soporte la corrige."
+      }
+    ]
+  },
+  {
+    "id": "arch-evolution-day-to-day",
+    "topic": "software-architecture",
+    "subtopic": "arch-evolution",
+    "title": "Plataforma: entrega, seguridad, observabilidad y evolución",
+    "lesson": {
+      "goal": "Hacer que el cambio sea seguro y que el impacto en el cliente sea visible para el equipo.",
+      "outcome": "Una lista de verificación de lanzamiento con un SLO, alerta, ruta de rollback y escenario de amenaza.",
+      "challenge": "Definir la alerta que pruebe que los clientes están siendo perjudicados, no simplemente que una máquina está ocupada."
+    },
+    "sections": [
+      {
+        "heading": "DevSecOps es capacidad de entrega",
+        "content": "Cada servicio necesita un pipeline repetible: compilación, pruebas, análisis de origen y dependencias, imagen firmada, infraestructura versionada, despliegue progresivo y evidencia de auditoría. Desplaza la seguridad a la izquierda (shift-left): mantén los secretos fuera del código, usa el privilegio mínimo, revisa las dependencias, escanea apropiadamente y define políticas de promoción. No añadas SAST, DAST, IAST y RASP indiscriminadamente; cada control necesita una amenaza, un costo y un propietario."
+      },
+      {
+        "heading": "Confianza Cero (Zero Trust) en la práctica",
+        "content": "No confíes en la red interna. Autentica personas y cargas de trabajo, autoriza cada recurso y acción, limita los privilegios, protege y rota secretos, segmenta el tráfico y audita el acceso. Los API gateways, WAFs, IAM, mTLS y la política como código son medios; reducir el alcance de una brecha es el objetivo. Modela las amenazas de cada flujo: activos, actores, límites de confianza, abusos plausibles, controles y evidencia."
+      },
+      {
+        "heading": "Observabilidad que acelera el diagnóstico",
+        "content": "Instrumenta logs estructurados con IDs de correlación, métricas de servicio y de negocio, y trazas distribuidas a través de OpenTelemetry. Usa tableros para la tasa de peticiones, errores, duración, saturación, colas, caché, bases de datos y resultados de negocio. Las alertas deben ser accionables y enlazar a un runbook. La CPU por sí sola crea fatiga de alertas; el consumo del presupuesto de errores conecta las operaciones con el impacto en el cliente."
+      },
+      {
+        "heading": "La modernización es una secuencia reversible",
+        "content": "Usa el patrón del higo estrangulador (strangler fig), feature flags, canario, azul-verde y contratos compatibles hacia atrás para reducir el radio de impacto. Extrae un flujo con un dolor concreto y un límite comprensible; reconcilia el comportamiento antiguo y el nuevo hasta que se gane confianza. Una reescritura total a menudo reemplaza un riesgo técnico conocido por un riesgo de alcance desconocido."
+      }
+    ]
+  },
+  {
+    "id": "arch-documentation-day-to-day",
+    "topic": "software-architecture",
+    "subtopic": "arch-documentation",
+    "title": "ADRs, C4 y gobernanza de decisiones",
+    "lesson": {
+      "goal": "Comunicar las decisiones para que otro ingeniero pueda operar y cambiar el sistema de forma segura.",
+      "outcome": "Una vista de contenedores C4, un ADR, un contrato de evento y un runbook de incidentes.",
+      "challenge": "Explicar una alternativa rechazada y el disparador que te haría volver a considerarla."
+    },
+    "sections": [
+      {
+        "heading": "ADRs cortos, trazables y honestos",
+        "content": "Un ADR (Registro de Decisión de Arquitectura) contiene el contexto y las fuerzas en competencia, la decisión, las alternativas consideradas, las consecuencias positivas y negativas, la fecha, el propietario y el disparador de revisión. No escribas “elegimos X porque es moderno”. Establece qué requisito cumple, qué se está sacrificando y cómo se detectará el fallo. Preserva la historia: un nuevo ADR reemplaza a uno antiguo en lugar de borrar por qué ocurrió el cambio."
+      },
+      {
+        "heading": "Los diagramas responden preguntas",
+        "content": "El Contexto C4 explica usuarios e integraciones; el Contenedor explica tiempo de ejecución, almacenamiento y comunicación; el Componente explica responsabilidades internas solo cuando ayuda. Añade diagramas de secuencia para flujos críticos, diagramas de despliegue para operaciones y diagramas de flujo/propiedad de datos para la gobernanza. No produzcas UML detallado cuando el equipo simplemente necesita localizar una dependencia. Cada diagrama debe tener alcance, fecha y enlaces a código o ADRs."
+      },
+      {
+        "heading": "Gobernanza de IA aplicada",
+        "content": "Para soluciones de IA o LLM, documenta el origen y retención de los datos, la evaluación de calidad, los límites de uso, el costo, la privacidad, el riesgo de inyección de prompts, la autorización de herramientas, la auditoría y la intervención humana. Una demo convincente todavía puede fallar por alucinaciones, fuga de datos o costos impredecibles. Usa la IA para generar alternativas y acelerar el análisis, nunca como una autoridad que elimine la evidencia y la responsabilidad."
+      },
+      {
+        "heading": "Proyecto final: una decisión defendible",
+        "content": "Elige un sistema con usuarios, datos sensibles, integración externa y carga máxima. Entrega escenarios de calidad; Contexto y Contenedor C4; un contrato de API o evento; un ADR de integración/datos; una POC para el riesgo principal; tablero y SLO; modelo de amenazas; plan de despliegue y rollback. Defiende por qué las alternativas rechazadas eran peores bajo las mismas restricciones. Eso es evidencia de razonamiento arquitectónico."
+      }
+    ]
+  },
+  {
+    "id": "arch-documentation-examples",
+    "topic": "software-architecture",
+    "subtopic": "arch-documentation",
+    "title": "Paquete de documentación: ejemplos de trabajo",
+    "visuals": [
+      {
+        "src": "assets/architecture-examples/visualizations/system-context.svg",
+        "alt": "Diagrama de contexto del sistema que muestra a clientes y conductores usando ParcelFlow y sus integraciones externas de transportistas y pagos.",
+        "caption": "Vista de contexto: quién usa el sistema y qué sistemas externos lo restringen."
+      },
+      {
+        "src": "assets/architecture-examples/visualizations/container-view.svg",
+        "alt": "Diagrama de contenedores que muestra el cliente, la API de pedidos, PostgreSQL, el relé de outbox, el broker de eventos, los trabajadores y el colector de OpenTelemetry.",
+        "caption": "Vista de contenedores: responsabilidades en tiempo de ejecución, propiedad de datos y telemetría."
+      },
+      {
+        "src": "assets/architecture-examples/visualizations/event-recovery.svg",
+        "alt": "Flujo de recuperación de eventos desde la entrega confirmada y el outbox a través de la publicación, procesamiento, reintento, cola de mensajes fallidos y repetición corregida.",
+        "caption": "Vista de recuperación: la entrega al menos una vez necesita idempotencia, reintento e investigación."
+      }
+    ],
+    "sections": [
+      {
+        "heading": "ADR: elegir notificaciones de pedido asíncronas",
+        "content": "Esto es lo suficientemente corto para mantenerse y lo suficientemente específico para defenderse en una revisión de diseño.\n\n```markdown\n# ADR-014 — Publicar OrderCreated de forma asíncrona\n**Estado:** Aceptado · 2026-07-21 · Propietario: Equipo de Comercio\n\n## Contexto\nLa creación de pedidos debe tener éxito incluso cuando las notificaciones no estén disponibles.\nSe esperan nuevos consumidores (facturación, analítica).\n\n## Decisión\nPersistir el pedido y un registro de outbox en una sola transacción.\nUn relé publica `OrderCreated`; los consumidores lo procesan de forma idempotente.\n\n## Alternativas\n1. Notificación REST sincrónica — rechazada: acoplamiento temporal.\n2. Publicación directa al broker — rechazada: el evento puede perderse tras el commit en la DB.\n\n## Consecuencias\n+ El flujo de pedidos se mantiene disponible; los consumidores pueden repetir.\n- Consistencia eventual; monitorear lag, reintentos y DLQ.\n\n## Disparador de revisión\nVolver a considerar si la entrega de notificaciones se convierte en un requisito de negocio sincrónico.\n```"
+      },
+      {
+        "heading": "C4: un documento de contenedores que la gente pueda usar",
+        "content": "El objetivo de una vista de contenedores C4 es responder a dónde va una petición, dónde residen los datos y quién es el dueño de cada unidad de ejecución. Mantén el archivo del diagrama cerca del código; mantén este documento complementario en el README del repositorio.\n\n```markdown\n# Plataforma de pedidos — Vista de contenedores\n\n| Contenedor | Responsabilidad | Propiedad | Interfaces | Dueño del SLO |\n|---|---|---|---|---|\n| App Web | Flujo de pedidos del cliente | Estado del navegador | HTTPS → API de Pedidos | Equipo Web |\n| API de Pedidos | Validar y crear pedidos | Pedidos + outbox | REST, OrderCreated | Equipo de Comercio |\n| Worker de Facturación | Crear facturas | Facturas | Consume OrderCreated | Equipo de Finanzas |\n| PostgreSQL | Fuente de verdad transaccional | Esquema de pedidos | JDBC, backups | Equipo de Plataforma |\n\n**Ruta crítica:** App Web → API de Pedidos → PostgreSQL.\n**Ruta degradada:** el retraso en notificaciones o facturación no bloquea la creación de pedidos.\n**Enlaces:** ADR-014 · OpenAPI · dashboard · runbook.\n```"
+      },
+      {
+        "heading": "Contrato: un evento que puede evolucionar",
+        "content": "Un contrato debe ser explícito sobre la propiedad, la compatibilidad y las expectativas del consumidor. Este ejemplo conciso estilo AsyncAPI es más útil que decir que “se usa Kafka”.\n\n```yaml\nchannel: commerce.order.created.v1\nowner: equipo-comercio\nkey: orderId\nretention: 14d\ncompatibility: BACKWARD\npayload:\n  required: [eventId, occurredAt, orderId, customerId, total]\n  properties:\n    eventId:    { type: string, format: uuid }\n    occurredAt: { type: string, format: date-time }\n    orderId:    { type: string }\n    customerId: { type: string }\n    total:      { type: number, minimum: 0 }\nconsumer-rules:\n  - Procesar al menos una vez; desduplicar por eventId.\n  - No depender del orden de los campos.\n  - Los campos desconocidos deben ignorarse.\n```"
+      },
+      {
+        "heading": "Runbook: hacer que una alerta sea accionable",
+        "content": "Un runbook convierte una alerta en una primera respuesta segura. Debe nombrar el impacto al cliente, las primeras comprobaciones, los límites de mitigación, el escalamiento y la evidencia a conservar.\n\n```markdown\n# Runbook — Lag del consumidor OrderCreated\n\n## Alerta\nLag del consumidor > 10,000 mensajes durante 10 minutos.\n\n## Impacto al cliente\nLos pedidos son aceptados. La facturación y las notificaciones pueden retrasarse.\n\n## Primeras comprobaciones\n1. Abrir el tablero de trazas y del consumidor.\n2. Verificar la salud del consumidor, la tasa de errores y los despliegues recientes.\n3. Verificar la capacidad del broker y el crecimiento de la DLQ.\n\n## Mitigación segura\n- Escalar consumidores solo si el conteo de particiones lo permite.\n- Pausar un consumidor defectuoso; no resetear offsets sin aprobación.\n- No repetir mensajes hasta que se verifique la idempotencia.\n\n## Escalar\nGuardia de Comercio → Guardia de Plataforma si el broker o la base de datos están saturados.\nRegistrar ID del incidente, pico de lag, causa raíz y ADR de seguimiento.\n```"
+      }
+    ]
+  }
 ]

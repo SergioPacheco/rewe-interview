@@ -3,23 +3,23 @@
     "id": "theory-security-auth",
     "topic": "security",
     "subtopic": "security-auth",
-    "title": "Authentication & Authorization",
+    "title": "Autenticación y Autorización",
     "sections": [
       {
-        "heading": "Core distinction",
-        "content": "Authentication answers who the user is; authorization answers what that authenticated user may do. In a logistics platform, a driver, warehouse operator, planner and administrator may all authenticate through the same identity provider but receive different permissions."
+        "heading": "Distinción principal",
+        "content": "La autenticación responde a quién es el usuario; la autorización responde a qué puede hacer ese usuario autenticado. En una plataforma logística, un conductor, un operador de almacén, un planificador y un administrador pueden autenticarse a través del mismo proveedor de identidad pero recibir diferentes permisos."
       },
       {
-        "heading": "OAuth2 and OpenID Connect",
-        "content": "OAuth2 is an authorization framework. OpenID Connect adds identity on top of OAuth2. A browser or mobile client normally uses Authorization Code with PKCE. The application receives an access token for APIs and optionally an ID token containing identity claims."
+        "heading": "OAuth2 y OpenID Connect",
+        "content": "OAuth2 es un framework de autorización. OpenID Connect añade una capa de identidad sobre OAuth2. Un navegador o cliente móvil normalmente utiliza el flujo 'Authorization Code' con PKCE. La aplicación recibe un token de acceso para las APIs y, opcionalmente, un token de ID que contiene las 'claims' o afirmaciones de identidad."
       },
       {
-        "heading": "Roles and permissions",
-        "content": "Prefer permission-based checks such as DELIVERY_READ or ROUTE_ASSIGN over broad role checks. Roles can group permissions, but business code should depend on the smallest capability required. Apply authorization at both API boundaries and sensitive service methods."
+        "heading": "Roles y permisos",
+        "content": "Es preferible realizar comprobaciones basadas en permisos como DELIVERY_READ o ROUTE_ASSIGN en lugar de comprobaciones de roles generales. Los roles pueden agrupar permisos, pero el código de negocio debe depender de la capacidad mínima requerida. Aplica la autorización tanto en los límites de la API como en los métodos de servicio sensibles."
       },
       {
-        "heading": "Interview answer",
-        "content": "I separate authentication from authorization, use short-lived access tokens, validate issuer, audience, signature and expiry, and enforce least privilege. For high-risk operations I also require audit logging and sometimes step-up authentication."
+        "heading": "Respuesta para entrevista",
+        "content": "Separo la autenticación de la autorización, utilizo tokens de acceso de corta duración, valido el emisor (issuer), la audiencia, la firma y la expiración, y aplico el principio de mínimo privilegio. Para operaciones de alto riesgo, también requiero registros de auditoría y, a veces, autenticación reforzada (step-up authentication)."
       }
     ]
   },
@@ -30,20 +30,20 @@
     "title": "Spring Security",
     "sections": [
       {
-        "heading": "Security filter chain",
-        "content": "Spring Security processes requests through a SecurityFilterChain. Configure public endpoints explicitly, require authentication by default, and place the most specific matchers before broader ones."
+        "heading": "Cadena de filtros de seguridad",
+        "content": "Spring Security procesa las peticiones a través de un SecurityFilterChain. Configura los endpoints públicos explícitamente, requiere autenticación por defecto y coloca los 'matchers' más específicos antes que los generales."
       },
       {
-        "heading": "JWT resource server",
-        "content": "A Spring Boot API can act as an OAuth2 Resource Server. It validates JWT signatures using the identity provider's JWK set and converts claims or scopes into GrantedAuthority values."
+        "heading": "Servidor de recursos JWT",
+        "content": "Una API de Spring Boot puede actuar como un servidor de recursos OAuth2. Valida las firmas JWT utilizando el conjunto de claves JWK del proveedor de identidad y convierte las 'claims' o 'scopes' en valores de GrantedAuthority."
       },
       {
-        "heading": "Method security",
-        "content": "Use @PreAuthorize for sensitive business actions, for example @PreAuthorize(\"hasAuthority('ROUTE_ASSIGN')\"). Method security protects the use case even when it is called from another controller or integration path."
+        "heading": "Seguridad a nivel de método",
+        "content": "Utiliza @PreAuthorize para acciones de negocio sensibles, por ejemplo: @PreAuthorize(\"hasAuthority('ROUTE_ASSIGN')\"). La seguridad de método protege el caso de uso incluso cuando se llama desde otro controlador o ruta de integración."
       },
       {
-        "heading": "Production guidance",
-        "content": "Do not disable security globally for convenience. Keep actuator endpoints restricted, avoid logging tokens, use secure cookies for browser sessions, and test both allowed and denied scenarios."
+        "heading": "Guía para producción",
+        "content": "No deshabilites la seguridad globalmente por conveniencia. Mantén restringidos los endpoints de Actuator, evita registrar tokens en los logs, utiliza cookies seguras para las sesiones del navegador y prueba tanto los escenarios permitidos como los denegados."
       }
     ]
   },
@@ -51,23 +51,23 @@
     "id": "theory-security-web",
     "topic": "security",
     "subtopic": "security-web",
-    "title": "Web Security: XSS, CSRF and CORS",
+    "title": "Seguridad Web: XSS, CSRF y CORS",
     "sections": [
       {
         "heading": "XSS",
-        "content": "Cross-site scripting happens when untrusted content is rendered as executable HTML or JavaScript. Escape output, sanitize rich text, avoid unsafe innerHTML, and use a strict Content Security Policy."
+        "content": "El Cross-site scripting (XSS) ocurre cuando contenido no confiable se renderiza como HTML o JavaScript ejecutable. Escapa las salidas, sanitiza el texto enriquecido, evita el uso inseguro de innerHTML y utiliza una Política de Seguridad de Contenido (CSP) estricta."
       },
       {
         "heading": "CSRF",
-        "content": "CSRF abuses a browser's automatic credential submission. It matters mainly for cookie-based sessions. Use Spring Security CSRF protection and SameSite cookies. Pure bearer-token APIs that do not use cookies are generally not vulnerable in the same way."
+        "content": "El CSRF abusa del envío automático de credenciales del navegador. Afecta principalmente a las sesiones basadas en cookies. Utiliza la protección CSRF de Spring Security y cookies con atributo SameSite. Las APIs puras basadas en tokens 'bearer' que no usan cookies generalmente no son vulnerables de la misma manera."
       },
       {
         "heading": "CORS",
-        "content": "CORS is a browser access-control mechanism, not authentication. Allow only known origins, methods and headers. Never combine wildcard origins with credentials."
+        "content": "CORS es un mecanismo de control de acceso del navegador, no es autenticación. Permite únicamente orígenes, métodos y cabeceras conocidos. Nunca combines orígenes con comodines (*) con el uso de credenciales."
       },
       {
-        "heading": "Interview answer",
-        "content": "I treat XSS, CSRF and CORS as different problems: output encoding for XSS, anti-forgery controls for cookie sessions, and a narrow origin policy for CORS."
+        "heading": "Respuesta para entrevista",
+        "content": "Trato XSS, CSRF y CORS como problemas diferentes: codificación de salida para XSS, controles contra falsificación para sesiones de cookies y una política de origen restringida para CORS."
       }
     ]
   },
@@ -75,23 +75,23 @@
     "id": "theory-security-api",
     "topic": "security",
     "subtopic": "security-api",
-    "title": "API & Service Security",
+    "title": "Seguridad en APIs y Servicios",
     "sections": [
       {
-        "heading": "Service-to-service authentication",
-        "content": "Internal services should authenticate each other using workload identity, mTLS or OAuth2 client credentials. Network location alone is not proof of identity."
+        "heading": "Autenticación entre servicios",
+        "content": "Los servicios internos deben autenticarse entre sí mediante identidades de carga de trabajo (workload identity), mTLS o credenciales de cliente OAuth2. La ubicación en la red por sí sola no es prueba de identidad."
       },
       {
-        "heading": "Resilience and abuse controls",
-        "content": "Apply rate limits, request-size limits, timeouts and circuit breakers. Validate payloads at the boundary and reject unknown or dangerous fields."
+        "heading": "Controles de resiliencia y abuso",
+        "content": "Aplica límites de tasa (rate limits), límites de tamaño de petición, tiempos de espera e interruptores automáticos (circuit breakers). Valida los payloads en el límite y rechaza campos desconocidos o peligrosos."
       },
       {
-        "heading": "Secrets",
-        "content": "Store secrets in a secret manager or Kubernetes Secret integrated with encryption and access control. Never commit credentials, private keys or production tokens to source control."
+        "heading": "Secretos",
+        "content": "Almacena los secretos en un gestor de secretos o en Secrets de Kubernetes integrados con cifrado y control de acceso. Nunca guardes credenciales, claves privadas o tokens de producción en el control de versiones (Git)."
       },
       {
-        "heading": "Auditability",
-        "content": "Log security-relevant business events such as route reassignment, permission changes and manual delivery overrides. Logs should identify actor, action, target, time and outcome without exposing sensitive data."
+        "heading": "Auditabilidad",
+        "content": "Registra eventos de negocio relevantes para la seguridad, como la reasignación de rutas, cambios de permisos y anulaciones manuales de entregas. Los logs deben identificar al actor, la acción, el objetivo, la hora y el resultado sin exponer datos sensibles."
       }
     ]
   },
@@ -99,23 +99,23 @@
     "id": "theory-security-data",
     "topic": "security",
     "subtopic": "security-data",
-    "title": "Data Protection & GDPR",
+    "title": "Protección de Datos y RGPD",
     "sections": [
       {
-        "heading": "Data minimization",
-        "content": "Collect and retain only the personal data required for the operational purpose. Driver location data, customer addresses and phone numbers require clear purpose and restricted access."
+        "heading": "Minimización de datos",
+        "content": "Recopila y conserva solo los datos personales necesarios para el propósito operativo. Los datos de ubicación de los conductores, las direcciones de los clientes y los números de teléfono requieren un propósito claro y acceso restringido."
       },
       {
-        "heading": "Protection",
-        "content": "Encrypt data in transit with TLS and at rest using platform-managed encryption. Mask sensitive fields in logs and non-production databases."
+        "heading": "Protección",
+        "content": "Cifra los datos en tránsito con TLS y en reposo utilizando cifrado gestionado por la plataforma. Enmascara los campos sensibles en los logs y en las bases de datos que no sean de producción."
       },
       {
-        "heading": "GDPR principles",
-        "content": "Key principles include lawfulness, purpose limitation, data minimization, accuracy, storage limitation, integrity, confidentiality and accountability."
+        "heading": "Principios del RGPD",
+        "content": "Los principios clave incluyen licitud, limitación de la finalidad, minimización de datos, exactitud, limitación del plazo de conservación, integridad, confidencialidad y responsabilidad proactiva."
       },
       {
-        "heading": "Operational design",
-        "content": "Define retention periods, deletion workflows, access auditing and incident response before production. Privacy requirements must be part of architecture, not an afterthought."
+        "heading": "Diseño operativo",
+        "content": "Define periodos de retención, flujos de trabajo de eliminación, auditoría de acceso y respuesta ante incidentes antes de salir a producción. Los requisitos de privacidad deben ser parte de la arquitectura, no una ocurrencia tardía."
       }
     ]
   }

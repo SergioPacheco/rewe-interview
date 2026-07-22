@@ -3,28 +3,28 @@
     "id": "arch-learning-journey",
     "topic": "software-architecture",
     "subtopic": "arch-foundations",
-    "title": "Start here: learn architecture by making one system evolve",
+    "title": "Comienza aquí: aprende arquitectura haciendo evolucionar un sistema",
     "lesson": {
-      "goal": "Stop collecting patterns and learn to make justified decisions under constraints.",
-      "outcome": "A small architecture decision pack: quality scenarios, one C4 view, one ADR, and evidence from a POC.",
-      "challenge": "Use the same running case in every lesson. Do not introduce a new technology until a constraint requires it."
+      "goal": "Deja de coleccionar patrones y aprende a tomar decisiones justificadas bajo restricciones.",
+      "outcome": "Un pequeño paquete de decisiones de arquitectura: escenarios de calidad, una vista C4, un ADR y evidencia de una prueba de concepto (POC).",
+      "challenge": "Usa el mismo caso práctico en cada lección. No introduzcas una nueva tecnología hasta que una restricción lo requiera."
     },
     "sections": [
       {
-        "heading": "The running case: ParcelFlow",
-        "content": "You are designing <strong>ParcelFlow</strong>, a service that lets a customer create a delivery request and follow its progress. In the first release, 2,000 requests/day are expected. A delivery request must never be created twice; sending a notification may be delayed; customer tracking should update within 30 seconds; the team has six engineers and one existing PostgreSQL database.\n\nThis is intentionally ordinary. Architecture is not reserved for a global-scale system. The same questions appear in a small product: what can fail, who owns a rule, what must be consistent, and how will the team know that it is working?"
+        "heading": "El caso práctico: ParcelFlow",
+        "content": "Estás diseñando <strong>ParcelFlow</strong>, un servicio que permite al cliente crear una solicitud de entrega y seguir su progreso. En la primera versión, se esperan 2,000 solicitudes al día. Una solicitud de entrega nunca debe crearse dos veces; el envío de una notificación puede retrasarse; el seguimiento del cliente debe actualizarse en 30 segundos; el equipo cuenta con seis ingenieros y una base de datos PostgreSQL existente.\n\nEsto es intencionadamente ordinario. La arquitectura no está reservada para sistemas de escala global. Las mismas preguntas aparecen en un producto pequeño: ¿qué puede fallar?, ¿quién es el dueño de una regla?, ¿qué debe ser consistente? y ¿cómo sabrá el equipo que está funcionando?"
       },
       {
-        "heading": "The learning sequence",
-        "content": "1. <strong>Quality attributes:</strong> turn the case into measurable acceptance criteria.\n2. <strong>Styles and boundaries:</strong> decide what remains in a modular monolith and who owns delivery, billing, and notification data.\n3. <strong>Integration and data:</strong> choose the API and event flow; prove no notification is lost or duplicated.\n4. <strong>Reliability and operations:</strong> define SLOs, traces, alerts, security controls, rollout, and rollback.\n5. <strong>Documentation:</strong> turn the decisions into diagrams, contracts, an ADR, and a runbook.\n\nEach sidebar topic is one decision in this sequence — not a list of technologies to memorise."
+        "heading": "La secuencia de aprendizaje",
+        "content": "1. <strong>Atributos de calidad:</strong> convierte el caso en criterios de aceptación medibles.\n2. <strong>Estilos y límites:</strong> decide qué permanece en un monolito modular y quién posee los datos de entrega, facturación y notificación.\n3. <strong>Integración y datos:</strong> elige el flujo de API y eventos; demuestra que ninguna notificación se pierde ni se duplica.\n4. <strong>Fiabilidad y operaciones:</strong> define SLOs, trazas, alertas, controles de seguridad, despliegue (rollout) y reversión (rollback).\n5. <strong>Documentación:</strong> convierte las decisiones en diagramas, contratos, un ADR y un manual de procedimientos (runbook).\n\nCada tema lateral es una decisión en esta secuencia, no una lista de tecnologías para memorizar."
       },
       {
-        "heading": "The question that unlocks each lesson",
-        "content": "Before reading, answer one question in writing. <strong>Quality:</strong> what does “fast enough” mean for a customer? <strong>Modularity:</strong> which team may change a rule without asking another team? <strong>Distribution:</strong> what does a timeout mean? <strong>Data:</strong> which data is the source of truth? <strong>Operations:</strong> how will an on-call engineer discover customer impact?\n\nIf a lesson does not change your answer to one of those questions, treat it as reference material, not as a decision."
+        "heading": "La pregunta que desbloquea cada lección",
+        "content": "Antes de leer, responde a una pregunta por escrito. <strong>Calidad:</strong> ¿qué significa “lo suficientemente rápido” para un cliente? <strong>Modularidad:</strong> ¿qué equipo puede cambiar una regla sin preguntar a otro equipo? <strong>Distribución:</strong> ¿qué significa un tiempo de espera (timeout)? <strong>Datos:</strong> ¿qué datos son la fuente de verdad? <strong>Operaciones:</strong> ¿cómo descubrirá un ingeniero de guardia (on-call) el impacto en el cliente?\n\nSi una lección no cambia tu respuesta a una de esas preguntas, trátala como material de referencia, no como una decisión."
       },
       {
-        "heading": "What success looks like",
-        "content": "At the end, you should be able to explain: “We start with a modular monolith because the team and release cadence are shared. Order creation writes an outbox record in the same transaction. Billing and notification consume the event idempotently. We accept delayed notification, but not duplicate delivery requests. We measure this through a checkout SLO, consumer lag, traces, and a runbook.”\n\nThat sentence is more valuable than being able to recite CQRS, Kubernetes, Zero Trust, or event sourcing without a context."
+        "heading": "Cómo se ve el éxito",
+        "content": "Al final, deberías ser capaz de explicar: “Comenzamos con un monolito modular porque el equipo y la cadencia de lanzamientos son compartidos. La creación del pedido escribe un registro de outbox en la misma transacción. Facturación y notificación consumen el evento de forma idempotente. Aceptamos notificaciones retrasadas, pero no solicitudes de entrega duplicadas. Medimos esto a través de un SLO de checkout, lag del consumidor, trazas y un manual de procedimientos”.\n\nEsa frase es más valiosa que ser capaz de recitar CQRS, Kubernetes, Zero Trust o event sourcing sin un contexto."
       }
     ]
   }

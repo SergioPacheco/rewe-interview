@@ -98,7 +98,8 @@ export class AppComponent implements OnInit {
 
   getTopicsByGroup(group: TopicGroup): Topic[] {
     const query = this.searchQuery().toLowerCase();
-    const topics = this.topicService.getByGroup(group);
+    const topics = this.topicService.getByGroup(group)
+      .filter(t => t.id !== 'stories');
     if (!query) return topics;
     return topics.filter(t =>
       t.name.toLowerCase().includes(query) ||

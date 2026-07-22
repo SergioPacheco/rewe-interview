@@ -113,8 +113,7 @@ export class TopicService {
       'concurrency.json',
       'design-patterns.json',
       'behavioral.json',
-      'system-design.json',
-      'system-design-v2-pilots.json',
+      'software-architecture.json',
       'rewe.json',
       'security.json',
       'testing.json',
@@ -125,10 +124,8 @@ export class TopicService {
       'stories.json',
       'mindset.json',
       'senior-questions.json'
-      ,'software-architecture.json'
       ,'practice-coverage.json'
       ,'dsa.json'
-      ,'system-design-modeling.json'
     ];
 
     const paths = files.map(f => `data/exercises/${lang}/${f}`);
@@ -169,19 +166,19 @@ export class TopicService {
       'theory-rest.json',
       'theory-data-persistence.json',
       'theory-dp-pg-query-tuning.json',
-      'theory-ddd.json',
+      'theory-software-architecture-ddd.json',
       'theory-solid.json',
       'theory-concurrency.json',
       'theory-patterns.json',
       'theory-docker.json',
-      'theory-kubernetes.json',
+      'theory-k8s.json',
       'theory-testing.json',
       'theory-kotlin.json',
       'theory-angular.json',
-      'theory-collections.json',
+      'theory-java-collections.json',
       'theory-oop.json',
       'theory-security.json',
-      'theory-system-design.json',
+      'theory-software-architecture-distributed.json',
       'theory-behavioral.json',
       'theory-stories.json',
       'theory-mindset.json',
@@ -190,9 +187,9 @@ export class TopicService {
       ,'theory-architecture-pack-link.json'
       ,'theory-software-architecture.json'
       ,'theory-dsa.json'
-      ,'theory-system-design-modeling.json'
+      ,'theory-software-architecture-modeling.json'
       ,'theory-learning-depth.json'
-      ,'theory-asd-summary.json'
+      ,'theory-software-architecture-summary.json'
       ,'theory-ai-engineering.json'
     ];
 

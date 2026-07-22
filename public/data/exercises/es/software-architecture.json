@@ -152,5 +152,2648 @@
       "documentation",
       "trade-offs"
     ]
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "senior",
+    "subtopic": "Event-Driven Architecture",
+    "question": "You need to design the delivery lifecycle event system for REWE transport. When a delivery changes status (planned → dispatched → in-transit → delivered), multiple services need to react: billing, notifications, analytics, and ETA calculations. How do you design this?",
+    "options": [
+      {
+        "label": "A) Synchronous REST calls from delivery-service to each consumer",
+        "description": "Delivery service calls billing, notification, analytics, ETA APIs sequentially."
+      },
+      {
+        "label": "B) Event bus (Kafka) with delivery events, each consumer independently subscribes",
+        "description": "Publish delivery-status-changed event. Each service consumes at its own pace."
+      },
+      {
+        "label": "C) Shared database polling — consumers query delivery table for changes",
+        "description": "Each consumer polls the delivery table every N seconds for status changes."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Option B (Kafka events) is the correct choice for this scenario:\n\n• **Decoupling**: Delivery service doesn't know about consumers. Add new consumers without modifying the producer.\n• **Resilience**: If billing is down, notifications still work. Each consumer has independent failure handling.\n• **Scalability**: Kafka handles millions of events/day. Consumers scale by adding partition consumers.\n• **Ordering**: Partition by delivery ID → events for same delivery are ordered.\n• **Replay**: New services can replay history to build their state.\n\nWhy NOT A (sync REST): One slow consumer blocks all. Delivery service becomes a distributed monolith.\nWhy NOT C (polling): Waste of resources, high latency, doesn't scale, complex \"last processed\" tracking.",
+    "tags": [
+      "kafka",
+      "event-driven",
+      "decoupling"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-event-driven-architecture-01"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Real-time Delivery Tracking",
+    "question": "Design a real-time delivery tracking system where customers can see their delivery position on a map, with ETA updates. Drivers send GPS coordinates every 10 seconds. 500 active drivers simultaneously.",
+    "modelAnswer": "**Requirements clarification:**\n- 500 drivers × 1 update/10s = 50 GPS events/second (manageable)\n- Customer-facing: needs sub-second updates on the map\n- ETA: recalculates on every position update\n\n**Architecture:**\n\n1. **Ingestion**: Drivers send GPS via lightweight protocol (MQTT or HTTP POST)\n   → Kafka topic: driver-location (partitioned by driver_id)\n\n2. **Processing**: \n   - Location consumer: updates driver's current position in Redis (fast read for map)\n   - ETA consumer: recalculates ETA based on new position + remaining route\n\n3. **Serving to customers**:\n   - WebSocket connection from customer app\n   - Customer subscribes to their delivery's driver\n   - Backend pushes updates from Redis → WebSocket when position changes\n\n4. **Storage**:\n   - Hot data (current positions): Redis hash (driver_id → lat/lng/timestamp)\n   - Cold data (history): Kafka retention + batch to PostgreSQL for analytics\n\n**Scaling considerations:**\n- 500 drivers is small. This architecture handles 50,000+ easily.\n- WebSocket connections: ~concurrent tracking customers (maybe 2000). One pod handles this.\n- Redis as cache for current positions: single instance is sufficient.\n- ETA calculation: can be async (500ms delay acceptable).",
+    "followUp": "What if we scale to 50,000 drivers across Europe?",
+    "tags": [
+      "real-time",
+      "websocket",
+      "redis",
+      "kafka"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-real-time-delivery-tracking-02"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Database Design",
+    "question": "The delivery table has 10 million rows. You need to query \"all active deliveries for a specific driver today\" frequently. How do you optimize?",
+    "options": [
+      {
+        "label": "A) Composite index on (driver_id, status, scheduled_at)",
+        "description": "B-tree index covering the three filter columns."
+      },
+      {
+        "label": "B) Separate table for active deliveries (materialized view)",
+        "description": "Copy only active deliveries to a separate table, query that instead."
+      },
+      {
+        "label": "C) Partition the table by date + index on (driver_id, status)",
+        "description": "Range partition by scheduled_at month, composite index within each partition."
+      }
+    ],
+    "bestOption": 0,
+    "explanation": "Option A (composite index) is the right first step:\n\n• The query is: WHERE driver_id = ? AND status = 'ACTIVE' AND scheduled_at >= today\n• Composite index (driver_id, status, scheduled_at) satisfies this perfectly\n• With 10M rows, this index reduces scan from 10M to ~5-20 rows (one driver's active deliveries today)\n• Simple, maintainable, no additional infrastructure\n\nOption B (materialized view) adds complexity — stale data, refresh logic, extra storage. Only justified if the main table is truly too large for indexes to help.\n\nOption C (partitioning) is good for 100M+ rows or when you need to drop old data quickly. For 10M with good indexes, premature.\n\n**Rule**: Always start with proper indexes. Add partitioning/caching only when indexes aren't enough.",
+    "tags": [
+      "database",
+      "indexes",
+      "performance"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-database-design-03"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Idempotency in Event Processing",
+    "question": "A Kafka consumer processes \"delivery-completed\" events and creates invoices in the billing system. How do you ensure that if the same event is processed twice (at-least-once delivery), you don't create duplicate invoices?",
+    "modelAnswer": "**Idempotency strategies (pick based on context):**\n\n**1. Unique constraint + INSERT ON CONFLICT (preferred):**\n```sql\nINSERT INTO invoice (delivery_id, amount, event_id, created_at)\nVALUES (:deliveryId, :amount, :eventId, NOW())\nON CONFLICT (delivery_id) DO NOTHING;\n```\n- If delivery_id already has an invoice → no-op\n- Atomic, no race condition, no distributed lock needed\n- Works because: one delivery = one invoice (business rule)\n\n**2. Idempotency key table (for complex operations):**\n```sql\nINSERT INTO processed_events (event_id, processed_at)\nVALUES (:eventId, NOW())\nON CONFLICT DO NOTHING;\n-- If inserted (affected = 1) → process\n-- If not inserted (affected = 0) → skip (already processed)\n```\n\n**3. Conditional state update:**\n```sql\nUPDATE delivery SET invoiced = true\nWHERE id = :deliveryId AND invoiced = false;\n-- affected = 1 → proceed to create invoice\n-- affected = 0 → already invoiced, skip\n```\n\n**Key principle**: The check and the action must be ATOMIC (same transaction). A SELECT exists followed by INSERT has a race condition.",
+    "followUp": "What about exactly-once semantics in Kafka? When would you use it vs at-least-once + idempotency?",
+    "tags": [
+      "idempotency",
+      "kafka",
+      "data-integrity"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-idempotency-in-event-processin-04"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Service Communication",
+    "question": "REWE has delivery-service, driver-service, route-service, and billing-service. When should they communicate synchronously (REST) vs asynchronously (Kafka events)?",
+    "modelAnswer": "**Decision matrix:**\n\n**Use synchronous REST when:**\n- Caller NEEDS the response to continue (query/validation)\n- Low latency required (<100ms)\n- Simple request-response pattern\n- Strong consistency needed for the operation\n\n**Examples:**\n- delivery-service validates driver availability → GET driver-service\n- UI requests delivery details → GET delivery-service\n- route-service calculates ETA → returns immediately\n\n**Use async Kafka when:**\n- Consumer doesn't need to respond to producer\n- Multiple independent consumers need the same event\n- Operation can tolerate seconds of delay\n- Retry/replay is important\n- Producer shouldn't fail if consumer is down\n\n**Examples:**\n- delivery-completed → billing creates invoice (async, can retry)\n- delivery-dispatched → notification-service sends SMS (async, non-critical)\n- driver-location-update → analytics aggregation (async, high volume)\n\n**Hybrid pattern (common in REWE logistics):**\n- Synchronous: validate + persist delivery\n- Async: publish event for downstream reactions\n```\nPOST /deliveries → delivery-service persists, returns 201\n                 → publishes delivery-planned event to Kafka\n                 → billing, routing, notifications consume independently\n```",
+    "followUp": "What happens when the synchronous call to driver-service times out during delivery creation?",
+    "tags": [
+      "architecture",
+      "sync-vs-async",
+      "resilience"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-service-communication-05"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "senior",
+    "subtopic": "Failure Handling",
+    "question": "The notification-service is down. delivery-service just completed a delivery and needs to notify the customer. What pattern do you use?",
+    "options": [
+      {
+        "label": "A) Retry 3 times with exponential backoff, then fail the delivery completion",
+        "description": "Synchronous retry. If notification fails after retries, roll back the delivery completion."
+      },
+      {
+        "label": "B) Outbox pattern: persist event in same TX as delivery, process notification async",
+        "description": "Save delivery + notification-event in same DB transaction. Separate process publishes to Kafka."
+      },
+      {
+        "label": "C) Fire-and-forget: publish to Kafka, if notification-service is down it will consume later",
+        "description": "Just publish the event. Kafka retains it. Notification-service will process when it recovers."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Option B (Outbox pattern) provides the strongest guarantee:\n\n**Why B wins:**\n- Delivery completion and notification intent are saved atomically (same TX)\n- If notification-service is down for hours, nothing is lost\n- Separate dispatcher reads outbox → publishes to Kafka → marks as sent\n- Even if Kafka is down temporarily, the outbox retains the intent\n\n**Why NOT A:** Notification is non-critical. Don't fail the core business operation (delivery completion) because a notification can't be sent right now.\n\n**Why NOT C (fire-and-forget to Kafka):** If the app crashes AFTER completing delivery but BEFORE publishing to Kafka, the event is lost. Outbox + same TX eliminates this gap.\n\n**The outbox pattern:**\n```\nTX: { delivery.status = COMPLETED; outbox.insert(notification_event); } COMMIT;\nDispatcher (async): read outbox → publish to Kafka → mark published\n```",
+    "tags": [
+      "outbox",
+      "resilience",
+      "eventual-consistency"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-failure-handling-06"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Scaling Strategy",
+    "question": "The delivery-service handles 1000 req/s during peak hours (morning route planning). Response time degrades from 50ms to 2s. How do you diagnose and fix?",
+    "modelAnswer": "**Diagnosis (in this order):**\n\n1. **Decompose latency**: Where is the time spent?\n   - Database queries? (check slow query log, connection pool)\n   - External service calls? (timeouts, latency)\n   - GC pauses? (heap pressure)\n   - CPU? (computation-heavy logic)\n   - Thread pool exhausted? (all threads blocked)\n\n2. **Most likely culprits at 1000 req/s:**\n   - Connection pool exhaustion (all JDBC connections in use)\n   - N+1 queries under load (10ms × 100 queries = 1s per request)\n   - External call without timeout holding threads\n\n**Fixes (by likely root cause):**\n\nIf DB connection pool: increase pool size cautiously + fix long-running queries\nIf N+1: add JOIN FETCH or batch loading\nIf external calls: add timeouts + circuit breaker + async where possible\nIf CPU: cache expensive calculations, offload to batch\n\n**Scaling options (after fixing root cause):**\n- Horizontal: add pods (if stateless — Spring Boot services are)\n- Read replicas: separate read traffic if reads dominate\n- Cache: Redis for frequently-read, rarely-changed data (route templates, driver profiles)\n- Async: move non-critical operations to Kafka (don't do everything in the request path)\n\n**Key insight**: Scale AFTER optimizing. Adding pods to a service with N+1 queries just adds more load to the database.",
+    "followUp": "How would you implement a circuit breaker for the route-optimization external service?",
+    "tags": [
+      "scalability",
+      "performance",
+      "diagnosis"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-scaling-strategy-07"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "API Design",
+    "question": "Design the REST API for the delivery resource. What endpoints, verbs, status codes?",
+    "modelAnswer": "```\n# Core CRUD\nGET    /api/v1/deliveries              → 200 (list, paginated)\nGET    /api/v1/deliveries/{id}         → 200 | 404\nPOST   /api/v1/deliveries              → 201 + Location header\nPUT    /api/v1/deliveries/{id}         → 200 | 404\nDELETE /api/v1/deliveries/{id}         → 204 | 404\n\n# State transitions (domain operations)\nPOST   /api/v1/deliveries/{id}/dispatch    → 200 | 409 (if not in PLANNED state)\nPOST   /api/v1/deliveries/{id}/complete    → 200 | 409 (if not in DISPATCHED state)\nPOST   /api/v1/deliveries/{id}/cancel      → 200 | 409 (if already COMPLETED)\n\n# Sub-resources\nGET    /api/v1/deliveries/{id}/stops       → 200 (list of stops for this delivery)\nGET    /api/v1/deliveries/{id}/events      → 200 (audit trail)\n\n# Filtered queries\nGET    /api/v1/deliveries?driverId=42&status=ACTIVE&date=2026-07-19\nGET    /api/v1/deliveries?routeId=7&sort=scheduledAt,asc&limit=50&offset=0\n```\n\n**Design decisions:**\n- State transitions as POST to sub-resource (not PATCH status field) — enforces valid transitions server-side\n- Pagination with offset/limit + deterministic sort\n- 409 Conflict for invalid state transitions (not 400 — the request is valid, the state isn't)\n- Sub-resources for related collections (stops, events)",
+    "followUp": "How would you handle bulk operations (dispatching 50 deliveries at once)?",
+    "tags": [
+      "rest",
+      "api-design",
+      "resources"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-api-design-08"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Caching Strategy",
+    "question": "Route templates (predefined routes with stops) are queried 500 times/minute but change once per week. How do you cache them?",
+    "options": [
+      {
+        "label": "A) Application-level cache (ConcurrentHashMap) with 1-hour TTL",
+        "description": "In-memory cache per pod instance, expires after 1 hour."
+      },
+      {
+        "label": "B) Redis cache with 24-hour TTL + invalidation on update",
+        "description": "Shared Redis cache. All pods read from same cache. Invalidate on admin update."
+      },
+      {
+        "label": "C) HTTP Cache-Control headers, var the API gateway cache",
+        "description": "Set max-age=3600 header. Gateway caches response, serves without hitting backend."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Option B (Redis + invalidation) is the best balance:\n\n**Why B:**\n- Shared across all pods (consistent data)\n- 24h TTL as safety net (even without explicit invalidation)\n- Explicit invalidation when admin updates routes (immediate consistency when needed)\n- 500 reads/min from Redis: trivial load (Redis handles 100K+/s)\n\n**Why NOT A:** Each pod has its own cache → inconsistency for up to 1 hour after update. If you have 5 pods, some serve stale data while others serve fresh.\n\n**Why NOT C:** Works if you don't need fine-grained invalidation. But when an admin updates a route, waiting up to 1 hour for cache expiry is unacceptable for logistics (drivers get wrong routes).\n\n**Pattern:**\n```\nRead: check Redis → if miss, query DB → write to Redis → return\nUpdate: update DB → delete Redis key → next read repopulates\n```",
+    "tags": [
+      "caching",
+      "redis",
+      "performance"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-caching-strategy-09"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Data Consistency",
+    "question": "delivery-service and billing-service have separate databases (microservice pattern). How do you ensure a completed delivery always has an invoice — without distributed transactions?",
+    "modelAnswer": "**Problem**: Two databases, no 2PC (distributed transaction). How to keep them consistent?\n\n**Solution: Eventual Consistency + Saga/Event pattern:**\n\n1. delivery-service: marks delivery as COMPLETED + publishes delivery-completed event (outbox pattern)\n2. billing-service: consumes event → creates invoice → publishes invoice-created event\n3. delivery-service (optional): consumes invoice-created → marks delivery as INVOICED\n\n**Handling failures:**\n\nIf billing-service fails to create invoice:\n- Kafka redelivers (at-least-once)\n- After max retries → goes to Dead Letter Topic\n- Alert on DLT → ops team investigates\n- delivery-service can query: \"deliveries completed >24h ago without INVOICED status\" → reconciliation\n\n**State machine approach:**\n```\nCOMPLETED → (event consumed by billing) → INVOICING → (invoice created) → INVOICED\n                                                     ↓ (failure)\n                                                  INVOICE_FAILED → DLT + alert\n```\n\n**Key principles:**\n- Accept eventual consistency (seconds, not synchronous)\n- Idempotent consumers (safe to retry)\n- Compensating actions if needed (cancel invoice if delivery is reversed)\n- Monitoring: alert on \"stuck\" states (COMPLETED but never INVOICED after 24h)",
+    "followUp": "What if the business requires synchronous invoice creation before confirming delivery to the customer?",
+    "tags": [
+      "consistency",
+      "saga",
+      "microservices"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-data-consistency-10"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Observability",
+    "question": "How do you monitor a delivery-service in production? What metrics, logs, and alerts would you set up?",
+    "modelAnswer": "**Three pillars of observability:**\n\n**1. Metrics (Prometheus/Grafana):**\n- Request latency: p50, p95, p99 per endpoint\n- Error rate: 4xx/5xx per endpoint\n- Throughput: requests/second\n- Business metrics: deliveries completed/hour, avg delivery time\n- Infrastructure: CPU, memory, GC pauses, connection pool usage\n\n**2. Logs (ELK/Kibana):**\n- Structured JSON logs with correlation ID\n- Log levels: ERROR for failures, WARN for retries, INFO for business events\n- Include: deliveryId, driverId, operation, duration\n- Never log: passwords, tokens, personal data\n\n**3. Tracing (Jaeger/Zipkin):**\n- Distributed trace across services (delivery → billing → notification)\n- Identify slow spans (which service/DB query is the bottleneck?)\n\n**Alerts (PagerDuty/OpsGenie):**\n- p95 latency > 500ms for 5 minutes → WARNING\n- Error rate > 5% for 2 minutes → CRITICAL\n- Kafka consumer lag > 10,000 → WARNING\n- Zero deliveries completed in last hour (business hours) → CRITICAL\n- Connection pool > 80% utilized → WARNING\n\n**Dashboard**: One screen showing health of all transport services — traffic lights (green/yellow/red) for each metric.",
+    "followUp": "How do you handle alert fatigue? What makes a good alert vs a noisy one?",
+    "tags": [
+      "observability",
+      "monitoring",
+      "production"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-observability-11"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Deployment & Zero Downtime",
+    "question": "How do you deploy a new version of delivery-service without downtime? Deliveries are happening 24/7.",
+    "modelAnswer": "**Rolling deployment with Kubernetes:**\n\n```yaml\nstrategy:\n  type: RollingUpdate\n  rollingUpdate:\n    maxUnavailable: 0    # never reduce below desired count\n    maxSurge: 1          # add 1 new pod before removing old\n```\n\n**Prerequisites for zero-downtime:**\n\n1. **Health probes**:\n   - Readiness: only route traffic when app is fully started\n   - Liveness: restart if stuck (but don't flap)\n\n2. **Graceful shutdown**:\n   - On SIGTERM: stop accepting new requests\n   - Finish in-flight requests (grace period: 30s)\n   - Close DB connections, flush buffers, commit offsets\n\n3. **Backward-compatible changes**:\n   - DB schema: additive only (new column with default, not rename/delete)\n   - API: new optional fields, not breaking changes\n   - Kafka events: new fields OK, don't remove existing fields\n\n4. **Database migrations**:\n   - Run BEFORE deployment (Flyway/Liquibase)\n   - Must be compatible with both old AND new code versions\n   - Two-step for breaking changes: Sprint 1 adds new column, Sprint 2 removes old\n\n**Deployment sequence**:\n```\n1. Run DB migration (backward-compatible)\n2. Deploy new pods (rolling: new pod ready → drain old pod)\n3. Old pods finish in-flight work → terminate\n4. All traffic on new version\n```",
+    "followUp": "What if a deployment introduces a bug? How do you roll back?",
+    "tags": [
+      "deployment",
+      "kubernetes",
+      "zero-downtime"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-deployment-zero-downtime-12"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Data Modeling",
+    "question": "A delivery has a status that changes over time: PLANNED → DISPATCHED → IN_TRANSIT → DELIVERED (or FAILED). How do you model this in the database?",
+    "options": [
+      {
+        "label": "A) Single status column on delivery table (overwritten on each transition)",
+        "description": "delivery.status = VARCHAR, updated to new value on each state change."
+      },
+      {
+        "label": "B) Status column + separate delivery_event table (audit trail)",
+        "description": "Current status on delivery table + full history in events table with timestamps."
+      },
+      {
+        "label": "C) Event sourcing: only store events, derive current state from event stream",
+        "description": "No status column. Replay delivery-planned, delivery-dispatched, etc. to compute current state."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Option B (status + event trail) is the pragmatic choice for logistics:\n\n**Why B:**\n- Fast reads: SELECT delivery.status (single column, indexed)\n- Full audit: delivery_event table shows WHO changed WHAT and WHEN\n- Simple queries: \"all DISPATCHED deliveries\" is a simple WHERE\n- History: \"when was this delivery dispatched?\" → query events table\n- Compliance: logistics requires audit trail for disputes\n\n**Why NOT A (status only):** Loses history. \"When was it dispatched?\" — unknown. Disputes unresolvable.\n\n**Why NOT C (event sourcing):** Overkill for this use case. Computing current state from N events is expensive for reads. Makes simple queries complex. Good for financial systems, not needed for delivery tracking.\n\n**Schema:**\n```sql\ndelivery (id, status, driver_id, route_id, scheduled_at, ...)\ndelivery_event (id, delivery_id, event_type, old_status, new_status, timestamp, user_id, metadata)\n```",
+    "tags": [
+      "data-modeling",
+      "audit-trail",
+      "event-sourcing"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-data-modeling-13"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Rate Limiting & Back-pressure",
+    "question": "The route-optimization service (external) has a rate limit of 100 requests/minute. During peak morning planning, delivery-service needs to calculate routes for 500 deliveries. How do you handle this?",
+    "modelAnswer": "**Problem**: 500 requests needed, only 100/min allowed. Synchronous = 5 minutes wait.\n\n**Solution: Queue-based rate-limited processing:**\n\n1. **Batch + Queue**: \n   - Accept all 500 planning requests\n   - Persist them as PENDING in database\n   - Enqueue to a rate-limited processor\n\n2. **Rate-limited consumer**:\n   ```java\n   @Scheduled(fixedRate = 600) // every 600ms = 100/min\n   void processNextRoute() {\n       PendingRoute next = pendingRouteRepo.findFirstByStatus(PENDING);\n       if (next == null) return;\n       Route route = routeOptimizationClient.calculate(next.getStops());\n       next.setRoute(route);\n       next.setStatus(COMPLETED);\n       pendingRouteRepo.save(next);\n   }\n   ```\n\n3. **User experience**:\n   - Return 202 Accepted immediately (\"route calculation in progress\")\n   - Client polls: GET /deliveries/{id}/route → 200 when ready, 202 while pending\n   - Or: push notification/WebSocket when route is calculated\n\n4. **Optimization**:\n   - Batch API if external service supports it (send 10 routes per call)\n   - Cache identical routes (same stops → same result)\n   - Pre-calculate common routes overnight\n\n**Key principle**: Don't make 500 users wait because of an external rate limit. Accept the work, process in background, notify when ready.",
+    "followUp": "What if the external route service is completely down for 30 minutes during peak planning?",
+    "tags": [
+      "rate-limiting",
+      "async",
+      "resilience"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-rate-limiting-back-pressure-14"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Overall Architecture",
+    "question": "Draw the high-level architecture for REWE transport logistics. What services, what communication, what data stores?",
+    "modelAnswer": "**Services:**\n```\n┌─────────────────────────────────────────────────────────┐\n│                    API Gateway (Kong/WSO2)               │\n└──────────┬──────────┬──────────┬──────────┬────────────┘\n           │          │          │          │\n     ┌─────▼─────┐ ┌──▼───┐ ┌───▼───┐ ┌───▼────┐\n     │ delivery  │ │driver │ │ route │ │billing │\n     │ service   │ │service│ │service│ │service │\n     └─────┬─────┘ └──┬───┘ └───┬───┘ └───┬────┘\n           │          │          │          │\n     ┌─────▼──────────▼──────────▼──────────▼────────────┐\n     │              Kafka (Event Bus)                      │\n     │  Topics: delivery-events, driver-location,         │\n     │          route-optimized, billing-events            │\n     └──────────┬──────────┬──────────┬──────────────────┘\n                │          │          │\n          ┌─────▼─────┐ ┌──▼────┐ ┌──▼──────────┐\n          │notification│ │  ETA  │ │  analytics  │\n          │  service   │ │service│ │  service    │\n          └───────────┘ └───────┘ └─────────────┘\n```\n\n**Data stores:**\n- delivery-service → PostgreSQL (deliveries, stops, events)\n- driver-service → PostgreSQL (drivers, availability, certifications)\n- ETA-service → Redis (current positions, calculated ETAs)\n- analytics → ClickHouse/TimescaleDB (time-series data)\n- notifications → stateless (just sends, no own DB)\n\n**Communication:**\n- Sync (REST): API Gateway → services (user-facing queries)\n- Sync (REST): delivery → driver-service (validate availability)\n- Async (Kafka): all state changes published as events\n- Async (Kafka): driver-location high-frequency updates\n\n**Key patterns:**\n- Each service owns its data (no shared DB)\n- Events for cross-service communication\n- API Gateway for auth, rate limiting, routing\n- Redis for hot/real-time data (positions, ETAs)",
+    "followUp": "How would you handle the case where delivery-service needs data from driver-service but driver-service is down?",
+    "tags": [
+      "architecture",
+      "microservices",
+      "system-design"
+    ],
+    "topic": "software-architecture",
+    "id": "system-design-overall-architecture-15"
+  },
+  {
+    "id": "interview-system-design-01",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Design Approach",
+    "difficulty": "interview",
+    "question": "How do you start a system-design interview?",
+    "interviewerIntent": "Test structured design thinking",
+    "answer": "I start by clarifying the requirements.\n\nI ask about users, traffic, read and write volumes, latency, consistency, availability, data retention, security and failure expectations.\n\nThen I identify the main use cases and propose a simple high-level architecture.\n\nI explain trade-offs before adding more complex components.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-02",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Scalability",
+    "difficulty": "interview",
+    "question": "What does stateless service mean?",
+    "interviewerIntent": "Check scalability fundamentals",
+    "answer": "A stateless service does not keep client-specific session state only in the memory of one application instance.\n\nAny instance can handle the next request.\n\nShared state is stored in external systems such as databases or distributed caches.\n\nThis makes horizontal scaling and failover easier.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-03",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Consistency",
+    "difficulty": "interview",
+    "question": "What is eventual consistency?",
+    "interviewerIntent": "Verify distributed systems understanding",
+    "answer": "Eventual consistency means that different parts of a distributed system may temporarily have different values, but they converge after updates are propagated.\n\nIt is common with read replicas, caches and event-driven systems.\n\nIt improves scalability and decoupling, but business operations that require immediate consistency need special handling.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-04",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Resilience",
+    "difficulty": "interview",
+    "question": "What is a circuit breaker?",
+    "interviewerIntent": "Check resilience patterns knowledge",
+    "answer": "A circuit breaker stops repeated calls to a dependency that is failing.\n\nAfter a failure threshold, it opens and fails fast.\n\nLater, it allows limited test calls to check whether the dependency has recovered.\n\nThis protects the system from cascading failures.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-05",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Event-Driven",
+    "difficulty": "interview",
+    "question": "What is the transactional outbox pattern?",
+    "interviewerIntent": "Test reliable event publishing knowledge",
+    "answer": "The transactional outbox pattern solves the problem of updating the database and publishing an event reliably.\n\nThe application stores the business change and an outbox record in the same database transaction.\n\nA separate publisher reads the outbox and sends the event to Kafka.\n\nThis avoids a situation where the database commit succeeds but event publication fails, or the reverse.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-06",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Catalogue Design",
+    "difficulty": "interview",
+    "question": "Design a product catalogue service for a supermarket with millions of reads per day.",
+    "interviewerIntent": "Full system design exercise for retail domain",
+    "answer": "First, I would clarify the catalogue size, expected latency, update frequency, regional pricing and consistency requirements.\n\nI would expose a stateless catalogue API behind a load balancer.\n\nProduct data would be stored in PostgreSQL.\n\nFor read-heavy traffic, I could use read replicas and Redis cache.\n\nFrequently accessed product responses would follow a cache-aside strategy.\n\nPrice and product changes could be published through Kafka.\n\nConsumers would update the read model or invalidate related Redis entries.\n\nI would monitor cache hit rate, database latency, replication lag, Kafka consumer lag and API errors.\n\nI would start with a simple architecture and add components only when traffic and operational requirements justify them.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-system-design-07",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Checkout Design",
+    "difficulty": "interview",
+    "question": "Design a checkout service for a supermarket.",
+    "interviewerIntent": "Full checkout system design exercise",
+    "answer": "I would first clarify payment methods, stock consistency, expected traffic and failure requirements.\n\nThe checkout service would receive the basket and an idempotency key.\n\nIt would validate product availability and current prices.\n\nThe order would be created in PostgreSQL inside a short transaction.\n\nExternal operations such as payment, notification and analytics should not all be executed inside the same database transaction.\n\nThe service could use an orchestrated workflow or saga.\n\nOrder events would be published to Kafka using a reliable mechanism such as the transactional outbox pattern.\n\nConsumers would process inventory, payment, notification and analytics.\n\nI would track order states explicitly and provide safe retries and compensation for failures.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-obs-01",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "SLO & SRE",
+    "difficulty": "senior",
+    "question": "What is the difference between an SLA, SLO and SLI?",
+    "interviewerIntent": "Test SRE fundamentals",
+    "answer": "An SLI is the measured indicator, such as successful request percentage or p95 latency.\n\nAn SLO is the internal target for that indicator.\n\nAn SLA is the formal commitment made to customers and may include consequences if the commitment is not met.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-obs-02",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "SLO & SRE",
+    "difficulty": "senior",
+    "question": "What is an error budget?",
+    "interviewerIntent": "Check error budget concept",
+    "answer": "An error budget is the amount of unreliability allowed by the SLO.\n\nFor example, an availability target of 99.9% permits approximately 0.1% unavailability over the measurement period. Teams can use the remaining budget to balance delivery speed and reliability.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-obs-03",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Metrics",
+    "difficulty": "senior",
+    "question": "Why are averages dangerous for latency?",
+    "interviewerIntent": "Verify metrics understanding",
+    "answer": "An average can hide a small but important group of extremely slow requests.\n\nPercentiles such as p95 and p99 show the experience of slower users and are more useful for detecting tail-latency problems.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-obs-04",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Business Monitoring",
+    "difficulty": "senior",
+    "question": "What would you monitor for a logistics process besides HTTP metrics?",
+    "interviewerIntent": "Test business observability thinking",
+    "answer": "I would monitor business-flow indicators:\n\n- deliveries stuck in one state\n- routes not assigned before departure\n- events waiting for reconciliation\n- duplicate assignments\n- unusually low completion volume\n- delay between physical operation and system update\n\nA technically healthy service can still represent a broken business process.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-ddd-01",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Bounded Contexts",
+    "difficulty": "senior",
+    "question": "What could be the bounded contexts in transport logistics?",
+    "interviewerIntent": "Test domain modeling thinking",
+    "answer": "Possible bounded contexts could include transport planning, delivery execution, driver management, carrier integration, route optimization, communication and billing.\n\nI would not decide the boundaries only from technical components. I would examine ownership, terminology, business rules, rate of change and transactional consistency requirements.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-ddd-02",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Aggregates",
+    "difficulty": "senior",
+    "question": "What is an aggregate?",
+    "interviewerIntent": "Check aggregate understanding",
+    "answer": "An aggregate is a consistency boundary containing one or more domain objects and controlled through an aggregate root.\n\nIn a delivery aggregate, operations such as dispatching or completing the delivery should be performed through the delivery root so its invariants remain valid.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-ddd-03",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Transaction Boundaries",
+    "difficulty": "senior",
+    "question": "When should two operations be in the same transaction?",
+    "interviewerIntent": "Test transaction boundary judgment",
+    "answer": "They should normally share a transaction when the business invariant requires immediate atomic consistency and the data belongs to the same service boundary.\n\nOperations across independent services should generally use an explicit distributed workflow instead of trying to reproduce a local ACID transaction across the network.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-ddd-04",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Anti-Corruption Layer",
+    "difficulty": "senior",
+    "question": "What is an anti-corruption layer?",
+    "interviewerIntent": "Verify ACL understanding",
+    "answer": "It protects one domain model from the terminology and structures of another system.\n\nWhen integrating a modern transport service with a legacy platform or an external carrier, the layer translates external messages into the internal domain language instead of allowing the external model to spread through the application.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-ddd-05",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Architecture",
+    "difficulty": "senior",
+    "question": "When would you choose a modular monolith instead of microservices?",
+    "interviewerIntent": "Test architecture pragmatism",
+    "answer": "I would choose a modular monolith when the domain boundaries are not mature, the team is relatively small, independent scaling is not required and operational simplicity is more valuable than independent deployment.\n\nI would preserve clear module boundaries so services can be extracted later if the business justifies it.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-logistics-01",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Offline Operations",
+    "difficulty": "senior",
+    "question": "A truck loses connectivity for two hours. How should the system behave?",
+    "interviewerIntent": "Test offline-first design thinking",
+    "answer": "The driver application should support offline operation for essential tasks.\n\nActions should be recorded locally with stable identifiers and timestamps, then synchronized when connectivity returns.\n\nThe backend must treat synchronization as at-least-once, process commands idempotently and resolve conflicts using explicit domain rules rather than only last-write-wins.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-logistics-02",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Event Processing",
+    "difficulty": "senior",
+    "question": "How would you process driver-location events at scale?",
+    "interviewerIntent": "Test high-throughput event design",
+    "answer": "I would partition events by driver or vehicle identifier to preserve ordering per source.\n\nThe hot current location could be stored in Redis, while historical positions could be written asynchronously to a time-series or analytical store.\n\nI would reduce unnecessary volume through sampling, movement thresholds or batching, depending on the precision required.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-logistics-03",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Event Ordering",
+    "difficulty": "senior",
+    "question": "A delivery event arrives out of order. What do you do?",
+    "interviewerIntent": "Check event ordering strategy",
+    "answer": "I would include an event identifier, aggregate identifier, occurrence time and preferably an aggregate sequence or version.\n\nThe consumer can reject, buffer or reconcile an out-of-order event depending on the business requirement. Relying only on Kafka arrival time is insufficient when events come from offline devices or multiple systems.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-logistics-04",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Idempotency",
+    "difficulty": "senior",
+    "question": "How do you prevent duplicate delivery confirmation?",
+    "interviewerIntent": "Verify idempotency in logistics context",
+    "answer": "The command should include an idempotency key or a stable operation identifier.\n\nThe database must record processed operations under a uniqueness constraint. Repeating the command should return the previously produced result instead of applying the state transition again.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-logistics-05",
+    "type": "ORAL_ANSWER",
+    "topic": "software-architecture",
+    "subtopic": "Integration",
+    "difficulty": "senior",
+    "question": "How would you handle an external carrier sending malformed files or messages?",
+    "interviewerIntent": "Test integration resilience",
+    "answer": "I would validate at the integration boundary, quarantine invalid input, preserve the original payload securely and provide actionable diagnostics.\n\nInvalid records should not block all valid records in the same batch. I would expose reconciliation tooling because operational teams need to see, correct and replay failures.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "schemaVersion": 2,
+    "id": "sd-tracking-v2",
+    "topic": "software-architecture",
+    "subtopic": "Real-time Delivery Tracking",
+    "type": "ORAL_ANSWER",
+    "difficulty": "SENIOR",
+    "question": "Design a real-time delivery tracking system where customers can see their delivery position on a map, with ETA updates. Drivers send GPS coordinates every 10 seconds. 500 active drivers simultaneously.",
+    "context": "You are in a system-design interview for REWE Digital. The interviewer gave you this problem and is watching how you approach it — not just what solution you pick.",
+    "knownFacts": [
+      "500 active drivers",
+      "GPS updates every 10 seconds",
+      "Customers see position on a map",
+      "ETA updates needed"
+    ],
+    "intentionallyMissingInformation": [
+      "What 'real-time' means to the business (sub-second? 5s? 30s?)",
+      "Number of concurrent customers tracking deliveries",
+      "Whether position history is needed",
+      "Whether ETA is distance-based or traffic-aware",
+      "Failure behavior when GPS updates stop",
+      "Growth trajectory beyond 500 drivers"
+    ],
+    "oralMode": {
+      "preparationSeconds": 30,
+      "initialAnswerSeconds": 180,
+      "followUpSeconds": 60
+    },
+    "openingGuidance": {
+      "objective": "Demonstrate that you identify missing requirements before proposing architecture. Show the interviewer you know that 'real-time' is ambiguous and that scale determines complexity.",
+      "requiredElements": [
+        "Acknowledge the problem domain (delivery tracking)",
+        "State what information is missing before you can design",
+        "Signal that your first step is clarification, not solution"
+      ],
+      "avoid": [
+        "Jumping to 'I would use Kafka and WebSocket'",
+        "Reciting a generic architecture without connecting to the specific constraints",
+        "Saying 'real-time' without defining what freshness means"
+      ]
+    },
+    "clarifyingQuestions": [
+      {
+        "category": "LATENCY_SLO",
+        "question": "What does 'real-time' mean for the customer? Sub-second map updates, or is a 5-10 second refresh acceptable?",
+        "whyItMatters": "Sub-second requires persistent push connections (WebSocket/SSE). 5-10 second tolerance allows simple polling, which is drastically simpler to build, debug, and scale.",
+        "affectedDecisions": [
+          "Push vs Pull architecture",
+          "Infrastructure complexity",
+          "Connection management"
+        ]
+      },
+      {
+        "category": "SCALE",
+        "question": "Is 500 the peak or steady-state? What's the expected growth over 12 months?",
+        "whyItMatters": "500 drivers at 10s intervals = 50 events/second. This is trivially handled by a single PostgreSQL instance. Designing for 50k when you have 500 is premature complexity.",
+        "affectedDecisions": [
+          "Whether to introduce Kafka or event streaming",
+          "Database choice",
+          "Horizontal scaling needs"
+        ]
+      },
+      {
+        "category": "CONSUMERS",
+        "question": "How many customers are tracking simultaneously? What's the ratio of watchers to drivers?",
+        "whyItMatters": "If 3 customers watch each driver, that's 1500 WebSocket connections — one pod handles this. If it's 50 watchers per driver (public tracking page), the fan-out problem changes significantly.",
+        "affectedDecisions": [
+          "Fan-out strategy",
+          "Connection limits per pod",
+          "Pub/sub topology"
+        ]
+      },
+      {
+        "category": "DATA_RETENTION",
+        "question": "Do we need position history for analytics or route replay, or only the current position?",
+        "whyItMatters": "Current-only means a simple cache (Redis hash, overwritten each update). History means append-only storage, which changes write patterns and storage costs entirely.",
+        "affectedDecisions": [
+          "Storage model",
+          "Whether to introduce a streaming log",
+          "Analytics pipeline"
+        ]
+      },
+      {
+        "category": "FAILURE_MODE",
+        "question": "What should the customer see if GPS updates stop for 30+ seconds? Stale position? Warning? ETA becomes uncertain?",
+        "whyItMatters": "Failure UX is part of the design. Silent stale positions erode trust. Explicit uncertainty ('last seen 45s ago') is honest and requires staleness detection in the serving layer.",
+        "affectedDecisions": [
+          "Staleness detection",
+          "Client-side timeout",
+          "Health status per driver"
+        ]
+      }
+    ],
+    "assumptionsToDeclare": [
+      {
+        "assumption": "I'll assume 'real-time' means 5-10 second freshness is acceptable for the MVP, with sub-second as a future optimization.",
+        "consequence": "This allows starting with client polling, avoiding WebSocket infrastructure initially."
+      },
+      {
+        "assumption": "I'll assume we need current position only, not full route history.",
+        "consequence": "A Redis hash (driver_id → lat/lng/timestamp) suffices for serving. No append-only log needed initially."
+      }
+    ],
+    "tradeoffs": [
+      {
+        "dimensionA": "Freshness (sub-second updates)",
+        "dimensionB": "Infrastructure simplicity",
+        "domainContext": "At 500 drivers and moderate customer concurrency, the infrastructure cost of WebSocket + Redis pub/sub is real engineering time with minimal user benefit if 5s polling is acceptable.",
+        "consequence": "Choosing sub-second when 5s suffices adds WebSocket gateway, connection state management, reconnection logic, and monitoring complexity — for no measurable business outcome at this scale."
+      },
+      {
+        "dimensionA": "Durability (event log of all positions)",
+        "dimensionB": "Operational cost",
+        "domainContext": "Storing every GPS ping (50/sec × 86400 sec/day = 4.3M records/day) requires purpose. If nobody queries history, it's cost without value.",
+        "consequence": "Adding Kafka for durability when you only need current position is designing for a requirement that doesn't exist yet. Add it when analytics requests it."
+      }
+    ],
+    "decisionBranches": [
+      {
+        "condition": "500 drivers, 5-10s freshness acceptable, current position only",
+        "recommendation": "HTTP polling every 5s against Redis cache. Drivers POST GPS to a simple REST endpoint that writes to Redis hash.",
+        "rationale": "50 events/sec ingestion is trivial for any backend. 1500 poll requests every 5s = 300 req/s read — a single Redis instance handles millions. No Kafka, no WebSocket, no pub/sub.",
+        "costs": [
+          "Not truly real-time (5s lag)",
+          "Polling creates steady request load even when nothing changes"
+        ],
+        "risks": [
+          "If product later demands sub-second, requires rearchitecture to push model"
+        ],
+        "invalidatedBy": [
+          "Product confirms sub-second is required from day one",
+          "Customer count exceeds 50k concurrent"
+        ]
+      },
+      {
+        "condition": "500 drivers, sub-second required, moderate fan-out",
+        "recommendation": "WebSocket connection from customer app. Backend pushes from Redis pub/sub channel per driver_id when position updates.",
+        "rationale": "Sub-second requires server push. Redis pub/sub is lightweight for this scale. WebSocket is the standard for bidirectional real-time on web.",
+        "costs": [
+          "WebSocket state management (reconnection, heartbeat)",
+          "Load balancer must support sticky/upgrade",
+          "Monitoring connection count per pod"
+        ],
+        "risks": [
+          "WebSocket connections are stateful — pod restart drops all connections",
+          "Proxy/firewall may not support WebSocket in all customer networks"
+        ],
+        "invalidatedBy": [
+          "Customer only needs position on page load (not live tracking)",
+          "SSE is sufficient (unidirectional, simpler proxy support)"
+        ]
+      },
+      {
+        "condition": "50,000+ drivers, history needed, multiple consumers of position data",
+        "recommendation": "Kafka topic (partitioned by driver_id) for ingestion. Consumers: one writes to Redis (hot serving), one writes to TimescaleDB (cold analytics). WebSocket gateway cluster serves customers.",
+        "rationale": "At this scale, multiple systems need position data (tracking, ETA, analytics, operations). A durable log decouples producers from consumers. Kafka's partitioning gives ordering per driver.",
+        "costs": [
+          "Kafka operational complexity",
+          "Consumer lag monitoring",
+          "Schema management"
+        ],
+        "risks": [
+          "Kafka is operationally heavy for a small team",
+          "Consumer lag can make positions stale without alerting"
+        ],
+        "invalidatedBy": [
+          "Team has no Kafka expertise and no budget to build it",
+          "Scale remains under 1000 drivers for foreseeable future"
+        ]
+      }
+    ],
+    "validationPlan": [
+      {
+        "hypothesis": "Polling at 5s intervals delivers acceptable freshness for customer satisfaction.",
+        "method": "A/B test or user research: show customers tracking with 5s refresh vs 1s. Measure satisfaction score and complaints.",
+        "metrics": [
+          "Customer satisfaction score",
+          "Support tickets about 'wrong position'",
+          "Time customers spend on tracking page"
+        ],
+        "successCriteria": [
+          "No statistically significant difference in satisfaction between 1s and 5s",
+          "Support tickets about position < 0.1% of deliveries"
+        ],
+        "failureSignals": [
+          "Customers report 'delivery jumped' because position updated too infrequently",
+          "Product insists on sub-second after seeing competitor"
+        ]
+      },
+      {
+        "hypothesis": "Redis handles 50 writes/sec + 300 reads/sec without degradation.",
+        "method": "Load test with simulated GPS events at 2x peak (100 events/sec write, 600 reads/sec).",
+        "metrics": [
+          "Redis p99 latency",
+          "Memory usage growth over 24h",
+          "CPU utilization"
+        ],
+        "successCriteria": [
+          "p99 < 5ms",
+          "Memory stable (no leak from accumulating drivers)",
+          "CPU < 30%"
+        ],
+        "failureSignals": [
+          "p99 spikes during write bursts",
+          "Memory grows linearly (stale driver entries not evicted)"
+        ]
+      }
+    ],
+    "followUps": [
+      {
+        "type": "CHANGE_REQUIREMENT",
+        "question": "Product now says customers complain about stale positions. They want sub-second updates. How do you migrate?",
+        "interviewerIntent": "Tests ability to evolve architecture incrementally, not redesign from scratch.",
+        "strongSignals": [
+          "Proposes adding WebSocket/SSE layer on top of existing Redis cache",
+          "Keeps polling as fallback for clients that can't WebSocket",
+          "Discusses migration without downtime"
+        ],
+        "weakSignals": [
+          "Proposes replacing everything with Kafka",
+          "No migration plan, just 'rebuild with WebSocket'",
+          "Doesn't address existing polling clients"
+        ],
+        "hint": "Add a WebSocket gateway that subscribes to Redis pub/sub. Existing polling clients continue working. New clients connect via WebSocket. Gradual migration."
+      },
+      {
+        "type": "FAILURE_SCENARIO",
+        "question": "A driver's phone loses connectivity for 2 minutes. What does the customer see? What happens to ETA?",
+        "interviewerIntent": "Tests failure mode thinking — a critical aspect of real-time systems that candidates often ignore.",
+        "strongSignals": [
+          "Staleness detection (no update for 30s → mark as 'last seen X ago')",
+          "ETA becomes uncertain/range instead of precise",
+          "Discusses batch upload of buffered GPS when connectivity returns"
+        ],
+        "weakSignals": [
+          "Just show last known position (silent staleness)",
+          "Doesn't mention ETA impact",
+          "No recovery strategy for buffered updates"
+        ],
+        "hint": "Track last_update_timestamp per driver. If > 30s stale, show 'last updated X seconds ago' to customer. ETA shows range instead of precise time. When driver reconnects, batch-process buffered pings."
+      },
+      {
+        "type": "CAPACITY_ESTIMATION",
+        "question": "Calculate the storage and bandwidth for position history if we decide to keep 30 days.",
+        "interviewerIntent": "Tests back-of-envelope estimation skills.",
+        "strongSignals": [
+          "Calculates: 500 drivers × 6/min × 60min × 24h × 30d ≈ 130M records",
+          "Estimates record size (~50 bytes: driver_id, lat, lng, timestamp) → ~6.5GB raw",
+          "Proposes partitioning by date for easy deletion"
+        ],
+        "weakSignals": [
+          "Cannot estimate order of magnitude",
+          "Confuses storage with bandwidth",
+          "Proposes complex solution for a small data volume"
+        ],
+        "hint": "500 × 6/min × 1440min/day × 30d = 130M records. At ~50 bytes each = ~6.5GB. TimescaleDB or partitioned PostgreSQL handles this trivially. Don't over-engineer."
+      },
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "A colleague suggests Server-Sent Events instead of WebSocket. How do you respond?",
+        "interviewerIntent": "Tests whether candidate knows the actual differences and can evaluate alternatives honestly.",
+        "strongSignals": [
+          "Acknowledges SSE is simpler (unidirectional, HTTP-based, works through proxies)",
+          "Notes tracking is unidirectional (server→client only) so SSE is valid",
+          "Discusses when WebSocket would be needed (bidirectional: chat, interactive maps)"
+        ],
+        "weakSignals": [
+          "Dismisses SSE without reason",
+          "Claims WebSocket is 'always better for real-time'",
+          "Cannot explain the actual technical difference"
+        ],
+        "hint": "For tracking (server→client only), SSE is arguably better: simpler, auto-reconnects, works through HTTP proxies, no upgrade handshake. WebSocket only needed if client sends data back (chat, interactive control)."
+      }
+    ],
+    "experienceEvidence": [
+      {
+        "area": "Event-driven architecture with message queues",
+        "level": "PRODUCTION_EXPERIENCE",
+        "evidence": "8 years with JMS/ActiveMQ in SGN3 — 80 queues, 128 MDB consumers, retry/DLQ patterns",
+        "safeWording": "I have extensive production experience with event-driven architecture using JMS and ActiveMQ — 80 queues handling asynchronous processing across modules."
+      },
+      {
+        "area": "Kafka specifically",
+        "level": "STUDIED_NOT_USED",
+        "safeWording": "I have studied Kafka's architecture — partitions, consumer groups, offset management — but have not operated it in production. My JMS experience transfers the consumption patterns; Kafka's operational model is what I would need to learn on the job."
+      },
+      {
+        "area": "WebSocket / real-time push",
+        "level": "STUDIED_NOT_USED",
+        "safeWording": "I have not built WebSocket services in production. I understand the protocol and connection lifecycle conceptually. My real-time experience is server-push via JSF AJAX and JMS notifications."
+      },
+      {
+        "area": "Redis as cache/serving layer",
+        "level": "STUDIED_NOT_USED",
+        "safeWording": "I have not operated Redis in production. My caching experience is Infinispan (embedded in WildFly) and application-level ConcurrentHashMap caches with TTL."
+      },
+      {
+        "area": "APM and production monitoring",
+        "level": "PRODUCTION_EXPERIENCE",
+        "evidence": "Daily use of Glowroot for latency diagnosis, Kibana for log correlation, EXPLAIN ANALYZE for query plans",
+        "safeWording": "I monitor production daily using Glowroot for transaction latency and query breakdown, and Kibana for error patterns and correlation."
+      }
+    ],
+    "scoringRubric": [
+      {
+        "criterion": "CLARIFICATION",
+        "weight": 25,
+        "strongSignals": [
+          "Asks what 'real-time' means before designing",
+          "Identifies scale as a key decision factor",
+          "Questions failure behavior"
+        ],
+        "weakSignals": [
+          "No questions — jumps to architecture",
+          "Only asks 1 generic question",
+          "Assumes all requirements are in the problem statement"
+        ]
+      },
+      {
+        "criterion": "TRADEOFFS",
+        "weight": 20,
+        "strongSignals": [
+          "Explicitly names freshness vs simplicity",
+          "Explains why Kafka is overkill at this scale",
+          "Presents alternatives with conditions"
+        ],
+        "weakSignals": [
+          "Only one solution presented",
+          "No mention of costs or alternatives",
+          "Technology choice without justification"
+        ]
+      },
+      {
+        "criterion": "CONDITIONAL_REASONING",
+        "weight": 20,
+        "strongSignals": [
+          "Uses 'if X then Y, if Z then W' structure",
+          "Recommendation changes based on scale/requirements",
+          "Acknowledges when their recommendation is invalidated"
+        ],
+        "weakSignals": [
+          "One-size-fits-all answer",
+          "Doesn't adapt when follow-up changes the constraint",
+          "Cannot explain when their solution would be wrong"
+        ]
+      },
+      {
+        "criterion": "FAILURE_HANDLING",
+        "weight": 15,
+        "strongSignals": [
+          "Discusses what happens when GPS stops",
+          "Mentions staleness detection",
+          "Considers network issues on customer side"
+        ],
+        "weakSignals": [
+          "Only happy path",
+          "No mention of what could go wrong",
+          "Assumes perfect network"
+        ]
+      },
+      {
+        "criterion": "HONESTY",
+        "weight": 10,
+        "strongSignals": [
+          "Clearly states Kafka/Redis/WebSocket is studied not used",
+          "Bridges to real JMS experience",
+          "Doesn't claim REWE-specific knowledge"
+        ],
+        "weakSignals": [
+          "Implies production experience with technologies not used",
+          "Vague about experience level",
+          "Claims everything is transferable without acknowledging gaps"
+        ]
+      },
+      {
+        "criterion": "COMMUNICATION",
+        "weight": 10,
+        "strongSignals": [
+          "Structured thinking visible to interviewer",
+          "Signals transitions ('now let me discuss scaling')",
+          "Draws/describes diagram while talking"
+        ],
+        "weakSignals": [
+          "Stream of consciousness",
+          "Jumps between topics",
+          "Cannot be interrupted and resume"
+        ]
+      }
+    ],
+    "redFlags": [
+      "Immediately saying 'I would use Kafka' for 50 events/second",
+      "Not asking a single clarifying question",
+      "Designing for 50k scale when the problem says 500",
+      "Claiming production experience with Kafka or WebSocket",
+      "Ignoring failure modes entirely",
+      "Presenting architecture without explaining why this approach over alternatives"
+    ],
+    "coachDebrief": {
+      "strongAnswerElements": [
+        "Opened with clarifying questions about freshness SLO and customer count",
+        "Proposed polling as starting point with explicit upgrade path to WebSocket",
+        "Named the trade-off: simplicity now vs flexibility later",
+        "Discussed failure (stale GPS) without being prompted",
+        "Honest about Kafka/WebSocket being studied, bridged to JMS experience"
+      ],
+      "possibleDirections": [
+        "Polling MVP → WebSocket upgrade path (pragmatic)",
+        "WebSocket from start with SSE as simpler alternative (technical depth)",
+        "Focus on ETA calculation as the hard problem (algorithmic angle)",
+        "Focus on multi-tenant fan-out (infrastructure angle)"
+      ],
+      "commonlyMissedPoints": [
+        "SSE as a simpler alternative to WebSocket for unidirectional push",
+        "Staleness detection and honest UX when data is stale",
+        "That 50 events/sec is trivially small — no need for Kafka",
+        "Cost estimation: Redis memory for 500 drivers is ~50KB total",
+        "The ETA recalculation is often harder than the tracking itself"
+      ]
+    }
+  },
+  {
+    "schemaVersion": 2,
+    "id": "sd-consistency-v2",
+    "topic": "software-architecture",
+    "subtopic": "Data Consistency",
+    "type": "ORAL_ANSWER",
+    "difficulty": "SENIOR",
+    "question": "delivery-service and billing-service have separate databases. How do you ensure a completed delivery always has an invoice — without distributed transactions?",
+    "context": "Microservice architecture. Each service owns its database. No shared DB, no 2PC.",
+    "knownFacts": [
+      "Two services with separate databases",
+      "A completed delivery must produce an invoice",
+      "Distributed transactions are not allowed"
+    ],
+    "intentionallyMissingInformation": [
+      "Acceptable delay between completion and invoice",
+      "Whether duplicate invoices are tolerable (and reconcilable)",
+      "Existing messaging infrastructure",
+      "Compliance requirements (auditing, guaranteed delivery)",
+      "Volume of deliveries per day",
+      "Whether billing-service is owned by same team"
+    ],
+    "oralMode": {
+      "preparationSeconds": 30,
+      "initialAnswerSeconds": 180,
+      "followUpSeconds": 60
+    },
+    "openingGuidance": {
+      "objective": "Show that you recognize this as a consistency problem with multiple valid solutions depending on tolerance for delay, duplication, and operational complexity.",
+      "requiredElements": [
+        "Name the problem class (cross-service consistency without 2PC)",
+        "State that the solution depends on consistency SLO",
+        "Signal you will clarify before choosing a pattern"
+      ],
+      "avoid": [
+        "Immediately saying 'Saga pattern' without explaining which variant or why",
+        "Proposing 2PC as viable without acknowledging its costs",
+        "Ignoring the failure case (what if billing never processes?)"
+      ]
+    },
+    "clarifyingQuestions": [
+      {
+        "category": "CONSISTENCY_SLO",
+        "question": "What's the maximum acceptable delay between delivery completion and invoice creation?",
+        "whyItMatters": "If seconds are required, synchronous call may be necessary despite coupling. If hours are acceptable, eventual consistency via events is simpler and more resilient.",
+        "affectedDecisions": [
+          "Sync vs async",
+          "Whether to use messaging",
+          "Monitoring/alerting thresholds"
+        ]
+      },
+      {
+        "category": "FAILURE_TOLERANCE",
+        "question": "What happens if an invoice is never created? Is this a compliance violation or a recoverable gap?",
+        "whyItMatters": "Compliance-critical means we need guaranteed delivery + reconciliation + alerting. If it's just a gap fixable by support, simpler retry with DLQ suffices.",
+        "affectedDecisions": [
+          "Outbox pattern necessity",
+          "Reconciliation job",
+          "Alert severity"
+        ]
+      },
+      {
+        "category": "DUPLICATION",
+        "question": "Can we tolerate a duplicate invoice that gets reconciled later, or must processing be exactly-once?",
+        "whyItMatters": "At-least-once with idempotent consumer is dramatically simpler than exactly-once. If duplicates are reconcilable (same amount, same delivery), we can use simpler infrastructure.",
+        "affectedDecisions": [
+          "Idempotency strategy",
+          "Consumer complexity",
+          "Whether to use transactional outbox"
+        ]
+      },
+      {
+        "category": "INFRASTRUCTURE",
+        "question": "Is there already a message broker (Kafka, RabbitMQ) in the infrastructure, or would this be the first async integration?",
+        "whyItMatters": "Introducing a broker for one integration point has high operational cost. If a broker exists, event-driven is natural. If not, a simpler pattern (polling, webhook) might be more proportional.",
+        "affectedDecisions": [
+          "Event-driven vs polling",
+          "Operational burden",
+          "Team expertise requirements"
+        ]
+      }
+    ],
+    "assumptionsToDeclare": [
+      {
+        "assumption": "Minutes of delay are acceptable (not real-time consistency).",
+        "consequence": "Event-driven eventual consistency is appropriate. No need for synchronous coupling."
+      },
+      {
+        "assumption": "At-least-once delivery with idempotent consumer is sufficient (duplicates reconcilable).",
+        "consequence": "We don't need exactly-once semantics, which simplifies the consumer significantly."
+      }
+    ],
+    "tradeoffs": [
+      {
+        "dimensionA": "Simplicity (synchronous REST call)",
+        "dimensionB": "Resilience (event-driven decoupling)",
+        "domainContext": "A synchronous call from delivery-service to billing-service is 5 lines of code. But if billing is down for 2 minutes, deliveries fail or queue. Event-driven survives outages but adds broker ops, consumer monitoring, and DLQ handling.",
+        "consequence": "Choosing event-driven for a single integration between two services owned by the same team may be over-engineering. Choosing synchronous for services with different SLAs or teams creates invisible coupling."
+      },
+      {
+        "dimensionA": "Guaranteed delivery (outbox pattern)",
+        "dimensionB": "Operational complexity",
+        "domainContext": "The outbox pattern (write event to a table in the same DB transaction as the status change, then relay to broker) guarantees no message loss. But it requires: outbox table, relay process (polling or CDC), cleanup, monitoring.",
+        "consequence": "For compliance-critical flows, this complexity is justified. For non-critical flows, simple event publish with retry may be proportional."
+      }
+    ],
+    "decisionBranches": [
+      {
+        "condition": "Compliance-critical, zero-loss tolerance, broker exists",
+        "recommendation": "Outbox pattern: delivery-service writes COMPLETED status + outbox event in same DB transaction. Relay publishes to broker. Billing consumer is idempotent (INSERT ON CONFLICT on delivery_id). DLQ for permanent failures. Reconciliation job queries unmatched deliveries.",
+        "rationale": "Same-transaction write guarantees the event is never lost. Idempotent consumer handles retries safely. Reconciliation is the safety net.",
+        "costs": [
+          "Outbox table + relay process",
+          "DLQ monitoring",
+          "Reconciliation job development"
+        ],
+        "risks": [
+          "Relay lag if polling interval is high",
+          "Outbox table growth if relay fails silently"
+        ],
+        "invalidatedBy": [
+          "Team has no experience with outbox pattern and deadline is tight",
+          "Volume is < 100 deliveries/day (over-engineering)"
+        ]
+      },
+      {
+        "condition": "Minutes acceptable, duplicates reconcilable, broker exists",
+        "recommendation": "Simple event publish after commit (delivery-completed). Consumer creates invoice with idempotency key (delivery_id). DLQ for retries exhausted.",
+        "rationale": "Simpler than outbox — no relay process. Small window of event loss possible (crash between commit and publish), but reconciliation job catches these.",
+        "costs": [
+          "Possible event loss on crash (rare)",
+          "Reconciliation job still needed as safety net"
+        ],
+        "risks": [
+          "Event lost if service crashes between DB commit and broker publish (tiny window)"
+        ],
+        "invalidatedBy": [
+          "Compliance requires provable zero-loss",
+          "Audit trail must show exact event sequence"
+        ]
+      },
+      {
+        "condition": "Same team, tight coupling acceptable, synchronous OK",
+        "recommendation": "Synchronous REST call from delivery-service to billing-service with circuit breaker and retry. If billing is down, delivery status stays COMPLETED_PENDING_INVOICE.",
+        "rationale": "Simplest implementation. No broker. Appropriate when services are tightly coupled operationally (same team, same deploy pipeline, same SLA).",
+        "costs": [
+          "Temporal coupling (billing down affects delivery latency)",
+          "Retry logic in delivery-service"
+        ],
+        "risks": [
+          "If billing is down for extended period, all deliveries queue",
+          "Cascading failure risk without circuit breaker"
+        ],
+        "invalidatedBy": [
+          "Services have different teams/deploy cadences",
+          "Billing downtime > 5 minutes is expected",
+          "Volume makes synchronous calls a throughput bottleneck"
+        ]
+      }
+    ],
+    "validationPlan": [
+      {
+        "hypothesis": "The outbox relay delivers events within 5 seconds under normal load.",
+        "method": "Measure time between outbox row insert and consumer acknowledgment under sustained load.",
+        "metrics": [
+          "Relay lag (p50, p95, p99)",
+          "Outbox table row count (should stay near zero when healthy)"
+        ],
+        "successCriteria": [
+          "p99 relay lag < 10 seconds",
+          "Outbox table never exceeds 100 rows during normal operation"
+        ],
+        "failureSignals": [
+          "Outbox table growing continuously",
+          "Consumer lag increasing",
+          "Reconciliation job finding unmatched deliveries"
+        ]
+      },
+      {
+        "hypothesis": "No delivery remains without an invoice for more than 1 hour.",
+        "method": "Reconciliation query: SELECT deliveries WHERE status = COMPLETED AND completed_at < now() - interval '1 hour' AND NOT EXISTS (invoice).",
+        "metrics": [
+          "Count of unmatched deliveries",
+          "Age of oldest unmatched delivery"
+        ],
+        "successCriteria": [
+          "Zero unmatched deliveries older than 1 hour in steady state",
+          "Alert fires within 5 minutes of first unmatched delivery exceeding threshold"
+        ],
+        "failureSignals": [
+          "Unmatched deliveries accumulating",
+          "Alert not firing despite gap",
+          "Reconciliation job itself failing silently"
+        ]
+      }
+    ],
+    "followUps": [
+      {
+        "type": "CHANGE_REQUIREMENT",
+        "question": "Compliance now says the invoice must exist within 30 seconds. Does your event-driven design still work?",
+        "interviewerIntent": "Tests whether candidate can adapt or admits the design no longer fits.",
+        "strongSignals": [
+          "Acknowledges 30s is tight for eventual consistency",
+          "Proposes hybrid: synchronous primary path with async fallback",
+          "Discusses SLA monitoring to prove compliance"
+        ],
+        "weakSignals": [
+          "Claims event-driven 'already handles this'",
+          "Doesn't reconsider the architecture",
+          "No mention of how to prove 30s SLA is met"
+        ],
+        "hint": "30s is tight. Options: reduce relay interval to 1s, use CDC instead of polling, or make it synchronous primary path with circuit breaker and async retry as fallback."
+      },
+      {
+        "type": "FAILURE_SCENARIO",
+        "question": "Billing-service is down for 20 minutes. What happens to deliveries completed during that window?",
+        "interviewerIntent": "Tests understanding of failure accumulation and recovery.",
+        "strongSignals": [
+          "Events queue in broker (Kafka retains)",
+          "After recovery, consumer drains backlog",
+          "Discusses backlog processing time and whether it causes downstream pressure",
+          "Mentions alerting on consumer lag"
+        ],
+        "weakSignals": [
+          "Assumes broker never fails",
+          "Doesn't discuss recovery time for accumulated backlog",
+          "No mention of monitoring during outage"
+        ],
+        "hint": "With outbox: events accumulate in broker. After recovery, consumer processes backlog. At 100 deliveries/min × 20 min = 2000 queued events. Monitor: consumer lag alert, billing-service health check, reconciliation job as safety net."
+      },
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Have you implemented cross-service consistency in production?",
+        "interviewerIntent": "Tests honesty and ability to bridge experience.",
+        "strongSignals": [
+          "Describes JMS/MDB pattern in SGN honestly",
+          "Explains idempotency implementation (INSERT ON CONFLICT)",
+          "Bridges: 'same reliability pattern, different infrastructure'"
+        ],
+        "weakSignals": [
+          "Claims microservice experience that doesn't exist",
+          "Cannot describe a specific implementation",
+          "Vague about what was actually built vs studied"
+        ],
+        "hint": "Honest answer: 'Not microservices with separate databases. In SGN, we use JMS queues between modules — same transactional outbox concept, same idempotency pattern (INSERT ON CONFLICT), same DLQ handling. The consumption reliability transfers directly; what's different is the operational model of Kafka vs embedded Artemis.'"
+      }
+    ],
+    "experienceEvidence": [
+      {
+        "area": "Asynchronous messaging with guaranteed delivery",
+        "level": "PRODUCTION_EXPERIENCE",
+        "evidence": "JMS/Artemis in SGN3: 80 queues, MDB consumers with CMT, redelivery configuration, DLQ handling",
+        "safeWording": "I operate 80 JMS queues in production with guaranteed delivery, configurable retry, and dead-letter handling."
+      },
+      {
+        "area": "Idempotent consumers",
+        "level": "PRODUCTION_EXPERIENCE",
+        "evidence": "INSERT ON CONFLICT DO NOTHING pattern in MDB consumers, inbox table pattern",
+        "safeWording": "I implement idempotent consumers using INSERT ON CONFLICT — the same pattern regardless of whether the broker is JMS or Kafka."
+      },
+      {
+        "area": "Outbox pattern specifically",
+        "level": "TRANSFERABLE_EXPERIENCE",
+        "safeWording": "I haven't implemented a formal outbox relay, but the concept is identical to what we do: persist the intent in the same transaction, then process asynchronously. The difference is the relay mechanism."
+      },
+      {
+        "area": "Kafka operations",
+        "level": "STUDIED_NOT_USED",
+        "safeWording": "I have not operated Kafka. My broker experience is JMS/Artemis. The consumption patterns (offset management ≈ acknowledgment, consumer groups ≈ MDB pooling) are conceptually equivalent but operationally different."
+      }
+    ],
+    "scoringRubric": [
+      {
+        "criterion": "CLARIFICATION",
+        "weight": 20,
+        "strongSignals": [
+          "Asks about consistency SLO before choosing pattern",
+          "Questions failure tolerance",
+          "Asks about existing infrastructure"
+        ],
+        "weakSignals": [
+          "Jumps to 'use Saga pattern'",
+          "No questions about acceptable delay"
+        ]
+      },
+      {
+        "criterion": "TRADEOFFS",
+        "weight": 25,
+        "strongSignals": [
+          "Names sync simplicity vs async resilience",
+          "Explains outbox cost vs guarantee level",
+          "Connects choice to team/context"
+        ],
+        "weakSignals": [
+          "Only one pattern presented",
+          "No mention of costs",
+          "Treats event-driven as universally superior"
+        ]
+      },
+      {
+        "criterion": "CONDITIONAL_REASONING",
+        "weight": 20,
+        "strongSignals": [
+          "Different solutions for different SLOs",
+          "Explains when their recommendation fails",
+          "Adapts when follow-up changes constraint"
+        ],
+        "weakSignals": [
+          "Same answer regardless of clarification responses",
+          "Cannot explain when outbox is overkill"
+        ]
+      },
+      {
+        "criterion": "FAILURE_HANDLING",
+        "weight": 20,
+        "strongSignals": [
+          "Discusses what happens during billing outage",
+          "Mentions reconciliation as safety net",
+          "Consumer idempotency explained"
+        ],
+        "weakSignals": [
+          "Assumes happy path only",
+          "No DLQ or reconciliation",
+          "Doesn't mention what happens to accumulated events"
+        ]
+      },
+      {
+        "criterion": "HONESTY",
+        "weight": 15,
+        "strongSignals": [
+          "Clearly distinguishes JMS experience from Kafka claims",
+          "Bridges honestly",
+          "Doesn't claim microservice architecture experience"
+        ],
+        "weakSignals": [
+          "Implies Kafka production experience",
+          "Vague about what was actually built"
+        ]
+      }
+    ],
+    "redFlags": [
+      "Saying 'Saga pattern' without explaining orchestration vs choreography or why",
+      "Proposing distributed transactions (2PC) as the default",
+      "Not mentioning idempotency when discussing at-least-once delivery",
+      "Ignoring the failure case (billing down for minutes)",
+      "Not asking about consistency SLO before designing",
+      "Claiming Kafka production experience"
+    ],
+    "coachDebrief": {
+      "strongAnswerElements": [
+        "Started by clarifying acceptable delay and failure tolerance",
+        "Presented multiple patterns with conditions for each",
+        "Named reconciliation as the safety net regardless of pattern",
+        "Explained idempotency mechanism concretely (INSERT ON CONFLICT)",
+        "Honest about JMS experience bridging to Kafka concepts"
+      ],
+      "possibleDirections": [
+        "Outbox pattern deep-dive (compliance angle)",
+        "Simple event with reconciliation (pragmatic angle)",
+        "Synchronous with circuit breaker (simplicity angle)",
+        "State machine approach (COMPLETED → INVOICING → INVOICED)"
+      ],
+      "commonlyMissedPoints": [
+        "The reconciliation job is needed regardless of pattern (safety net)",
+        "Outbox relay can use CDC (Debezium) instead of polling — lower latency",
+        "Consumer idempotency key should be the delivery_id, not a generated UUID",
+        "Monitor: 'deliveries without invoice after X minutes' is the business metric that matters",
+        "Simple synchronous call is valid when services are tightly coupled (don't over-engineer)"
+      ]
+    }
+  },
+  {
+    "schemaVersion": 2,
+    "id": "sd-legacy-migration-v2",
+    "topic": "software-architecture",
+    "subtopic": "Event-Driven Architecture",
+    "type": "ORAL_ANSWER",
+    "difficulty": "SENIOR",
+    "question": "A monolithic logistics application handles order intake, routing, driver assignment, and billing in a single deployment. The team wants to extract driver-assignment into a separate service. How do you approach this?",
+    "context": "The monolith is stable and serving production traffic. The goal is incremental extraction, not a rewrite.",
+    "knownFacts": [
+      "Monolithic application (single deploy)",
+      "Modules: order intake, routing, driver assignment, billing",
+      "Goal: extract driver-assignment as a separate service",
+      "Production traffic must not be interrupted"
+    ],
+    "intentionallyMissingInformation": [
+      "Data coupling between driver-assignment and other modules (shared tables?)",
+      "Whether driver-assignment has a clean interface or is deeply entangled",
+      "Team size and experience with distributed systems",
+      "Timeline pressure",
+      "Current database schema ownership per module",
+      "Existing test coverage of driver-assignment"
+    ],
+    "oralMode": {
+      "preparationSeconds": 45,
+      "initialAnswerSeconds": 240,
+      "followUpSeconds": 90
+    },
+    "openingGuidance": {
+      "objective": "Show that extraction is a sequence of preparatory steps, not a big-bang rewrite. Demonstrate awareness of data coupling, interface stability, and operational readiness.",
+      "requiredElements": [
+        "Acknowledge this is incremental, not a rewrite",
+        "Identify data coupling as the primary risk",
+        "Signal that you'd assess the current boundary before cutting"
+      ],
+      "avoid": [
+        "Proposing a complete microservice architecture for all modules at once",
+        "Ignoring the data coupling problem",
+        "Assuming the module has a clean boundary already",
+        "Recommending Strangler Fig without explaining what the fig actually does here"
+      ]
+    },
+    "clarifyingQuestions": [
+      {
+        "category": "DATA_COUPLING",
+        "question": "Does driver-assignment share database tables with other modules? Does it write to tables that billing or routing reads directly?",
+        "whyItMatters": "Shared tables are the hardest coupling to break. If driver-assignment writes to a table that billing reads via JOIN, extracting requires either data replication or API introduction.",
+        "affectedDecisions": [
+          "Whether to split the database first or the service first",
+          "Need for anti-corruption layer",
+          "Data synchronization strategy"
+        ]
+      },
+      {
+        "category": "INTERFACE_CLARITY",
+        "question": "Is there already a clear internal interface (method boundary, package boundary) for driver-assignment, or is it deeply entangled with routing?",
+        "whyItMatters": "A clean internal boundary means extraction is mostly infrastructure (deploy separately, add network call). Deep entanglement means refactoring inside the monolith first.",
+        "affectedDecisions": [
+          "Whether to refactor internally before extracting",
+          "Effort estimation",
+          "Risk level"
+        ]
+      },
+      {
+        "category": "TEAM_READINESS",
+        "question": "Has the team operated distributed services before? Do they have observability, deployment pipelines, and incident response for multiple services?",
+        "whyItMatters": "A team operating their first microservice will face operational challenges (network failures, deployment coordination, distributed tracing) that are unrelated to the extraction itself.",
+        "affectedDecisions": [
+          "Whether to build operational foundation first",
+          "Monitoring requirements before extraction",
+          "Training needs"
+        ]
+      },
+      {
+        "category": "TIMELINE",
+        "question": "Is there a deadline driving this, or is it a quality-of-life improvement?",
+        "whyItMatters": "Under time pressure, the Strangler Fig approach (parallel run, gradual migration) may not be feasible. The answer might be 'refactor the boundary inside the monolith and extract later'.",
+        "affectedDecisions": [
+          "Strangler Fig vs direct extraction",
+          "Whether to accept temporary coupling",
+          "Phase planning"
+        ]
+      }
+    ],
+    "assumptionsToDeclare": [
+      {
+        "assumption": "Driver-assignment shares some tables with routing (at minimum, a drivers table with availability status).",
+        "consequence": "We cannot simply deploy separately without addressing data access. Need either API or event-based sync for driver availability."
+      },
+      {
+        "assumption": "The team has basic CI/CD but has not operated multiple services before.",
+        "consequence": "Operational foundation (monitoring, alerting, deployment pipeline for service) must be built as part of the extraction — not after."
+      }
+    ],
+    "tradeoffs": [
+      {
+        "dimensionA": "Speed of extraction",
+        "dimensionB": "Safety of extraction",
+        "domainContext": "Extracting quickly (direct cut, new service, decommission old code) is fast but risky — any missed dependency breaks production. Extracting safely (parallel run, feature flag, gradual traffic shift) is slow but reversible.",
+        "consequence": "For a revenue-critical system with live traffic, safety wins. The cost of a failed extraction (rollback, data inconsistency, downtime) exceeds the cost of going slower."
+      },
+      {
+        "dimensionA": "Database-first split",
+        "dimensionB": "Service-first split",
+        "domainContext": "Splitting the database first (driver-assignment gets its own schema, synced via events) makes service extraction clean — but the data migration is complex. Splitting the service first (separate deployment, shared DB temporarily) is faster but creates distributed monolith risk.",
+        "consequence": "Shared database between services is the most common anti-pattern teams fall into. It works short-term but prevents independent deployment and scaling — which is the reason for extracting in the first place."
+      }
+    ],
+    "decisionBranches": [
+      {
+        "condition": "Clean internal boundary exists, moderate coupling, team has ops experience",
+        "recommendation": "Strangler Fig: deploy driver-assignment as service alongside monolith. Route traffic via feature flag. Both paths active — compare results. Gradually shift 100% to new service. Decommission old code.",
+        "rationale": "Parallel run with comparison is the safest migration strategy. Any discrepancy is caught before users are affected.",
+        "costs": [
+          "Running both paths temporarily (compute cost, complexity)",
+          "Comparison logic development",
+          "Feature flag infrastructure"
+        ],
+        "risks": [
+          "Comparison drift if business logic evolves during migration",
+          "Team maintaining two codepaths temporarily"
+        ],
+        "invalidatedBy": [
+          "Deep data coupling makes parallel run impractical",
+          "Timeline doesn't allow parallel period"
+        ]
+      },
+      {
+        "condition": "Deep entanglement, shared tables, limited ops experience",
+        "recommendation": "Phase 1: Refactor inside the monolith — create explicit interface (internal API/facade) between driver-assignment and other modules. Phase 2 (later): Extract to service once the boundary is clean.",
+        "rationale": "Extracting entangled code creates a distributed monolith — the worst of both worlds. Cleaning the boundary first makes extraction a deployment concern, not a logic concern.",
+        "costs": [
+          "Refactoring inside monolith takes time with no visible external change",
+          "May be hard to justify to management"
+        ],
+        "risks": [
+          "Refactoring stalls and extraction never happens",
+          "Scope creep during internal refactoring"
+        ],
+        "invalidatedBy": [
+          "Management requires visible progress (deployed service) within weeks",
+          "The entanglement is so deep that refactoring inside is equivalent effort to rewriting"
+        ]
+      },
+      {
+        "condition": "Timeline pressure, need quick win, acceptable coupling temporarily",
+        "recommendation": "Extract service with shared database (temporary). Add TODO: split database within 6 months. Immediate benefit: independent deployment, separate scaling.",
+        "rationale": "Pragmatic trade-off: get independent deployment now, accept shared DB as tech debt. Only valid if team commits to splitting the database before the coupling causes problems.",
+        "costs": [
+          "Technical debt: shared DB prevents true independence",
+          "Schema changes require coordinating both services"
+        ],
+        "risks": [
+          "'Temporary' shared DB becomes permanent",
+          "Teams diverge and coordination becomes expensive",
+          "Distributed monolith"
+        ],
+        "invalidatedBy": [
+          "Team history shows 'temporary' compromises becoming permanent",
+          "Database schema is actively evolving (changes break the other service)"
+        ]
+      }
+    ],
+    "validationPlan": [
+      {
+        "hypothesis": "The extracted service produces identical results to the monolith code for driver assignment.",
+        "method": "Shadow mode: route real requests to both old and new path. Compare outputs. Log discrepancies without affecting users.",
+        "metrics": [
+          "Discrepancy rate (should be 0%)",
+          "Latency comparison (new vs old)",
+          "Error rate in new service"
+        ],
+        "successCriteria": [
+          "0 discrepancies over 1 week of production traffic",
+          "New service latency within 20% of monolith path",
+          "No errors unique to new service"
+        ],
+        "failureSignals": [
+          "Any discrepancy in business-critical output",
+          "New service latency 2x+ worse",
+          "Errors in new service not present in monolith"
+        ]
+      }
+    ],
+    "followUps": [
+      {
+        "type": "FAILURE_SCENARIO",
+        "question": "You've extracted the service and it goes down. Driver assignment stops working. What's your blast radius and mitigation?",
+        "interviewerIntent": "Tests operational thinking — extraction increases failure modes.",
+        "strongSignals": [
+          "Circuit breaker: fall back to monolith code if service is down",
+          "Health check with automatic routing back to monolith",
+          "Discusses blast radius: only driver-assignment affected, not billing/routing"
+        ],
+        "weakSignals": [
+          "Assumes service never goes down",
+          "No fallback strategy",
+          "Doesn't mention the increased failure surface of network dependency"
+        ],
+        "hint": "Keep the monolith code alive (disabled by flag) for N weeks after migration. If new service fails, flip flag to route back to monolith. Gradually remove monolith code only after confidence period."
+      },
+      {
+        "type": "MIGRATION",
+        "question": "How do you handle the database split? Driver-assignment currently reads from a shared 'drivers' table that routing also writes to.",
+        "interviewerIntent": "Tests understanding of the hardest part of microservice extraction.",
+        "strongSignals": [
+          "Proposes events: routing publishes driver-availability-changed, driver-assignment maintains local read model",
+          "Discusses eventual consistency implications",
+          "Mentions dual-write risk and how to avoid it"
+        ],
+        "weakSignals": [
+          "Just 'copy the table' without sync strategy",
+          "Ignores the write path (who owns driver status now?)",
+          "Proposes distributed transactions"
+        ],
+        "hint": "Event-based sync: routing owns driver status, publishes events. Driver-assignment maintains a local read-only projection. Accepts eventual consistency (seconds). For the transition: dual-read (read from both, compare) before cutting over."
+      },
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Have you extracted a module from a monolith in production?",
+        "interviewerIntent": "Tests honesty about experience level.",
+        "strongSignals": [
+          "Describes SGN3 modular monolith honestly — schemas as boundaries, services as facades",
+          "Explains why SGN3 hasn't extracted to microservices (shared DB, team size, domain coupling)",
+          "Bridges: 'I understand the boundary patterns because I enforce them daily'"
+        ],
+        "weakSignals": [
+          "Claims microservice extraction experience",
+          "Cannot describe a concrete boundary they maintain",
+          "Theoretical answer without operational grounding"
+        ],
+        "hint": "Honest: 'SGN3 is a modular monolith — we enforce module boundaries via schemas and service facades, but haven't extracted to separate deployments. I maintain the discipline that would make extraction possible: clear interfaces, no cross-module direct DB access for writes. The extraction step itself (infrastructure, networking, monitoring) is what I'd learn on the job.'"
+      }
+    ],
+    "experienceEvidence": [
+      {
+        "area": "Modular monolith with enforced boundaries",
+        "level": "PRODUCTION_EXPERIENCE",
+        "evidence": "SGN3: schemas per domain, services as facades, cross-module writes only through service layer",
+        "safeWording": "I maintain a modular monolith where I enforce boundaries between modules — cross-module writes go through service interfaces, each module owns its schema. This is the prerequisite for extraction."
+      },
+      {
+        "area": "Microservice extraction specifically",
+        "level": "STUDIED_NOT_USED",
+        "safeWording": "I have not extracted a module into a separately deployed service. My experience is maintaining the boundary discipline that makes extraction possible, not the extraction itself."
+      },
+      {
+        "area": "Event-driven decoupling",
+        "level": "PRODUCTION_EXPERIENCE",
+        "evidence": "JMS between SGN3 modules for async operations (80 queues)",
+        "safeWording": "I use JMS queues for asynchronous decoupling between modules — same concept as events between services, currently within a single deployment."
+      }
+    ],
+    "scoringRubric": [
+      {
+        "criterion": "CLARIFICATION",
+        "weight": 20,
+        "strongSignals": [
+          "Asks about data coupling first",
+          "Questions team readiness",
+          "Asks about existing boundary clarity"
+        ],
+        "weakSignals": [
+          "Jumps to 'Strangler Fig' without understanding current state",
+          "Assumes clean boundary exists"
+        ]
+      },
+      {
+        "criterion": "TRADEOFFS",
+        "weight": 25,
+        "strongSignals": [
+          "Names speed vs safety",
+          "Discusses shared DB anti-pattern",
+          "Explains database-first vs service-first"
+        ],
+        "weakSignals": [
+          "Only one approach presented",
+          "Doesn't mention risks of shared DB",
+          "Treats extraction as simple deploy change"
+        ]
+      },
+      {
+        "criterion": "CONDITIONAL_REASONING",
+        "weight": 20,
+        "strongSignals": [
+          "Different approach for clean vs entangled boundary",
+          "Adapts to team experience level",
+          "Proposes phased approach"
+        ],
+        "weakSignals": [
+          "One-size-fits-all extraction plan",
+          "Doesn't adapt when follow-up reveals constraints"
+        ]
+      },
+      {
+        "criterion": "FAILURE_HANDLING",
+        "weight": 20,
+        "strongSignals": [
+          "Plans rollback strategy",
+          "Discusses increased failure surface (network)",
+          "Proposes shadow mode for validation"
+        ],
+        "weakSignals": [
+          "Assumes extraction succeeds first time",
+          "No rollback plan",
+          "Ignores operational impact"
+        ]
+      },
+      {
+        "criterion": "HONESTY",
+        "weight": 15,
+        "strongSignals": [
+          "Clearly states monolith experience, not microservice extraction",
+          "Bridges boundary discipline to extraction readiness"
+        ],
+        "weakSignals": [
+          "Implies having extracted services before",
+          "Vague about actual experience"
+        ]
+      }
+    ],
+    "redFlags": [
+      "Proposing microservice extraction for all modules simultaneously",
+      "Ignoring data coupling ('just deploy separately')",
+      "Not mentioning rollback strategy",
+      "Claiming production microservice extraction experience",
+      "Recommending Strangler Fig without explaining what it means concretely for this case",
+      "Not asking about team operational readiness"
+    ],
+    "coachDebrief": {
+      "strongAnswerElements": [
+        "Identified data coupling as the primary risk before proposing solutions",
+        "Distinguished between clean boundary (ready to extract) vs entangled (refactor first)",
+        "Proposed phased approach with validation at each step",
+        "Discussed rollback and blast radius mitigation",
+        "Honest: modular monolith experience, not microservice extraction"
+      ],
+      "possibleDirections": [
+        "Strangler Fig with parallel run (safest)",
+        "Internal refactoring first, extract later (pragmatic for entangled code)",
+        "Shared DB temporarily with commitment to split (time-pressured)",
+        "Event-driven decoupling as preparation for extraction (long-term thinking)"
+      ],
+      "commonlyMissedPoints": [
+        "The hardest part is the database split, not the service deployment",
+        "A shared database between services is a distributed monolith — worst of both worlds",
+        "Team operational readiness (monitoring, alerting, incident response for distributed systems) is a prerequisite",
+        "Feature flags for routing between old and new path enable safe rollback",
+        "Shadow mode (compare outputs without affecting users) is the gold standard for validation"
+      ]
+    }
+  },
+  {
+    "schemaVersion": 2,
+    "id": "sd-external-integration-v2",
+    "topic": "software-architecture",
+    "subtopic": "Resilience",
+    "type": "ORAL_ANSWER",
+    "difficulty": "SENIOR",
+    "question": "delivery-service depends on an external carrier API for shipment booking. The API has 99.5% availability, average latency 800ms, and occasional spikes to 15 seconds. How do you design for resilience?",
+    "context": "The external carrier API is not under your control. You cannot change their SLA or infrastructure.",
+    "knownFacts": [
+      "External API: 99.5% availability (~3.6 hours downtime/month)",
+      "Average latency: 800ms",
+      "Occasional spikes: up to 15 seconds",
+      "Cannot modify the external API"
+    ],
+    "intentionallyMissingInformation": [
+      "Whether booking must be synchronous (customer waits) or can be async",
+      "What happens to the delivery if booking fails (retry? cancel? manual?)",
+      "Whether the external API supports idempotency keys",
+      "Rate limits on the external API",
+      "Whether there's a fallback carrier",
+      "Cost of a failed booking to the business"
+    ],
+    "oralMode": {
+      "preparationSeconds": 30,
+      "initialAnswerSeconds": 180,
+      "followUpSeconds": 60
+    },
+    "openingGuidance": {
+      "objective": "Demonstrate that resilience is not just 'add a circuit breaker'. Show understanding of failure modes, user impact, and the difference between transient and permanent failures.",
+      "requiredElements": [
+        "Identify that 99.5% means real downtime (not theoretical)",
+        "Distinguish between latency spikes and outages — different handling",
+        "Ask whether the user waits synchronously or can be notified later"
+      ],
+      "avoid": [
+        "Listing resilience patterns (circuit breaker, retry, bulkhead) without connecting to this specific problem",
+        "Assuming synchronous user-facing flow",
+        "Ignoring the 15-second spike (this is the more common problem vs full outage)"
+      ]
+    },
+    "clarifyingQuestions": [
+      {
+        "category": "USER_EXPERIENCE",
+        "question": "Does the customer wait for booking confirmation, or can we confirm the delivery and book asynchronously?",
+        "whyItMatters": "Synchronous: timeout at 5s, customer sees error if API is slow. Async: accept delivery immediately, book in background, notify on failure. Async is dramatically more resilient but changes the user contract.",
+        "affectedDecisions": [
+          "Sync vs async booking",
+          "Timeout strategy",
+          "User notification design"
+        ]
+      },
+      {
+        "category": "FAILURE_IMPACT",
+        "question": "What's the business cost of a failed booking? Can we retry in 5 minutes, or is the delivery slot lost?",
+        "whyItMatters": "If retry in 5 minutes is fine, simple retry with backoff solves 99% of cases. If the slot is lost, we need immediate fallback (alternative carrier or manual intervention).",
+        "affectedDecisions": [
+          "Retry strategy",
+          "Whether fallback carrier is needed",
+          "Alert urgency"
+        ]
+      },
+      {
+        "category": "IDEMPOTENCY",
+        "question": "Does the carrier API support idempotency keys? Can we safely retry without creating duplicate bookings?",
+        "whyItMatters": "Without idempotency keys, retry risks double-booking. We'd need to query 'does this booking exist?' before retrying, which adds complexity and its own failure mode.",
+        "affectedDecisions": [
+          "Retry safety",
+          "Whether to implement client-side deduplication",
+          "Recovery procedure"
+        ]
+      },
+      {
+        "category": "RATE_LIMITS",
+        "question": "Are there rate limits? If we retry failed requests, do retries count against the limit?",
+        "whyItMatters": "Aggressive retry during an outage can exhaust rate limits, making recovery slower. Need exponential backoff with jitter to avoid thundering herd.",
+        "affectedDecisions": [
+          "Retry backoff strategy",
+          "Queue drain rate after recovery",
+          "Whether to implement token bucket"
+        ]
+      }
+    ],
+    "assumptionsToDeclare": [
+      {
+        "assumption": "Booking can be asynchronous — customer gets delivery confirmation immediately, booking happens in background.",
+        "consequence": "This allows us to queue bookings and handle API failures without impacting customer experience directly."
+      },
+      {
+        "assumption": "The carrier API does not support idempotency keys.",
+        "consequence": "We must implement our own deduplication — persist booking intent with a unique key before calling the API, check before retry."
+      }
+    ],
+    "tradeoffs": [
+      {
+        "dimensionA": "Fast timeout (fail quickly, good UX)",
+        "dimensionB": "Completion rate (wait longer, more bookings succeed)",
+        "domainContext": "With 800ms average and 15s spikes, a 3s timeout gives good UX but fails on spikes. A 20s timeout catches spikes but makes the user wait. Async decouples this entirely — the user never waits.",
+        "consequence": "Choosing between fast timeout and completion rate is a false dilemma if booking can be async. The real question is whether the business accepts async confirmation."
+      },
+      {
+        "dimensionA": "Simple retry (fewer components)",
+        "dimensionB": "Circuit breaker (protect against prolonged outage)",
+        "domainContext": "Simple retry with backoff handles transient failures (spikes). Circuit breaker prevents wasting resources calling an API that's fully down. At 99.5% availability, full outages happen ~3.6h/month — circuit breaker is justified.",
+        "consequence": "Circuit breaker without retry underneath is incomplete. Retry without circuit breaker during extended outage wastes threads and may exhaust connection pools."
+      }
+    ],
+    "decisionBranches": [
+      {
+        "condition": "Async booking acceptable, retry in minutes is fine",
+        "recommendation": "Accept delivery immediately. Queue booking request (persistent — survives restart). Worker drains queue with: timeout 5s, retry 3x with exponential backoff, circuit breaker on 5 consecutive failures. Failed after retries → DLQ + alert.",
+        "rationale": "Customer never sees the API's unreliability. Most transient failures resolve within minutes. Persistent queue means no booking lost on service restart.",
+        "costs": [
+          "Async means customer doesn't know booking status immediately",
+          "Queue infrastructure",
+          "DLQ monitoring"
+        ],
+        "risks": [
+          "If carrier is down for hours, bookings accumulate — need capacity planning for drain",
+          "Customer may ask 'is my delivery booked?' before confirmation arrives"
+        ],
+        "invalidatedBy": [
+          "Business requires synchronous confirmation",
+          "Carrier slot expires within seconds (must book immediately or lose it)"
+        ]
+      },
+      {
+        "condition": "Synchronous required, customer waits for confirmation",
+        "recommendation": "Timeout at 5 seconds. Retry once immediately (transient network issue). If both fail: return provisional confirmation to customer ('booking in progress'), queue for async retry, notify customer of final status.",
+        "rationale": "5s timeout + 1 retry covers 95% of successes. For the remaining 5%, degrade gracefully to async rather than showing error.",
+        "costs": [
+          "More complex UX (provisional → confirmed)",
+          "Customer notification system needed",
+          "State machine for booking status"
+        ],
+        "risks": [
+          "Customer confusion about provisional vs confirmed",
+          "Booking that never succeeds requires manual intervention"
+        ],
+        "invalidatedBy": [
+          "Business doesn't accept provisional status (binary: confirmed or failed)"
+        ]
+      }
+    ],
+    "validationPlan": [
+      {
+        "hypothesis": "Circuit breaker prevents thread exhaustion during extended outage.",
+        "method": "Chaos test: block external API for 10 minutes during load. Monitor thread pool, connection pool, response times for other operations.",
+        "metrics": [
+          "Thread pool utilization during outage",
+          "Response time for non-carrier operations",
+          "Circuit breaker state transitions"
+        ],
+        "successCriteria": [
+          "Non-carrier operations unaffected during outage (< 5% latency increase)",
+          "Circuit breaker opens within 30s of outage start",
+          "No thread pool exhaustion"
+        ],
+        "failureSignals": [
+          "Other operations degrade during carrier outage (cascade)",
+          "Circuit breaker never opens (misconfigured threshold)",
+          "Thread pool at 100% capacity"
+        ]
+      },
+      {
+        "hypothesis": "Retry with backoff resolves 95%+ of transient failures without human intervention.",
+        "method": "Track: bookings that succeeded on first try vs retry. Monitor retry success rate over 30 days.",
+        "metrics": [
+          "First-attempt success rate",
+          "Retry success rate",
+          "DLQ arrival rate"
+        ],
+        "successCriteria": [
+          "First attempt: >95% success",
+          "After retries: >99.5% total success",
+          "DLQ < 0.1% of bookings"
+        ],
+        "failureSignals": [
+          "DLQ rate > 1%",
+          "Retries consistently failing (API degraded, not transient)",
+          "Alert fatigue from DLQ notifications"
+        ]
+      }
+    ],
+    "followUps": [
+      {
+        "type": "FAILURE_SCENARIO",
+        "question": "The carrier API is down for 4 hours. 2000 bookings are queued. When it comes back, what happens?",
+        "interviewerIntent": "Tests understanding of recovery thundering herd and backpressure.",
+        "strongSignals": [
+          "Drain queue at controlled rate (not all 2000 at once)",
+          "Respects rate limit during recovery",
+          "Monitors carrier health before resuming full throughput",
+          "Discusses notification to customers about delayed confirmation"
+        ],
+        "weakSignals": [
+          "Drain all 2000 immediately (overwhelms carrier)",
+          "No rate control during recovery",
+          "Doesn't mention customer communication"
+        ],
+        "hint": "Controlled drain: process 50/minute initially (within rate limit). Monitor success rate. If stable, increase gradually. Notify operations team of backlog size and ETA to clear. Notify customers: 'Your booking is confirmed' (delayed notification, not error)."
+      },
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "Why not just increase the timeout to 20 seconds instead of all this complexity?",
+        "interviewerIntent": "Tests whether candidate can defend architecture or admits simplicity wins.",
+        "strongSignals": [
+          "Acknowledges 20s timeout is simpler",
+          "Explains cost: thread held for 20s under load → pool exhaustion risk",
+          "Calculates: at 100 concurrent requests with 20s timeout, need 100 threads blocked on carrier alone",
+          "Names the threshold where simplicity stops working"
+        ],
+        "weakSignals": [
+          "Dismisses the suggestion without analyzing it",
+          "Cannot explain the resource cost of long timeouts",
+          "Over-engineers without justifying the complexity"
+        ],
+        "hint": "20s timeout is valid at low volume. At 100 req/s with 15s spikes: 100 × 15s = 1500 request-seconds of blocked threads. If thread pool is 200, half is consumed by carrier waits. This is where async/circuit breaker become necessary — when synchronous blocking threatens the entire service."
+      },
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Have you handled unreliable external APIs in production?",
+        "interviewerIntent": "Tests real experience with resilience patterns.",
+        "strongSignals": [
+          "Describes SGN3 integrations: Moodle (60s timeout, slow), LDAP, VTEX",
+          "Mentions specific pattern: NOT_SUPPORTED transaction boundary for external calls",
+          "Describes actual timeout configurations used"
+        ],
+        "weakSignals": [
+          "Theoretical answer only",
+          "Cannot name a specific integration and its failure mode",
+          "Claims experience without specifics"
+        ],
+        "hint": "Honest: 'SGN3 integrates with Moodle (60s timeout, frequently slow), LDAP (10s timeout), and VTEX. We enforce: external calls outside DB transactions (prevents connection pool exhaustion), mandatory timeouts (connect 5s, read configurable), and async processing via JMS for non-critical integrations. The Moodle integration specifically taught me that timeout without circuit breaker still wastes threads.'"
+      }
+    ],
+    "experienceEvidence": [
+      {
+        "area": "External API integration with timeouts",
+        "level": "PRODUCTION_EXPERIENCE",
+        "evidence": "SGN3: Moodle (60s timeout), LDAP (10s), VTEX (15s). Mandatory timeouts enforced in code review.",
+        "safeWording": "I integrate with multiple external APIs in production with enforced timeouts: Moodle (60s), LDAP (10s), third-party services (15s). Timeout is mandatory in our code review process."
+      },
+      {
+        "area": "Transaction boundary separation for external calls",
+        "level": "PRODUCTION_EXPERIENCE",
+        "evidence": "Enforced pattern: @TransactionAttribute(NOT_SUPPORTED) on orchestrators that call external APIs, preventing connection pool exhaustion.",
+        "safeWording": "I enforce separating database transactions from external calls — external I/O must not hold a JDBC connection. This prevents connection pool exhaustion when external services are slow."
+      },
+      {
+        "area": "Circuit breaker pattern specifically",
+        "level": "STUDIED_NOT_USED",
+        "safeWording": "I haven't implemented a formal circuit breaker (like Resilience4j). Our current approach is timeout + async (JMS) for unreliable integrations. A circuit breaker would be the next evolution."
+      },
+      {
+        "area": "Async processing for resilience",
+        "level": "PRODUCTION_EXPERIENCE",
+        "evidence": "JMS queues for Moodle integration, email sending, Educacenso — all non-critical paths that should not block the user.",
+        "safeWording": "Non-critical external integrations go through JMS queues — if the external service is down, messages queue and process when it recovers. The user is never blocked."
+      }
+    ],
+    "scoringRubric": [
+      {
+        "criterion": "CLARIFICATION",
+        "weight": 20,
+        "strongSignals": [
+          "Asks sync vs async first",
+          "Questions idempotency support",
+          "Asks about business cost of failure"
+        ],
+        "weakSignals": [
+          "Jumps to circuit breaker pattern",
+          "Doesn't ask whether user waits"
+        ]
+      },
+      {
+        "criterion": "TRADEOFFS",
+        "weight": 20,
+        "strongSignals": [
+          "Names timeout vs completion rate",
+          "Discusses simple retry vs circuit breaker scope",
+          "Explains when async is justified vs over-engineering"
+        ],
+        "weakSignals": [
+          "Only one approach",
+          "Lists patterns without connecting to this problem"
+        ]
+      },
+      {
+        "criterion": "CONDITIONAL_REASONING",
+        "weight": 20,
+        "strongSignals": [
+          "Different design for sync vs async",
+          "Adapts when follow-up changes constraint",
+          "Names when their solution is wrong"
+        ],
+        "weakSignals": [
+          "Same answer regardless of sync/async decision",
+          "Cannot adapt"
+        ]
+      },
+      {
+        "criterion": "FAILURE_HANDLING",
+        "weight": 25,
+        "strongSignals": [
+          "Discusses recovery thundering herd",
+          "Plans for extended outage",
+          "Mentions DLQ and alerting",
+          "Considers cascade risk"
+        ],
+        "weakSignals": [
+          "Only handles transient failure",
+          "No extended outage plan",
+          "Ignores cascade to other operations"
+        ]
+      },
+      {
+        "criterion": "HONESTY",
+        "weight": 15,
+        "strongSignals": [
+          "Names specific integrations (Moodle, LDAP)",
+          "Distinguishes timeout+JMS (used) from circuit breaker (studied)"
+        ],
+        "weakSignals": [
+          "Claims Resilience4j or Hystrix experience",
+          "Generic 'I've done resilience'"
+        ]
+      }
+    ],
+    "redFlags": [
+      "Listing patterns (circuit breaker, retry, bulkhead, timeout) without connecting to the specific problem",
+      "Not asking whether the flow is synchronous or async",
+      "Ignoring the 15-second spike scenario (more common than full outage)",
+      "No mention of what happens during recovery (thundering herd)",
+      "Claiming circuit breaker production experience without specifics",
+      "Designing without considering idempotency for retry safety"
+    ],
+    "coachDebrief": {
+      "strongAnswerElements": [
+        "Started by clarifying sync vs async and business impact of failure",
+        "Distinguished transient (spikes) from sustained (outage) failures",
+        "Proposed async as primary resilience mechanism with concrete queue design",
+        "Discussed recovery scenario and controlled drain",
+        "Connected to real experience: Moodle integration, JMS for resilience, TX boundary separation"
+      ],
+      "possibleDirections": [
+        "Async queue with controlled drain (resilience-first)",
+        "Synchronous with graceful degradation to provisional status (UX-first)",
+        "Multi-carrier fallback (business continuity angle)",
+        "Observability focus: knowing the API is degrading before users notice"
+      ],
+      "commonlyMissedPoints": [
+        "Recovery thundering herd is a real failure mode (draining 2000 at once)",
+        "Idempotency without API support requires client-side deduplication",
+        "15-second spikes are more impactful than full outages (full outages trigger circuit breaker; spikes hold threads)",
+        "Connection pool exhaustion from slow external calls inside transactions (SGN3's exact problem)",
+        "The simple solution (longer timeout) actually works at low volume — don't over-engineer"
+      ]
+    }
+  },
+  {
+    "schemaVersion": 2,
+    "id": "sd-investigation-v2",
+    "topic": "software-architecture",
+    "subtopic": "Observability",
+    "type": "ORAL_ANSWER",
+    "difficulty": "SENIOR",
+    "question": "Production latency for the delivery confirmation endpoint increased from p95=200ms to p95=2.5s after yesterday's deploy. No errors in logs. How do you investigate?",
+    "context": "You have access to APM (distributed tracing), logs, metrics dashboards, and database monitoring. The deploy was a feature addition, not a refactoring.",
+    "knownFacts": [
+      "p95 latency jumped from 200ms to 2.5s (12.5x)",
+      "No error rate increase",
+      "Started after yesterday's deploy",
+      "Feature addition deploy (new code, not refactoring)"
+    ],
+    "intentionallyMissingInformation": [
+      "Whether latency is constant 2.5s or spiky",
+      "Whether all requests are slow or only some (specific input patterns?)",
+      "What the new feature does",
+      "Whether the database load changed",
+      "Whether external dependencies are slower",
+      "Whether it affects all pods or specific ones"
+    ],
+    "oralMode": {
+      "preparationSeconds": 30,
+      "initialAnswerSeconds": 180,
+      "followUpSeconds": 60
+    },
+    "openingGuidance": {
+      "objective": "Demonstrate systematic decomposition — not guessing. Show that you can narrow down the cause methodically: is it database? External call? New code? GC? Contention?",
+      "requiredElements": [
+        "State the investigation method (decompose latency by component)",
+        "Acknowledge correlation with deploy is strong signal but not proof of causation",
+        "Indicate you'll use APM traces to identify the dominant cost"
+      ],
+      "avoid": [
+        "Guessing the cause without evidence ('probably a missing index')",
+        "Suggesting rollback as first action without diagnosis",
+        "Only looking at one possible cause (tunnel vision)"
+      ]
+    },
+    "clarifyingQuestions": [
+      {
+        "category": "PATTERN",
+        "question": "Is the latency constant 2.5s for all requests, or only for specific patterns (certain delivery types, regions, sizes)?",
+        "whyItMatters": "If only large deliveries are slow, the new feature likely added processing proportional to size. If all requests are slow uniformly, it might be a shared resource (connection pool, lock, external dependency).",
+        "affectedDecisions": [
+          "Where to look in traces (specific inputs vs all)",
+          "Whether to filter by request parameters",
+          "Scope of the problem"
+        ]
+      },
+      {
+        "category": "SCOPE",
+        "question": "Is it all pods or specific instances? Did the deploy go to all pods simultaneously?",
+        "whyItMatters": "If one pod is slow, it might be resource contention, GC, or a hot partition. If all pods are equally slow, the cause is in the code or a shared dependency (database, external service).",
+        "affectedDecisions": [
+          "Pod-specific vs systemic investigation",
+          "Whether to look at JVM metrics per pod",
+          "Canary deploy consideration"
+        ]
+      },
+      {
+        "category": "TEMPORAL",
+        "question": "Is the latency constant since deploy, or does it correlate with load (worse during peak)?",
+        "whyItMatters": "Constant: likely a new synchronous cost added to every request (extra query, external call). Load-correlated: likely contention (connection pool, lock, thread pool saturation).",
+        "affectedDecisions": [
+          "Contention investigation (thread dumps, pool metrics) vs code path investigation (traces)"
+        ]
+      }
+    ],
+    "assumptionsToDeclare": [
+      {
+        "assumption": "I'll start with APM traces from the slow endpoint to identify where the 2.3 seconds are being spent.",
+        "consequence": "This gives direct evidence of the bottleneck without guessing. If 2s is in a new query, I know where to look."
+      }
+    ],
+    "tradeoffs": [
+      {
+        "dimensionA": "Speed of resolution (rollback immediately)",
+        "dimensionB": "Understanding the cause (investigate first)",
+        "domainContext": "Rollback fixes the symptom in minutes. But without understanding the cause, the next deploy might reintroduce it. If the latency is from a new business requirement (not a bug), rollback removes desired functionality.",
+        "consequence": "If p95=2.5s is causing user complaints or business impact, rollback while investigating in parallel. If it's degraded but not critical, investigate first to avoid losing a feature."
+      }
+    ],
+    "decisionBranches": [
+      {
+        "condition": "APM trace shows a new database query taking 2s",
+        "recommendation": "EXPLAIN ANALYZE on the query. Check if it's a missing index, Cartesian product, or N+1 introduced by the new feature. Fix: add index, fix join, or add pagination.",
+        "rationale": "Database is the most common cause of latency in CRUD services. A new feature often adds queries without considering index coverage or volume.",
+        "costs": [
+          "Time to identify specific query",
+          "Index creation may require DBA approval"
+        ],
+        "risks": [
+          "Index might not help if the query is fundamentally wrong (Cartesian product)",
+          "Fix might take longer than expected if schema change needed"
+        ],
+        "invalidatedBy": [
+          "Trace shows latency is NOT in database",
+          "Query plan shows index is being used correctly"
+        ]
+      },
+      {
+        "condition": "APM trace shows a new external call taking 2s",
+        "recommendation": "Check external service health. If it's expected latency: make the call async (don't block the response). If unexpected: add timeout, circuit breaker, and alert.",
+        "rationale": "A new feature might introduce an external dependency that was tested in dev (fast) but is slow in production (scale, network, rate limits).",
+        "costs": [
+          "Making it async changes the response contract",
+          "Circuit breaker adds complexity"
+        ],
+        "risks": [
+          "External service might be temporarily degraded (not the new code's fault)",
+          "Making it async might change user-visible behavior"
+        ],
+        "invalidatedBy": [
+          "Trace shows external call existed before deploy (not new)",
+          "External service confirms no degradation"
+        ]
+      },
+      {
+        "condition": "APM trace shows latency spread across many small operations (no single bottleneck)",
+        "recommendation": "Look for N+1 pattern: many small queries/calls that sum to 2s. Check if the new feature iterates over a collection and makes a call per item.",
+        "rationale": "N+1 doesn't show as one slow operation — it shows as many fast operations. 100 queries × 20ms each = 2 seconds but no single query appears slow.",
+        "costs": [
+          "Harder to identify without counting query instances in the trace",
+          "Fix (batch loading) may require refactoring"
+        ],
+        "risks": [
+          "N+1 may only manifest at production scale (10 items in dev, 100 in prod)"
+        ],
+        "invalidatedBy": [
+          "Query count is the same as before deploy",
+          "Individual query times haven't changed"
+        ]
+      }
+    ],
+    "validationPlan": [
+      {
+        "hypothesis": "The new feature introduced a query without index coverage that causes sequential scan on a large table.",
+        "method": "EXPLAIN ANALYZE on the identified slow query. Compare execution plan before and after the deploy (if possible).",
+        "metrics": [
+          "Execution time",
+          "Scan type (seq vs index)",
+          "Rows examined vs rows returned"
+        ],
+        "successCriteria": [
+          "Index scan after fix",
+          "Query time < 50ms",
+          "p95 returns to ~200ms after deploy of fix"
+        ],
+        "failureSignals": [
+          "Index doesn't help (query is fundamentally wrong)",
+          "p95 doesn't improve after fix (other causes exist)"
+        ]
+      }
+    ],
+    "followUps": [
+      {
+        "type": "CHANGE_REQUIREMENT",
+        "question": "The APM shows the latency is evenly distributed across 50 small queries, each taking 40ms. What now?",
+        "interviewerIntent": "Tests recognition of N+1 pattern and ability to adapt investigation.",
+        "strongSignals": [
+          "Identifies as N+1 or similar loop pattern",
+          "Asks: did these 50 queries exist before or are they new?",
+          "Proposes batch loading or JOIN FETCH",
+          "Checks if the new feature iterates over a collection"
+        ],
+        "weakSignals": [
+          "Tries to optimize individual 40ms queries (missing the pattern)",
+          "Doesn't ask if the count is new",
+          "Cannot identify N+1 from the symptom description"
+        ],
+        "hint": "50 queries × 40ms = 2s. Classic N+1. The new feature probably loads a list then loops fetching details. Fix: batch load details in one query (IN clause or JOIN FETCH). Validate: query count drops from 50 to 2-3."
+      },
+      {
+        "type": "OPERATIONS",
+        "question": "While you investigate, the support team is getting complaints. Do you rollback now or continue investigating?",
+        "interviewerIntent": "Tests operational judgment — balancing investigation with user impact.",
+        "strongSignals": [
+          "Asks: how severe is the user impact? (degraded but working vs broken)",
+          "If critical: rollback AND investigate in parallel on staging",
+          "If degraded but functional: time-box investigation (30 min) then rollback if not resolved",
+          "Communicates to team what's happening"
+        ],
+        "weakSignals": [
+          "Insists on investigating without considering user impact",
+          "Rollbacks immediately without any diagnosis",
+          "Doesn't mention communication to stakeholders"
+        ],
+        "hint": "Decision framework: if SLA is breached or revenue impacted → rollback immediately, investigate post-rollback. If degraded but within SLA → time-box investigation (30 min), rollback if unresolved. Always: communicate status to team and stakeholders."
+      },
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Describe a time you investigated a production performance regression.",
+        "interviewerIntent": "Expects the real inscription listing story or another concrete case.",
+        "strongSignals": [
+          "Tells the real story: 26,705 inscriptions, 48k queries, Glowroot diagnosis",
+          "Describes the methodology: APM → identify dominant cost → fix root cause → verify",
+          "Shows the same systematic approach proposed in this answer"
+        ],
+        "weakSignals": [
+          "Generic answer without specifics",
+          "Cannot describe the tools used",
+          "Story doesn't match the methodology proposed"
+        ],
+        "hint": "Real case: 'Inscription listing taking 16 minutes. Used Glowroot to identify ~48,000 queries (N+1 pattern). Root cause: JSF template triggering lazy loads for 26,705 records. Fix: pagination + batch loading. Result: ~10 queries, 2 seconds. Verified in Glowroot: query count dropped from 48k to 10.'"
+      }
+    ],
+    "experienceEvidence": [
+      {
+        "area": "Production performance investigation",
+        "level": "PRODUCTION_EXPERIENCE",
+        "evidence": "Inscription listing: 16min→2s using Glowroot traces to identify 48k queries. Daily use of Glowroot for latency diagnosis.",
+        "safeWording": "I investigate production performance issues daily using Glowroot (APM). My most significant case: a listing taking 16 minutes — traced to 48,000 queries from an N+1 pattern. Fixed with pagination and batch loading, verified at 2 seconds."
+      },
+      {
+        "area": "EXPLAIN ANALYZE for query optimization",
+        "level": "PRODUCTION_EXPERIENCE",
+        "evidence": "Regular use for identifying missing indexes, sequential scans, cartesian products in SGN PostgreSQL",
+        "safeWording": "I regularly use EXPLAIN ANALYZE to diagnose slow queries — identifying sequential scans, missing indexes, and join issues in our PostgreSQL production database."
+      },
+      {
+        "area": "Distributed tracing (Jaeger/Zipkin/OpenTelemetry)",
+        "level": "STUDIED_NOT_USED",
+        "safeWording": "My APM experience is Glowroot (single-service tracing). I have not used distributed tracing (Jaeger/Zipkin) across multiple services. The investigation methodology transfers — decompose latency by component — but the tooling is different."
+      }
+    ],
+    "scoringRubric": [
+      {
+        "criterion": "CLARIFICATION",
+        "weight": 15,
+        "strongSignals": [
+          "Asks about pattern (all requests vs some)",
+          "Questions temporal correlation with load",
+          "Asks about scope (all pods vs one)"
+        ],
+        "weakSignals": [
+          "Starts fixing without understanding the pattern",
+          "Assumes it's database without evidence"
+        ]
+      },
+      {
+        "criterion": "ASSUMPTIONS",
+        "weight": 10,
+        "strongSignals": [
+          "States: 'I'll start with APM traces to identify the bottleneck'",
+          "Acknowledges deploy correlation is signal not proof"
+        ],
+        "weakSignals": [
+          "Assumes cause without stating it as assumption",
+          "Treats correlation as causation"
+        ]
+      },
+      {
+        "criterion": "TRADEOFFS",
+        "weight": 15,
+        "strongSignals": [
+          "Discusses rollback vs investigate trade-off",
+          "Time-boxes investigation before deciding"
+        ],
+        "weakSignals": [
+          "Doesn't consider rollback",
+          "Doesn't consider user impact while investigating"
+        ]
+      },
+      {
+        "criterion": "CONDITIONAL_REASONING",
+        "weight": 25,
+        "strongSignals": [
+          "Different fix depending on what trace shows (DB vs external vs N+1)",
+          "Adapts when follow-up reveals N+1",
+          "Doesn't commit to solution before seeing trace"
+        ],
+        "weakSignals": [
+          "One diagnosis regardless of evidence",
+          "Cannot pivot when follow-up changes the data"
+        ]
+      },
+      {
+        "criterion": "VALIDATION",
+        "weight": 15,
+        "strongSignals": [
+          "Verifies fix by checking p95 returns to baseline",
+          "Uses same APM tool to confirm",
+          "Checks for other degradation after fix"
+        ],
+        "weakSignals": [
+          "Deploys fix without verification plan",
+          "Doesn't define what success looks like"
+        ]
+      },
+      {
+        "criterion": "HONESTY",
+        "weight": 20,
+        "strongSignals": [
+          "Connects to real inscription listing investigation",
+          "Names specific tools (Glowroot, EXPLAIN ANALYZE)",
+          "Distinguishes single-service APM from distributed tracing"
+        ],
+        "weakSignals": [
+          "Claims Jaeger/distributed tracing experience",
+          "Generic methodology without tool specifics"
+        ]
+      }
+    ],
+    "redFlags": [
+      "Guessing 'probably a missing index' without looking at traces",
+      "Suggesting rollback as first and only action (no diagnosis)",
+      "Not asking whether all requests are affected or only some",
+      "Tunnel vision on one possible cause (only database, ignoring external calls)",
+      "Claiming distributed tracing experience (Jaeger/Zipkin) not backed by real usage",
+      "Not mentioning the N+1 possibility when trace shows many small operations"
+    ],
+    "coachDebrief": {
+      "strongAnswerElements": [
+        "Started with APM trace analysis, not guessing",
+        "Presented conditional paths: DB, external call, or N+1 — depending on what trace shows",
+        "Discussed rollback decision with clear criteria (impact severity determines urgency)",
+        "Connected to real experience: Glowroot, EXPLAIN ANALYZE, inscription listing case",
+        "Honest about distributed tracing being studied, single-service APM being real"
+      ],
+      "possibleDirections": [
+        "Database-first investigation (most common cause in CRUD services)",
+        "External dependency investigation (new integration introduced by feature)",
+        "N+1 hunting (new collection processing without batch loading)",
+        "Contention investigation (thread pool, connection pool, locks)"
+      ],
+      "commonlyMissedPoints": [
+        "N+1 doesn't appear as one slow query — it appears as many fast queries summing to seconds",
+        "Deploy correlation is strong but not proof (could be coincidence with data growth or external service change)",
+        "Load-correlated vs constant degradation tells you different things",
+        "Rollback decision depends on business impact, not engineering preference",
+        "Verify the fix in production with the same metric that detected the problem (p95)"
+      ]
+    }
+  },
+  {
+    "id": "sdm-uc-01",
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "sdm-use-cases",
+    "question": "What is the difference between a use case and a user story?",
+    "interviewerIntent": "Tests understanding of requirements communication formats",
+    "keyPoints": [
+      "Use case: detailed flow (preconditions, steps, extensions, postconditions)",
+      "User story: brief value statement (As a... I want... So that...)",
+      "Use case = complete specification, user story = conversation starter",
+      "Both valid — use cases for complex flows, stories for agile backlog"
+    ],
+    "followUps": [
+      {
+        "question": "When would you prefer use cases over user stories?",
+        "answerHint": "Complex integrations, regulatory requirements, outsourced development (need detailed spec), systems with many exception paths."
+      }
+    ],
+    "topic": "software-architecture",
+    "explain": "Use case = comprehensive behavior description. User story = placeholder for a conversation. Use cases from Dennis/Wixom describe full actor-system interaction; user stories from XP are intentionally brief to encourage collaboration."
+  },
+  {
+    "id": "sdm-uc-02",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "sdm-use-cases",
+    "mission": "In UML, what does <<include>> between two use cases mean?",
+    "choices": [
+      "The included use case is optional",
+      "The included use case ALWAYS executes as part of the base use case",
+      "The included use case extends the base with new steps",
+      "The included use case replaces the base use case"
+    ],
+    "answer": "The included use case ALWAYS executes as part of the base use case",
+    "explain": "<<include>> means mandatory sub-behavior. Example: 'Place Order' <<include>> 'Validate Payment' — payment validation ALWAYS happens. <<extend>> is for optional/conditional behavior.",
+    "topic": "software-architecture"
+  },
+  {
+    "id": "sdm-cd-01",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "sdm-class-diagrams",
+    "mission": "A Delivery has a filled diamond (◆) pointing to Stop. What does this mean?",
+    "choices": [
+      "Delivery references Stop (can exist independently)",
+      "Delivery OWNS Stop (Stop cannot exist without Delivery)",
+      "Stop inherits from Delivery",
+      "Delivery and Stop are the same class"
+    ],
+    "answer": "Delivery OWNS Stop (Stop cannot exist without Delivery)",
+    "explain": "Filled diamond = Composition (strong ownership). If Delivery is deleted, its Stops are deleted too. In JPA: cascade=ALL, orphanRemoval=true. Open diamond (◇) = Aggregation (weak reference) — the referenced object can exist independently.",
+    "topic": "software-architecture"
+  },
+  {
+    "id": "sdm-cd-02",
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "sdm-class-diagrams",
+    "question": "How do you decide between inheritance and composition in your domain model?",
+    "interviewerIntent": "Tests OO design judgment — composition over inheritance principle",
+    "keyPoints": [
+      "Inheritance: IS-A relationship (ExpressDelivery IS-A Delivery)",
+      "Composition: HAS-A relationship (Delivery HAS-A Route)",
+      "Prefer composition: more flexible, avoids fragile base class",
+      "Inheritance justified when: shared behavior, polymorphism needed, stable hierarchy",
+      "In Spring: @Service with injected strategy = composition. Abstract class with template method = inheritance."
+    ],
+    "followUps": [
+      {
+        "question": "Give an example where inheritance caused problems.",
+        "answerHint": "Deep hierarchies where changing base class broke multiple subclasses. Or 'diamond problem' in multiple inheritance. In Java, solved with interfaces + default methods."
+      }
+    ],
+    "topic": "software-architecture",
+    "explain": "Dennis/Wixom: inheritance for stable taxonomies, composition for flexible behavior. GoF: 'Favor composition over inheritance.' In practice: use inheritance for identity (what it IS), composition for behavior (what it DOES)."
+  },
+  {
+    "id": "sdm-seq-01",
+    "type": "ORDER_EXECUTION",
+    "difficulty": "inter",
+    "subtopic": "sdm-sequence-diagrams",
+    "mission": "Order the steps in a typical Spring Boot request flow (sequence diagram):",
+    "items": [
+      {
+        "id": "client",
+        "label": "Client sends HTTP request"
+      },
+      {
+        "id": "filter",
+        "label": "Security filter validates token"
+      },
+      {
+        "id": "controller",
+        "label": "Controller deserializes request, calls service"
+      },
+      {
+        "id": "service",
+        "label": "Service applies business logic, calls repository"
+      },
+      {
+        "id": "repo",
+        "label": "Repository executes SQL query"
+      },
+      {
+        "id": "response",
+        "label": "Controller serializes response, returns HTTP status"
+      }
+    ],
+    "topic": "software-architecture",
+    "explain": "This is the standard layered sequence in Spring Boot. Each layer has a single responsibility. A sequence diagram makes this flow explicit and helps identify where to add cross-cutting concerns (logging, caching, retry)."
+  },
+  {
+    "id": "sdm-arch-01",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "sdm-architecture",
+    "question": "How do you approach making an architecture decision when there are multiple valid options?",
+    "interviewerIntent": "Tests decision-making process, not just technical knowledge",
+    "keyPoints": [
+      "1. Define constraints (team size, timeline, existing infra, compliance)",
+      "2. List options with pros/cons for THIS context (not generic)",
+      "3. Identify the MOST IMPORTANT quality attribute (scalability? consistency? time-to-market?)",
+      "4. Make decision explicit (ADR)",
+      "5. Define reversal cost — is this a one-way door or two-way door?"
+    ],
+    "followUps": [
+      {
+        "question": "What is a two-way door decision?",
+        "answerHint": "A decision easily reversed: library choice, internal API design. Decide fast, adjust later. One-way door: database choice, public API contract, messaging platform. Invest more time upfront."
+      }
+    ],
+    "topic": "software-architecture",
+    "explain": "Senior engineers don't just pick the 'best' technology — they make decisions in context, document rationale (ADR), and distinguish reversible from irreversible choices. Dennis/Wixom: architecture design is about constraints and trade-offs, not ideal solutions."
+  },
+  {
+    "id": "sdm-data-01",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "sdm-data-modeling",
+    "mission": "A delivery can have many stops, and a stop belongs to exactly one delivery. What JPA annotations represent this?",
+    "choices": [
+      "@ManyToMany on both sides",
+      "@OneToMany on Delivery, @ManyToOne on Stop",
+      "@OneToOne on both sides",
+      "@ManyToOne on Delivery, @OneToMany on Stop"
+    ],
+    "answer": "@OneToMany on Delivery, @ManyToOne on Stop",
+    "explain": "One Delivery has Many Stops (1:N). The 'owning side' (with FK column) is Stop (@ManyToOne). The 'inverse side' is Delivery (@OneToMany(mappedBy='delivery')). The FK (delivery_id) lives in the stop table.",
+    "topic": "software-architecture"
+  },
+  {
+    "id": "sdm-data-02",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "sdm-data-modeling",
+    "question": "When would you intentionally denormalize your data model?",
+    "interviewerIntent": "Tests practical trade-off thinking beyond textbook normalization",
+    "keyPoints": [
+      "Read-heavy path joining 5+ tables with measured latency problem",
+      "Event payloads (self-contained, no JOIN needed to process)",
+      "Audit/history tables (snapshot at point in time)",
+      "Reporting/analytics (star schema)",
+      "Caching layer (Redis denormalized view)"
+    ],
+    "followUps": [
+      {
+        "question": "How do you keep denormalized data consistent?",
+        "answerHint": "Event-driven updates (CDC), materialized views with refresh, application-level sync on write, or accept eventual consistency with defined SLA."
+      }
+    ],
+    "topic": "software-architecture",
+    "explain": "Dennis/Wixom: normalize by default (3NF), denormalize with justification. Senior approach: measure first, denormalize specific read paths, keep normalized source as truth."
+  },
+  {
+    "id": "sdm-comm-01",
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "sdm-communication",
+    "question": "You're in a system design interview. How do you structure your approach?",
+    "interviewerIntent": "Tests structured thinking and communication under pressure",
+    "keyPoints": [
+      "1. Clarify requirements (ask questions! scope, scale, constraints)",
+      "2. High-level design (C4 Level 1-2: context, containers)",
+      "3. Deep dive (C4 Level 3: components, sequence diagram for key flow)",
+      "4. Trade-offs (what you chose AND what you rejected, with reasons)",
+      "5. Operational considerations (monitoring, failure modes, scaling)"
+    ],
+    "followUps": [
+      {
+        "question": "What do you do when you don't know the answer?",
+        "answerHint": "State your assumption explicitly: 'I'm assuming X because... If that's wrong, the design would change by...' Shows intellectual honesty and adaptability."
+      }
+    ],
+    "topic": "software-architecture",
+    "explain": "The C4 model provides natural zoom levels. Start broad (system context), zoom in when asked. Always clarify before designing — jumping to solution without understanding requirements is the #1 red flag."
+  },
+  {
+    "id": "sdm-comm-02",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "sdm-communication",
+    "mission": "In the C4 model, what does Level 2 (Container diagram) show?",
+    "choices": [
+      "External users and systems",
+      "Deployable units (apps, databases, queues)",
+      "Internal classes and methods",
+      "Network topology and servers"
+    ],
+    "answer": "Deployable units (apps, databases, queues)",
+    "explain": "C4 levels: L1=System Context (who uses it), L2=Containers (deployable units: Spring Boot app, PostgreSQL, Kafka, Redis), L3=Components (internal modules within a container), L4=Code (class-level, rarely drawn). Container = something that runs and hosts code.",
+    "topic": "software-architecture"
   }
 ]

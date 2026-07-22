@@ -42,10 +42,10 @@ The site separates **learning** from **interview simulation**:
 
 ## 📊 Content
 
-- **24 topics / 141 subtopics** across backend, distributed systems, frontend, and interview domains
-- **154 theory chapters** with code examples and production context
-- **729 exercises** — ORAL_ANSWER, PREDICT_OUTPUT, FILL_BLANK, PICK_INVALID, ORDER_STEPS
-- **146 interview questions**, covering every indexed subtopic, with follow-ups and experience classification
+- **25 topics / 172 subtopics** across backend, distributed systems, frontend, and interview domains
+- **303 theory chapters** with code examples and production context
+- **854 exercises** — ORAL_ANSWER, PREDICT_OUTPUT, FILL_BLANK, PICK_INVALID, ORDER_STEPS
+- **197 interview questions**, covering 164/172 subtopics, with follow-ups and experience classification
 - **5 System Design pilots** (schema v2) with scoring rubric and coach debrief
 - **REWE content** classified: ✅ Confirmed | 🔶 Inferred | 🚫 Unknown
 - **My Stories** — measured cases where evidence exists; missing personal examples are explicitly marked as templates or inferences
@@ -74,7 +74,7 @@ src/app/
     └── interview.model.ts        ← Interview-specific interfaces
 
 public/data/
-├── exercises/                    ← 24 JSON files, 695+ exercises
+├── exercises/                    ← 27 JSON files, 854 exercises
 ├── interviews/                   ← Interview prep questions per topic
 │   └── *.json                   ← 24 topic files, validated for complete coverage
 └── topics/                       ← Theory files + index.json

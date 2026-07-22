@@ -21,8 +21,7 @@ export class DashboardComponent {
   private readonly learnIds = [
     'java', 'oop', 'solid', 'dsa', 'data-persistence', 'spring',
     'rest', 'security', 'concurrency', 'patterns', 'testing',
-    'docker', 'k8s', 'kotlin', 'angular', 'kafka', 'system-design-modeling',
-    'ddd'
+    'docker', 'k8s', 'kotlin', 'angular', 'kafka', 'system-design-modeling'
   ];
 
   private readonly interviewIds = ['system-design', 'software-architecture', 'behavioral', 'mindset'];
@@ -83,7 +82,6 @@ export class DashboardComponent {
     'k8s': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-original.svg',
     'kotlin': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kotlin/kotlin-original.svg',
     'angular': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/angularjs/angularjs-original.svg',
-    'ddd': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/unifiedmodelinglanguage/unifiedmodelinglanguage-original.svg',
   };
 
   getImageUrl(topicId: string): string {

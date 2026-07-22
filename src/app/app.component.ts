@@ -114,8 +114,23 @@ export class AppComponent implements OnInit {
   getSubtopicGroups(topic: Topic): SidebarSubtopicGroup[] {
     const labels = TOPIC_PHASES[topic.id] ?? [''];
     const items = topic.subtopics ?? [];
-    const size = Math.ceil(items.length / labels.length);
+    const sizes = TOPIC_PHASE_SIZES[topic.id];
 
+    if (sizes) {
+      // Explicit sizes per phase
+      let offset = 0;
+      return labels
+        .map((label, index) => {
+          const count = sizes[index] ?? 0;
+          const group = { label, items: items.slice(offset, offset + count) };
+          offset += count;
+          return group;
+        })
+        .filter(group => group.items.length > 0);
+    }
+
+    // Default: equal division
+    const size = Math.ceil(items.length / labels.length);
     return labels
       .map((label, index) => ({ label, items: items.slice(index * size, (index + 1) * size) }))
       .filter(group => group.items.length > 0);
@@ -205,8 +220,7 @@ const TOPIC_PHASES: Record<string, string[]> = {
   java: ['Language essentials', 'Flow and structure', 'Objects and standard APIs', 'Express intent safely', 'Modern concurrency'],
   'data-persistence': ['SQL fundamentals', 'JPA & Hibernate', 'Distributed data (DDIA)', 'Performance & production'],
   'system-design': ['Shape the flow', 'Protect data and scale', 'Operate the system'],
-  'software-architecture': ['Start with decisions', 'Shape boundaries and communication', 'Operate, evolve, and document'],
-  ddd: ['Strategic design', 'Tactical building blocks', 'Integration and practice'],
+  'software-architecture': ['Foundations', 'Domain-Driven Design', 'Architectural Styles', 'Distributed Architecture', 'API & Integration', 'Data Architecture', 'Evolution & Legacy'],
   behavioral: ['Adapt and collaborate', 'Lead under pressure', 'Show motivation and judgement'],
   stories: ['Business impact', 'Technical decisions', 'Personal narrative'],
   portfolio: ['Product context', 'Architecture and delivery', 'Interview evidence'],
@@ -221,4 +235,9 @@ const TOPIC_PHASES: Record<string, string[]> = {
   k8s: ['Run workloads', 'Expose and protect services', 'Scale and observe'],
   kotlin: ['Language foundations', 'Model data safely', 'Compose asynchronous behaviour'],
   angular: ['Build components and state', 'Connect data and forms', 'Navigate and secure journeys']
+};
+
+/** Explicit phase sizes for topics with uneven distribution */
+const TOPIC_PHASE_SIZES: Record<string, number[]> = {
+  'software-architecture': [3, 12, 3, 1, 1, 1, 1]  // Foundations(3), DDD(12), Styles(3), Distributed(1), API(1), Data(1), Evolution(1)
 };

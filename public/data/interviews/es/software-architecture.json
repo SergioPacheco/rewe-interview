@@ -453,5 +453,392 @@
       "title": "Propiedad en base de datos compartida como compromiso de diseño",
       "description": "La organización por esquemas de SGN3 puede ilustrar la propiedad dentro de una única base de datos operativa si las rutas de escritura de la capa de servicio y las excepciones de reportes se verifican a partir del código en el que trabajaste. Presentar los esquemas como apoyo organizativo, describir los controles de dependencia que puedas demostrar, y reconocer que las lecturas sin restricciones entre esquemas reducen el aislamiento."
     }
+  },
+  {
+    "id": "interview-ddd-1",
+    "topic": "software-architecture",
+    "subtopic": "ddd-introduction",
+    "difficulty": "INTERMEDIATE",
+    "question": "When would you choose to apply DDD, and when would it be overkill?",
+    "shortAnswer": "DDD is valuable when the business logic is genuinely complex — many rules, edge cases, and domain experts needed. It's overkill for CRUD-heavy systems where the complexity is technical (integrations, performance) rather than in the domain model itself.",
+    "detailedAnswer": "DDD targets the core domain — the part of the system that gives competitive advantage and has complex, evolving rules. Apply it when:\n\n- Business rules are non-trivial and change frequently\n- Domain experts use specialized vocabulary that the code should reflect\n- Multiple teams need clear boundaries to work independently\n- The cost of getting the model wrong is high\n\nDon't apply DDD when:\n- The system is primarily data-centric (forms in → database → reports out)\n- Business logic is simple validation (required fields, ranges)\n- The team is small and communication overhead is negligible\n- Time-to-market matters more than long-term model purity\n\nEric Evans himself warns against applying DDD uniformly. Use strategic design (subdomains, bounded contexts) everywhere, but reserve tactical patterns (aggregates, value objects, domain events) for the core subdomain where they pay off.",
+    "keyPoints": [
+      "Core domain with complex rules → DDD adds value",
+      "CRUD/data-centric systems → DDD adds overhead without benefit",
+      "Strategic design (context boundaries) is always useful",
+      "Tactical patterns reserved for core subdomain",
+      "The decision is about domain complexity, not system size"
+    ],
+    "followUps": [
+      {
+        "question": "How do you identify the core subdomain in a company like REWE?",
+        "answerHint": "Ask: what differentiates REWE from competitors? Likely logistics optimization, delivery scheduling, and pricing — not user authentication or email sending. Those supporting domains get simpler models."
+      },
+      {
+        "question": "Can you start without DDD and introduce it later?",
+        "answerHint": "Yes — refactor toward DDD when complexity emerges. Start with clear module boundaries (strategic) and extract aggregates/value objects when the anemic model becomes painful. Big-bang DDD rewrites usually fail."
+      }
+    ],
+    "redFlags": [
+      "Applying DDD to every project regardless of complexity",
+      "Confusing DDD with using Repository/Service naming",
+      "Not knowing when DDD is overkill"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ddd-2",
+    "topic": "software-architecture",
+    "subtopic": "ddd-bounded-context",
+    "difficulty": "SENIOR",
+    "question": "You're designing a system where 'Customer' means different things in Sales, Support, and Billing. How do you model this?",
+    "shortAnswer": "Each department is a separate Bounded Context with its own Customer model. Sales has leads and opportunities, Support has tickets and SLAs, Billing has payment methods and invoices. They share a customer ID for correlation but each defines Customer differently — no single canonical model.",
+    "detailedAnswer": "This is the fundamental problem Bounded Contexts solve. A single 'Customer' class trying to serve all departments becomes a god object with 50+ fields, inconsistent invariants, and coupling between teams.\n\nThe solution:\n\n1. **Identify contexts**: Sales Context, Support Context, Billing Context\n2. **Each owns its Customer**: SalesCustomer (lead status, pipeline stage), SupportCustomer (SLA tier, open tickets), BillingCustomer (payment methods, credit limit)\n3. **Shared identity**: all reference the same customerId but their models diverge\n4. **Integration**: Context Map defines how they communicate — typically via domain events or an Anti-Corruption Layer\n\nExample integration:\n- Sales closes a deal → publishes CustomerAcquired event\n- Billing listens → creates BillingCustomer with default payment terms\n- Support listens → creates SupportCustomer with standard SLA\n\nEach context evolves independently. Billing can add crypto payments without touching Sales code.",
+    "keyPoints": [
+      "Same word, different models → separate Bounded Contexts",
+      "Shared ID for correlation, separate schemas/classes",
+      "No single canonical Customer model across contexts",
+      "Integration via events or Anti-Corruption Layer",
+      "Teams can evolve contexts independently"
+    ],
+    "followUps": [
+      {
+        "question": "How do you handle the case where Support needs the customer's billing status?",
+        "answerHint": "Anti-Corruption Layer: Support queries Billing's API and translates the response into its own model (e.g., 'hasPastDueInvoice' boolean). Support never depends on Billing's internal schema."
+      },
+      {
+        "question": "What's the difference between a Bounded Context and a microservice?",
+        "answerHint": "A Bounded Context is a logical boundary (model consistency). A microservice is a deployment unit. One context can have multiple services, or multiple small contexts can share one deployment. They often align but are not synonymous."
+      }
+    ],
+    "redFlags": [
+      "Creating one shared Customer table for all departments",
+      "Confusing Bounded Context with microservice 1:1",
+      "Not knowing how contexts communicate"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ddd-3",
+    "topic": "software-architecture",
+    "subtopic": "ddd-aggregate",
+    "difficulty": "SENIOR",
+    "question": "How do you decide the boundaries of an Aggregate? What's the consequence of making it too large or too small?",
+    "shortAnswer": "An Aggregate boundary is determined by consistency requirements — what must be transactionally consistent together. Too large: lock contention, performance problems, difficult to scale. Too small: invariants split across aggregates require eventual consistency for rules that should be immediate.",
+    "detailedAnswer": "The Aggregate boundary defines the transactional consistency boundary. Rules:\n\n**Design heuristics:**\n1. What MUST change together atomically? (invariant protection)\n2. What's the minimum cluster that protects a business rule?\n3. Prefer smaller aggregates — default to eventual consistency between them\n\n**Too large (Order with all OrderLines, Payments, Shipments):**\n- Optimistic locking conflicts when concurrent users modify different lines\n- Loading the full graph for simple updates\n- Database contention on the aggregate root row\n- Hard to distribute across services later\n\n**Too small (each OrderLine is its own aggregate):**\n- 'Total order value cannot exceed credit limit' — this invariant spans lines\n- Need eventual consistency + compensation for what should be immediate\n- Complex saga/process manager for what could be a single transaction\n\n**Practical example — Order:**\n- Order + OrderLines = one aggregate (adding a line must validate total)\n- Payment = separate aggregate (can fail independently)\n- Shipment = separate aggregate (lifecycle differs)\n\nReference between aggregates: by ID only, never direct object reference.",
+    "keyPoints": [
+      "Boundary = transactional consistency boundary",
+      "Protect invariants that MUST be immediate",
+      "Default to smaller aggregates + eventual consistency",
+      "Reference other aggregates by ID only",
+      "Too large → contention; too small → split invariants"
+    ],
+    "followUps": [
+      {
+        "question": "How do you handle a rule that spans two aggregates?",
+        "answerHint": "Domain event + eventual consistency. OrderPlaced event triggers inventory reservation. If reservation fails, compensate (cancel order or notify). Accept eventual consistency for cross-aggregate rules."
+      },
+      {
+        "question": "Can an Aggregate Root reference another Aggregate Root directly?",
+        "answerHint": "No — only by ID. Direct reference couples their lifecycles, makes serialization difficult, and prevents independent scaling. Use the ID to load the other aggregate when needed."
+      }
+    ],
+    "redFlags": [
+      "Making the entire database one aggregate",
+      "No clear reasoning for where the boundary goes",
+      "Referencing other aggregates by direct object reference",
+      "Not understanding the consistency trade-off"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ddd-4",
+    "topic": "software-architecture",
+    "subtopic": "ddd-value-object",
+    "difficulty": "INTERMEDIATE",
+    "question": "What's the difference between an Entity and a Value Object? Give a concrete example where using a Value Object improves the design.",
+    "shortAnswer": "An Entity has identity and lifecycle (same ID = same thing even if attributes change). A Value Object has no identity — it's defined entirely by its attributes (two Money(100, EUR) are interchangeable). Value Objects make the model richer by replacing primitives with domain concepts that carry behavior and validation.",
+    "detailedAnswer": "**Entity**: tracked by identity. Customer #42 is still Customer #42 even after changing their address.\n\n**Value Object**: defined by attributes. Money(100, EUR) == Money(100, EUR). No identity, immutable, replaceable.\n\n**Concrete example — replacing primitives with Value Objects:**\n\nBefore (primitive obsession):\n```java\nclass Order {\n  private BigDecimal amount;    // what currency?\n  private String email;          // validated where?\n  private String street, city;   // always together\n}\n```\n\nAfter (Value Objects):\n```java\nclass Order {\n  private Money totalAmount;     // carries currency + arithmetic\n  private EmailAddress contact;  // self-validating\n  private Address shipping;      // cohesive, immutable\n}\n```\n\nBenefits:\n- Validation at construction (invalid email can't exist)\n- Domain behavior where it belongs (Money.add handles currency)\n- Immutability eliminates aliasing bugs\n- Type safety (can't pass Money where Weight is expected)\n- Self-documenting code\n\nValue Objects are the most universally applicable DDD pattern — useful even without full DDD adoption.",
+    "keyPoints": [
+      "Entity = identity + lifecycle; Value Object = attributes only",
+      "Value Objects are immutable and replaceable",
+      "Eliminate primitive obsession with domain-typed values",
+      "Validation enforced at construction",
+      "Most universally applicable DDD pattern"
+    ],
+    "followUps": [
+      {
+        "question": "How do you persist Value Objects in JPA?",
+        "answerHint": "@Embeddable for simple VOs (Address, Money). For collections of VOs, use @ElementCollection. Never give a VO its own @Id — that makes it an entity."
+      },
+      {
+        "question": "When does something look like a Value Object but is actually an Entity?",
+        "answerHint": "When you need to track it individually over time. A Seat in a theater: same row/number but you need to track its reservation history → Entity. A Color RGB(255,0,0) → always a Value Object."
+      }
+    ],
+    "redFlags": [
+      "Can't explain the difference clearly",
+      "Never uses Value Objects (everything is an Entity or primitive)",
+      "Making Value Objects mutable"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ddd-5",
+    "topic": "software-architecture",
+    "subtopic": "ddd-domain-events",
+    "difficulty": "SENIOR",
+    "question": "How do Domain Events help decouple bounded contexts? What's the difference between a Domain Event and an Integration Event?",
+    "shortAnswer": "Domain Events represent facts that happened in the domain (OrderPlaced, PaymentReceived). They decouple contexts because the publisher doesn't know or care who listens. Domain Events are internal to a context (rich, may include objects). Integration Events are for cross-context communication (simplified DTOs, versioned contracts).",
+    "detailedAnswer": "**Domain Events** capture business-meaningful state changes:\n- OrderPlaced, InventoryReserved, ShipmentDispatched\n- Named in past tense (it already happened)\n- Carry the data needed to understand what happened\n\n**Decoupling through events:**\n- Order Context publishes OrderPlaced\n- Inventory Context subscribes → reserves stock\n- Notification Context subscribes → sends confirmation email\n- Billing Context subscribes → generates invoice\n\nOrder knows nothing about inventory, email, or billing. New subscribers can be added without modifying the publisher.\n\n**Domain Event vs Integration Event:**\n\n| Aspect | Domain Event | Integration Event |\n|--------|-------------|-------------------|\n| Scope | Within bounded context | Between contexts |\n| Payload | Rich (can include entities/VOs) | Simplified DTO |\n| Schema | Can change freely | Versioned contract |\n| Transport | In-process (mediator) | Message broker (Kafka, RabbitMQ) |\n| Guarantee | Same transaction possible | Eventual consistency |\n\n**Pattern:** Domain Event triggers internally → if relevant to other contexts, an event handler publishes a simplified Integration Event to the broker.\n\nThis prevents leaking internal model details across context boundaries.",
+    "keyPoints": [
+      "Domain Events = business facts in past tense",
+      "Publisher doesn't know subscribers → decoupling",
+      "Domain Events are internal; Integration Events cross boundaries",
+      "Integration Events have versioned, simplified schemas",
+      "New subscribers added without modifying publisher"
+    ],
+    "followUps": [
+      {
+        "question": "How do you ensure the event is published only if the transaction commits?",
+        "answerHint": "Transactional Outbox pattern: persist the event in the same transaction as the aggregate change. A separate process reads the outbox and publishes to the broker. Guarantees at-least-once delivery without dual-write problems."
+      },
+      {
+        "question": "What happens if a subscriber fails to process an event?",
+        "answerHint": "Retry with backoff, dead-letter queue for poison messages, idempotent handlers (processing same event twice produces same result). The publisher's transaction is never affected — it already committed."
+      }
+    ],
+    "redFlags": [
+      "Confusing commands with events (events are facts, not requests)",
+      "Publishing events with the full internal entity graph",
+      "No strategy for failed event processing",
+      "Synchronous event handling that couples contexts"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ddd-6",
+    "topic": "software-architecture",
+    "subtopic": "ddd-services",
+    "difficulty": "INTERMEDIATE",
+    "question": "What's the difference between a Domain Service, an Application Service, and an Infrastructure Service?",
+    "shortAnswer": "Domain Service: business logic that doesn't belong to any single entity (e.g., pricing calculation involving multiple aggregates). Application Service: orchestration (load aggregate, call domain, persist, publish event). Infrastructure Service: technical concerns (email, file storage, external APIs).",
+    "detailedAnswer": "The three layers serve different purposes:\n\n**Domain Service:**\n- Contains business logic that doesn't naturally belong to one entity/aggregate\n- Stateless, speaks the ubiquitous language\n- Example: TransferService.transfer(from, to, amount) — involves two Account aggregates\n- Lives in the domain layer, depends only on domain concepts\n\n**Application Service:**\n- Orchestrates the use case workflow\n- Thin — delegates all business logic to domain objects\n- Handles: load from repository, call domain, persist, publish events, return DTO\n- Lives in the application layer\n- Example: PlaceOrderUseCase.execute(command) — loads customer, calls order.place(), saves, publishes OrderPlaced\n\n**Infrastructure Service:**\n- Implements technical contracts defined by the domain/application layers\n- Email sending, file storage, payment gateway, message broker\n- Lives in the infrastructure layer, implements interfaces from inner layers\n\n**Key rule:** If you can explain the logic to a domain expert using business language → Domain Service. If it's 'load, call, save, notify' orchestration → Application Service. If it involves a specific technology → Infrastructure Service.",
+    "keyPoints": [
+      "Domain Service: business logic spanning multiple aggregates",
+      "Application Service: orchestration (load → domain → save → event)",
+      "Infrastructure Service: technical integration",
+      "Domain Services use ubiquitous language",
+      "Application Services are thin — no business decisions"
+    ],
+    "followUps": [
+      {
+        "question": "Can an Application Service call another Application Service?",
+        "answerHint": "Generally no — it creates coupling and tangled transactions. If two use cases need shared behavior, extract a Domain Service or use domain events for cross-use-case coordination."
+      },
+      {
+        "question": "Where does input validation go?",
+        "answerHint": "Structural validation (format, required fields) in the Application Service or command/DTO. Business validation (credit limit, stock availability) in the Domain — entities or Domain Services."
+      }
+    ],
+    "redFlags": [
+      "All logic in Application Services (anemic domain)",
+      "Domain Services with repository dependencies (that's Application Service)",
+      "No clear distinction between the three"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ddd-7",
+    "topic": "software-architecture",
+    "subtopic": "ddd-ubiquitous-language",
+    "difficulty": "INTERMEDIATE",
+    "question": "What is Ubiquitous Language and why does Evans consider it the foundation of DDD?",
+    "shortAnswer": "Ubiquitous Language is a shared vocabulary between developers and domain experts used consistently in code, conversations, and documentation. It's foundational because misalignment between code names and business concepts causes bugs, miscommunication, and models that don't reflect reality.",
+    "detailedAnswer": "The Ubiquitous Language is a rigorous shared language that:\n\n- Is spoken in daily conversations between devs and domain experts\n- Appears directly in the code (class names, method names, variable names)\n- Exists in documentation and tests\n- Evolves as understanding deepens\n\n**Why it's foundational:**\n\nWhen code says `setStatus(3)` but the business says 'escalate the claim', there's a translation gap. Every translation is an opportunity for bugs. If the code literally says `claim.escalate()`, the gap disappears.\n\n**Practical example:**\n\nBad (developer language):\n```java\norder.setFlag(true);\norder.setStatusCode(\"CNF\");\norderDao.update(order);\n```\n\nGood (ubiquitous language):\n```java\norder.confirm();\norderRepository.save(order);\n```\n\nDomain experts can review the second version and spot errors. They can't review the first.\n\n**Within a Bounded Context**, the language is precise and unambiguous. The same word may mean different things in different contexts — that's expected and solved by context boundaries.",
+    "keyPoints": [
+      "Shared vocabulary between devs and domain experts",
+      "Appears directly in code (class/method names)",
+      "Eliminates translation gaps that cause bugs",
+      "Evolves as understanding deepens",
+      "Bounded to a specific context (same word can differ between contexts)"
+    ],
+    "followUps": [
+      {
+        "question": "How do you discover and refine the Ubiquitous Language?",
+        "answerHint": "Event Storming sessions, domain expert interviews, reviewing how they actually talk (not how they write specs). When a concept has two names, that often signals a context boundary."
+      },
+      {
+        "question": "What do you do when the domain expert uses inconsistent terminology?",
+        "answerHint": "That's valuable information — inconsistency often reveals hidden bounded contexts or concepts that need deeper modeling. Don't just pick one name; explore why different people use different words."
+      }
+    ],
+    "redFlags": [
+      "Code uses only technical terms (DAO, DTO, Manager, Helper)",
+      "Domain experts can't read the code at a high level",
+      "Not knowing what Ubiquitous Language means"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ddd-8",
+    "topic": "software-architecture",
+    "subtopic": "ddd-repository",
+    "difficulty": "INTERMEDIATE",
+    "question": "In DDD, what's the role of a Repository and how does it differ from a generic DAO?",
+    "shortAnswer": "A Repository provides collection-like access to aggregates — you save and retrieve whole aggregates, not individual tables. Unlike a DAO which is data-access-centric (one per table, SQL-focused), a Repository speaks the domain language and hides persistence details entirely.",
+    "detailedAnswer": "**Repository in DDD:**\n- Acts as an in-memory collection of aggregates\n- One Repository per Aggregate Root (not per table)\n- Interface defined in the domain layer (implementation in infrastructure)\n- Methods use domain language: findPendingOrders(), save(order)\n- Always returns/accepts complete aggregates\n\n**DAO (Data Access Object):**\n- One per table/entity\n- Methods mirror SQL: insert, update, delete, findByColumn\n- Lives in the data layer\n- May return partial objects or raw data\n\n**Key differences:**\n\n| Aspect | Repository | DAO |\n|--------|-----------|-----|\n| Granularity | Aggregate | Table |\n| Language | Domain | Technical |\n| Defined in | Domain layer | Data layer |\n| Returns | Complete aggregate | Any projection |\n| Responsibility | Reconstitute aggregate | Data access |\n\n**Practical implication:** When you load an Order aggregate, the Repository handles loading the Order + its OrderLines + its DeliveryInfo in one operation. The caller gets a fully consistent aggregate. A DAO would require the caller to assemble pieces from multiple DAOs.",
+    "keyPoints": [
+      "One Repository per Aggregate Root",
+      "Interface in domain layer, implementation in infrastructure",
+      "Returns/saves whole aggregates, not individual tables",
+      "Methods use domain language",
+      "Hides persistence technology from the domain"
+    ],
+    "followUps": [
+      {
+        "question": "Should a Repository have query methods with complex filters?",
+        "answerHint": "Repositories should support finding aggregates (by ID, by domain criteria). For complex read queries (reports, search), use a separate Read Model or CQRS query side — don't pollute the Repository with every possible query."
+      },
+      {
+        "question": "How do you handle the Repository pattern in Spring Data JPA?",
+        "answerHint": "Spring Repositories blur the line — they're essentially enhanced DAOs. You can still apply DDD: define a domain interface, implement it with Spring Data, ensure you load full aggregates (fetch joins), and keep query methods domain-focused."
+      }
+    ],
+    "redFlags": [
+      "Repository with methods for every table in the aggregate",
+      "Returning detached partial objects from a Repository",
+      "Repository in the domain layer with JPA/Spring annotations"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ddd-9",
+    "topic": "software-architecture",
+    "subtopic": "ddd-subdomains",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you classify subdomains, and why does it matter for investment decisions?",
+    "shortAnswer": "Core (competitive advantage — invest heavily), Supporting (necessary but not differentiating — good enough), Generic (solved problems — buy or use open source). Classification determines where to spend engineering effort and where to use off-the-shelf solutions.",
+    "detailedAnswer": "Eric Evans classifies subdomains into three types:\n\n**Core Domain:** What makes the business unique. For REWE: delivery route optimization, dynamic pricing, inventory forecasting. Invest the best engineers, most sophisticated modeling, and DDD tactical patterns here.\n\n**Supporting Subdomain:** Needed by the business but not differentiating. For REWE: employee scheduling, supplier onboarding. Build it, but simpler models are fine — no need for full DDD rigor.\n\n**Generic Subdomain:** Solved problems with known solutions. Authentication, email, payment processing. Buy, use open source, or outsource. Don't reinvent.\n\n**Why it matters:**\n- Core: custom-build with DDD, best team, iterate fast\n- Supporting: build pragmatically, maybe outsource to a less experienced team\n- Generic: integrate a product (Auth0, Stripe, SendGrid)\n\nClassification is a business decision, not a technical one. The CTO and domain experts decide what's core — developers often misjudge by overvaluing technical complexity over business value.",
+    "keyPoints": [
+      "Core = competitive advantage → invest heavily",
+      "Supporting = necessary but not unique → pragmatic",
+      "Generic = solved problem → buy/integrate",
+      "Classification drives team allocation and design investment",
+      "Business decides what's core, not engineering"
+    ],
+    "followUps": [
+      {
+        "question": "Can a subdomain change classification over time?",
+        "answerHint": "Yes — delivery was once generic for retailers (outsource to UPS). For REWE it became core (competitive advantage in grocery delivery). When industry commoditizes something, core becomes generic."
+      },
+      {
+        "question": "How would you map REWE's subdomains?",
+        "answerHint": "Core: delivery optimization, demand forecasting, dynamic pricing. Supporting: store management, supplier ordering, employee scheduling. Generic: authentication, email, payments. The core domains are where REWE competes against other grocery delivery services."
+      }
+    ],
+    "redFlags": [
+      "Treating everything as core (over-engineering)",
+      "Treating everything as generic (losing competitive edge)",
+      "Classifying by technical complexity instead of business value"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ddd-10",
+    "topic": "software-architecture",
+    "subtopic": "ddd-context-map",
+    "difficulty": "SENIOR",
+    "question": "Describe the relationship patterns in a Context Map. When would you choose an Anti-Corruption Layer vs a Shared Kernel?",
+    "shortAnswer": "A Context Map shows how bounded contexts relate: Shared Kernel (shared code, tight coupling), Customer-Supplier (upstream serves downstream), Conformist (downstream accepts upstream's model), Anti-Corruption Layer (downstream translates upstream's model). ACL when protecting your model from a legacy or external system. Shared Kernel only when two contexts are owned by the same team and benefit from sharing a small piece.",
+    "detailedAnswer": "**Context Map relationship patterns:**\n\n- **Shared Kernel:** Two contexts share a small subset of model/code. High coupling, requires coordination. Only viable when same team owns both.\n\n- **Customer-Supplier:** Upstream provides what downstream needs. Downstream can influence upstream's roadmap.\n\n- **Conformist:** Downstream accepts upstream's model as-is. No influence on upstream. Cheap but risky if upstream changes.\n\n- **Anti-Corruption Layer (ACL):** Downstream translates upstream's model into its own. Isolation at the cost of translation code.\n\n- **Open Host Service + Published Language:** Upstream provides a clean API/protocol for all consumers.\n\n- **Separate Ways:** No integration — each context solves its needs independently.\n\n**ACL vs Shared Kernel decision:**\n\n| Criterion | ACL | Shared Kernel |\n|-----------|-----|---------------|\n| Ownership | Different teams | Same team |\n| Upstream stability | Unstable or external | Stable, controlled |\n| Model compatibility | Incompatible models | Overlapping model |\n| Change frequency | Upstream changes often | Shared part rarely changes |\n| Cost | Translation code | Coordination overhead |\n\nACL is the defensive choice — use when integrating with systems you don't control (legacy, third-party). Shared Kernel is the collaborative choice — only when both sides commit to maintaining compatibility.",
+    "keyPoints": [
+      "Context Map visualizes relationships between bounded contexts",
+      "ACL protects your model from external/legacy contamination",
+      "Shared Kernel requires same-team ownership and discipline",
+      "Conformist is cheap but creates coupling to upstream's model",
+      "Choose based on ownership, stability, and model compatibility"
+    ],
+    "followUps": [
+      {
+        "question": "Give a real example of when you'd use an ACL.",
+        "answerHint": "Integrating with a legacy ERP that models 'Customer' as a flat record with 200 fields. Your domain has a rich Customer aggregate. The ACL translates the ERP's flat structure into your domain objects, insulating your model from ERP quirks."
+      },
+      {
+        "question": "What happens when a Shared Kernel grows too large?",
+        "answerHint": "It becomes a distributed monolith — changes to the shared code break both contexts. The fix is to split it: each context takes a copy and diverges. Or extract it into a Published Language that both consume independently."
+      }
+    ],
+    "redFlags": [
+      "Not knowing any Context Map patterns beyond 'they talk via REST'",
+      "Using Shared Kernel between teams that don't coordinate",
+      "No ACL when integrating with an external system"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ddd-11",
+    "topic": "software-architecture",
+    "subtopic": "ddd-entity",
+    "difficulty": "INTERMEDIATE",
+    "question": "How does an Entity in DDD differ from a JPA @Entity? What makes something an Entity rather than a Value Object?",
+    "shortAnswer": "A DDD Entity has identity that persists through state changes — Customer #42 remains #42 even after changing name/address. A JPA @Entity is just a persistence annotation. The distinction from Value Object is identity: if two objects with identical attributes are NOT interchangeable (different identity), it's an Entity.",
+    "detailedAnswer": "**DDD Entity characteristics:**\n- Has a unique identity (often a domain-meaningful ID, not just a database surrogate)\n- Identity persists through state changes (you can rename a Customer, it's still the same Customer)\n- Has a lifecycle (created, modified, possibly archived/deleted)\n- Equality based on identity, not attributes\n- Encapsulates behavior that enforces its own invariants\n\n**JPA @Entity vs DDD Entity:**\n- JPA @Entity is a technical annotation for O/R mapping\n- Many JPA entities are actually Value Objects in DDD (Address, Money) but mapped as entities for persistence convenience\n- A DDD Entity should have behavior (methods enforcing rules), not just getters/setters\n\n**The identity test:**\n- Two people named 'John Smith' with same address → different Entities (different identity)\n- Two Money(100, EUR) → same Value Object (interchangeable)\n- A Seat in row A, number 5 in a theater → Entity (you track reservations per seat)\n- A Color(255, 0, 0) → Value Object (all reds are the same)\n\n**Key principle:** Entities should protect their invariants. A DDD Entity that is just a data holder with public setters is an 'anemic entity' — the domain logic leaked elsewhere.",
+    "keyPoints": [
+      "Identity persists through state changes",
+      "Equality by identity, not by attributes",
+      "JPA @Entity ≠ DDD Entity (JPA is just persistence)",
+      "Entities encapsulate behavior and enforce invariants",
+      "The test: are two identical-attribute instances interchangeable?"
+    ],
+    "followUps": [
+      {
+        "question": "How do you avoid anemic entities in practice?",
+        "answerHint": "Move setters to private, expose domain methods instead: order.cancel() not order.setStatus(CANCELLED). The entity validates the transition (can only cancel if not shipped). Logic lives in the entity, not in a service."
+      },
+      {
+        "question": "Should Entity IDs be database-generated or domain-generated?",
+        "answerHint": "Domain-generated (UUID) preferred in DDD — the entity has identity before persisting. Database-generated (sequence) ties identity to persistence, making testing and event publishing harder. Trade-off: UUIDs are larger and less index-friendly."
+      }
+    ],
+    "redFlags": [
+      "Confusing JPA entity with DDD entity",
+      "Entities with only getters/setters (anemic)",
+      "Using database-generated IDs as the only identity concept"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ddd-12",
+    "topic": "software-architecture",
+    "subtopic": "ddd-complete-example",
+    "difficulty": "SENIOR",
+    "question": "Walk me through how you would model an Order Management system using DDD. What are the aggregates, value objects, and domain events?",
+    "shortAnswer": "Order aggregate (Order + OrderLines, protects total/discount invariants), Customer aggregate (separate, referenced by ID), Payment aggregate (own lifecycle), Shipment aggregate. Value Objects: Money, Address, OrderLineItem, SKU. Events: OrderPlaced, PaymentReceived, OrderShipped. Contexts: Sales, Fulfillment, Billing.",
+    "detailedAnswer": "**Bounded Contexts:**\n- Sales Context: order placement, pricing, promotions\n- Fulfillment Context: picking, packing, shipping\n- Billing Context: payment processing, invoicing\n\n**Sales Context — Aggregates:**\n\n*Order (Aggregate Root):*\n- Contains OrderLines (Value Objects — no independent identity)\n- Invariants: minimum order value, max items, valid discounts\n- Methods: addItem(), removeItem(), applyDiscount(), confirm()\n- Publishes: OrderPlaced, OrderModified\n\n*Customer (separate Aggregate):*\n- Referenced by customerId from Order (not direct reference)\n- Has its own invariants (credit limit, account status)\n\n**Value Objects:**\n- Money(amount, currency) — arithmetic, validation\n- Address(street, city, zip, country) — immutable, self-validating\n- SKU(productId, variant) — product identification\n- Quantity(value) — positive integer with domain meaning\n\n**Domain Events flow:**\n```\nOrderPlaced → Fulfillment: reserve inventory\nOrderPlaced → Billing: create pending payment\nPaymentReceived → Fulfillment: start picking\nOrderShipped → Sales: update order status\nOrderShipped → Notification: send tracking email\n```\n\n**Key design decisions:**\n- OrderLine is a Value Object inside Order (no independent lifecycle)\n- Payment is a separate aggregate (can fail/retry independently)\n- Shipment is separate (different lifecycle, potentially different context)\n- Cross-aggregate communication via domain events, not direct calls",
+    "keyPoints": [
+      "Multiple bounded contexts with clear responsibilities",
+      "Order aggregate contains lines but references Customer by ID",
+      "Value Objects for Money, Address, SKU (no identity needed)",
+      "Domain events connect contexts without coupling",
+      "Each aggregate has clear invariants to protect"
+    ],
+    "followUps": [
+      {
+        "question": "Why not include Payment inside the Order aggregate?",
+        "answerHint": "Different lifecycles and consistency requirements. A payment can be retried, refunded, or split independently. Including it in Order would mean locking the entire order for payment retries. Separate aggregates with eventual consistency via events."
+      },
+      {
+        "question": "How would you handle 'order total must not exceed credit limit' if Customer is a different aggregate?",
+        "answerHint": "Check credit limit in the Application Service before confirming the order (query Customer aggregate). If limit changes between check and confirm, the eventual consistency handler detects the violation and compensates (cancel order, notify customer). Accept the small race window."
+      }
+    ],
+    "redFlags": [
+      "One giant aggregate containing everything",
+      "No clear bounded context separation",
+      "Direct object references between aggregates",
+      "No domain events — contexts call each other synchronously"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
   }
 ]

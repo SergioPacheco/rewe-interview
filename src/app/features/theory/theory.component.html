@@ -82,7 +82,7 @@
   }
 
   <!-- ==================== PRACTICE TAB ==================== -->
-  @if (activeTab() === 'practice' || (!hasTheory() && hasExercises())) {
+  @if (activeTab() === 'practice' || (activeTab() !== 'interview' && !hasTheory() && hasExercises())) {
     <div class="practice-content">
 
       <!-- Active session with current question -->

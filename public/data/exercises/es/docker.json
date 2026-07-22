@@ -5,31 +5,31 @@
     "topic": "docker",
     "subtopic": "Containers",
     "difficulty": "beginner",
-    "question": "What is a container and how does it differ from a virtual machine?",
-    "interviewerIntent": "Fundamental Docker concept. Candidates should explain isolation, lightweight nature, and shared kernel.",
-    "answer": "A container is a lightweight, isolated process that shares the host OS kernel but has its own filesystem, network, and process space via Linux namespaces and cgroups. A VM virtualizes the entire hardware stack and runs a full guest OS, consuming gigabytes of RAM and taking minutes to start. Containers share the host kernel, start in seconds, and use megabytes. The trade-off: containers are less isolated than VMs (shared kernel means a kernel exploit affects all containers on the host). For most application workloads, containers offer the right balance of isolation and efficiency.",
-    "shortAnswer": "Container = isolated process sharing host kernel (namespaces + cgroups). VM = full guest OS on virtualized hardware. Containers: seconds to start, MBs of overhead. VMs: minutes, GBs.",
+    "question": "¿Qué es un contenedor y en qué se diferencia de una máquina virtual?",
+    "interviewerIntent": "Concepto fundamental de Docker. Los candidatos deben explicar el aislamiento, la naturaleza ligera y el kernel compartido.",
+    "answer": "Un contenedor es un proceso ligero y aislado que comparte el kernel del sistema operativo anfitrión (host), pero tiene su propio sistema de archivos, red y espacio de procesos mediante namespaces y cgroups de Linux. Una VM virtualiza todo el stack de hardware y ejecuta un SO invitado completo, consumiendo gigabytes de RAM y tardando minutos en arrancar. Los contenedores comparten el kernel, arrancan en segundos y consumen megabytes. El compromiso (trade-off) es que los contenedores están menos aislados que las VMs (un exploit en el kernel afecta a todos los contenedores del host). Para la mayoría de las cargas de trabajo de aplicaciones, los contenedores ofrecen el equilibrio adecuado entre aislamiento y eficiencia.",
+    "shortAnswer": "Contenedor = proceso aislado que comparte el kernel del host (namespaces + cgroups). VM = SO invitado completo sobre hardware virtualizado. Contenedores: segundos en arrancar, MB de sobrecarga. VMs: minutos, GB.",
     "keyPoints": [
-      "Containers use Linux namespaces (PID, network, mount, UTS) for isolation",
-      "cgroups limit CPU, memory, and I/O",
-      "Shared kernel is the key difference from VMs",
-      "Container images are layered, immutable filesystems",
-      "Docker is not the only container runtime — containerd, podman also exist"
+      "Los contenedores usan namespaces de Linux (PID, network, mount, UTS) para el aislamiento",
+      "Los cgroups limitan el uso de CPU, memoria e I/O",
+      "El kernel compartido es la diferencia clave con las VMs",
+      "Las imágenes de contenedor son sistemas de archivos inmutables y por capas",
+      "Docker no es el único runtime — existen containerd y podman"
     ],
     "followUps": [
       {
-        "question": "What are Linux namespaces?",
-        "answerHint": "Kernel feature that isolates system resources. PID namespace = isolated process tree. Network namespace = isolated network stack. Mount namespace = isolated filesystem view."
+        "question": "¿Qué son los namespaces de Linux?",
+        "answerHint": "Característica del kernel que aísla recursos del sistema. PID namespace = árbol de procesos aislado. Network namespace = stack de red aislado. Mount namespace = vista aislada del sistema de archivos."
       },
       {
-        "question": "Are containers secure enough for production?",
-        "answerHint": "Yes, with proper configuration: non-root user inside container, read-only filesystem where possible, resource limits, no privileged mode, image scanning."
+        "question": "¿Son los contenedores lo suficientemente seguros para producción?",
+        "answerHint": "Sí, con la configuración adecuada: usuario no-root, sistema de archivos de solo lectura, límites de recursos, escaneo de imágenes y evitar el modo privilegiado."
       }
     ],
     "mistakesToAvoid": [
-      "Saying containers are 'like VMs but lighter' without explaining the kernel sharing",
-      "Thinking Docker invented containers — LXC and namespaces predate Docker",
-      "Assuming containers are fully isolated from the host"
+      "Decir que los contenedores son 'como VMs pero ligeras' sin explicar que comparten el kernel",
+      "Pensar que Docker inventó los contenedores (LXC y los namespaces son anteriores)",
+      "Asumir que los contenedores están totalmente aislados del host"
     ]
   },
   {
@@ -38,31 +38,31 @@
     "topic": "docker",
     "subtopic": "Containers",
     "difficulty": "intermediate",
-    "question": "What happens when you run 'docker run -d -p 8080:80 nginx'? Walk me through each flag.",
-    "interviewerIntent": "Checks practical Docker CLI knowledge and understanding of port mapping and detached mode.",
-    "answer": "docker run creates and starts a new container from the nginx image. -d runs it in detached mode (background), so the terminal is not attached to the container's stdout. -p 8080:80 maps port 8080 on the host to port 80 inside the container — traffic hitting localhost:8080 is forwarded to the container's port 80. nginx is the image name; Docker pulls it from Docker Hub if not cached locally. The result: an nginx web server accessible at http://localhost:8080 running in the background. To see it: docker ps. To stop it: docker stop <container-id>.",
-    "shortAnswer": "-d = detached (background). -p host:container port mapping. nginx = image from Docker Hub. Result: nginx on localhost:8080 running in background.",
+    "question": "¿Qué sucede cuando ejecutas 'docker run -d -p 8080:80 nginx'? Explica cada flag.",
+    "interviewerIntent": "Verifica conocimientos prácticos de la CLI de Docker y la comprensión del mapeo de puertos y el modo 'detached'.",
+    "answer": "docker run crea y arranca un nuevo contenedor a partir de la imagen de nginx. -d lo ejecuta en modo 'detached' (segundo plano), por lo que la terminal no se vincula al stdout del contenedor. -p 8080:80 mapea el puerto 8080 del host al puerto 80 interno del contenedor: el tráfico que llegue a localhost:8080 se redirige al puerto 80 del contenedor. nginx es el nombre de la imagen; Docker la descarga de Docker Hub si no está en la caché local. El resultado es un servidor web nginx accesible en http://localhost:8080 ejecutándose en segundo plano.",
+    "shortAnswer": "-d = detached (segundo plano). -p host:container para mapeo de puertos. nginx = imagen de Docker Hub. Resultado: nginx en localhost:8080 en segundo plano.",
     "keyPoints": [
-      "-d detaches from stdio; container runs in background",
-      "-p hostPort:containerPort — host port is what you access externally",
-      "Image pulled from Docker Hub if not in local cache",
-      "docker ps shows running containers",
-      "docker logs <id> to see output from detached container"
+      "-d se desvincula del stdio; el contenedor corre en background",
+      "-p puertoHost:puertoContenedor — el puerto del host es el accesible externamente",
+      "La imagen se descarga si no está en la caché local",
+      "docker ps muestra los contenedores en ejecución",
+      "docker logs <id> para ver la salida de un contenedor en detached"
     ],
     "followUps": [
       {
-        "question": "How do you run a container and get an interactive shell?",
-        "answerHint": "docker run -it image /bin/sh — -i keeps stdin open, -t allocates a pseudo-TTY."
+        "question": "¿Cómo ejecutas un contenedor para obtener una shell interactiva?",
+        "answerHint": "docker run -it imagen /bin/sh — -i mantiene el stdin abierto, -t asigna uma pseudo-TTY."
       },
       {
-        "question": "What is the difference between docker run and docker start?",
-        "answerHint": "docker run creates a new container from an image. docker start restarts a stopped existing container."
+        "question": "¿Cuál es la diferencia entre docker run y docker start?",
+        "answerHint": "docker run crea un contenedor nuevo. docker start reinicia uno ya existente que estaba detenido."
       }
     ],
     "mistakesToAvoid": [
-      "Confusing -p 8080:80 order (host:container, not container:host)",
-      "Forgetting that -d means you need docker logs to see output",
-      "Thinking the container is deleted when stopped — use docker rm to delete"
+      "Confundir el orden de -p 8080:80 (es host:contenedor, no al revés)",
+      "Olvidar que con -d necesitas docker logs para ver la salida",
+      "Pensar que el contenedor se borra al detenerse (hay que usar docker rm)"
     ]
   },
   {
@@ -71,31 +71,31 @@
     "topic": "docker",
     "subtopic": "Images",
     "difficulty": "beginner",
-    "question": "What is a Docker image and how are layers used?",
-    "interviewerIntent": "Understanding of image layers is foundational for writing efficient Dockerfiles and understanding caching.",
-    "answer": "A Docker image is a read-only, layered filesystem. Each instruction in a Dockerfile creates a new layer stacked on top of the previous one. Layers are content-addressed and cached — if a layer has not changed, Docker reuses it from cache instead of rebuilding. This means instruction order matters: put rarely-changing instructions (install dependencies) before frequently-changing ones (copy source code) to maximize cache hits. When you push or pull an image, only the changed layers transfer. A container adds a thin writable layer on top of the image layers — the image itself is never modified.",
-    "shortAnswer": "Image = stacked read-only layers. Each Dockerfile instruction = one layer. Layers are cached. Order matters: stable instructions first to maximize cache reuse.",
+    "question": "¿Qué es una imagen de Docker y cómo se utilizan las capas?",
+    "interviewerIntent": "La comprensión de las capas de imagen es fundamental para escribir Dockerfiles eficientes y entender el almacenamiento en caché.",
+    "answer": "Una imagen de Docker es un sistema de archivos de solo lectura compuesto por capas. Cada instrucción en un Dockerfile crea una nueva capa que se apila sobre la anterior. Las capas se identifican por su contenido y se almacenan en caché; si una capa no ha cambiado, Docker la reutiliza en lugar de reconstruirla. Esto significa que el orden de las instrucciones importa: coloca las instrucciones que cambian poco (instalar dependencias) antes de las que cambian mucho (copiar código fuente) para maximizar el uso de la caché. Al hacer push o pull, solo se transfieren las capas cambiadas. Un contenedor añade una delgada capa de escritura sobre las capas de la imagen.",
+    "shortAnswer": "Imagen = capas de solo lectura apiladas. Cada instrucción del Dockerfile = una capa. Las capas se cachean. El orden importa: instrucciones estables primero.",
     "keyPoints": [
-      "Each RUN, COPY, ADD instruction creates a layer",
-      "Layers are immutable and content-addressed (SHA256)",
-      "Cache invalidation: if a layer changes, all subsequent layers rebuild",
-      "Container = image layers + thin writable layer on top",
-      "docker history <image> shows layers and their sizes"
+      "Cada RUN, COPY, ADD crea una capa",
+      "Las capas son inmutables y direccionadas por contenido (SHA256)",
+      "Invalidación de caché: si una capa cambia, todas las siguientes se reconstruyen",
+      "Contenedor = capas de imagen + capa delgada de escritura",
+      "docker history <image> muestra las capas y sus tamaños"
     ],
     "followUps": [
       {
-        "question": "How do you minimize image size using layers?",
-        "answerHint": "Combine RUN commands with && to avoid intermediate layers. Use multi-stage builds. Use .dockerignore. Choose slim/alpine base images."
+        "question": "¿Cómo minimizas el tamaño de la imagen usando capas?",
+        "answerHint": "Combinar comandos RUN con && para evitar capas intermedias. Usar multi-stage builds. Usar .dockerignore. Elegir imágenes base slim o alpine."
       },
       {
-        "question": "What is a dangling image?",
-        "answerHint": "An image with no tag and no container using it — usually a previous build replaced by a newer one with the same tag. Clean with docker image prune."
+        "question": "¿Qué es una imagen 'dangling'?",
+        "answerHint": "Una imagen sin etiqueta (tag) y sin contenedores que la usen, generalmente reemplazada por una versión más nueva con el mismo tag. Se limpian con docker image prune."
       }
     ],
     "mistakesToAvoid": [
-      "Putting COPY . . before RUN npm install — invalidates dependency cache on every source change",
-      "Not using .dockerignore — copies node_modules or .git into the image",
-      "Creating many layers with separate RUN commands for related operations"
+      "Poner COPY . . antes de RUN npm install (invalida la caché de dependencias en cada cambio de código)",
+      "No usar .dockerignore (copia node_modules o .git a la imagen)",
+      "Crear demasiadas capas con comandos RUN separados para tareas relacionadas"
     ]
   },
   {
@@ -104,31 +104,31 @@
     "topic": "docker",
     "subtopic": "Dockerfile",
     "difficulty": "intermediate",
-    "question": "What is a multi-stage build in Docker and why is it important?",
-    "interviewerIntent": "Multi-stage builds are standard practice for production images. Candidates who don't know them produce bloated images with build tools included.",
-    "answer": "Multi-stage builds use multiple FROM instructions in one Dockerfile. Each stage can have its own base image and instructions. The final stage copies only the artifacts from previous stages — discarding build tools, source code, and intermediate files. Example: a Java app uses a Maven stage to compile (FROM maven:3.9 AS builder, RUN mvn package), then a second stage copies only the JAR (FROM eclipse-temurin:17-jre, COPY --from=builder /app/target/app.jar). The final image has only the JRE and the JAR — no Maven, no source code. This dramatically reduces image size (from ~600MB to ~200MB) and attack surface.",
-    "shortAnswer": "Multiple FROM stages. Build stage compiles/installs. Final stage copies only artifacts. Eliminates build tools from production image. Reduces size and attack surface.",
+    "question": "¿Qué es una construcción multi-etapa (multi-stage build) y por qué es importante?",
+    "interviewerIntent": "Las construcciones multi-etapa son el estándar para imágenes de producción. Los candidatos que no las conocen producen imágenes pesadas que incluyen herramientas de construcción.",
+    "answer": "Las construcciones multi-etapa utilizan múltiples instrucciones FROM en un solo Dockerfile. Cada etapa puede tener su propia imagen base. La etapa final copia solo los artefactos necesarios de las etapas anteriores, descartando herramientas de compilación y archivos intermedios. Ejemplo: una app Java usa una etapa Maven para compilar (FROM maven AS builder, RUN mvn package) y una segunda etapa copia solo el JAR (FROM jre, COPY --from=builder /app.jar). La imagen final solo tiene el JRE y el JAR, reduciendo drásticamente el tamaño (de ~600MB a ~200MB) y la superficie de ataque.",
+    "shortAnswer": "Múltiples etapas FROM. La etapa de construcción compila; la etapa final solo copia los artefactos resultantes. Elimina herramientas de construcción de la imagen de producción.",
     "keyPoints": [
-      "Each FROM starts a new stage with its own filesystem",
-      "COPY --from=stageName copies artifacts between stages",
-      "Only the final stage ends up in the output image",
-      "Reduces image size significantly (build tools not included)",
-      "Reduces attack surface (no compiler, no build scripts in production)"
+      "Cada FROM inicia una etapa con su propio sistema de archivos",
+      "COPY --from=nombreEtapa copia archivos entre etapas",
+      "Solo la última etapa forma parte de la imagen final",
+      "Reduce significativamente el tamaño de la imagen",
+      "Mejora la seguridad (sin compiladores ni scripts de build en producción)"
     ],
     "followUps": [
       {
-        "question": "Can you have more than two stages?",
-        "answerHint": "Yes. Common pattern: test stage (run tests), build stage (compile), final stage (production image). Stages can also be used for conditional logic."
+        "question": "¿Se pueden tener más de dos etapas?",
+        "answerHint": "Sí. Patrón común: etapa de test (ejecutar pruebas), etapa de build (compilar) y etapa final (imagen de producción)."
       },
       {
-        "question": "How do you build only a specific stage?",
-        "answerHint": "docker build --target stageName . — useful for running tests in CI without producing the final image."
+        "question": "¿Cómo construyes solo una etapa específica?",
+        "answerHint": "docker build --target nombreEtapa . — útil para ejecutar tests en CI sin generar la imagen final."
       }
     ],
     "mistakesToAvoid": [
-      "Including Maven/npm/Gradle in the production image",
-      "Copying the entire source code into the final image",
-      "Using the same large base image for build and runtime"
+      "Incluir Maven/npm/Gradle en la imagen de producción",
+      "Copiar todo el código fuente en la imagen final",
+      "Usar la misma imagen base pesada para compilación y ejecución"
     ]
   },
   {
@@ -137,31 +137,27 @@
     "topic": "docker",
     "subtopic": "Dockerfile",
     "difficulty": "intermediate",
-    "question": "What is the difference between CMD and ENTRYPOINT in a Dockerfile?",
-    "interviewerIntent": "Frequently confused. Understanding the difference is necessary for writing flexible, production-ready images.",
-    "answer": "ENTRYPOINT defines the executable that always runs — it is not overridden by arguments to docker run. CMD provides default arguments to ENTRYPOINT (or a default command if no ENTRYPOINT is set). When both are used: ENTRYPOINT is the process, CMD is the default args. docker run myimage --verbose would replace CMD but not ENTRYPOINT. A common pattern: ENTRYPOINT [\"java\", \"-jar\", \"app.jar\"] with CMD [\"--spring.profiles.active=prod\"] as default profile. To override ENTRYPOINT: docker run --entrypoint /bin/sh myimage. For scripts, ENTRYPOINT with exec form ['./entrypoint.sh'] is preferred to preserve signal handling.",
-    "shortAnswer": "ENTRYPOINT = always-run executable (not overridden by docker run args). CMD = default args to ENTRYPOINT or default command. Both in exec form [] for signal handling.",
+    "question": "¿Cuál es la diferencia entre CMD y ENTRYPOINT en un Dockerfile?",
+    "interviewerIntent": "Se confunden a menudo. Entender la diferencia es necesario para crear imágenes flexibles y listas para producción.",
+    "answer": "ENTRYPOINT define el ejecutable que siempre se corre; no se sobrescribe con los argumentos de 'docker run'. CMD proporciona argumentos por defecto para ENTRYPOINT (o un comando por defecto si no hay ENTRYPOINT). Cuando se usan ambos: ENTRYPOINT es el proceso y CMD son los argumentos por defecto. 'docker run imagen --verbose' reemplazaría el CMD pero no el ENTRYPOINT. Para scripts, se prefiere ENTRYPOINT en su forma 'exec' [\"./script.sh\"] para preservar el manejo de señales del SO.",
+    "shortAnswer": "ENTRYPOINT = ejecutable fijo. CMD = argumentos por defecto (sobrescribibles por el usuario). Usar siempre la forma exec [] para el manejo de señales.",
     "keyPoints": [
-      "ENTRYPOINT is not replaced by docker run arguments",
-      "CMD IS replaced by docker run arguments",
-      "Use exec form ([\"cmd\", \"arg\"]) not shell form for signal handling",
-      "Shell form wraps in /bin/sh -c, which prevents PID 1 signal propagation",
-      "ENTRYPOINT + CMD together = executable + default args"
+      "ENTRYPOINT no se reemplaza por argumentos de docker run",
+      "CMD sí se reemplaza por los argumentos de docker run",
+      "Usar la forma exec ([\"cmd\", \"arg\"]) para que el proceso reciba señales (SIGTERM)",
+      "La forma de shell envuelve el comando en /bin/sh -c, impidiendo que el proceso sea el PID 1",
+      "ENTRYPOINT + CMD = ejecutable + argumentos por defecto"
     ],
     "followUps": [
       {
-        "question": "Why does exec form matter for signal handling?",
-        "answerHint": "Shell form makes /bin/sh PID 1, which may not forward SIGTERM to the real process. Exec form makes your process PID 1, receiving signals directly — critical for graceful shutdown."
-      },
-      {
-        "question": "When would you use only CMD without ENTRYPOINT?",
-        "answerHint": "For general-purpose images where the user might run different commands (e.g., a development utility image). ENTRYPOINT is better when the image has one clear purpose."
+        "question": "¿Por qué importa la forma 'exec' para las señales?",
+        "answerHint": "La forma de shell hace que /bin/sh sea el PID 1, que no suele propagar SIGTERM. La forma exec hace que tu proceso sea el PID 1, permitiendo un apagado elegante (graceful shutdown)."
       }
     ],
     "mistakesToAvoid": [
-      "Shell form for ENTRYPOINT — breaks SIGTERM handling",
-      "Putting the full command in ENTRYPOINT with no CMD — makes it inflexible",
-      "Confusing which one docker run arguments replace"
+      "Usar la forma de shell para ENTRYPOINT (rompe el apagado elegante)",
+      "Poner todo el comando en ENTRYPOINT sin CMD, quitando flexibilidad al usuario",
+      "Confundir cuál de los dos es el que se sobrescribe al ejecutar el contenedor"
     ]
   },
   {
@@ -170,31 +166,31 @@
     "topic": "docker",
     "subtopic": "Docker Compose",
     "difficulty": "intermediate",
-    "question": "What is Docker Compose and how do you use it for a multi-service application?",
-    "interviewerIntent": "Docker Compose is standard for local development. Checks practical multi-service orchestration knowledge.",
-    "answer": "Docker Compose defines and runs multi-container applications via a docker-compose.yml file. Each service defines its image or build context, environment variables, ports, volumes, and dependencies. 'docker compose up' starts all services; 'docker compose down' stops and removes containers. Services communicate by service name within the compose network — app can reach db at postgres://db:5432. Key features: depends_on for startup order (but not readiness — use healthchecks), volumes for persistent data, networks for isolation between service groups, and override files (docker-compose.override.yml) for local dev differences.",
-    "shortAnswer": "docker-compose.yml defines services, networks, volumes. Services reach each other by name. docker compose up/down. depends_on for order, healthcheck for readiness.",
+    "question": "¿Qué es Docker Compose y cómo se usa para aplicaciones multiservicio?",
+    "interviewerIntent": "Docker Compose es el estándar para desarrollo local. Verifica conocimientos prácticos de orquestación.",
+    "answer": "Docker Compose define y ejecuta aplicaciones multi-contenedor mediante un archivo docker-compose.yml. Cada servicio define su imagen, variables de entorno, puertos y volúmenes. 'docker compose up' arranca todos los servicios; 'docker compose down' los detiene y borra. Los servicios se comunican por su nombre dentro de la red de compose (ej. la app llega a la DB en postgres://db:5432). Características clave: depends_on para el orden de arranque, volumes para persistencia y archivos override para configurar diferencias entre entornos.",
+    "shortAnswer": "docker-compose.yml define servicios, redes y volúmenes. Los servicios se ven por nombre. depends_on controla el orden; los healthchecks controlan la disponibilidad real.",
     "keyPoints": [
-      "Services communicate via service name on the default network",
-      "depends_on controls start order but not readiness",
-      "Use healthcheck + condition: service_healthy for true readiness",
-      "volumes: persist data outside container lifecycle",
-      "docker compose up -d for detached, docker compose logs -f to follow"
+      "Los servicios se comunican vía nombre de servicio en la red por defecto",
+      "depends_on controla el orden de inicio pero no la disponibilidad de la app",
+      "Usar healthcheck + condition: service_healthy para una disponibilidad real",
+      "volumes: persiste datos fuera del ciclo de vida del contenedor",
+      "docker compose up -d para segundo plano; docker compose logs -f para seguimiento"
     ],
     "followUps": [
       {
-        "question": "How do you share environment variables across services?",
-        "answerHint": "env_file to load from .env file, or environment: block inline. Docker Compose automatically reads .env in the same directory for variable substitution."
+        "question": "¿Cómo compartes variables de entorno entre servicios?",
+        "answerHint": "Usando env_file para cargar un archivo .env, o el bloque 'environment' inline. Compose lee automáticamente el .env del directorio actual."
       },
       {
-        "question": "How is Docker Compose different from Kubernetes?",
-        "answerHint": "Compose is for local development and simple single-host deployments. Kubernetes is for production multi-host orchestration with scaling, rolling updates, and self-healing."
+        "question": "¿En qué se diferencia Docker Compose de Kubernetes?",
+        "answerHint": "Compose es para desarrollo local y despliegues simples en un solo host. Kubernetes es para producción en múltiples hosts con escalado, rollouts y auto-recuperación."
       }
     ],
     "mistakesToAvoid": [
-      "Using depends_on without healthcheck for readiness-sensitive services",
-      "Hardcoding passwords in docker-compose.yml — use env_file or secrets",
-      "Not defining volumes for databases — losing data on docker compose down"
+      "Usar depends_on sin healthcheck para servicios sensibles al orden de arranque",
+      "Escribir contraseñas directamente en el yaml (usar .env o secrets)",
+      "Olvidar definir volúmenes para las bases de datos (perder datos al hacer 'down')"
     ]
   },
   {
@@ -203,31 +199,26 @@
     "topic": "docker",
     "subtopic": "Networking",
     "difficulty": "intermediate",
-    "question": "How does Docker networking work? What are the main network drivers?",
-    "interviewerIntent": "Networking is a common source of issues in containerized apps. Checks understanding of bridge, host, and overlay networks.",
-    "answer": "Docker provides several network drivers. Bridge (default): creates a virtual network on the host; containers on the same bridge network communicate by IP or name. Each docker-compose project gets its own bridge network automatically. Host: container shares the host network stack directly — no port mapping needed, but no network isolation. None: no networking. Overlay: multi-host networking for Docker Swarm. In practice for development: compose creates a bridge network; services reach each other by service name via Docker's embedded DNS. For production on Kubernetes: Docker networking is replaced by the CNI plugin (Calico, Flannel, etc).",
-    "shortAnswer": "Bridge (default, container-to-container by name), Host (shares host network, no isolation), Overlay (multi-host Swarm). Compose auto-creates bridge; services talk by service name.",
+    "question": "¿Cómo funciona la red en Docker? ¿Cuáles son los principales drivers?",
+    "interviewerIntent": "La red es fuente común de problemas. Verifica la comprensión de bridge, host y overlay.",
+    "answer": "Docker ofrece varios drivers de red. Bridge (por defecto): crea una red virtual en el host; los contenedores se comunican por IP o nombre. Cada proyecto de compose obtiene su propia red bridge. Host: el contenedor comparte directamente el stack de red del host (sin aislamiento, pero sin sobrecarga de mapeo). None: sin red. Overlay: para comunicación entre múltiples hosts (Docker Swarm). En desarrollo, compose crea la red y los servicios se resuelven por nombre mediante el DNS embebido de Docker. En Kubernetes, esto se reemplaza por el plugin CNI (Calico, Flannel, etc).",
+    "shortAnswer": "Bridge (por defecto, por nombre), Host (comparte red del host, sin aislamiento), Overlay (multi-host). Compose auto-crea la red bridge.",
     "keyPoints": [
-      "Bridge: isolated virtual network, containers talk by name",
-      "Host: shares host network — no port mapping, no isolation",
-      "Compose creates a project-scoped bridge network automatically",
-      "Docker embedded DNS resolves service names within a network",
-      "Containers on different networks cannot communicate by default"
+      "Bridge: red virtual aislada, comunicación por nombre",
+      "Host: usa la red del host directamente — sin aislamiento",
+      "El DNS interno de Docker resuelve los nombres de servicio en la red",
+      "Contenedores en redes diferentes no pueden comunicarse por defecto"
     ],
     "followUps": [
       {
-        "question": "How do you connect a container to multiple networks?",
-        "answerHint": "Assign multiple networks in docker-compose.yml under the service's networks key, or docker network connect for running containers."
-      },
-      {
-        "question": "When would you use --network host?",
-        "answerHint": "When the container needs to access host-only services or when port mapping overhead matters. Avoid in production — no network isolation."
+        "question": "¿Cuándo usarías --network host?",
+        "answerHint": "Cuando el contenedor necesita acceder a servicios exclusivos del host o cuando el rendimiento del mapeo de puertos es crítico. Evitar en producción por falta de aislamiento."
       }
     ],
     "mistakesToAvoid": [
-      "Using localhost inside a container to reach another container — use service name",
-      "Exposing all ports with -p without considering security",
-      "Assuming containers on different compose projects can communicate by name"
+      "Usar localhost dentro de un contenedor para intentar llegar a otro (usar el nombre de servicio)",
+      "Exponer todos los puertos con -p sin considerar la seguridad",
+      "Asumir que contenedores de proyectos de compose diferentes pueden verse por nombre"
     ]
   },
   {
@@ -236,31 +227,21 @@
     "topic": "docker",
     "subtopic": "Networking",
     "difficulty": "advanced",
-    "question": "How do you optimize a Docker image for a Java Spring Boot application?",
-    "interviewerIntent": "Practical question combining Dockerfile best practices with Java-specific knowledge. Shows production readiness.",
-    "answer": "Key optimizations: (1) Multi-stage build — Maven/Gradle stage to build the JAR, JRE-only final stage (eclipse-temurin:17-jre instead of JDK). (2) Layer the JAR — Spring Boot layered JARs split into dependencies, spring-boot-loader, snapshot-dependencies, and application layers; dependencies change rarely so they're cached. (3) Use a non-root user — RUN addgroup -S spring && adduser -S spring -G spring, USER spring. (4) JVM flags for containers: -XX:+UseContainerSupport (default in Java 11+) respects cgroup memory limits; set -Xmx explicitly or use -XX:MaxRAMPercentage=75. (5) COPY .dockerignore to exclude target/, .git, etc.",
-    "shortAnswer": "Multi-stage (JRE only), layered JAR for cache, non-root user, -XX:MaxRAMPercentage for container memory, .dockerignore to exclude build artifacts.",
+    "question": "¿Cómo optimizas una imagen de Docker para una aplicación Java Spring Boot?",
+    "interviewerIntent": "Pregunta práctica que combina buenas prácticas de Docker con conocimientos específicos de Java.",
+    "answer": "Optimizaciones clave: (1) Multi-stage build — etapa Maven/Gradle para el JAR, etapa final solo con JRE (eclipse-temurin:17-jre). (2) Capas para el JAR — usar el modo de capas de Spring Boot para separar dependencias (cambian poco) del código (cambia mucho). (3) Usuario no-root — por seguridad. (4) Flags de la JVM: usar -XX:MaxRAMPercentage=75 para que la JVM respete el límite de memoria del contenedor en lugar de ver la RAM del host. (5) .dockerignore para excluir target/ y .git.",
+    "shortAnswer": "Multi-stage (solo JRE), JAR por capas para caché, usuario no-root, -XX:MaxRAMPercentage para la memoria, .dockerignore.",
     "keyPoints": [
-      "eclipse-temurin:17-jre saves ~200MB vs JDK image",
-      "Spring Boot layered JARs: separate slow-changing deps from fast-changing code",
-      "Non-root USER is a security best practice",
-      "-XX:MaxRAMPercentage=75 prevents OOMKilled by container memory limit",
-      ".dockerignore prevents target/ and .git from invalidating COPY cache"
-    ],
-    "followUps": [
-      {
-        "question": "What is GraalVM native image and when is it worth it for Spring Boot?",
-        "answerHint": "Compiles to native binary — sub-second startup, low memory. Worth it for serverless/short-lived workloads. Long-running services benefit less and lose dynamic features."
-      },
-      {
-        "question": "How do you set JVM heap size in a Kubernetes pod?",
-        "answerHint": "Set resources.limits.memory in the pod spec and use -XX:MaxRAMPercentage=75 so JVM reads the cgroup limit rather than host RAM."
-      }
+      "Usar JRE ahorra ~200MB frente al JDK",
+      "JAR por capas de Spring Boot: separa dependencias de código para optimizar caché",
+      "El usuario USER no-root es una mejor práctica de seguridad",
+      "-XX:MaxRAMPercentage evita que el proceso sea matado por el OOMKiller del contenedor",
+      ".dockerignore evita invalidar la caché de la capa COPY por cambios en archivos irrelevantes"
     ],
     "mistakesToAvoid": [
-      "Using JDK image in production — includes compiler and tools not needed at runtime",
-      "Not setting memory limits — JVM uses host RAM by default, causing OOMKilled",
-      "Running as root inside the container"
+      "Usar la imagen del JDK en producción (incluye compilador y herramientas innecesarias)",
+      "No establecer límites de memoria (la JVM intentará usar la RAM del host)",
+      "Ejecutar como root dentro del contenedor"
     ]
   },
   {
@@ -269,31 +250,20 @@
     "topic": "docker",
     "subtopic": "Images",
     "difficulty": "intermediate",
-    "question": "What is .dockerignore and why is it important?",
-    "interviewerIntent": "Often overlooked but critical for cache efficiency and security. Missing .dockerignore is a common production mistake.",
-    "answer": ".dockerignore works like .gitignore — it lists files and directories to exclude from the build context sent to the Docker daemon. Without it, the entire project directory is sent, including node_modules, target/, .git, test data, and local configs. This causes problems: large build context slows the build, COPY . . includes unwanted files in the image, and any change in excluded files (like .git) invalidates the COPY cache layer. Typical .dockerignore entries: .git, target/, node_modules/, *.md, .env, test/, .idea/.",
-    "shortAnswer": ".dockerignore excludes files from build context. Without it: slow builds, bloated images, cache invalidation on .git changes. Always exclude .git, target/, node_modules/.",
+    "question": "¿Qué es .dockerignore y por qué es importante?",
+    "interviewerIntent": "A menudo ignorado pero crítico para la eficiencia de la caché y la seguridad.",
+    "answer": ".dockerignore funciona como .gitignore: lista archivos y directorios para excluir del 'build context' enviado al demonio de Docker. Sin él, se envía todo el proyecto (node_modules, target/, .git, configs locales). Esto ralentiza la construcción, infla la imagen final e invalida la caché de la capa COPY ante cualquier cambio en archivos excluidos (como los logs de .git). Entradas típicas: .git, target/, node_modules/, *.md, .env.",
+    "shortAnswer": ".dockerignore excluye archivos del contexto de construcción. Sin él: builds lentos, imágenes pesadas e invalidación innecesaria de caché.",
     "keyPoints": [
-      "Reduces build context size sent to Docker daemon",
-      "Prevents sensitive files (.env, credentials) from entering image",
-      "Prevents .git changes from invalidating COPY cache",
-      "Same syntax as .gitignore",
-      "Place in same directory as Dockerfile"
-    ],
-    "followUps": [
-      {
-        "question": "Can .dockerignore exclude the Dockerfile itself?",
-        "answerHint": "Yes, but Docker always includes the Dockerfile and .dockerignore regardless of rules in .dockerignore."
-      },
-      {
-        "question": "What happens if you COPY a file that's in .dockerignore?",
-        "answerHint": "The COPY instruction fails with 'no such file or directory' — the file was excluded from the build context before Docker processes the Dockerfile."
-      }
+      "Reduce el tamaño del contexto enviado al daemon de Docker",
+      "Evita que archivos sensibles (.env, credenciales) entren en la imagen",
+      "Previene que cambios en .git invaliden la caché de la capa COPY",
+      "Sintaxis idéntica a .gitignore"
     ],
     "mistakesToAvoid": [
-      "Forgetting .dockerignore and including node_modules/ in the image",
-      "Not excluding .git — causes cache miss on every commit",
-      "Excluding files needed by the build"
+      "Olvidar el .dockerignore e incluir node_modules/ o target/ en la imagen",
+      "No excluir .git (causa fallos de caché en cada commit)",
+      "Excluir accidentalmente archivos necesarios para la compilación"
     ]
   },
   {
@@ -302,31 +272,21 @@
     "topic": "docker",
     "subtopic": "Containers",
     "difficulty": "intermediate",
-    "question": "How do you manage persistent data in Docker? What are volumes vs bind mounts?",
-    "interviewerIntent": "Data persistence is a fundamental concern for stateful services. Checks understanding of Docker storage options.",
-    "answer": "Docker containers are ephemeral — data written inside is lost when the container is removed. Two main persistence mechanisms: Volumes are managed by Docker, stored in /var/lib/docker/volumes/, and are portable between containers. They're the preferred way to persist database data. Bind mounts map a host directory into the container — changes on host reflect immediately inside. Preferred for development (mounting source code for hot reload). Key difference: volumes are Docker-managed (docker volume ls, docker volume prune), bind mounts are host-path-dependent. For databases in production: named volume. For development config or code: bind mount.",
-    "shortAnswer": "Volume = Docker-managed, portable, preferred for production data. Bind mount = host path mapped into container, preferred for dev (live code reload). Containers are ephemeral without one.",
+    "question": "¿Cómo gestionas datos persistentes en Docker? Diferencia entre volúmenes y bind mounts.",
+    "interviewerIntent": "La persistencia es fundamental para servicios con estado. Verifica las opciones de almacenamiento.",
+    "answer": "Los contenedores son efímeros; los datos se pierden al borrarlos. Los Volúmenes son gestionados por Docker (en /var/lib/docker/volumes/) y son portables y seguros; son la opción preferida para bases de datos en producción. Los Bind mounts mapean un directorio del host al contenedor; los cambios en el host se reflejan al instante. Se prefieren en desarrollo para el 'hot reload' del código fuente. Diferencia clave: los volúmenes los gestiona Docker, los bind mounts dependen de la ruta del host.",
+    "shortAnswer": "Volumen = gestionado por Docker, portable, ideal para producción. Bind mount = ruta del host mapeada, ideal para desarrollo (recarga de código).",
     "keyPoints": [
-      "Named volumes: docker volume create, referenced by name in compose",
-      "Bind mounts: absolute host path mapped to container path",
-      "tmpfs mount: in-memory, not persisted — for sensitive temporary data",
-      "Volumes survive docker compose down; use -v flag to also remove volumes",
-      "Never store production database data only in container filesystem"
-    ],
-    "followUps": [
-      {
-        "question": "How do you backup a Docker volume?",
-        "answerHint": "Mount the volume in a temporary container and use tar: docker run --rm -v myvolume:/data -v $(pwd):/backup alpine tar czf /backup/backup.tar.gz /data."
-      },
-      {
-        "question": "What are the performance implications of bind mounts on macOS?",
-        "answerHint": "macOS bind mounts are slow due to osxfs/VirtioFS translation layer. For large node_modules, use a named volume instead."
-      }
+      "Volúmenes con nombre: se crean y referencian en compose",
+      "Bind mounts: dependen de una ruta absoluta en el host",
+      "tmpfs mount: en memoria, no persistente, para datos temporales sensibles",
+      "Los volúmenes sobreviven a 'docker compose down'",
+      "Nunca guardes datos críticos solo en el sistema de archivos del contenedor"
     ],
     "mistakesToAvoid": [
-      "Assuming container data persists after docker rm",
-      "Using bind mounts in production — host path dependency is fragile",
-      "Forgetting to define volumes for database containers in compose"
+      "Asumir que los datos persisten tras un 'docker rm' sin volúmenes",
+      "Usar bind mounts en producción (la dependencia de la ruta del host es frágil)",
+      "Olvidar definir los volúmenes para los contenedores de bases de datos"
     ]
   },
   {
@@ -335,31 +295,20 @@
     "topic": "docker",
     "subtopic": "Docker Compose",
     "difficulty": "advanced",
-    "question": "How do you handle secrets and environment-specific configuration in Docker Compose?",
-    "interviewerIntent": "Security-conscious candidates avoid hardcoded secrets. This distinguishes developers who have shipped to production from those who only develop locally.",
-    "answer": "Best practices: use env_file to load from a .env file not committed to git. Docker Compose reads .env automatically for variable substitution (${DB_PASSWORD}). For production, Docker Secrets (Swarm) or Kubernetes Secrets mount secrets as files — read by the app from /run/secrets/. Never hardcode credentials in docker-compose.yml. For different environments: use override files — docker-compose.yml as base, docker-compose.override.yml for local dev, docker-compose.prod.yml for production (docker compose -f docker-compose.yml -f docker-compose.prod.yml up). This avoids duplicating the full config per environment.",
-    "shortAnswer": "env_file for .env not in git. Variable substitution with ${VAR}. Override files for env-specific config. Never hardcode secrets. Production: Docker Secrets or K8s Secrets as files.",
+    "question": "¿Cómo manejas secretos y configuraciones específicas por entorno en Docker Compose?",
+    "interviewerIntent": "Evalúa la conciencia sobre seguridad. Distingue a desarrolladores que han desplegado en producción.",
+    "answer": "Mejores prácticas: usar env_file para cargar archivos .env no incluidos en git. Compose soporta sustitución de variables con ${VAR}. Para producción, Docker Secrets (Swarm) o Kubernetes Secrets montan los secretos como archivos en /run/secrets/. Nunca escribas credenciales directamente en el yaml. Para entornos: usar archivos 'override' (docker-compose.yml como base, docker-compose.override.yml para local, docker-compose.prod.yml para producción) combinándolos con el flag -f.",
+    "shortAnswer": "env_file para el .env local. Sustitución con ${VAR}. Archivos override para cada entorno. Producción: Secrets como archivos.",
     "keyPoints": [
-      ".env file loaded automatically — add to .gitignore",
-      "Variable substitution: ${VARIABLE:-default} with fallback",
-      "Override files: base + environment-specific layer",
-      "docker-compose.override.yml merged automatically with docker compose up",
-      "Docker Secrets mount as files — more secure than env vars for sensitive data"
-    ],
-    "followUps": [
-      {
-        "question": "Why are environment variables less secure than file-based secrets?",
-        "answerHint": "Env vars can be read by any process in the container, appear in docker inspect output, and can leak into logs. Files with restricted permissions are harder to accidentally expose."
-      },
-      {
-        "question": "How do you validate that required environment variables are set?",
-        "answerHint": "Use ${REQUIRED_VAR:?Error message} syntax in docker-compose.yml — Compose fails with the error message if the variable is unset."
-      }
+      "Los archivos .env se cargan automáticamente (añadir a .gitignore)",
+      "Sustitución con valores por defecto: ${VAR:-default}",
+      "Los archivos override se fusionan automáticamente al hacer 'up'",
+      "Los secretos como archivos son más seguros que las variables de entorno"
     ],
     "mistakesToAvoid": [
-      "Committing .env files to git",
-      "Hardcoding passwords in docker-compose.yml",
-      "Duplicating the full config in a docker-compose.prod.yml instead of using overrides"
+      "Subir archivos .env al repositorio de git",
+      "Hardcodear contraseñas en el docker-compose.yml",
+      "Duplicar toda la configuración en varios archivos en lugar de usar overrides"
     ]
   },
   {
@@ -368,31 +317,16 @@
     "topic": "docker",
     "subtopic": "Images",
     "difficulty": "advanced",
-    "question": "What is image scanning and why is it important in a CI/CD pipeline?",
-    "interviewerIntent": "Security awareness in containerized environments. Shows production maturity.",
-    "answer": "Image scanning analyzes Docker images for known CVEs (Common Vulnerabilities and Exposures) in base images, installed packages, and application dependencies. Tools: Trivy (open source, fast), Snyk, Grype, Docker Scout. In CI/CD, scanning runs after build and blocks deployment if critical/high vulnerabilities exist. Key practices: use minimal base images (distroless, alpine) to reduce attack surface, regularly rebuild images even without code changes (base image vulnerabilities), pin base image versions with digest (FROM ubuntu:22.04@sha256:abc...) to prevent unexpected updates, and never run as root. A layered approach: scan in CI, also scan in registry on push.",
-    "shortAnswer": "Image scanning finds CVEs in base images and dependencies. Run Trivy/Snyk in CI. Block deploys on critical CVEs. Use minimal base images, pin with digest, non-root user.",
+    "question": "¿Qué es el escaneo de imágenes (image scanning) y por qué es importante en un pipeline de CI/CD?",
+    "interviewerIntent": "Conciencia de seguridad en entornos contenedorizados.",
+    "answer": "El escaneo analiza las imágenes buscando CVEs (vulnerabilidades conocidas) en la imagen base, paquetes instalados y dependencias. Herramientas: Trivy, Snyk, Docker Scout. En el CI/CD, el escaneo se ejecuta tras el build y bloquea el despliegue si existen vulnerabilidades críticas. Pruebas clave: usar imágenes base mínimas (distroless, alpine), reconstruir imágenes periódicamente para pillar parches del SO y fijar versiones con el digest (SHA256) para evitar actualizaciones inesperadas.",
+    "shortAnswer": "El escaneo detecta CVEs. Usar Trivy/Snyk en el CI. Bloquear despliegues con CVEs críticos. Usar imágenes mínimas y fijar versiones por digest.",
     "keyPoints": [
-      "Trivy and Grype are popular open-source scanners",
-      "Scan on every build and also in the registry",
-      "Distroless images minimize attack surface (no shell, no package manager)",
-      "Pin base images with SHA256 digest for reproducibility",
-      "Regularly rebuild even without app changes to pick up base image patches"
-    ],
-    "followUps": [
-      {
-        "question": "What is a distroless image?",
-        "answerHint": "Images with only the runtime (JRE, Python, etc.) and no OS utilities — no shell, no package manager. Dramatically reduces attack surface. gcr.io/distroless/ images."
-      },
-      {
-        "question": "How do you handle false positives in image scanning?",
-        "answerHint": "Document and suppress known false positives in .trivyignore or scanner config with a justification. Review and expire suppressions periodically."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Building images once and never rebuilding — base image vulnerabilities accumulate",
-      "Using :latest tag — unpredictable, not reproducible",
-      "Ignoring high severity findings because they seem theoretical"
+      "Trivy y Grype son escáneres open-source muy populares",
+      "Escaneo en cada build y también en el registry al hacer push",
+      "Imágenes 'distroless' minimizan la superficie de ataque (sin shell ni gestor de paquetes)",
+      "Fijar imágenes con el digest SHA256 garantiza la reproducibilidad",
+      "Reconstruir periódicamente incluso sin cambios de código"
     ]
   },
   {
@@ -401,31 +335,22 @@
     "topic": "docker",
     "subtopic": "Containers",
     "difficulty": "advanced",
-    "question": "How do you debug a running container or investigate why a container keeps crashing?",
-    "interviewerIntent": "Practical troubleshooting skill. Candidates who can debug containers independently are much more valuable in production.",
-    "answer": "For a running container: docker exec -it <id> /bin/sh for an interactive shell. docker logs <id> or docker logs -f <id> for streaming logs. docker inspect <id> for metadata, environment variables, mounts, and network config. docker stats <id> for live CPU/memory usage. For a crashing container: docker logs <id> shows the last output before crash. docker inspect <id> shows exit code and error. If the container exits immediately: override the entrypoint to get a shell — docker run --entrypoint /bin/sh -it myimage. Check OOMKilled in docker inspect State.OOMKilled (true = memory limit hit). Use --restart no to prevent automatic restart during debugging.",
-    "shortAnswer": "Running: docker exec -it for shell, docker logs for output, docker stats for resources. Crashing: check exit code via inspect, override entrypoint to get shell, check OOMKilled.",
+    "question": "¿Cómo depuras un contenedor en ejecución o investigas por qué falla al arrancar?",
+    "interviewerIntent": "Habilidad práctica de resolución de problemas (troubleshooting).",
+    "answer": "Para contenedores activos: 'docker exec -it <id> /bin/sh' para una shell interactiva. 'docker logs -f' para ver la salida. 'docker inspect' para metadatos y red. 'docker stats' para consumo de recursos. Para contenedores que fallan: 'docker logs' muestra la última salida. 'docker inspect' revela el exit code y errores de montaje. Si el contenedor se cierra al instante, sobrescribo el entrypoint: 'docker run --entrypoint /bin/sh -it imagen'. Reviso si fue un OOMKilled en el State.OOMKilled del inspect.",
+    "shortAnswer": "Activo: docker exec para shell, logs para salida, stats para recursos. Fallido: revisar exit code, sobrescribir entrypoint para entrar, revisar OOMKilled.",
     "keyPoints": [
-      "docker exec -it <id> /bin/sh — interactive shell in running container",
-      "docker logs --tail 100 -f — last 100 lines + follow",
-      "docker inspect State.ExitCode and State.OOMKilled",
-      "docker run --entrypoint /bin/sh to debug containers that exit immediately",
-      "docker events — real-time event stream from Docker daemon"
+      "docker exec -it para entrar en el contenedor",
+      "docker logs --tail 100 -f para ver lo último y seguir el flujo",
+      "Revisar State.ExitCode y State.OOMKilled en el inspect",
+      "Sobrescribir el entrypoint para depurar cierres inmediatos",
+      "docker events para ver el flujo de eventos del daemon"
     ],
     "followUps": [
       {
-        "question": "What if the container image has no shell (distroless)?",
-        "answerHint": "Use docker cp to copy files out. Use kubectl debug (in K8s) with an ephemeral debug container. Or temporarily use a non-distroless image for debugging."
-      },
-      {
-        "question": "How do you investigate a container that was OOMKilled?",
-        "answerHint": "docker inspect State.OOMKilled = true confirms it. Increase memory limit or optimize the application. Use -Xmx for JVM apps to set explicit heap limit."
+        "question": "¿Qué pasa si la imagen es distroless y no tiene shell?",
+        "answerHint": "Usar docker cp para sacar archivos. Usar kubectl debug (en K8s) con un contenedor de depuración efímero. O usar temporalmente una imagen base con shell para depurar."
       }
-    ],
-    "mistakesToAvoid": [
-      "Deleting the crashed container before collecting logs",
-      "Not checking OOMKilled when a container exits unexpectedly",
-      "Assuming the error is in the app without checking docker logs first"
     ]
   },
   {
@@ -434,31 +359,15 @@
     "topic": "docker",
     "subtopic": "Dockerfile",
     "difficulty": "beginner",
-    "question": "What is the difference between COPY and ADD in a Dockerfile?",
-    "interviewerIntent": "Simple but important distinction. ADD has hidden behaviors that can cause security and reproducibility issues.",
-    "answer": "COPY simply copies files from the build context into the image. ADD does everything COPY does, plus: it can fetch remote URLs (ADD http://example.com/file.tar.gz /app/) and it automatically extracts tar archives. The Docker best practice is to always use COPY unless you specifically need the tar extraction feature. ADD with URLs is discouraged because it cannot be cached effectively and introduces remote dependencies into the build. If you need to download a file, use RUN curl or RUN wget instead — it's explicit and cacheable. COPY is predictable; ADD has magic behavior that surprises people.",
-    "shortAnswer": "COPY = simple file copy. ADD = COPY + URL fetch + tar extraction. Always prefer COPY. Use RUN curl for downloads. ADD's magic behavior is a source of surprises.",
+    "question": "¿Cuál es la diferencia entre COPY y ADD en un Dockerfile?",
+    "interviewerIntent": "Distinción simple pero importante. ADD tiene comportamientos ocultos.",
+    "answer": "COPY simplemente copia archivos del contexto de construcción a la imagen. ADD hace lo mismo pero además puede descargar archivos de URLs remotas y descomprime automáticamente archivos tar. La buena práctica es usar siempre COPY a menos que necesites específicamente la extracción automática de un tar local. Para descargas, es mejor usar RUN curl o wget, ya que es más explícito y eficiente para la caché. COPY es predecible; ADD tiene comportamientos 'mágicos' que pueden sorprender.",
+    "shortAnswer": "COPY = copia simple. ADD = COPY + descarga de URLs + extracción de tar. Se prefiere COPY por ser más explícito y predecible.",
     "keyPoints": [
-      "COPY is explicit and predictable",
-      "ADD auto-extracts .tar.gz, .tar.bz2, etc.",
-      "ADD with URLs bypasses the build cache",
-      "Prefer COPY for files, RUN curl/wget for downloads",
-      "Official Dockerfile linter (hadolint) warns about ADD misuse"
-    ],
-    "followUps": [
-      {
-        "question": "Can COPY handle glob patterns?",
-        "answerHint": "Yes — COPY src/*.jar /app/ copies all JARs from src. Uses Go filepath.Match patterns."
-      },
-      {
-        "question": "How do you copy files from a previous stage using COPY?",
-        "answerHint": "COPY --from=stageName /path/in/stage /path/in/current — the --from flag targets a named stage."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Using ADD when COPY suffices",
-      "Using ADD with a URL — not cacheable, non-reproducible",
-      "Expecting ADD to recursively copy directories like cp -r (it does, but COPY is clearer)"
+      "COPY es explícito y predecible",
+      "ADD extrae automáticamente archivos .tar.gz, .tar.bz2, etc.",
+      "ADD con URLs no aprovecha bien la caché",
+      "Usar RUN curl/wget para descargas controladas"
     ]
   },
   {
@@ -467,31 +376,21 @@
     "topic": "docker",
     "subtopic": "Networking",
     "difficulty": "intermediate",
-    "question": "How does health checking work in Docker and why is it critical for orchestration?",
-    "interviewerIntent": "Health checks bridge Docker and Kubernetes readiness. Candidates who understand them write more reliable service deployments.",
-    "answer": "HEALTHCHECK in Dockerfile defines a command that Docker runs periodically inside the container to determine if it's healthy. Syntax: HEALTHCHECK --interval=30s --timeout=10s --retries=3 CMD curl -f http://localhost:8080/actuator/health || exit 1. Status: starting (initial), healthy, unhealthy. Docker Compose depends_on with condition: service_healthy waits for a service to be healthy before starting dependents — solving the 'database not ready' race condition. In Kubernetes, liveness and readiness probes replace the Docker HEALTHCHECK for pod scheduling and traffic routing. Key: health check should test actual readiness (can the app serve requests?), not just that the process is running.",
-    "shortAnswer": "HEALTHCHECK runs a command periodically. Status: starting/healthy/unhealthy. In Compose: depends_on condition: service_healthy. In K8s: replaced by liveness/readiness probes.",
+    "question": "¿Cómo funcionan los health checks en Docker y por qué son críticos para la orquestación?",
+    "interviewerIntent": "Los health checks conectan la disponibilidad de Docker con Kubernetes.",
+    "answer": "HEALTHCHECK define un comando que Docker ejecuta periódicamente dentro del contenedor para determinar su salud. Estados: starting, healthy, unhealthy. En Compose, depends_on con 'condition: service_healthy' soluciona el problema de arrancar la app antes de que la BD esté lista. En Kubernetes, las liveness y readiness probes reemplazan este mecanismo para gestionar el tráfico y el reinicio de pods. La clave es que el health check debe probar la disponibilidad real (¿puede la app atender peticiones?), no solo que el proceso esté corriendo.",
+    "shortAnswer": "HEALTHCHECK ejecuta un comando periódicamente. Estados: starting/healthy/unhealthy. Útil para coordinar el arranque de servicios dependientes.",
     "keyPoints": [
-      "--interval (how often), --timeout (max wait), --retries (failures before unhealthy)",
-      "depends_on condition: service_healthy waits for actual readiness",
-      "Health endpoint should test real readiness (DB connection, required services)",
-      "Spring Boot Actuator /actuator/health is perfect for this",
-      "K8s liveness vs readiness: liveness restarts unhealthy pods, readiness removes from LB"
+      "Parámetros: --interval, --timeout, --retries",
+      "depends_on con service_healthy coordina el arranque real",
+      "El endpoint de salud debe verificar conexiones críticas (BD, Kafka)",
+      "Spring Boot Actuator es ideal para esto (/actuator/health)"
     ],
     "followUps": [
       {
-        "question": "What is the difference between liveness and readiness in Kubernetes?",
-        "answerHint": "Liveness: is the app in a broken state that requires restart? Readiness: is the app ready to serve traffic? An app can be live but not ready (warming up, downstream unavailable)."
-      },
-      {
-        "question": "What should a health check NOT do?",
-        "answerHint": "Heavy queries, external HTTP calls with no timeout, anything that takes >5s. A slow health check causes false unhealthy status and unnecessary restarts."
+        "question": "¿Qué no debería hacer un health check?",
+        "answerHint": "Consultas pesadas, llamadas externas sin timeout o cualquier cosa que tarde más de unos segundos. Un health check lento causa falsos negativos."
       }
-    ],
-    "mistakesToAvoid": [
-      "Health check that only verifies the process is running, not that it can serve requests",
-      "Expensive health checks (full DB query, external HTTP) — they run every 30s",
-      "Not using service_healthy in depends_on and wondering why app starts before DB is ready"
     ]
   },
   {
@@ -500,12 +399,12 @@
     "topic": "docker",
     "subtopic": "CI/CD Pipeline",
     "difficulty": "senior",
-    "question": "What should a production CI/CD pipeline contain?",
-    "interviewerIntent": "Test CI/CD completeness",
-    "answer": "A typical pipeline should compile, run unit and integration tests, perform static analysis and dependency-security checks, build an immutable artifact, generate provenance or an SBOM when required, and publish the artifact to a controlled registry.\n\nDeployment should use environment-specific configuration, automated health verification and an explicit rollback strategy.",
+    "question": "¿Qué debería contener un pipeline de CI/CD para producción?",
+    "interviewerIntent": "Evaluar la visión completa del ciclo de vida.",
+    "answer": "Un pipeline típico debe compilar, ejecutar tests unitarios y de integración, realizar análisis estático y chequeos de seguridad de dependencias, construir un artefacto inmutable (imagen), generar un SBOM si se requiere y publicar en un registry controlado. El despliegue debe usar configuración específica por entorno, verificación automatizada de salud y tener una estrategia de rollback explícita.",
     "tags": [
-      "interview-prep",
-      "senior-level"
+      "preparación de entrevista",
+      "nivel senior"
     ]
   },
   {
@@ -514,12 +413,12 @@
     "topic": "docker",
     "subtopic": "Deployment Strategies",
     "difficulty": "senior",
-    "question": "What is the difference between blue-green and canary deployment?",
-    "interviewerIntent": "Check deployment strategy knowledge",
-    "answer": "Blue-green keeps two complete environments and switches traffic from one to the other.\n\nCanary deployment gradually sends a percentage of traffic to the new version.\n\nBlue-green offers a simple rollback but requires more duplicated capacity. Canary provides controlled exposure but requires strong observability and routing capabilities.",
+    "question": "¿Cuál es la diferencia entre despliegue blue-green y canary?",
+    "interviewerIntent": "Verificar conocimientos de estrategias de despliegue.",
+    "answer": "Blue-green mantiene dos entornos completos e intercambia el tráfico de uno a otro. El despliegue canary envía gradualmente un porcentaje del tráfico a la nueva versión. Blue-green ofrece un rollback muy simple pero requiere duplicar la capacidad. Canary permite una exposición controlada pero requiere una observabilidad y capacidades de ruteo muy sólidas.",
     "tags": [
-      "interview-prep",
-      "senior-level"
+      "preparación de entrevista",
+      "nivel senior"
     ]
   },
   {
@@ -528,12 +427,12 @@
     "topic": "docker",
     "subtopic": "Database Migrations",
     "difficulty": "senior",
-    "question": "How do you deploy a database-breaking change safely?",
-    "interviewerIntent": "Test safe migration strategy",
-    "answer": "I use the expand-and-contract pattern.\n\nFirst, add the new schema in a backward-compatible form. Then deploy code capable of working with both versions, migrate or backfill data, switch reads and writes, and only later remove the obsolete structure.",
+    "question": "¿Cómo despliegas de forma segura un cambio que rompe la base de datos?",
+    "interviewerIntent": "Probar estrategias de migración segura.",
+    "answer": "Utilizo el patrón expand-and-contract. Primero, añado el nuevo esquema de forma compatible. Luego despliego el código capaz de trabajar con ambas versiones, migro los datos, cambio las lecturas y escrituras a la nueva estructura y, solo al final, elimino la estructura obsoleta.",
     "tags": [
-      "interview-prep",
-      "senior-level"
+      "preparación de entrevista",
+      "nivel senior"
     ]
   }
 ]

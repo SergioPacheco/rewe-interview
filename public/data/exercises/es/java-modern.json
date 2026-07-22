@@ -5,24 +5,24 @@
     "subtopic": "modern-records",
     "type": "ORAL_ANSWER",
     "difficulty": "medium",
-    "question": "What are Java Records and when would you use them in a microservice?",
-    "context": "Records were introduced in Java 16 as immutable data carriers.",
-    "interviewerIntent": "Checks understanding of records vs regular classes and practical usage.",
-    "answer": "Records are immutable data classes with compiler-generated equals, hashCode, toString, and accessors. I use them for DTOs, API responses, events, and value objects \u2014 anywhere data should not be mutated after creation. They are NOT suitable for JPA entities (which need mutable state and no-arg constructors).",
+    "question": "¿Qué son los Records de Java y cuándo los usarías en un microservicio?",
+    "context": "Los Records se introdujeron en Java 16 como transportadores de datos inmutables.",
+    "interviewerIntent": "Comprobar la comprensión de los records frente a las clases regulares y su uso práctico.",
+    "answer": "Los Records son clases de datos inmutables con implementaciones generadas por el compilador de equals, hashCode, toString y métodos de acceso (accessors). Los utilizo para DTOs, respuestas de API, eventos y objetos de valor (value objects); en cualquier lugar donde los datos no deban mutarse después de su creación. NO son adecuados para entidades JPA (que necesitan un estado mutable y constructores sin argumentos).",
     "keyPoints": [
-      "Immutable by design",
-      "Auto-generated boilerplate",
-      "Ideal for DTOs and events",
-      "Not for JPA entities"
+      "Inmutables por diseño",
+      "Eliminación de código repetitivo (boilerplate) generado automáticamente",
+      "Ideales para DTOs y eventos",
+      "No aptos para entidades JPA"
     ],
     "followUps": [
       {
-        "question": "Can you add methods to a record?",
-        "answerHint": "Yes \u2014 instance methods, static methods, and compact constructors for validation."
+        "question": "¿Se pueden añadir métodos a un record?",
+        "answerHint": "Sí: métodos de instancia, métodos estáticos y constructores compactos para validación."
       },
       {
-        "question": "How do records interact with Jackson serialization?",
-        "answerHint": "Jackson supports records natively since 2.12 \u2014 uses the canonical constructor for deserialization."
+        "question": "¿Cómo interactúan los records con la serialización de Jackson?",
+        "answerHint": "Jackson soporta records de forma nativa desde la versión 2.12; utiliza el constructor canónico para la deserialización."
       }
     ]
   },
@@ -32,23 +32,19 @@
     "subtopic": "modern-records",
     "type": "ORAL_ANSWER",
     "difficulty": "hard",
-    "question": "Explain sealed classes and how they enable exhaustive pattern matching.",
-    "interviewerIntent": "Tests understanding of closed type hierarchies and their compile-time guarantees.",
-    "answer": "Sealed classes restrict which types can extend them \u2014 the compiler knows ALL subtypes. Combined with pattern matching in switch (Java 21), you get exhaustive handling: the compiler verifies every subtype is covered, no default case needed. This is ideal for domain outcomes like DeliveryResult.Success, Rejected, RetryableFailure.",
+    "question": "Explica las clases selladas (sealed classes) y cómo permiten el pattern matching exhaustivo.",
+    "interviewerIntent": "Probar la comprensión de las jerarquías de tipos cerradas y sus garantías en tiempo de compilación.",
+    "answer": "Las clases selladas restringen qué tipos pueden extenderlas; el compilador conoce TODOS los subtipos. Combinado con el pattern matching en switch (Java 21), obtienes un manejo exhaustivo: el compilador verifica que cada subtipo esté cubierto, eliminando la necesidad de un caso 'default'. Esto es ideal para resultados de dominio como DeliveryResult.Success, Rejected o RetryableFailure.",
     "keyPoints": [
-      "Restrict inheritance explicitly",
-      "Compiler knows all subtypes",
-      "Exhaustive switch without default",
-      "Domain modeling: closed outcomes"
+      "Restringen la herencia explícitamente",
+      "El compilador conoce todos los subtipos",
+      "Switch exhaustivo sin necesidad de 'default'",
+      "Modelado de dominio: resultados cerrados"
     ],
     "followUps": [
       {
-        "question": "What's the difference between sealed and final?",
-        "answerHint": "Final allows zero subclasses; sealed allows a specific, controlled set."
-      },
-      {
-        "question": "Can a sealed interface have permitted subtypes in different packages?",
-        "answerHint": "Yes, since Java 17 \u2014 permits clause lists them explicitly regardless of package."
+        "question": "¿Cuál es la diferencia entre sealed y final?",
+        "answerHint": "Final permite cero subclases; sealed permite un conjunto específico y controlado."
       }
     ]
   },
@@ -58,10 +54,10 @@
     "subtopic": "modern-patterns",
     "type": "PREDICT_OUTPUT",
     "difficulty": "medium",
-    "question": "What does this code print?",
+    "question": "¿Qué imprime este código?",
     "code": "Object obj = \"Hello\";\nif (obj instanceof String s && s.length() > 3) {\n    System.out.println(s.toUpperCase());\n} else {\n    System.out.println(\"short\");\n}",
     "answer": "HELLO",
-    "explain": "Pattern matching for instanceof (Java 16+) binds the variable 's' after the type check. Since \"Hello\" has length 5 (> 3), it prints the uppercase version."
+    "explain": "El pattern matching para instanceof (Java 16+) vincula la variable 's' tras la comprobación de tipo. Como \"Hello\" tiene longitud 5 (> 3), imprime la versión en mayúsculas."
   },
   {
     "id": "modern-patterns-2",
@@ -69,19 +65,19 @@
     "subtopic": "modern-patterns",
     "type": "ORAL_ANSWER",
     "difficulty": "medium",
-    "question": "How do switch expressions differ from switch statements, and why do they matter?",
-    "interviewerIntent": "Checks awareness of modern control flow and exhaustiveness.",
-    "answer": "Switch expressions return a value (no break needed), use arrow syntax for clarity, and the compiler enforces exhaustiveness \u2014 you must handle all cases or provide a default. This eliminates fall-through bugs and makes code more readable. Combined with sealed classes, the compiler guarantees you handle every subtype.",
+    "question": "¿En qué se diferencian las expresiones switch de las sentencias switch, y por qué son importantes?",
+    "interviewerIntent": "Comprobar el conocimiento sobre el flujo de control moderno y la exhaustividad.",
+    "answer": "Las expresiones switch devuelven un valor (no necesitan 'break'), utilizan la sintaxis de flecha para mayor claridad y el compilador obliga a la exhaustividad: debes manejar todos los casos o proporcionar un 'default'. Esto elimina errores por olvido de 'break' (fall-through) y hace el código más legible. Junto con las clases selladas, el compilador garantiza que manejes cada subtipo.",
     "keyPoints": [
-      "Returns a value",
-      "No fall-through",
-      "Arrow syntax",
-      "Exhaustiveness check"
+      "Devuelve un valor",
+      "Sin errores de fall-through",
+      "Sintaxis de flecha",
+      "Comprobación de exhaustividad"
     ],
     "followUps": [
       {
-        "question": "Can you use yield in a switch expression?",
-        "answerHint": "Yes \u2014 yield is used in block cases when you need multiple statements before returning a value."
+        "question": "¿Se puede usar 'yield' en una expresión switch?",
+        "answerHint": "Sí: 'yield' se usa en bloques de código dentro de un caso cuando necesitas varias sentencias antes de devolver el valor."
       }
     ]
   },
@@ -91,19 +87,19 @@
     "subtopic": "modern-streams",
     "type": "ORAL_ANSWER",
     "difficulty": "medium",
-    "question": "When would you use a Stream versus a simple for-loop?",
-    "interviewerIntent": "Tests pragmatism \u2014 streams aren't always better.",
-    "answer": "I use streams when the transformation is a clear pipeline: filter \u2192 map \u2192 collect. The intent reads like a sentence. I use for-loops when: there's early exit logic, mutation is needed, the operation is simple (just summing), or debugging step-by-step is important. Streams are about clarity, not performance.",
+    "question": "¿Cuándo usarías un Stream frente a un bucle for simple?",
+    "interviewerIntent": "Probar el pragmatismo; los streams no siempre son mejores.",
+    "answer": "Uso streams cuando la transformación es un pipeline claro: filter → map → collect. La intención se lee como una frase. Uso bucles for cuando: hay lógica de salida temprana (early exit), se necesita mutación, la operación es muy simple (como una suma) o cuando la depuración paso a paso es prioritaria. Los streams son para claridad, no necesariamente para rendimiento.",
     "keyPoints": [
-      "Streams for declarative pipelines",
-      "Loops for mutation/early exit",
-      "Readability is the criterion",
-      "Parallel streams rarely help"
+      "Streams para flujos declarativos",
+      "Bucles para mutación o salida temprana",
+      "El criterio es la legibilidad",
+      "Los streams paralelos rara vez ayudan"
     ],
     "followUps": [
       {
-        "question": "When would parallel streams help?",
-        "answerHint": "Large collections (10k+) with CPU-bound operations and no shared state. For I/O-bound work, virtual threads are better."
+        "question": "¿Cuándo ayudarían los streams paralelos?",
+        "answerHint": "Colecciones muy grandes (+10k) con operaciones pesadas ligadas a CPU y sin estado compartido. Para trabajo de E/S, los hilos virtuales son mejores."
       }
     ]
   },
@@ -113,10 +109,10 @@
     "subtopic": "modern-streams",
     "type": "PREDICT_OUTPUT",
     "difficulty": "medium",
-    "question": "What does this code print?",
+    "question": "¿Qué imprime este código?",
     "code": "List<String> names = List.of(\"Alice\", \"Bob\", \"Charlie\", \"Anna\");\nlong count = names.stream()\n    .filter(n -> n.startsWith(\"A\"))\n    .peek(System.out::println)\n    .count();\nSystem.out.println(count);",
     "answer": "Alice\nAnna\n2",
-    "explain": "The stream filters names starting with 'A' (Alice, Anna), peek prints each, and count() returns 2. Note: in some JVM versions, count() may skip peek if the size is known \u2014 but with filter, it must evaluate."
+    "explain": "El stream filtra los nombres que empiezan por 'A' (Alice, Anna), peek imprime cada uno y count() devuelve 2. Nota: en algunas versiones de la JVM, count() podría optimizar y saltarse el peek si el tamaño es conocido, pero al haber un filtro, debe evaluar la línea."
   },
   {
     "id": "modern-streams-3",
@@ -124,20 +120,20 @@
     "subtopic": "modern-streams",
     "type": "ORAL_ANSWER",
     "difficulty": "medium",
-    "question": "How should Optional be used correctly?",
-    "interviewerIntent": "Checks for anti-patterns like Optional fields or Optional parameters.",
-    "answer": "Optional is for return types only \u2014 methods that might not have a result. Never use Optional as a field, constructor parameter, or method parameter. Use orElseThrow for required values, orElse for defaults, and map/flatMap to chain transformations. An empty collection is better than Optional<List<T>>.",
+    "question": "¿Cómo se debe usar Optional correctamente?",
+    "interviewerIntent": "Detectar antipatrones como campos Optional o parámetros Optional.",
+    "answer": "Optional es solo para tipos de retorno: métodos que podrían no tener un resultado. Nunca uses Optional como campo (field), parámetro de constructor o parámetro de método. Usa orElseThrow para valores obligatorios, orElse para valores por defecto y map/flatMap para encadenar transformaciones. Una colección vacía es siempre mejor que un Optional<List<T>>.",
     "keyPoints": [
-      "Return types only",
-      "Never as fields or parameters",
-      "orElseThrow for required",
-      "Empty collection > Optional<List>"
+      "Solo para tipos de retorno",
+      "Nunca en campos o parámetros",
+      "orElseThrow para valores requeridos",
+      "Colección vacía > Optional<List>"
     ],
     "mistakesToAvoid": [
-      "Optional.get() without isPresent check",
-      "Optional as a method parameter",
-      "Optional wrapping a collection",
-      "Nested Optional<Optional<T>>"
+      "Llamar a Optional.get() sin comprobar isPresent()",
+      "Usar Optional como parámetro de método",
+      "Envolver una colección en un Optional",
+      "Optional anidados: Optional<Optional<T>>"
     ]
   },
   {
@@ -146,23 +142,19 @@
     "subtopic": "modern-threads",
     "type": "ORAL_ANSWER",
     "difficulty": "hard",
-    "question": "Explain virtual threads and how they change concurrency in Spring Boot.",
-    "interviewerIntent": "Tests deep understanding of Project Loom and practical adoption.",
-    "answer": "Virtual threads are lightweight JVM-managed threads \u2014 millions can coexist because they don't map 1:1 to OS threads. When a virtual thread blocks on I/O, the JVM unmounts it from its carrier platform thread, which can run another virtual thread. In Spring Boot 3.2+, enabling virtual threads means every request handler runs on a virtual thread \u2014 you write simple blocking code and get massive concurrency without reactive complexity.",
+    "question": "Explica los hilos virtuales (virtual threads) y cómo cambian la concurrencia en Spring Boot.",
+    "interviewerIntent": "Probar el conocimiento profundo de Project Loom y su adopción práctica.",
+    "answer": "Los hilos virtuales son hilos ligeros gestionados por la JVM; millones pueden coexistir porque no mapean 1:1 con los hilos del SO. Cuando un hilo virtual se bloquea por E/S, la JVM lo 'desmonta' de su hilo de plataforma portador (carrier thread), que queda libre para ejecutar otro hilo virtual. En Spring Boot 3.2+, habilitarlos significa que cada manejador de peticiones corre en un hilo virtual: escribes código bloqueante simple y obtienes una escalabilidad masiva sin la complejidad de la programación reactiva.",
     "keyPoints": [
-      "JVM-managed, not OS threads",
-      "Blocking unmounts from carrier",
-      "Simple blocking code scales",
-      "spring.threads.virtual.enabled=true"
+      "Gestionados por la JVM, no por el SO",
+      "El bloqueo libera el hilo portador",
+      "Escalabilidad con código bloqueante simple",
+      "Configuración: spring.threads.virtual.enabled=true"
     ],
     "followUps": [
       {
-        "question": "What are the pitfalls?",
-        "answerHint": "Synchronized blocks pin the carrier thread (use ReentrantLock), connection pools still limit concurrency, thread-locals accumulate memory."
-      },
-      {
-        "question": "Do virtual threads replace reactive programming?",
-        "answerHint": "For I/O-bound request-response: yes. For streaming/backpressure scenarios: reactive is still needed."
+        "question": "¿Cuáles son las posibles trampas (pitfalls)?",
+        "answerHint": "Los bloques 'synchronized' anclan (pin) el hilo al portador (usar ReentrantLock en su lugar), los pools de conexiones siguen limitando la concurrencia real."
       }
     ]
   },
@@ -172,15 +164,15 @@
     "subtopic": "modern-threads",
     "type": "PICK_INVALID",
     "difficulty": "medium",
-    "question": "Which statement about virtual threads is INCORRECT?",
+    "question": "¿Qué afirmación sobre los hilos virtuales es INCORRECTA?",
     "choices": [
-      "Virtual threads are ideal for CPU-bound computation",
-      "Virtual threads unmount from carrier threads during blocking I/O",
-      "Millions of virtual threads can coexist in a single JVM",
-      "Spring Boot 3.2+ supports virtual threads with a configuration property"
+      "Los hilos virtuales son ideales para cálculos intensivos de CPU (CPU-bound)",
+      "Los hilos virtuales se desmontan del hilo portador durante E/S bloqueante",
+      "Millones de hilos virtuales pueden coexistir en una sola JVM",
+      "Spring Boot 3.2+ soporta hilos virtuales mediante una propiedad de configuración"
     ],
-    "answer": "Virtual threads are ideal for CPU-bound computation",
-    "explain": "Virtual threads shine for I/O-bound work (waiting on network, DB, files). For CPU-bound computation, they offer no advantage over platform threads \u2014 the work still needs CPU cores."
+    "answer": "Los hilos virtuales son ideales para cálculos intensivos de CPU (CPU-bound)",
+    "explain": "Los hilos virtuales brillan en tareas ligadas a E/S (espera de red, BD, archivos). Para cálculos intensivos de CPU, no ofrecen ventaja sobre los hilos de plataforma, ya que el trabajo sigue necesitando núcleos físicos de CPU."
   },
   {
     "id": "modern-evolution-1",
@@ -188,20 +180,14 @@
     "subtopic": "modern-evolution",
     "type": "ORAL_ANSWER",
     "difficulty": "medium",
-    "question": "You're starting a new microservice at REWE. Java 17 or 21? Justify your choice.",
-    "interviewerIntent": "Tests decision-making and awareness of ecosystem readiness.",
-    "answer": "For a new service in 2024+, I'd choose Java 21: it's LTS, Spring Boot 3.2+ fully supports it, and virtual threads eliminate the reactive vs imperative debate for I/O-bound services. The migration cost is near-zero for a greenfield project. For existing services on 17, I'd stay until dependencies fully support 21 and plan a coordinated upgrade.",
+    "question": "Vas a empezar un nuevo microservicio en REWE. ¿Java 17 o 21? Justifica tu elección.",
+    "interviewerIntent": "Probar la toma de decisiones y el conocimiento del ecosistema.",
+    "answer": "Para un servicio nuevo en 2024+, elegiría Java 21: es una versión LTS, Spring Boot 3.2+ la soporta totalmente y los hilos virtuales eliminan el debate entre reactivo e imperativo para servicios de E/S. El coste de migración es casi nulo en un proyecto nuevo. Para servicios existentes en 17, me quedaría ahí hasta que todas las dependencias soporten plenamente la 21 y planificaría una actualización coordinada.",
     "keyPoints": [
-      "Java 21 for greenfield",
-      "Virtual threads are the killer feature",
-      "Spring Boot 3.2+ ready",
-      "Existing services: upgrade when deps are ready"
-    ],
-    "followUps": [
-      {
-        "question": "What are the key migration tasks from 17 to 21?",
-        "answerHint": "Mostly transparent \u2014 check for removed APIs, update build plugins, verify library compatibility. No javax\u2192jakarta jump (that was 11\u219217)."
-      }
+      "Java 21 para proyectos nuevos (greenfield)",
+      "Hilos virtuales como característica estrella",
+      "Preparado para Spring Boot 3.2+",
+      "Servicios existentes: actualizar cuando las dependencias estén listas"
     ]
   },
   {
@@ -210,13 +196,13 @@
     "subtopic": "modern-evolution",
     "type": "ORAL_ANSWER",
     "difficulty": "medium",
-    "question": "Name three Java features since version 17 that improve your daily coding.",
-    "interviewerIntent": "Checks if candidate actually uses modern features, not just knows about them.",
-    "answer": "1) Records \u2014 eliminate DTO boilerplate, 80% of my value objects are now records. 2) Pattern matching in switch \u2014 exhaustive handling of sealed hierarchies without instanceof chains. 3) Text blocks \u2014 SQL queries, JSON templates, and multi-line strings are finally readable. Each reduces cognitive overhead without adding complexity.",
+    "question": "Nombra tres características de Java desde la versión 17 que mejoren tu programación diaria.",
+    "interviewerIntent": "Comprobar si el candidato realmente usa las funciones modernas.",
+    "answer": "1) Records: eliminan el boilerplate de los DTOs; el 80% de mis objetos de valor son ahora records. 2) Pattern matching en switch: manejo exhaustivo de jerarquías selladas sin cadenas de instanceof. 3) Bloques de texto (Text blocks): las consultas SQL y plantillas JSON son finalmente legibles. Todo esto reduce la carga cognitiva sin añadir complejidad.",
     "keyPoints": [
-      "Records for DTOs",
-      "Pattern matching for type hierarchies",
-      "Text blocks for readability"
+      "Records para DTOs",
+      "Pattern matching para jerarquías de tipos",
+      "Text blocks para legibilidad"
     ]
   },
   {
@@ -225,10 +211,10 @@
     "subtopic": "modern-records",
     "type": "PREDICT_OUTPUT",
     "difficulty": "easy",
-    "question": "What does this code print?",
+    "question": "¿Qué imprime este código?",
     "code": "record Point(int x, int y) {}\n\nvar p1 = new Point(3, 4);\nvar p2 = new Point(3, 4);\nSystem.out.println(p1.equals(p2));\nSystem.out.println(p1 == p2);",
     "answer": "true\nfalse",
-    "explain": "Records auto-generate equals() based on all components \u2014 so p1.equals(p2) is true (same x and y). But == compares references \u2014 they are different objects, so false."
+    "explain": "Los Records generan automáticamente equals() basándose en todos sus componentes, por lo que p1.equals(p2) es true. Pero == compara referencias, y al ser objetos distintos, es false."
   },
   {
     "id": "modern-streams-4",
@@ -236,7 +222,7 @@
     "subtopic": "modern-streams",
     "type": "PICK_INVALID",
     "difficulty": "easy",
-    "question": "Which is NOT a terminal operation on a Stream?",
+    "question": "¿Cuál de estas NO es una operación terminal de un Stream?",
     "choices": [
       "collect()",
       "filter()",
@@ -244,7 +230,7 @@
       "forEach()"
     ],
     "answer": "filter()",
-    "explain": "filter() is an intermediate operation \u2014 it returns a new Stream. Terminal operations (collect, count, forEach) trigger execution of the pipeline."
+    "explain": "filter() es una operación intermedia; devuelve un nuevo Stream. Las operaciones terminales (collect, count, forEach) disparan la ejecución del flujo."
   },
   {
     "id": "ej-42",
@@ -252,15 +238,15 @@
     "subtopic": "java-streams",
     "type": "PICK_INVALID",
     "difficulty": "INTERMEDIATE",
-    "question": "According to Effective Java, which is NOT good practice with streams?",
-    "explain": "Item 46: Side-effect-free functions in streams. forEach should be used only to report results, not to perform computation. Mutating external state in forEach (e.g., adding to an external list) defeats the purpose of streams and can cause bugs in parallel streams. Use collectors instead.",
+    "question": "Según Effective Java, ¿cuál NO es una buena práctica con los streams?",
+    "explain": "Item 46: Funciones libres de efectos secundarios en los streams. forEach debe usarse solo para informar resultados, no para realizar cálculos. Mutar un estado externo dentro de forEach (ej. añadir a una lista externa) rompe el propósito de los streams y puede causar errores en streams paralelos. Usa colectores en su lugar.",
     "choices": [
-      "Use streams for transforming collections",
-      "Use streams for searching/filtering",
-      "Use streams to mutate external state in forEach",
-      "Use streams for parallel computation on independent elements"
+      "Usar streams para transformar colecciones",
+      "Usar streams para búsqueda y filtrado",
+      "Usar streams para mutar un estado externo en forEach",
+      "Usar streams para cálculos paralelos en elementos independientes"
     ],
-    "answer": "Use streams to mutate external state in forEach"
+    "answer": "Usar streams para mutar un estado externo en forEach"
   },
   {
     "id": "ej-46",
@@ -268,13 +254,13 @@
     "subtopic": "java-streams",
     "type": "FILL_BLANK",
     "difficulty": "INTERMEDIATE",
-    "question": "The three most important Collectors are _____, _____, and _____ (grouping results).",
+    "question": "Los tres Collectors más importantes son _____, _____, y _____ (agrupación de resultados).",
     "blanks": [
       "toList()",
       "toMap()",
       "groupingBy()"
     ],
-    "explain": "Effective Java Item 46. These cover 90% of stream terminal operations. toList() collects into a List, toMap() into a Map (watch for duplicate keys!), and groupingBy() partitions elements by a classifier function. Also important: joining(), counting(), toUnmodifiableList()."
+    "explain": "Item 46 de Effective Java. Estos cubren el 90% de las operaciones terminales. toList() agrupa en una lista, toMap() en un mapa y groupingBy() particiona los elementos mediante una función clasificadora."
   },
   {
     "id": "ej-48",
@@ -282,8 +268,13 @@
     "subtopic": "java-streams",
     "type": "ORAL_ANSWER",
     "difficulty": "SENIOR",
-    "question": "When should you NOT use parallel streams? What are the dangers?",
-    "answer": "Don't use parallel streams when: 1) Source is Stream.iterate() or LinkedList (poor splitting). 2) Operations have side effects or shared mutable state. 3) Pipeline has limit(), findFirst(), or order-dependent operations. 4) Data size is small (<10K elements usually). 5) Per-element cost is tiny (overhead > benefit). Dangers: Incorrect results from race conditions, worse performance from thread overhead and poor data splitting, liveness failures. Best candidates: large ArrayList, arrays, IntRange with independent stateless operations (no autoboxing)."
+    "question": "¿Cuándo NO deberías usar streams paralelos? ¿Cuáles son los peligros?",
+    "answer": "No los uses cuando: 1) La fuente es Stream.iterate() o LinkedList (se dividen mal). 2) Las operaciones tienen efectos secundarios o estado compartido. 3) El pipeline tiene limit(), findFirst() u operaciones dependientes del orden. 4) El tamaño de los datos es pequeño (menos de 10k elementos). Peligros: Resultados incorrectos por condiciones de carrera, peor rendimiento por la sobrecarga de hilos y fallos de liveness.",
+    "tags": [
+      "streams-paralelos",
+      "rendimiento",
+      "concurrencia"
+    ]
   },
   {
     "id": "ej-55",
@@ -291,14 +282,14 @@
     "subtopic": "java-optionals",
     "type": "PICK_INVALID",
     "difficulty": "INTERMEDIATE",
-    "question": "According to Effective Java, which is an ANTI-PATTERN with Optional?",
-    "explain": "Item 55: Never use Optional as a field, method parameter, or collection element. It's designed ONLY as a return type. As a parameter, it forces callers to create Optional objects and makes the API clunky. Use overloading or @Nullable instead.",
+    "question": "Según Effective Java, ¿cuál es un ANTIPATRÓN con Optional?",
+    "explain": "Item 55: Nunca uses Optional como campo (field), parámetro de método o elemento de una colección. Se diseñó EXCLUSIVAMENTE como tipo de retorno. Como parámetro, obliga a los llamadores a crear objetos Optional y hace la API farragosa. Usa sobrecarga o @Nullable en su lugar.",
     "choices": [
-      "Return Optional from a method that might not have a result",
-      "Call orElseThrow() when absence is a bug",
-      "Use Optional as a method parameter",
-      "Chain with map() and flatMap()"
+      "Devolver Optional en un método que podría no tener resultado",
+      "Llamar a orElseThrow() cuando la ausencia es un error de lógica",
+      "Usar Optional como parámetro de método",
+      "Encadenar con map() y flatMap()"
     ],
-    "answer": "Use Optional as a method parameter"
+    "answer": "Usar Optional como parámetro de método"
   }
 ]

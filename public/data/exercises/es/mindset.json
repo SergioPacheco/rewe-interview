@@ -5,20 +5,16 @@
     "topic": "mindset",
     "subtopic": "ms-thinking",
     "difficulty": "senior",
-    "question": "Your team (5 developers) needs to build a new service for real-time delivery tracking. The tech lead proposes microservices with Kafka. A senior dev suggests starting with a monolith. How do you evaluate this decision?",
-    "context": "Greenfield project, 6 month deadline, team has no Kafka experience, expected load: 5,000 events/hour initially",
+    "question": "Tu equipo (5 desarrolladores) necesita construir un nuevo servicio para el seguimiento de entregas en tiempo real. El líder técnico propone microservicios con Kafka. Un desarrollador senior sugiere empezar con un monolito. ¿Cómo evaluarías esta decisión?",
+    "context": "Proyecto nuevo (greenfield), plazo de 6 meses, el equipo no tiene experiencia con Kafka, carga esperada: 5,000 eventos/hora inicialmente.",
     "keyPoints": [
-      "Identify this as a one-way door decision (hard to reverse architecture)",
-      "Evaluate team expertise vs operational burden",
-      "Consider the timeline constraint (6 months)",
-      "Assess actual scale requirements vs perceived needs",
-      "Propose modular monolith as middle ground"
+      "Identificar esta decisión como una 'puerta de una sola vía' (arquitectura difícil de revertir)",
+      "Evaluar la experiencia del equipo frente a la carga operativa",
+      "Considerar la restricción del cronograma (6 meses)",
+      "Evaluar los requisitos reales de escala frente a las necesidades percibidas",
+      "Proponer un monolito modular como punto medio"
     ],
-    "modelAnswer": "This is a one-way door decision, so I'd invest time evaluating properly. Given a team of 5 with no Kafka experience, a 6-month deadline, and 5,000 events/hour — I'd argue for a modular monolith with clear domain boundaries. At 5K/hour, we don't need Kafka's scale. The team would spend 2+ months just learning Kafka operations. I'd design the module boundaries so we CAN extract microservices later when scale demands it. The key question: what's the cost of being wrong in each direction?",
-    "followUps": [
-      {"question": "At what point would you revisit this decision?", "answerHint": "When load exceeds what a single node handles, or when team grows enough to own independent services"},
-      {"question": "How would you design the monolith to allow future extraction?", "answerHint": "Clear module boundaries, async events internally, separate data per module, API contracts between modules"}
-    ]
+    "modelAnswer": "Esta es una decisión de 'puerta de una sola vía', por lo que invertiría tiempo en evaluarla adecuadamente. Dado un equipo de 5 personas sin experiencia en Kafka, un plazo de 6 meses y una carga de 5,000 eventos/hora, yo abogaría por un monolito modular con límites de dominio claros. A 5k eventos/hora, no necesitamos la escala de Kafka. El equipo pasaría más de 2 meses solo aprendiendo la operación de Kafka. Diseñaría los límites de los módulos de manera que PODAMOS extraer microservicios más adelante cuando la escala lo exija. La pregunta clave es: ¿cuál es el coste de equivocarse en cada dirección?"
   },
   {
     "id": "ms-thinking-2",
@@ -26,16 +22,16 @@
     "topic": "mindset",
     "subtopic": "ms-thinking",
     "difficulty": "staff",
-    "question": "A product manager asks: 'Can we add real-time notifications when a delivery is delayed?' How would a senior engineer respond differently from a junior developer?",
+    "question": "Un gerente de producto pregunta: '¿Podemos añadir notificaciones en tiempo real cuando una entrega se retrasa?'. ¿Cómo respondería un ingeniero senior de forma diferente a un desarrollador junior?",
     "keyPoints": [
-      "Junior: jumps to WebSocket implementation",
-      "Senior: asks clarifying questions first",
-      "What 'real-time' means (seconds? minutes?)",
-      "Who receives notifications (driver? warehouse? customer?)",
-      "What's the definition of 'delayed'?",
-      "What's the notification channel (push, email, in-app)?"
+      "Junior: salta directamente a la implementación con WebSockets",
+      "Senior: hace primero preguntas aclaratorias",
+      "Qué significa 'tiempo real' (¿segundos?, ¿minutos?)",
+      "Quién recibe las notificaciones (¿conductor?, ¿almacén?, ¿cliente?)",
+      "Cuál es la definición de 'retrasado'",
+      "Cuál es el canal de notificación (push, email, in-app)"
     ],
-    "modelAnswer": "Before discussing implementation, I'd ask: What does 'real-time' mean here — seconds or minutes? Who needs to be notified — the driver, the warehouse, or the customer? What's the threshold for 'delayed' — 5 minutes? 30 minutes? Is this best-effort or must every notification be delivered? These answers determine whether I need WebSockets, server-sent events, push notifications, or simply a polling endpoint. The implementation is the easy part — defining the problem correctly is the hard part."
+    "modelAnswer": "Antes de discutir la implementación, preguntaría: ¿Qué significa 'tiempo real' en este contexto: segundos o minutos? ¿Quién necesita ser notificado: el conductor, el almacén o el cliente? ¿Cuál es el umbral para considerar algo como 'retrasado': 5 minutos, 30 minutos? ¿Es un sistema de 'mejor esfuerzo' (best-effort) o cada notificación debe entregarse obligatoriamente? Estas respuestas determinan si necesito WebSockets, Server-Sent Events, notificaciones push o simplemente un endpoint de sondeo (polling). La implementación es la parte fácil; definir el problema correctamente es lo difícil."
   },
   {
     "id": "ms-answering-1",
@@ -43,16 +39,16 @@
     "topic": "mindset",
     "subtopic": "ms-answering",
     "difficulty": "senior",
-    "question": "An interviewer asks: 'What is dependency injection?' Structure your answer at Senior level using the What-Why-How-Tradeoffs-When-Example framework.",
+    "question": "Un entrevistador pregunta: '¿Qué es la inyección de dependencias?'. Estructura tu respuesta a nivel Senior usando el marco Qué-Por qué-Cómo-Tradeoffs-Cuándo-Ejemplo.",
     "keyPoints": [
-      "WHAT: Object receives dependencies from outside instead of creating them",
-      "WHY: Decoupling, testability, configurability",
-      "HOW: Constructor injection (preferred), framework manages lifecycle",
-      "TRADE-OFFS: Indirection, harder to trace flow, framework dependency",
-      "WHEN NOT: Simple scripts, prototypes where testability isn't needed",
-      "EXAMPLE: Production scenario with real benefit"
+      "QUÉ: El objeto recibe sus dependencias desde fuera en lugar de crearlas",
+      "POR QUÉ: Desacoplamiento, testeabilidad, configurabilidad",
+      "CÓMO: Inyección por constructor (preferida), el framework gestiona el ciclo de vida",
+      "TRADE-OFFS: Indirección, más difícil de seguir el flujo, dependencia del framework",
+      "CUÁNDO NO: Scripts simples, prototipos donde no se necesita testeabilidad",
+      "EJEMPLO: Escenario de producción con un beneficio real"
     ],
-    "modelAnswer": "Dependency injection means a component receives its collaborators from outside rather than creating them internally. It exists to decouple components — making them testable independently and configurable per environment. In Spring, the container manages bean creation and injects via constructor. The trade-off is indirection: code flow is harder to trace since wiring happens outside the class. I'd use DI in any system that needs testing and configurability — which is almost every production system. I wouldn't use a DI framework for a simple CLI script where a manual new() is clearer."
+    "modelAnswer": "La inyección de dependencias significa que un componente recibe a sus colaboradores desde el exterior en lugar de crearlos internamente. Existe para desacoplar componentes, permitiendo que sean testeables de forma independiente y configurables por entorno. En Spring, el contenedor gestiona la creación de beans e inyecta mediante el constructor. El compromiso (trade-off) es la indirección: el flujo del código es más difícil de seguir ya que el cableado ocurre fuera de la clase. Usaría DI en cualquier sistema que necesite pruebas y configurabilidad, que es casi cualquier sistema de producción. No usaría un framework de DI para un script de CLI simple donde un 'new()' manual es más claro."
   },
   {
     "id": "ms-tradeoffs-1",
@@ -60,16 +56,16 @@
     "topic": "mindset",
     "subtopic": "ms-tradeoffs",
     "difficulty": "senior",
-    "question": "Your warehouse service currently uses PostgreSQL for event storage. Volume is growing from 10K to 500K events/day. A team member proposes migrating to Kafka. Evaluate this proposal.",
-    "context": "Current system works but queries are getting slower. Team has 3 backend developers. No one has Kafka production experience.",
+    "question": "Tu servicio de almacén utiliza actualmente PostgreSQL para el almacenamiento de eventos. El volumen está creciendo de 10k a 500k eventos/día. Un miembro del equipo propone migrar a Kafka. Evalúa esta propuesta.",
+    "context": "El sistema actual funciona pero las consultas se están volviendo lentas. El equipo tiene 3 desarrolladores backend. Nadie tiene experiencia en producción con Kafka.",
     "keyPoints": [
-      "Quantify the actual problem (slow queries ≠ need Kafka)",
-      "Consider simpler solutions first (indexes, partitioning, archival)",
-      "Evaluate operational cost of introducing Kafka",
-      "Assess team readiness",
-      "Identify the real bottleneck before choosing a solution"
+      "Cuantificar el problema real (consultas lentas ≠ necesidad de Kafka)",
+      "Considerar soluciones más simples primero (índices, particionamiento, archivado)",
+      "Evaluar el coste operativo de introducir Kafka",
+      "Evaluar la preparación del equipo",
+      "Identificar el cuello de botella real antes de elegir una solución"
     ],
-    "modelAnswer": "Before adopting Kafka, I'd first diagnose: which queries are slow and why? 500K events/day is ~6/second — PostgreSQL handles this easily with proper indexing and partitioning. The problem is likely missing indexes or unbounded queries, not the database itself. Introducing Kafka adds: broker management, consumer group coordination, monitoring, retry handling, and a new deployment dependency — for a team of 3 with no experience. I'd first optimize PostgreSQL (indexes, table partitioning, archival of old events), and only consider Kafka when we genuinely need event streaming, replay capability, or multi-consumer fanout that PostgreSQL cannot provide."
+    "modelAnswer": "Antes de adoptar Kafka, primero diagnosticaría: ¿qué consultas son lentas y por qué? 500k eventos al día son aproximadamente 6 por segundo; PostgreSQL maneja esto fácilmente con una indexación y particionamiento adecuados. El problema probablemente sean índices faltantes o consultas sin límites, no la base de datos en sí. Introducir Kafka añade: gestión de brokers, coordinación de grupos de consumidores, monitoreo, manejo de reintentos y una nueva dependencia de despliegue para un equipo de 3 personas sin experiencia. Primero optimizaría PostgreSQL (índices, particionamiento de tablas, archivado de eventos antiguos) y solo consideraría Kafka cuando realmente necesitemos streaming de eventos, capacidad de replay o un fan-out de múltiples consumidores que PostgreSQL no pueda proporcionar."
   },
   {
     "id": "ms-production-1",
@@ -77,17 +73,17 @@
     "topic": "mindset",
     "subtopic": "ms-production",
     "difficulty": "senior",
-    "question": "It's 3 PM. Your monitoring dashboard shows HTTP 502 errors spiking to 15% in the delivery service. What's your diagnostic process?",
-    "context": "No recent deployments. CPU and memory look normal. The spike started 10 minutes ago.",
+    "question": "Son las 3 PM. Tu tablero de monitoreo muestra un pico de errores HTTP 502 del 15% en el servicio de entregas. ¿Cuál es tu proceso de diagnóstico?",
+    "context": "No ha habido despliegues recientes. El uso de CPU y memoria parece normal. El pico empezó hace 10 minutos.",
     "keyPoints": [
-      "Check what changed (even without deployments — config, traffic spike, upstream)",
-      "Look at connection pools and thread pools",
-      "Check downstream dependencies (database, external services)",
-      "Look at specific error patterns (all endpoints or one?)",
-      "Check if it's correlated with traffic volume",
-      "Decision: mitigate first or diagnose first?"
+      "Revisar qué ha cambiado (configuración, pico de tráfico, servicios aguas arriba)",
+      "Observar los pools de conexiones y de hilos",
+      "Revisar dependencias aguas abajo (base de datos, servicios externos)",
+      "Buscar patrones de error específicos (¿un solo endpoint o todos?)",
+      "Verificar la correlación con el volumen de tráfico",
+      "Decisión: ¿mitigar primero o diagnosticar primero?"
     ],
-    "modelAnswer": "First 60 seconds: Is it all endpoints or one? Check if a downstream dependency is slow — database connection pool, external service timeout. 502 usually means the app isn't responding in time. With normal CPU/memory, suspect thread exhaustion or connection starvation. I'd check: active DB connections vs pool max, active threads vs thread pool size, and response times of external calls. If one specific endpoint is hanging, it's likely a slow dependency on that path. If all endpoints, it's a shared resource (connection pool, thread pool). No recent deploy doesn't mean no change — check if traffic spiked, if a batch job is running, or if an upstream service changed behavior."
+    "modelAnswer": "Primeros 60 segundos: ¿Afecta a todos los endpoints o solo a uno? Comprobaría si una dependencia aguas abajo está lenta: pool de conexiones de BD, tiempo de espera de un servicio externo. Un error 502 suele significar que la app no responde a tiempo. Con CPU/memoria normales, sospecharía de agotamiento de hilos (thread exhaustion) o falta de conexiones. Revisaría: conexiones activas de BD vs. máximo del pool, hilos activos vs. tamaño del pool y tiempos de respuesta de llamadas externas. Si un endpoint específico se cuelga, es probable que haya una dependencia lenta en esa ruta. Si son todos, es un recurso compartido. Que no haya despliegues recientes no significa que no haya cambios: revisaría si hubo un pico de tráfico, si hay un trabajo batch ejecutándose o si un servicio upstream cambió su comportamiento."
   },
   {
     "id": "ms-mistakes-1",
@@ -95,16 +91,16 @@
     "topic": "mindset",
     "subtopic": "ms-mistakes",
     "difficulty": "senior",
-    "question": "What are the most common mistakes you see in senior interview answers?",
+    "question": "¿Cuáles son los errores más comunes que ves en las respuestas de entrevistas senior?",
     "keyPoints": [
-      "Answering without constraints ('always use X')",
-      "Reciting documentation instead of demonstrating understanding",
-      "Not asking clarifying questions before answering design questions",
-      "Talking too long without structure",
-      "Not acknowledging trade-offs or limitations",
-      "Never saying 'I don't know' or 'I haven't encountered that'"
+      "Responder sin restricciones ('siempre usa X')",
+      "Recitar documentación en lugar de demostrar comprensión",
+      "No hacer preguntas aclaratorias antes de responder preguntas de diseño",
+      "Hablar demasiado tiempo sin estructura",
+      "No reconocer los trade-offs o limitaciones",
+      "No decir nunca 'no lo sé' o 'no me he encontrado con eso'"
     ],
-    "modelAnswer": "The biggest mistake is answering without context. When someone says 'always use microservices' or 'Kafka is the best,' they reveal inexperience. Seniors know every choice has costs. Second: reciting docs instead of sharing real experience. Third: not asking questions before system design — jumping to solutions before understanding constraints. Fourth: talking for 10 minutes without structure — 2-3 minutes with What-Why-Tradeoffs is more effective. Fifth: never admitting boundaries. Saying 'I haven't deployed Kafka at scale but I understand its architecture' builds more trust than pretending expertise you don't have."
+    "modelAnswer": "El error más grande es responder sin contexto. Cuando alguien dice 'usa siempre microservicios' o 'Kafka es lo mejor', revela falta de experiencia. Los seniors saben que cada elección tiene costes. Segundo: recitar manuales en lugar de compartir experiencias reales. Tercero: no hacer preguntas antes del diseño de sistemas, saltando a soluciones antes de entender las restricciones. Cuarto: hablar durante 10 minutos sin estructura; son más efectivos 2-3 minutos con Qué-Por qué-Tradeoffs. Quinto: no admitir nunca los límites. Decir 'no he desplegado Kafka a gran escala pero entiendo su arquitectura' genera más confianza que fingir una experiencia que no tienes."
   },
   {
     "id": "ms-whiteboard-1",
@@ -112,26 +108,16 @@
     "topic": "mindset",
     "subtopic": "ms-whiteboard",
     "difficulty": "senior",
-    "question": "You're given a whiteboard problem: design a rate limiter for an API. Walk me through how you approach this, step by step.",
+    "question": "En un problema de pizarra: diseña un limitador de tasa (rate limiter) para una API. Explícame paso a paso cómo lo abordarías.",
     "keyPoints": [
-      "Clarify before drawing anything (what kind of rate limit? per user? per IP? globally?)",
-      "State your assumptions aloud before coding or diagramming",
-      "Start with the simplest correct solution, then evolve",
-      "Talk while you think — silence is a red flag",
-      "Acknowledge trade-offs as you design, not just at the end",
-      "Ask if the interviewer wants a specific focus (latency, accuracy, distributed?)"
+      "Clarificar antes de dibujar (¿qué tipo de límite?, ¿por usuario?, ¿por IP?)",
+      "Exponer suposiciones en voz alta antes de programar o diagramar",
+      "Empezar por la solución correcta más simple y evolucionarla",
+      "Hablar mientras piensas; el silencio es una señal de alerta",
+      "Reconocer los trade-offs durante el diseño, no solo al final",
+      "Preguntar si el entrevistador quiere un enfoque específico (latencia, precisión, distribuido)"
     ],
-    "modelAnswer": "Before drawing anything: I'd ask — per user or global? What's the limit (requests per second? per minute?)? Is this a distributed system across multiple nodes? Then I'd state assumptions: 'I'll assume per-user, 100 req/min, single node first, then extend to distributed.' I'd start with a token bucket in memory — simple, correct, explainable. Token bucket: each user gets a bucket of 100 tokens per minute; each request consumes one token; tokens refill at a fixed rate. I'd draw the data structure (map of userId → {tokens, lastRefillTime}), explain the refill logic, then discuss race conditions. Then I'd layer on distributed: Redis with atomic INCR + TTL, or a dedicated rate-limiting service. I keep narrating: 'This is simple and correct for single-node. For distributed, the token state needs to be shared — Redis is the natural choice, but introduces network latency per request. A sliding window counter in Redis is an alternative with better precision.' The point isn't arriving at the perfect answer — it's demonstrating that you think systematically, know the trade-offs, and can evolve a design.",
-    "followUps": [
-      {
-        "question": "What if you get stuck in the middle of the problem?",
-        "answerHint": "Say so aloud: 'I'm thinking about the distributed case — give me a moment.' Then think step by step. Never go silent. Asking a clarifying question when stuck shows metacognition, not weakness."
-      },
-      {
-        "question": "How do you signal you're done vs still thinking?",
-        "answerHint": "Explicitly state transitions: 'The simple version is done. Now let me think about edge cases.' and 'Here's my complete solution — I'm happy to extend any part.' Interviewers can't read your mind."
-      }
-    ]
+    "modelAnswer": "Antes de dibujar nada, preguntaría: ¿por usuario o global? ¿Cuál es el límite (peticiones por segundo o por minuto)? ¿Es un sistema distribuido en varios nodos? Luego expondría mis suposiciones: 'Asumiré que es por usuario, 100 req/min, primero en un solo nodo y luego lo extenderé a distribuido'. Empezaría con un 'token bucket' en memoria: simple y explicable. Cada usuario tiene un cubo de 100 tokens por minuto; cada petición consume uno; los tokens se rellenan a una tasa fija. Dibujaría la estructura (mapa de userId → {tokens, lastRefillTime}), explicaría la lógica de recarga y luego discutiría las condiciones de carrera. Después añadiría la capa distribuida: Redis con INCR atómico + TTL, o un servicio dedicado. Seguiría narrando: 'Esto es correcto para un solo nodo. Para distribuido, el estado del token debe compartirse; Redis es la opción natural, pero introduce latencia de red. Un 'sliding window counter' en Redis es una alternativa con mejor precisión'. El objetivo no es llegar a la respuesta perfecta, sino demostrar que piensas sistemáticamente y sabes evolucionar un diseño."
   },
   {
     "id": "ms-whiteboard-2",
@@ -139,24 +125,14 @@
     "topic": "mindset",
     "subtopic": "ms-whiteboard",
     "difficulty": "staff",
-    "question": "How do you handle a whiteboard problem where you don't know the optimal algorithm?",
+    "question": "¿Cómo manejas un problema de pizarra donde no conoces el algoritmo óptimo?",
     "keyPoints": [
-      "Don't panic or go silent — vocalize your thought process",
-      "Propose the brute force solution first and state its complexity",
-      "Reason from the constraints (input size, time limit) towards the right complexity class",
-      "Interviewers evaluate thinking process more than the final answer",
-      "Ask clarifying questions to narrow the problem space"
+      "No entrar en pánico ni quedarse en silencio; vocalizar el proceso de pensamiento",
+      "Proponer primero la solución de fuerza bruta e indicar su complejidad",
+      "Razonar a partir de las restricciones (tamaño de entrada, límite de tiempo)",
+      "Los entrevistadores evalúan el proceso de pensamiento más que la respuesta final",
+      "Hacer preguntas aclaratorias para estrechar el espacio del problema"
     ],
-    "modelAnswer": "First, I resist the urge to panic and go silent. I say: 'I don't know the optimal algorithm off the top of my head, but let me reason through it.' I start with a brute force solution — even O(n²) or O(n³) — and implement it correctly. Then I analyze: 'This is O(n²). Given n up to 10^5, we need at most O(n log n). The bottleneck is this nested loop. What if I precompute this? What data structure gives me O(1) lookup here?' I reason from complexity constraints to data structure choices — not the other way around. I'm also transparent about knowledge boundaries: 'I know the result requires a segment tree or a Fenwick tree, but I don't have it memorized. Let me implement what I can and talk through the approach.' Interviewers at REWE are evaluating problem decomposition and reasoning, not whether you have every algorithm memorized. A candidate who gets a correct O(n²) solution and clearly explains why O(n log n) is needed — and what approach would achieve it — demonstrates more than someone who writes a memorized solution without explanation.",
-    "followUps": [
-      {
-        "question": "What if you implement a solution and realize mid-way it's wrong?",
-        "answerHint": "Say so: 'I see a problem with this approach — [explain why]. Let me backtrack to [point].' Catching your own mistake and correcting it is a positive signal. Continuing down a wrong path hoping the interviewer won't notice is worse."
-      },
-      {
-        "question": "How do you handle time pressure when the problem has multiple steps?",
-        "answerHint": "State what you'll implement vs describe: 'I'll implement the core algorithm. For the edge cases around empty input and overflow, I'll describe the approach and add tests for them.' Prioritize correctness of the core over completeness of everything."
-      }
-    ]
+    "modelAnswer": "Primero, resisto el impulso de entrar en pánico y quedarme callado. Digo: 'No recuerdo el algoritmo óptimo de memoria, pero permítame razonarlo'. Empiezo con una solución de fuerza bruta —incluso O(n²) o O(n³)— e intento implementarla correctamente. Luego analizo: 'Esto es O(n²). Dado que n llega a 10^5, necesitamos como máximo O(n log n). El cuello de botella es este bucle anidado. ¿Y si precomputo esto? ¿Qué estructura de datos me da una búsqueda O(1) aquí?'. Razono desde las restricciones de complejidad hacia la elección de estructuras de datos. También soy transparente con mis límites: 'Sé que el resultado requiere un 'segment tree', pero no lo tengo memorizado. Implementaré lo que pueda y explicaré el enfoque'. Los entrevistadores en REWE evalúan la descomposición del problema y el razonamiento, no si tienes todos los algoritmos memorizados. Alguien que logra un O(n²) correcto y explica claramente por qué se necesita un O(n log n) demuestra más madurez que alguien que escribe una solución memorizada sin explicación."
   }
 ]

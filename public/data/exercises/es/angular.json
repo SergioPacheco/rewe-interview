@@ -5,31 +5,31 @@
     "topic": "angular",
     "subtopic": "Signals",
     "difficulty": "intermediate",
-    "question": "What are Angular Signals and how do they improve on Zone.js change detection?",
-    "interviewerIntent": "Signals are Angular 16-19's primary state primitive. Shows whether candidate is current with modern Angular.",
-    "answer": "Signals are reactive state containers that track their own dependencies and notify consumers when they change. Declared with signal(initialValue), read by calling them as a function (count()), and updated with .set() or .update(). The key improvement over Zone.js: Zone.js patches async APIs globally and triggers change detection for the entire tree on any async event \u2014 potentially checking thousands of components for every setTimeout or HTTP call. Signals enable fine-grained reactivity \u2014 only components that actually read a changed signal re-render. With signal-based components (Angular 19), Zone.js can be removed entirely, reducing bundle size and runtime overhead. computed() derives values from signals; effect() runs side effects when signals change.",
-    "shortAnswer": "signal() = reactive state. Read: count(). Write: count.set(). computed() = derived. effect() = side effects. Fine-grained updates vs Zone.js full-tree change detection. Enables zoneless Angular.",
+    "question": "¿Qué son los Angular Signals y cómo mejoran la detección de cambios de Zone.js?",
+    "interviewerIntent": "Signals es o el primitivo de estado principal de Angular 16-19. Muestra si el candidato está actualizado con el Angular moderno.",
+    "answer": "Los Signals son contenedores de estado reactivo que rastrean sus propias dependencias y notifican a los consumidores cuando cambian. Se declaran con signal(initialValue), se leen llamándolos como una función (count()) y se actualizan con .set() o .update(). La mejora clave sobre Zone.js es que Zone.js aplica parches a las APIs asíncronas globalmente y dispara la detección de cambios para todo el árbol ante cualquier evento asíncrono, verificando potencialmente miles de componentes por cada setTimeout o llamada HTTP. Los Signals permiten una reactividad granular: solo se vuelven a renderizar los componentes que realmente leen un signal que ha cambiado. Con los componentes basados en signals (Angular 19), Zone.js puede eliminarse por completo (zoneless), reduciendo el tamaño del bundle y la sobrecarga en tiempo de ejecución. computed() deriva valores de signals y effect() ejecuta efectos secundarios cuando los signals cambian.",
+    "shortAnswer": "signal() = estado reactivo. Lectura: count(). Escritura: count.set(). computed() = derivado. effect() = efectos secundarios. Actualizaciones granulares frente a la detección de cambios en todo el árbol de Zone.js. Permite Angular zoneless.",
     "keyPoints": [
-      "signal(value) creates a writable signal",
-      "computed(() => sig1() + sig2()) auto-tracks dependencies",
-      "effect() runs when any read signal changes",
-      "Signals are synchronous \u2014 no async like RxJS observables",
-      "input() and output() signal-based for components (Angular 17.1+)"
+      "signal(value) crea un signal de escritura",
+      "computed(() => sig1() + sig2()) rastrea dependencias automáticamente",
+      "effect() se ejecuta cuando cambia cualquier signal leído",
+      "Los Signals son síncronos; no son asíncronos como los observables de RxJS",
+      "input() y output() basados en signals para componentes (Angular 17.1+)"
     ],
     "followUps": [
       {
-        "question": "What is the difference between computed() and effect()?",
-        "answerHint": "computed() returns a new signal (read-only, derived value). effect() runs imperative side effects (DOM manipulation, logging) when signals change. Don't mutate state inside effect()."
+        "question": "¿Cuál es la diferencia entre computed() y effect()?",
+        "answerHint": "computed() devuelve un nuevo signal (solo lectura, valor derivado). effect() ejecuta efectos secundarios imperativos (manipulación del DOM, logging) cuando los signals cambian. No se debe mutar el estado dentro de effect()."
       },
       {
-        "question": "Can signals replace RxJS completely?",
-        "answerHint": "Signals handle synchronous state well. RxJS is still valuable for async event streams, complex transformations (debounce, switchMap), and HTTP. toSignal() bridges RxJS observables to signals."
+        "question": "¿Pueden los signals reemplazar a RxJS por completo?",
+        "answerHint": "Los Signals manejan bien el estado síncrono. RxJS sigue siendo valioso para flujos de eventos asíncronos, transformaciones complejas (debounce, switchMap) y peticiones HTTP. toSignal() sirve de puente entre observables de RxJS y signals."
       }
     ],
     "mistakesToAvoid": [
-      "Mutating signal state inside effect() \u2014 can cause infinite loops",
-      "Calling signal.set() from computed() \u2014 computed must be pure",
-      "Not using OnPush with signal-based components \u2014 they work best together"
+      "Mutar el estado de un signal dentro de effect() — puede causar bucles infinitos",
+      "Llamar a signal.set() desde computed() — computed debe ser puro",
+      "No usar OnPush con componentes basados en signals — funcionan mejor juntos"
     ]
   },
   {
@@ -38,31 +38,31 @@
     "topic": "angular",
     "subtopic": "Signals",
     "difficulty": "advanced",
-    "question": "How do you manage shared state with signals across multiple components in Angular?",
-    "interviewerIntent": "State management with signals in a multi-component app \u2014 real-world architecture question.",
-    "answer": "The pattern: state lives in a service (singleton), components inject the service and read signals directly. Service holds writable signals internally, exposes read-only signals (asReadonly()) to components. Components cannot mutate state directly \u2014 they call service methods. Example: CartService has private items = signal<Item[]>([]), exposes readonly items = this.items.asReadonly(), and a method addItem(item) that calls this.items.update(). Components inject CartService and read cartService.items() in templates. For derived state: computed() in the service computes totals. This is the single record principle \u2014 state exists once, components are views. No NgRx needed for most apps \u2014 services with signals suffice.",
-    "shortAnswer": "State in services. Private writable signal, public .asReadonly(). Components inject service, read signals in template. Service methods mutate state. computed() for derived values. Single source of truth.",
+    "question": "¿Cómo gestionas el estado compartido con signals entre múltiples componentes en Angular?",
+    "interviewerIntent": "Gestión de estado con signals en una app multicomponente — pregunta de arquitectura del mundo real.",
+    "answer": "El patrón recomendado es que el estado resida en un servicio (singleton) y que los componentes inyecten el servicio y lean los signals directamente. El servicio mantiene signals de escritura internamente y expone signals de solo lectura (asReadonly()) a los componentes. Los componentes no pueden mutar el estado directamente; llaman a métodos del servicio. Ejemplo: CartService tiene un items = signal<Item[]>([]), expone readonly items = this.items.asReadonly(), y un método addItem(item) que llama a this.items.update(). Los componentes inyectan CartService y leen cartService.items() en las plantillas. Para el estado derivado: computed() en el servicio calcula los totales. Este es el principio de registro único: el estado existe una vez y los componentes son vistas. No se necesita NgRx para la mayoría de las apps; los servicios con signals son suficientes.",
+    "shortAnswer": "Estado en servicios. Signal de escritura privado, .asReadonly() público. Los componentes inyectan el servicio y leen los signals. Los métodos del servicio mutan el estado. computed() para valores derivados. Fuente única de verdad.",
     "keyPoints": [
-      ".asReadonly() prevents external mutation",
-      "Services are root-provided singletons \u2014 shared across all components",
-      "computed() in service derives totals/filtered views",
-      "No need for Subject/BehaviorSubject for simple state",
-      "toSignal(httpClient.get()) bridges HTTP to signal"
+      ".asReadonly() evita la mutación externa",
+      "Los servicios son singletons (providedIn: 'root') compartidos entre componentes",
+      "computed() en el servicio deriva totales o vistas filtradas",
+      "No hay necesidad de Subject/BehaviorSubject para estados simples",
+      "toSignal(httpClient.get()) conecta HTTP con signals"
     ],
     "followUps": [
       {
-        "question": "When would you still use NgRx over services with signals?",
-        "answerHint": "Very complex state with many actors, need for Redux DevTools time-travel debugging, team convention, or when effects and action history are valuable for debugging."
+        "question": "¿Cuándo seguirías usando NgRx sobre servicios con signals?",
+        "answerHint": "Estado muy complejo con muchos actores, necesidad de depuración con Redux DevTools (time-travel), convención del equipo, o cuando el historial de acciones es valioso."
       },
       {
-        "question": "How do you handle async data loading with signals?",
-        "answerHint": "toSignal(this.http.get(url), { initialValue: [] }) converts an Observable to a signal. Or use resource() API (Angular 19) for async signals with loading/error states."
+        "question": "¿Cómo manejas la carga de datos asíncronos con signals?",
+        "answerHint": "toSignal(this.http.get(url), { initialValue: [] }) convierte un Observable en un signal. O usar la API resource() (Angular 19) para signals asíncronos con estados de carga/error."
       }
     ],
     "mistakesToAvoid": [
-      "Duplicating state between service and component signals",
-      "Using effect() to sync state between services \u2014 creates implicit dependencies",
-      "Exposing writable signals publicly from services"
+      "Duplicar estado entre el servicio y los signals del componente",
+      "Usar effect() para sincronizar estado entre servicios — crea dependências implícitas",
+      "Exponer signals de escritura de forma pública desde los servicios"
     ]
   },
   {
@@ -71,31 +71,31 @@
     "topic": "angular",
     "subtopic": "Standalone Components",
     "difficulty": "beginner",
-    "question": "What are standalone components in Angular and why are they the default in Angular 17+?",
-    "interviewerIntent": "Standalone components are now the Angular standard. NgModules are legacy. Tests whether candidate is current.",
-    "answer": "Standalone components declare their own dependencies directly in the component decorator's imports array, without needing an NgModule. Before Angular 14, every component had to be declared in an NgModule, and all dependencies had to be imported in that module. With standalone: true, a component imports exactly what it needs \u2014 CommonModule or specific directives/pipes, other standalone components, or feature modules. Benefits: simpler mental model (no module indirection), better tree-shaking (unused imports are clear), easier lazy loading (loadComponent instead of loadChildren), and less boilerplate. Angular 17+ generates standalone components by default. NgModules still work for backward compatibility.",
-    "shortAnswer": "Standalone: true \u2014 component declares own imports, no NgModule needed. Simpler, better tree-shaking, easier lazy loading via loadComponent(). Default since Angular 17. NgModules are legacy.",
+    "question": "¿Qué son los componentes standalone en Angular y por qué son el estándar en Angular 17+?",
+    "interviewerIntent": "Los componentes standalone son ahora el estándar de Angular. Los NgModules son legado. Prueba si el candidato está al día.",
+    "answer": "Los componentes standalone declaran sus propias dependencias directamente en el array 'imports' del decorador del componente, sin necesidad de un NgModule. Antes de Angular 14, cada componente debía declararse en un NgModule. Con standalone: true, un componente importa exactamente lo que necesita: CommonModule, directivas/pipes específicos, otros componentes standalone o módulos de funcionalidades. Beneficios: modelo mental más simple (sin indirección de módulos), mejor tree-shaking (los imports no usados son claros), carga diferida (lazy loading) más fácil mediante loadComponent y menos boilerplate. Angular 17+ genera componentes standalone por defecto. Los NgModules siguen funcionando por compatibilidad hacia atrás.",
+    "shortAnswer": "Standalone: true — el componente declara sus propios imports, sin necesidad de NgModule. Más simple, mejor tree-shaking, lazy loading fácil vía loadComponent(). Por defecto desde Angular 17.",
     "keyPoints": [
-      "imports: [CommonModule, RouterModule, OtherComponent] in decorator",
-      "No NgModule declarations array needed",
-      "loadComponent: () => import('./feature.component') for lazy loading",
-      "provideRouter(), provideHttpClient() replace RouterModule.forRoot()",
-      "Existing NgModules can be imported by standalone components"
+      "imports: [CommonModule, RouterModule, OtherComponent] en el decorador",
+      "No se necesita el array declarations de NgModule",
+      "loadComponent: () => import('./feature.component') para lazy loading",
+      "provideRouter() y provideHttpClient() reemplazan a RouterModule.forRoot()",
+      "Los NgModules existentes pueden ser importados por componentes standalone"
     ],
     "followUps": [
       {
-        "question": "How do you provide services in a standalone application without AppModule?",
-        "answerHint": "bootstrapApplication(AppComponent, { providers: [provideRouter(routes), provideHttpClient()] }) in main.ts. Feature-specific providers in loadComponent routes."
+        "question": "¿Cómo provees servicios en una aplicación standalone sin AppModule?",
+        "answerHint": "Usando bootstrapApplication(AppComponent, { providers: [provideRouter(routes), provideHttpClient()] }) en main.ts. Proveedores específicos en las rutas de loadComponent."
       },
       {
-        "question": "Can standalone components be used in existing NgModule-based apps?",
-        "answerHint": "Yes \u2014 standalone components can be declared in NgModule's imports array. Migration can be incremental."
+        "question": "¿Se pueden usar componentes standalone en apps basadas en NgModule?",
+        "answerHint": "Sí, los componentes standalone pueden declararse en el array de imports de un NgModule. La migración puede ser incremental."
       }
     ],
     "mistakesToAvoid": [
-      "Declaring a standalone component in an NgModule's declarations \u2014 causes error",
-      "Importing the full CommonModule when only @if and @for are needed (use NgIf/NgFor directly or use new control flow)",
-      "Forgetting to add imports for pipes and directives used in the template"
+      "Declarar un componente standalone en el declarations de un NgModule (causa error)",
+      "Importar todo el CommonModule cuando solo se necesita @if y @for (usar el nuevo flujo de control)",
+      "Olvidar añadir los imports para los pipes y directivas usados en la plantilla"
     ]
   },
   {
@@ -104,31 +104,31 @@
     "topic": "angular",
     "subtopic": "Dependency Injection",
     "difficulty": "intermediate",
-    "question": "How does Angular's dependency injection system work? What is the difference between inject() and constructor injection?",
-    "interviewerIntent": "DI is central to Angular. The shift from constructor to inject() is a modern Angular pattern worth understanding.",
-    "answer": "Angular's DI container is hierarchical: root injector (singleton services), element injectors (component/directive level), and module injectors. Services decorated with @Injectable({ providedIn: 'root' }) are singletons in the root injector. inject() function (Angular 14+) is the modern way to inject dependencies \u2014 called in the constructor's execution context or in class field initializers. It replaces constructor parameters. Advantages of inject(): works in standalone functions (guards, interceptors as functions), enables functional patterns, cleaner for inheritance (no super() calls needed), and allows conditional injection. Constructor injection is still valid but inject() is idiomatic in Angular 19+.",
-    "shortAnswer": "inject(MyService) replaces constructor injection. Works in functions and class fields. Hierarchical injectors: root (singleton) > component (scoped). inject() is the Angular 19 idiom.",
+    "question": "¿Cómo funciona el sistema de inyección de dependencias de Angular? ¿Cuál es la diferencia entre inject() e inyección por constructor?",
+    "interviewerIntent": "La DI es central en Angular. El cambio del constructor a inject() es un patrón moderno que vale la pena entender.",
+    "answer": "El contenedor de DI de Angular es jerárquico: inyector raíz (servicios singleton), inyectores de elementos (nivel componente/directiva) e inyectores de módulos. Los servicios decorados con @Injectable({ providedIn: 'root' }) son singletons en el inyector raíz. La función inject() (Angular 14+) es la forma moderna de inyectar dependencias: se llama en el contexto de ejecución del constructor o en los inicializadores de campos de la clase. Reemplaza los parámetros del constructor. Ventajas de inject(): funciona en funciones standalone (guards, interceptores como funciones), permite patrones funcionales, es más limpio para la herencia (no requiere llamadas a super()) y permite inyección condicional. La inyección por constructor sigue siendo válida pero inject() es el modismo en Angular 19+.",
+    "shortAnswer": "inject(MyService) reemplaza la inyección por constructor. Funciona en funciones y campos de clase. Inyectores jerárquicos: root (singleton) > componente (con ámbito). inject() es el estándar moderno.",
     "keyPoints": [
-      "inject() must be called in an injection context (constructor, field init, factory)",
-      "providedIn: 'root' = singleton, 'any' = per-lazy-module, component = new per component",
-      "inject() enables functional guards: canActivateFn = (route) => inject(AuthService).canActivate(route)",
-      "InjectionToken for non-class dependencies: new InjectionToken<string>('API_URL')",
-      "Hierarchical DI: components can have their own provider, shadowing root"
+      "inject() debe llamarse en un contexto de inyección (constructor, inicialización de campos, factory)",
+      "providedIn: 'root' = singleton, 'any' = por módulo lazy, componente = instancia nueva por componente",
+      "inject() permite guards funcionales: canActivateFn = (route) => inject(AuthService).canActivate(route)",
+      "InjectionToken para dependencias que no son clases: new InjectionToken<string>('API_URL')",
+      "DI Jerárquica: los componentes pueden tener su propio provider, sobrescribiendo al root"
     ],
     "followUps": [
       {
-        "question": "What is an InjectionToken and when do you use it?",
-        "answerHint": "A typed token for injecting non-class values (strings, configs, functions). Created with new InjectionToken<T>('description'). Provided with { provide: TOKEN, useValue: value }."
+        "question": "¿Qué es un InjectionToken y cuándo se usa?",
+        "answerHint": "Un token tipado para inyectar valores que no son clases (strings, configs, funciones). Creado con new InjectionToken<T>('desc'). Provisto con { provide: TOKEN, useValue: valor }."
       },
       {
-        "question": "How do you create a service scoped to a component (not singleton)?",
-        "answerHint": "Add providers: [MyService] in the component decorator. Each instance of that component gets its own service instance, destroyed with the component."
+        "question": "¿Cómo creas un servicio con ámbito de componente (no singleton)?",
+        "answerHint": "Añadiendo providers: [MyService] en el decorador del componente. Cada instancia de ese componente tendrá su propia instancia del servicio."
       }
     ],
     "mistakesToAvoid": [
-      "Calling inject() outside an injection context \u2014 throws error at runtime",
-      "Using providedIn: 'root' for services with component-specific state",
-      "Forgetting that @Injectable() without providedIn still needs to be provided somewhere"
+      "Llamar a inject() fuera de un contexto de inyección (lanza error en runtime)",
+      "Usar providedIn: 'root' para servicios que mantienen estado específico de un componente",
+      "Olvidar que @Injectable() sin providedIn aún necesita ser provisto en algún lugar"
     ]
   },
   {
@@ -137,31 +137,31 @@
     "topic": "angular",
     "subtopic": "RxJS",
     "difficulty": "intermediate",
-    "question": "What is the difference between switchMap, mergeMap, concatMap, and exhaustMap in RxJS?",
-    "interviewerIntent": "The four flattening operators are a classic interview topic. Choosing the wrong one causes subtle bugs.",
-    "answer": "All four transform each emission into an inner Observable, but differ in how they handle concurrent inner subscriptions. switchMap: cancels the previous inner Observable when a new emission arrives \u2014 use for search autocomplete (only care about latest query). mergeMap: runs all inner Observables concurrently \u2014 use for independent parallel operations (uploading multiple files). concatMap: queues inner Observables and runs them sequentially \u2014 use when order matters (sequential API calls). exhaustMap: ignores new emissions while an inner Observable is active \u2014 use to prevent double-submit (clicking a button multiple times; only first click fires until the request completes).",
-    "shortAnswer": "switchMap = cancel previous (search). mergeMap = parallel (independent). concatMap = sequential, ordered. exhaustMap = ignore new while busy (prevent double-submit).",
+    "question": "¿Cuál es la diferencia entre switchMap, mergeMap, concatMap y exhaustMap en RxJS?",
+    "interviewerIntent": "Los cuatro operadores de aplanamiento son un tema clásico de entrevista. Elegir el incorrecto causa bugs sutiles.",
+    "answer": "Los cuatro transforman cada emisión en un Observable interno, pero difieren en cómo manejan las suscripciones internas concurrentes. switchMap: cancela el Observable interno anterior cuando llega una nueva emisión (ideal para búsquedas con autocompletado). mergeMap: ejecuta todos los Observables internos simultáneamente (operaciones paralelas independientes como subir varios archivos). concatMap: pone en cola los Observables internos y los ejecuta secuencialmente (cuando el orden importa). exhaustMap: ignora las nuevas emisiones mientras hay un Observable interno activo (evita el doble envío al hacer clic en un botón varias veces).",
+    "shortAnswer": "switchMap = cancela anterior (búsqueda). mergeMap = paralelo (independiente). concatMap = secuencial, ordenado. exhaustMap = ignora nuevos mientras está ocupado (evita doble submit).",
     "keyPoints": [
-      "switchMap: typeahead search \u2014 cancel previous HTTP call on new keystroke",
-      "mergeMap: parallel uploads \u2014 fire all, order doesn't matter",
-      "concatMap: sequential actions \u2014 process in order, queue new arrivals",
-      "exhaustMap: submit button \u2014 ignore clicks while request is in flight",
-      "All four are flatMap variants \u2014 just differ in concurrency strategy"
+      "switchMap: búsqueda tipo typeahead — cancela la llamada HTTP anterior al teclear de nuevo",
+      "mergeMap: subidas paralelas — lanza todas, el orden no importa",
+      "concatMap: acciones secuenciales — procesa en orden, encola las nuevas",
+      "exhaustMap: botón de envío — ignora clics mientras la petición está en vuelo",
+      "Los cuatro son variantes de flatMap — solo difieren en la estrategia de concurrencia"
     ],
     "followUps": [
       {
-        "question": "What happens to in-flight HTTP requests cancelled by switchMap?",
-        "answerHint": "Angular's HttpClient implements cancellation via AbortController. switchMap unsubscribes from the previous Observable, which triggers the HTTP abort. The request is actually cancelled at the network level."
+        "question": "¿Qué pasa con las peticiones HTTP en vuelo canceladas por switchMap?",
+        "answerHint": "El HttpClient de Angular implementa la cancelación vía AbortController. switchMap se desuscribe del Observable anterior, lo que dispara el aborto HTTP a nivel de red."
       },
       {
-        "question": "When would you use mergeMap over switchMap for an API search?",
-        "answerHint": "Almost never for search \u2014 you want the latest result. But for independent operations (send notification for each item in a list), mergeMap is appropriate."
+        "question": "¿Cuándo usarías mergeMap en lugar de switchMap para una búsqueda en la API?",
+        "answerHint": "Casi nunca para búsquedas; quieres el último resultado. Pero para operaciones independientes (enviar notificación por cada item de una lista), mergeMap es apropiado."
       }
     ],
     "mistakesToAvoid": [
-      "Using mergeMap for search \u2014 processes all requests, may show stale results",
-      "Using switchMap for sequential operations \u2014 cancels in-flight when new arrives",
-      "Not unsubscribing from observables \u2014 memory leaks in components"
+      "Usar mergeMap para búsquedas — procesa todas las petições y puede mostrar resultados obsoletos",
+      "Usar switchMap para operaciones secuenciales — cancela lo que está en vuelo si llega algo nuevo",
+      "No desuscribirse de los observables — fugas de memoria en componentes"
     ]
   },
   {
@@ -170,31 +170,31 @@
     "topic": "angular",
     "subtopic": "Change Detection",
     "difficulty": "intermediate",
-    "question": "What is OnPush change detection and when should every component use it?",
-    "interviewerIntent": "OnPush is essential for Angular performance. Candidates who don't use it are writing slow apps.",
-    "answer": "By default, Angular checks every component in the tree for changes on every event (click, HTTP, timer). With ChangeDetectionStrategy.OnPush, a component is only checked when: one of its @Input() references changes (new object reference, not mutation), an event originates inside the component, an async pipe emits, or markForCheck() is called. This means Angular skips the entire subtree of an OnPush component unless there's a reason to check it. For signal-based components, change detection is automatic and fine-grained \u2014 signals track their own dependencies. Best practice: use OnPush on every component, use immutable data for inputs, and use signals or observables with async pipe for data streams.",
-    "shortAnswer": "OnPush: check only when @Input changes reference, internal event fires, async pipe emits, or markForCheck() called. Skips subtree otherwise. Use on every component with immutable inputs.",
+    "question": "¿Qué es la detección de cambios OnPush y cuándo debería usarla cada componente?",
+    "interviewerIntent": "OnPush es esencial para el rendimiento de Angular. Los candidatos que no lo usan escriben apps lentas.",
+    "answer": "Por defecto, Angular verifica cada componente del árbol ante cada evento (clic, HTTP, timer). Con ChangeDetectionStrategy.OnPush, un componente solo se verifica cuando: cambia una de las referencias de sus @Input() (nueva referencia de objeto, no mutación), un evento se origina dentro del componente, un pipe async emite o se llama a markForCheck(). Esto significa que Angular omite todo el subárbol de un componente OnPush a menos que haya una razón para verificarlo. Para componentes basados en signals, la detección de cambios es automática y granular. Mejor práctica: usar OnPush en cada componente, usar datos inmutables para los inputs y usar signals u observables con el pipe async.",
+    "shortAnswer": "OnPush: verifica solo cuando cambia la referencia de un @Input, se dispara un evento interno, emite el pipe async o se llama a markForCheck(). Optimiza el rendimiento al omitir subárboles.",
     "keyPoints": [
-      "Object mutation doesn't trigger OnPush \u2014 must pass new reference",
-      "async pipe automatically calls markForCheck() when observable emits",
-      "Signals automatically mark for check \u2014 perfect with OnPush",
-      "detectChanges() forces immediate check, markForCheck() schedules check",
-      "OnPush is required for good performance in large component trees"
+      "La mutación de objetos no dispara OnPush — hay que pasar una nueva referencia",
+      "El pipe async llama automáticamente a markForCheck() cuando el observable emite",
+      "Los Signals marcan para verificación automáticamente — ideales con OnPush",
+      "detectChanges() fuerza la verificación inmediata, markForCheck() la programa",
+      "OnPush es necesario para el buen rendimiento en árboles de componentes grandes"
     ],
     "followUps": [
       {
-        "question": "Why doesn't mutating an @Input object trigger OnPush?",
-        "answerHint": "Angular checks reference equality for OnPush \u2014 if the object reference is the same, Angular assumes nothing changed. Mutation changes the content but not the reference."
+        "question": "¿Por qué mutar un objeto @Input no dispara OnPush?",
+        "answerHint": "Angular comprueba la igualdad de referencia para OnPush; si la referencia es la misma, asume que nada cambió. La mutación cambia el contenido pero no la referencia."
       },
       {
-        "question": "How do you trigger change detection in an OnPush component from outside?",
-        "answerHint": "Inject ChangeDetectorRef and call markForCheck() to schedule a check, or detectChanges() to run immediately. With signals, this is automatic."
+        "question": "¿Cómo disparas la detección de cambios en un componente OnPush desde fuera?",
+        "answerHint": "Inyectando ChangeDetectorRef y llamando a markForCheck() para programar la revisión, o detectChanges() para ejecutarla de inmediato. Con signals esto es automático."
       }
     ],
     "mistakesToAvoid": [
-      "Mutating arrays/objects passed as @Input \u2014 OnPush won't detect the change",
-      "Not using OnPush \u2014 every component re-checks on every event",
-      "Calling detectChanges() excessively \u2014 defeats the performance benefit"
+      "Mutar arrays u objetos pasados como @Input — OnPush no detectará el cambio",
+      "No usar OnPush — cada componente se vuelve a verificar en cada evento",
+      "Llamar a detectChanges() excesivamente — anula el beneficio de rendimiento"
     ]
   },
   {
@@ -203,31 +203,31 @@
     "topic": "angular",
     "subtopic": "Dependency Injection",
     "difficulty": "advanced",
-    "question": "How do Angular functional guards and interceptors work in Angular 15+?",
-    "interviewerIntent": "Functional guards replaced class-based guards as the Angular idiom. Shows up-to-date Angular knowledge.",
-    "answer": "Functional guards are plain functions that return boolean, UrlTree, or Observable/Promise of those. They use inject() to access services. CanActivateFn: export const authGuard: CanActivateFn = (route, state) => inject(AuthService).isAuthenticated() ? true : inject(Router).createUrlTree(['/login']). Registered directly in routes: { path: 'admin', canActivate: [authGuard] }. HTTP interceptors similarly: export const authInterceptor: HttpInterceptorFn = (req, next) => { const token = inject(AuthService).token(); return next(req.clone({ headers: req.headers.set('Authorization', `Bearer ${token}`) })); }. Registered in provideHttpClient(withInterceptors([authInterceptor])). No class needed, inject() works in these function contexts.",
-    "shortAnswer": "Functional guards: CanActivateFn = (route, state) => inject(Service).check(). Functional interceptors: HttpInterceptorFn = (req, next) => next(modified req). inject() works in both.",
+    "question": "¿Cómo funcionan los guardias (guards) e interceptores funcionales en Angular 15+?",
+    "interviewerIntent": "Los guardias funcionales reemplazaron a los basados en clases. Muestra conocimiento actualizado.",
+    "answer": "Los guardias funcionales son funciones simples que devuelven boolean, UrlTree o un Observable/Promise de estos. Usan inject() para acceder a servicios. Ejemplo de CanActivateFn: export const authGuard: CanActivateFn = (route, state) => inject(AuthService).isAuthenticated() ? true : inject(Router).createUrlTree(['/login']). Se registran directamente en las rutas. Los interceptores HTTP funcionan de forma similar: export const authInterceptor: HttpInterceptorFn = (req, next) => { const token = inject(AuthService).token(); return next(req.clone({ headers: req.headers.set('Authorization', `Bearer ${token}`) })); }. Se registran en provideHttpClient(withInterceptors([authInterceptor])). No requieren clases e inject() funciona en estos contextos de función.",
+    "shortAnswer": "Guardias funcionales: CanActivateFn = (route, state) => inject(Service).check(). Interceptores funcionales: HttpInterceptorFn = (req, next) => next(req modificado). inject() funciona en ambos.",
     "keyPoints": [
-      "inject() works in guard/interceptor function execution context",
-      "Guard returns boolean | UrlTree | Observable<boolean | UrlTree>",
-      "withInterceptors([fn]) in provideHttpClient()",
-      "Multiple guards: canActivate: [guard1, guard2] \u2014 all must pass",
-      "canMatch guard prevents lazy module loading without matching"
+      "inject() funciona en el contexto de ejecución de la función guardia/interceptor",
+      "El guardia devuelve boolean | UrlTree | Observable<boolean | UrlTree>",
+      "withInterceptors([fn]) en provideHttpClient()",
+      "Múltiples guardias: todos deben pasar",
+      "canMatch previene la carga de módulos lazy si no hay coincidencia"
     ],
     "followUps": [
       {
-        "question": "How do you compose multiple guards?",
-        "answerHint": "List them in the canActivate array \u2014 all must return true. Or create a composed guard that calls inject() on multiple services and combines their results."
+        "question": "¿Cómo compones múltiples guardias?",
+        "answerHint": "Listándolos en el array canActivate; todos deben devolver true. O creando un guardia compuesto que llame a inject() en varios servicios y combine resultados."
       },
       {
-        "question": "What is the difference between canActivate and canMatch?",
-        "answerHint": "canActivate: runs when the route is activated, lazy module may already be loaded. canMatch: runs before lazy loading \u2014 prevents even loading the chunk if the guard fails."
+        "question": "¿Cuál es la diferencia entre canActivate y canMatch?",
+        "answerHint": "canActivate se ejecuta cuando la ruta se activa (el módulo lazy ya puede estar cargado). canMatch se ejecuta antes de la carga diferida, evitando descargar el chunk si el guardia falla."
       }
     ],
     "mistakesToAvoid": [
-      "Implementing CanActivate interface \u2014 legacy class-based approach",
-      "Using class interceptors with HTTP_INTERCEPTORS token \u2014 deprecated pattern",
-      "Calling inject() outside the function execution context"
+      "Implementar la interfaz CanActivate (enfoque antiguo basado en clases)",
+      "Usar interceptores de clase con el token HTTP_INTERCEPTORS (patrón obsoleto)",
+      "Llamar a inject() fuera del contexto de ejecución de la función"
     ]
   },
   {
@@ -236,31 +236,31 @@
     "topic": "angular",
     "subtopic": "RxJS",
     "difficulty": "intermediate",
-    "question": "How do you prevent memory leaks from unsubscribed Observables in Angular components?",
-    "interviewerIntent": "Memory leaks from forgotten subscriptions are a common Angular bug. Tests practical component lifecycle knowledge.",
-    "answer": "Several approaches: (1) async pipe in template \u2014 Angular automatically subscribes and unsubscribes with the component lifecycle. Preferred. (2) takeUntilDestroyed(destroyRef) \u2014 pipe operator that automatically completes the Observable when the component is destroyed. Modern idiomatic approach. (3) toSignal() \u2014 converts Observable to signal, auto-managed. (4) Manual: inject DestroyRef and register a callback. Old approach: Subject + takeUntil(this.destroy$) + ngOnDestroy calling destroy$.next(). Never store a subscription without unsubscribing. HTTP calls via HttpClient complete automatically (no unsubscribe needed), but long-lived streams (intervals, WebSockets, route params) must be managed.",
-    "shortAnswer": "async pipe (best). takeUntilDestroyed(destroyRef). toSignal(). Never subscribe() without cleanup for long-lived streams. HTTP calls auto-complete. Route params/intervals don't.",
+    "question": "¿Cómo previenes fugas de memoria (memory leaks) de Observables en los componentes de Angular?",
+    "interviewerIntent": "Las fugas de memoria por suscripciones olvidadas son un bug común. Prueba el conocimiento del ciclo de vida.",
+    "answer": "Varios enfoques: (1) Pipe async en la plantilla: Angular se suscribe y desuscribe automáticamente con el ciclo de vida del componente. Es el preferido. (2) takeUntilDestroyed(destroyRef): operador que completa el Observable automáticamente cuando el componente se destruye. Enfoque moderno e idiomático. (3) toSignal(): convierte el Observable en signal, gestionado automáticamente. (4) Manual: inyectar DestroyRef y registrar un callback. El enfoque antiguo era usar un Subject + takeUntil(this.destroy$) y llamar a next() en ngOnDestroy. Nunca guardes una suscripción sin desuscribirte. Las llamadas de HttpClient se completan solas, pero los flujos de larga duración (intervalos, WebSockets) deben gestionarse.",
+    "shortAnswer": "Pipe async (el mejor). takeUntilDestroyed(destroyRef). toSignal(). Nunca hacer subscribe() sin limpieza en flujos largos. Las llamadas HTTP se autocompletan, pero los parámetros de ruta o intervalos no.",
     "keyPoints": [
-      "async pipe handles subscribe/unsubscribe automatically",
-      "takeUntilDestroyed(inject(DestroyRef)) \u2014 new idiomatic approach",
-      "HttpClient observables complete after one emission \u2014 no leak",
-      "interval(), fromEvent(), WebSocket \u2014 must be managed",
-      "DestroyRef.onDestroy(callback) for imperative cleanup"
+      "El pipe async gestiona la suscripción/desuscripción automáticamente",
+      "takeUntilDestroyed(inject(DestroyRef)) es el nuevo estándar",
+      "Los observables de HttpClient se completan tras una emisión; no hay fuga",
+      "interval(), fromEvent(), WebSocket deben ser gestionados",
+      "DestroyRef.onDestroy(callback) para limpiezas imperativas"
     ],
     "followUps": [
       {
-        "question": "Why doesn't HttpClient require manual unsubscription?",
-        "answerHint": "HttpClient Observables are cold and finite \u2014 they emit one response and complete. Complete = automatic cleanup. No need to unsubscribe, but you can to cancel in-flight requests."
+        "question": "¿Por qué HttpClient no requiere desuscripción manual?",
+        "answerHint": "Son observables fríos y finitos: emiten una respuesta y se completan. La compleción dispara la limpieza automática."
       },
       {
-        "question": "What is DestroyRef and how is it different from ngOnDestroy?",
-        "answerHint": "DestroyRef is an injectable (inject(DestroyRef)) that lets you register cleanup callbacks without implementing ngOnDestroy. Works in services and functions, not just components."
+        "question": "¿Qué es DestroyRef y en qué se diferencia de ngOnDestroy?",
+        "answerHint": "DestroyRef es un inyectable que permite registrar callbacks de limpieza sin implementar la interfaz ngOnDestroy. Funciona en servicios y funciones, no solo en componentes."
       }
     ],
     "mistakesToAvoid": [
-      "Subscribing in ngOnInit without cleanup \u2014 component destroyed, subscription lives",
-      "Using ngOnDestroy with Subject takeUntil \u2014 works but verbose vs takeUntilDestroyed",
-      "Unsubscribing from HTTP calls in ngOnDestroy \u2014 unnecessary, adds noise"
+      "Suscribirse en ngOnInit sin limpieza; la suscripción vive aunque el componente muera",
+      "Usar ngOnDestroy con takeUntil; funciona pero es verboso comparado con takeUntilDestroyed",
+      "Desuscribirse de llamadas HTTP en ngOnDestroy; es innecesario y añade ruido"
     ]
   },
   {
@@ -269,31 +269,31 @@
     "topic": "angular",
     "subtopic": "Change Detection",
     "difficulty": "advanced",
-    "question": "What is Zone.js and what problems does zoneless Angular solve?",
-    "interviewerIntent": "Advanced Angular internals. Shows deep understanding of the framework's performance model.",
-    "answer": "Zone.js monkey-patches all async browser APIs (setTimeout, Promise, addEventListener, XHR) to intercept async operations and notify Angular when they complete, triggering change detection. It's what made Angular 2+ 'magical' \u2014 you could update a variable anywhere and the template would update. The problems: (1) overhead from patching every async API, (2) change detection runs for every async event even if no component state changed, (3) third-party libraries trigger unnecessary checks, (4) 50-100KB bundle size. Zoneless Angular (stable in Angular 19) uses signals for fine-grained reactivity \u2014 only components that read changed signals re-render. Requires ChangeDetectionStrategy.OnPush everywhere and signals/async pipe for data.",
-    "shortAnswer": "Zone.js patches async APIs to trigger change detection. Problem: runs for all async events, overhead, large bundle. Zoneless: signals drive fine-grained updates. Requires OnPush + signals.",
+    "question": "¿Qué es Zone.js y qué problemas resuelve el Angular zoneless?",
+    "interviewerIntent": "Internos avanzados de Angular. Muestra comprensión profunda del modelo de rendimiento.",
+    "answer": "Zone.js aplica monkey-patching a todas las APIs asíncronas del navegador (setTimeout, Promise, XHR) para interceptar operaciones e informar a Angular cuando terminan, disparando la detección de cambios. Es lo que hacía a Angular 2+ 'mágico'. Los problemas son: (1) sobrecarga por parchear cada API, (2) la detección de cambios corre ante cada evento asíncrono aunque no cambie el estado, (3) librerías de terceros disparan verificaciones innecesarias, (4) añade 50-100KB al bundle. Angular zoneless (estable en Angular 19) usa signals para una reactividade granular: solo renderiza los componentes que leen signals cambiados. Requiere OnPush en todas partes y el uso de signals o el pipe async para los datos.",
+    "shortAnswer": "Zone.js parchea APIs asíncronas para disparar la detección de cambios. Problemas: sobrecarga y bundle grande. Zoneless: los signals dirigen actualizaciones granulares. Requiere OnPush + signals.",
     "keyPoints": [
-      "Zone.js = global async interceptor for change detection triggering",
-      "Runs application-wide CD after every setTimeout, click, XHR",
-      "provideExperimentalZonelessChangeDetection() enables zoneless",
-      "Zoneless requires OnPush + signals/async pipe \u2014 manual triggers",
-      "~50KB bundle reduction by removing Zone.js"
+      "Zone.js es un interceptor asíncrono global para disparar la detección de cambios",
+      "Ejecuta la detección de cambios en toda la app tras cada setTimeout, click, XHR",
+      "provideExperimentalZonelessChangeDetection() habilita el modo zoneless",
+      "Zoneless requiere OnPush + signals/pipe async",
+      "Reducción de ~50KB en el bundle al eliminar Zone.js"
     ],
     "followUps": [
       {
-        "question": "How do you run code outside Angular's zone intentionally?",
-        "answerHint": "NgZone.runOutsideAngular(() => { ... }) \u2014 the callback runs without triggering change detection. Useful for heavy animations or non-Angular timers."
+        "question": "¿Cómo ejecutas código fuera de la zona de Angular intencionadamente?",
+        "answerHint": "NgZone.runOutsideAngular(() => { ... }) ejecuta el callback sin disparar la detección de cambios. Útil para animaciones pesadas o timers no relacionados con Angular."
       },
       {
-        "question": "What happens if you update a signal outside Angular's context?",
-        "answerHint": "Signals are framework-agnostic \u2014 they can be updated from anywhere. Angular's scheduler picks up signal changes on the next microtask and schedules rendering."
+        "question": "¿Qué pasa si actualizas un signal fuera del contexto de Angular?",
+        "answerHint": "Los signals son agnósticos al framework. Se pueden actualizar desde cualquier lugar. El scheduler de Angular detecta el cambio en la siguiente microtarea y programa el renderizado."
       }
     ],
     "mistakesToAvoid": [
-      "Removing Zone.js without using OnPush and signals \u2014 templates won't update",
-      "Heavy computation inside change detection \u2014 runs synchronously, blocks rendering",
-      "Not benchmarking before zoneless migration \u2014 may not be the bottleneck"
+      "Eliminar Zone.js sin usar OnPush y signals: las plantillas no se actualizarán",
+      "Cálculos pesados dentro de la detección de cambios: bloquean el renderizado",
+      "No realizar benchmarks antes de la migración a zoneless; puede no ser el cuello de botella"
     ]
   },
   {
@@ -302,31 +302,30 @@
     "topic": "angular",
     "subtopic": "Standalone Components",
     "difficulty": "intermediate",
-    "question": "How does lazy loading work with standalone components in Angular?",
-    "interviewerIntent": "Lazy loading is critical for initial bundle size. The standalone approach is simpler than NgModule lazy loading.",
-    "answer": "With standalone components, lazy loading uses loadComponent in routes: { path: 'dashboard', loadComponent: () => import('./dashboard/dashboard.component').then(m => m.DashboardComponent) }. The component and its dependencies are split into a separate JavaScript chunk loaded on demand. For a group of routes in a feature: loadChildren with an array of routes: { path: 'admin', loadChildren: () => import('./admin/admin.routes').then(m => m.ADMIN_ROUTES) }. Each lazy-loaded route can have its own providers scoped to that route. Angular CLI automatically creates separate bundles for lazy routes. This is simpler than the NgModule approach (no forRoot/forChild, no module to lazy load).",
-    "shortAnswer": "loadComponent(() => import('./comp').then(m => m.MyComponent)). Separate JS chunk per lazy route. loadChildren for route groups. Route-scoped providers. Simpler than NgModule lazy loading.",
+    "question": "¿Cómo funciona la carga diferida (lazy loading) con componentes standalone en Angular?",
+    "interviewerIntent": "El lazy loading es crítico para el tamaño inicial del bundle. El enfoque standalone es más simple que el de NgModules.",
+    "answer": "Con componentes standalone, el lazy loading usa loadComponent en las rutas: { path: 'dashboard', loadComponent: () => import('./dashboard.component').then(m => m.DashboardComponent) }. El componente y sus dependencias se dividen en un fragmento (chunk) de JavaScript separado que se carga bajo demanda. Para grupos de rutas: loadChildren con un array de rutas: { path: 'admin', loadChildren: () => import('./admin.routes').then(m => m.ADMIN_ROUTES) }. Cada ruta cargada perezosamente puede tener sus propios proveedores (providers). Es más simple que el enfoque de NgModule (sin forRoot/forChild).",
+    "shortAnswer": "loadComponent(() => import('./comp')). Fragmento JS separado por cada ruta lazy. loadChildren para grupos de rutas. Proveedores con ámbito de ruta. Más simple que con NgModules.",
     "keyPoints": [
-      "Each lazy route becomes a separate JS chunk automatically",
-      "providers: [] in route config scopes services to that lazy route",
-      "Preloading strategies: PreloadAllModules or custom predicates",
-      "withPreloading(PreloadAllModules) in provideRouter()",
-      "defer block in templates for component-level lazy loading"
+      "Cada ruta lazy se convierte automáticamente en un chunk JS separado",
+      "providers: [] en la configuración de la ruta define servicios para esa ruta lazy",
+      "Estrategias de precarga: PreloadAllModules o predicados personalizados",
+      "bloque @defer en plantillas para lazy loading a nivel de componente"
     ],
     "followUps": [
       {
-        "question": "What is the @defer block in Angular 17+?",
-        "answerHint": "@defer lazily loads a component when a trigger fires: @defer (on viewport) { <heavy-component /> }. Triggers: idle, viewport, interaction, hover, timer, when(condition)."
+        "question": "¿Qué es el bloque @defer en Angular 17+?",
+        "answerHint": "@defer carga un componente de forma diferida cuando se activa un disparador: @defer (on viewport) { <componente-pesado /> }. Disparadores: idle, viewport, interacción, hover, timer, when(condición)."
       },
       {
-        "question": "How do you preload lazy routes without blocking initial load?",
-        "answerHint": "provideRouter(routes, withPreloading(PreloadAllModules)) \u2014 after initial page loads, Angular preloads all lazy routes in background. Custom strategy to preload only high-priority routes."
+        "question": "¿Cómo precargas rutas lazy sin bloquear la carga inicial?",
+        "answerHint": "Usando provideRouter(routes, withPreloading(PreloadAllModules)). Tras la carga inicial, Angular precarga las rutas lazy en segundo plano."
       }
     ],
     "mistakesToAvoid": [
-      "Importing heavy components eagerly \u2014 increases initial bundle",
-      "Not using lazy loading for feature areas users may never visit",
-      "Providing root-level services in lazy routes \u2014 creates multiple instances"
+      "Importar componentes pesados de forma eager (inmediata), aumentando el bundle inicial",
+      "No usar lazy loading en áreas que el usuario raramente visita",
+      "Proveer servicios de nivel root en rutas lazy, lo que podría crear múltiples instancias"
     ]
   },
   {
@@ -335,31 +334,31 @@
     "topic": "angular",
     "subtopic": "Signals",
     "difficulty": "advanced",
-    "question": "What is the resource() API in Angular 19 and how does it handle async data loading?",
-    "interviewerIntent": "resource() is new in Angular 19 \u2014 very current. Shows candidate is following Angular releases.",
-    "answer": "resource() is Angular 19's API for async signal-based data loading. It wraps an async operation (HTTP call, async function) in a signal that tracks loading, error, and value states. Syntax: const user = resource({ request: () => userId(), loader: ({ request: id }) => fetch('/api/users/' + id).then(r => r.json()) }). Properties: value (signal<T | undefined>), isLoading (boolean signal), error (signal<unknown>), status. Automatically re-fetches when request() signal changes \u2014 reactive. Replaces the boilerplate of BehaviorSubject + switchMap + loading flags. httpResource() is a convenience wrapper for HttpClient calls.",
-    "shortAnswer": "resource({ request: () => signal(), loader: ({request}) => fetchData(request) }). Tracks value/isLoading/error signals. Auto-refetches on request signal change. httpResource() for HttpClient.",
+    "question": "¿Qué es la API resource() en Angular 19 y cómo maneja la carga de datos asíncronos?",
+    "interviewerIntent": "resource() es nuevo en Angular 19. Muestra si el candidato sigue los lanzamientos recientes.",
+    "answer": "resource() es la API de Angular 19 para la carga de datos asíncronos basada en signals. Envuelve una operación asíncrona (llamada HTTP, función async) en un signal que rastrea los estados de carga (isLoading), error y valor. Sintaxis: const user = resource({ request: () => userId(), loader: ({ request: id }) => fetch('/api/users/' + id).then(r => r.json()) }). Se vuelve a ejecutar automáticamente cuando el signal de request() cambia. Reemplaza el boilerplate de BehaviorSubject + switchMap + flags de carga. httpResource() es un envoltorio de conveniencia para llamadas de HttpClient.",
+    "shortAnswer": "resource({ request: () => signal(), loader: ({request}) => fetchData(request) }). Rastraea signals de value/isLoading/error. Re-ejecuta automáticamente al cambiar el signal de petición.",
     "keyPoints": [
-      "request() is a signal-computed function \u2014 changes trigger refetch",
-      "loader receives current request value, returns Promise<T>",
-      ".value(), .isLoading(), .error() are signals",
-      "httpResource() is a typed wrapper for Angular HttpClient",
-      "Replaces combineLatest + switchMap + loading boilerplate"
+      "request() es una función computada por signals — los cambios disparan la recarga",
+      "el loader recibe el valor actual de la petición y devuelve un Promise<T>",
+      ".value(), .isLoading() y .error() son signals",
+      "httpResource() es un envoltorio tipado para el HttpClient de Angular",
+      "Reemplaza el boilerplate de combineLatest + switchMap + flags de carga"
     ],
     "followUps": [
       {
-        "question": "How do you handle errors with resource()?",
-        "answerHint": "resource.error() signal contains the error if the loader threw. In template: @if (resource.error()) { show error state }. The value is undefined when in error state."
+        "question": "¿Cómo manejas errores con resource()?",
+        "answerHint": "El signal resource.error() contiene el error si el loader falló. En la plantilla: @if (resource.error()) { mostrar error }. El valor es undefined en estado de error."
       },
       {
-        "question": "How does resource() compare to toSignal() with switchMap?",
-        "answerHint": "resource() is declarative and collocates request, loading, and error state. toSignal(obs$) is simpler for static observables. resource() wins for reactive loading patterns."
+        "question": "¿Cómo se compara resource() con toSignal() usando switchMap?",
+        "answerHint": "resource() es declarativo y agrupa petición, carga y error. toSignal(obs$) es más simple para observables estáticos. resource() gana en patrones de carga reactivos."
       }
     ],
     "mistakesToAvoid": [
-      "Using resource() for mutations (POST/PUT) \u2014 it's for reads. Use services for mutations.",
-      "Ignoring the error signal \u2014 always show error state to users",
-      "Not using httpResource() when working with HttpClient \u2014 loses type safety"
+      "Usar resource() para mutaciones (POST/PUT) — es para lecturas. Usar servicios para mutaciones.",
+      "Ignorar el signal de error — mostrar siempre el estado de error al usuario",
+      "No usar httpResource() al trabajar con HttpClient — se pierde seguridad de tipos"
     ]
   },
   {
@@ -368,31 +367,31 @@
     "topic": "angular",
     "subtopic": "Change Detection",
     "difficulty": "intermediate",
-    "question": "What is the async pipe and why is it preferred over manual subscriptions in Angular templates?",
-    "interviewerIntent": "async pipe is fundamental Angular best practice. Candidates who don't use it write memory-leaking code.",
-    "answer": "The async pipe subscribes to an Observable or Promise in the template and returns the latest emitted value. It automatically unsubscribes when the component is destroyed \u2014 no ngOnDestroy needed. With OnPush, it calls markForCheck() when a new value arrives, so the component updates correctly. Usage: *ngFor='let item of items$ | async' or in signal era: @for (item of items(); track item.id). For Observables still in use: {{ user$ | async | json }} or @let user = user$ | async \u2014 the new @let block in Angular 18+ binds the value for reuse in the template without subscribing multiple times. async pipe is safer, cleaner, and handles the subscription lifecycle automatically.",
-    "shortAnswer": "async pipe subscribes in template, auto-unsubscribes on destroy, calls markForCheck() for OnPush. Safer than manual subscribe. @let user = obs$ | async for multiple uses of the value.",
+    "question": "¿Qué es el pipe async y por qué se prefiere sobre las suscripciones manuales en las plantillas de Angular?",
+    "interviewerIntent": "El pipe async es una buena práctica fundamental. Los candidatos que no lo usan escriben código propenso a fugas de memoria.",
+    "answer": "El pipe async se suscribe a un Observable o Promise en la plantilla y devuelve el último valor emitido. Se desuscribe automáticamente cuando el componente se destruye, eliminando la necesidad de ngOnDestroy. Con OnPush, llama a markForCheck() cuando llega un nuevo valor. Uso: *ngFor='let item of items$ | async' o con el nuevo bloque @let de Angular 18+ para reutilizar el valor sin suscribirse varias veces. Es más seguro, limpio y gestiona el ciclo de vida de la suscripción automáticamente.",
+    "shortAnswer": "El pipe async suscribe en la plantilla, desuscribe al destruir y llama a markForCheck() para OnPush. Más seguro que subscribe manual. @let user = obs$ | async para múltiples usos del valor.",
     "keyPoints": [
-      "Auto-unsubscribes when component is destroyed",
-      "Calls markForCheck() on new emission for OnPush",
-      "Returns null before first emission \u2014 use with ?? 'loading' or @if",
-      "@let block (Angular 18+) avoids multiple async pipe subscriptions",
-      "For signals, async pipe is not needed \u2014 signals are synchronous"
+      "Se desuscribe automáticamente al destruir el componente",
+      "Llama a markForCheck() en cada nueva emisión para OnPush",
+      "Devuelve null antes de la primera emisión — manejar con ?? o @if",
+      "El bloque @let (Angular 18+) evita múltiples suscripciones del pipe async",
+      "Para signals, el pipe async no es necesario — los signals son síncronos"
     ],
     "followUps": [
       {
-        "question": "What are the downsides of async pipe?",
-        "answerHint": "Returns null initially (handle with ?? or @if). Multiple async pipes on the same Observable create multiple subscriptions \u2014 use @let or share() operator."
+        "question": "¿Cuáles son las desventajas del pipe async?",
+        "answerHint": "Devuelve null inicialmente. Múltiples pipes async sobre el mismo observable crean múltiples suscripciones (usar @let o el operador share())."
       },
       {
-        "question": "When would you use subscribe() directly instead of async pipe?",
-        "answerHint": "When you need to trigger imperative logic on emission (navigate, show toast, update non-template state). Use takeUntilDestroyed() and minimize imperative subscriptions."
+        "question": "¿Cuándo usarías subscribe() directamente en lugar del pipe async?",
+        "answerHint": "Cuando necesitas ejecutar lógica imperativa al recibir el valor (navegar, mostrar un aviso, actualizar estado no visual). Usar siempre takeUntilDestroyed()."
       }
     ],
     "mistakesToAvoid": [
-      "Using async pipe multiple times on the same observable in a template \u2014 multiple subscriptions",
-      "Not handling the null initial value \u2014 can cause template errors",
-      "Subscribing manually and storing in a field instead of using async pipe"
+      "Usar el pipe async múltiples veces sobre el mismo observable en una plantilla",
+      "No manejar el valor inicial nulo, lo que puede causar errores en la plantilla",
+      "Suscribirse manualmente y guardar el valor en un campo en lugar de usar el pipe async"
     ]
   },
   {
@@ -401,31 +400,31 @@
     "topic": "angular",
     "subtopic": "RxJS",
     "difficulty": "advanced",
-    "question": "How do you implement a debounced search with RxJS and Angular?",
-    "interviewerIntent": "Debounced search is the canonical RxJS + Angular use case. Tests practical operator knowledge.",
-    "answer": "Classic pattern: get a reference to the search input (via FormControl or @ViewChild), listen to valueChanges or fromEvent, apply debounceTime(300) to wait for typing pause, distinctUntilChanged() to skip if value didn't change, switchMap to cancel previous requests and fire new search, and handle errors with catchError inside switchMap (keeps the stream alive). With signals: effect(() => { const query = searchQuery(); if (query.length > 2) loadResults(query); }) with debounce via a timer. The full RxJS pipeline: searchControl.valueChanges.pipe(debounceTime(300), distinctUntilChanged(), filter(q => q.length >= 2), switchMap(q => this.searchService.search(q).pipe(catchError(() => of([])))), takeUntilDestroyed()).",
-    "shortAnswer": "valueChanges.pipe(debounceTime(300), distinctUntilChanged(), filter(len>=2), switchMap(q => search(q).pipe(catchError(() => of([])))), takeUntilDestroyed()). catchError inside switchMap to keep stream alive.",
+    "question": "¿Cómo implementas una búsqueda con debounce usando RxJS y Angular?",
+    "interviewerIntent": "La búsqueda con debounce es el caso de uso canónico de RxJS + Angular. Prueba el conocimiento práctico de los operadores.",
+    "answer": "Patrón clásico: obtener una referencia al input (vía FormControl), escuchar a valueChanges, aplicar debounceTime(300) para esperar una pausa al teclear, distinctUntilChanged() para omitir si el valor no cambió, switchMap para cancelar peticiones anteriores y lanzar la nueva búsqueda, y manejar errores con catchError dentro del switchMap (para mantener vivo el stream). El pipeline completo sería: searchControl.valueChanges.pipe(debounceTime(300), distinctUntilChanged(), filter(q => q.length >= 2), switchMap(q => this.service.search(q).pipe(catchError(() => of([])))), takeUntilDestroyed()).",
+    "shortAnswer": "valueChanges.pipe(debounceTime(300), distinctUntilChanged(), filter(long>=2), switchMap(q => search(q).pipe(catchError(() => of([])))), takeUntilDestroyed()). catchError dentro de switchMap para no romper el stream.",
     "keyPoints": [
-      "debounceTime(300) \u2014 waits for 300ms pause in typing",
-      "distinctUntilChanged() \u2014 skips if query didn't change",
-      "switchMap \u2014 cancels previous HTTP call on new query",
-      "catchError inside switchMap \u2014 keeps outer stream alive on error",
-      "takeUntilDestroyed() \u2014 cleanup when component destroys"
+      "debounceTime(300): espera 300ms de pausa al escribir",
+      "distinctUntilChanged(): omite si la consulta es igual a la anterior",
+      "switchMap: cancela la llamada HTTP anterior al llegar una nueva consulta",
+      "catchError dentro de switchMap: mantiene vivo el flujo principal ante errores",
+      "takeUntilDestroyed(): limpieza al destruir el componente"
     ],
     "followUps": [
       {
-        "question": "Why must catchError be inside the switchMap, not after it?",
-        "answerHint": "catchError after switchMap catches the error and terminates the entire stream \u2014 future queries won't work. Inside switchMap, only the inner observable is replaced with an empty/default on error."
+        "question": "¿Por qué catchError debe estar dentro del switchMap y no después?",
+        "answerHint": "Si está después, captura el error pero termina el stream principal y las futuras búsquedas dejarán de funcionar. Dentro de switchMap, solo se reemplaza el observable interno fallido."
       },
       {
-        "question": "What is the minimum query length check for and where does it go?",
-        "answerHint": "filter(q => q.length >= 2) prevents API calls for empty or single-character queries. Placed after distinctUntilChanged() so we don't emit for 'a' \u2192 'ab' \u2192 'a' (last two are distinct but only 'ab' passes filter)."
+        "question": "¿Para qué sirve el chequeo de longitud mínima y dónde se coloca?",
+        "answerHint": "filter(q => q.length >= 2) evita llamadas innecesarias para consultas vacías o de un solo carácter. Se coloca tras distinctUntilChanged()."
       }
     ],
     "mistakesToAvoid": [
-      "Forgetting catchError inside switchMap \u2014 one HTTP error kills the entire search stream",
-      "Using concatMap instead of switchMap \u2014 queues requests, shows stale results",
-      "Not adding distinctUntilChanged \u2014 fires on every keystroke even with same value"
+      "Olvidar catchError dentro de switchMap — un error HTTP matará todo el flujo de búsqueda",
+      "Usar concatMap en lugar de switchMap — encola las peticiones y muestra resultados obsoletos",
+      "No añadir distinctUntilChanged — dispara la búsqueda en cada pulsación aunque el valor sea el mismo"
     ]
   },
   {
@@ -434,31 +433,31 @@
     "topic": "angular",
     "subtopic": "Standalone Components",
     "difficulty": "intermediate",
-    "question": "What are Angular control flow syntax (@if, @for, @switch) and how do they replace NgIf and NgFor?",
-    "interviewerIntent": "New control flow is Angular 17+. Candidates writing modern Angular should know it.",
-    "answer": "Angular 17 introduced built-in control flow as a template syntax, replacing the structural directives NgIf, NgFor, NgSwitch. @if (condition) { ... } @else if (other) { ... } @else { ... } replaces *ngIf. @for (item of items; track item.id) { ... } @empty { ... } replaces *ngFor with mandatory track expression. @switch (value) { @case ('a') { ... } @default { ... } } replaces ngSwitch. Benefits: better TypeScript type narrowing in @if blocks, mandatory track in @for (no more missing trackBy), @empty block for empty state, no need to import CommonModule or NgIf/NgFor directives, improved performance from compiler optimization. Migration: ng generate @angular/core:control-flow.",
-    "shortAnswer": "@if/@else, @for (track required), @switch/@case/@default. Replaces NgIf/NgFor/NgSwitch. No imports needed. Better type narrowing. @empty for empty list state. Use ng generate to migrate.",
+    "question": "¿Qué es la nueva sintaxis de flujo de control (@if, @for, @switch) y cómo reemplaza a NgIf y NgFor?",
+    "interviewerIntent": "El nuevo flujo de control es de Angular 17+. Los candidatos que escriben Angular moderno deben conocerlo.",
+    "answer": "Angular 17 introdujo el flujo de control integrado como sintaxis de plantilla, reemplazando las directivas estructurales NgIf, NgFor y NgSwitch. @if (condición) { ... } @else { ... } reemplaza a *ngIf. @for (item of items; track item.id) { ... } @empty { ... } reemplaza a *ngFor con la expresión 'track' obligatoria. Beneficios: mejor inferencia de tipos de TypeScript en bloques @if, 'track' obligatorio en @for (evita problemas de rendimiento), bloque @empty para listas vacías, no requiere importar CommonModule y mejora el rendimiento gracias a la optimización del compilador. Migración: ng generate @angular/core:control-flow.",
+    "shortAnswer": "@if/@else, @for (track obligatorio), @switch/@case. Reemplaza NgIf/NgFor/NgSwitch. Sin imports. Mejor tipado. Bloque @empty para estados vacíos.",
     "keyPoints": [
-      "@for requires track expression \u2014 mandatory, prevents bugs",
-      "@if provides type narrowing: @if (user !== null) { user.name is string, not string|null }",
-      "@empty block inside @for for empty array state",
-      "No need to import NgIf, NgFor, NgSwitch, CommonModule",
-      "Angular Schematics: ng generate @angular/core:control-flow for auto-migration"
+      "@for requiere expresión track — obligatorio, previene bugs de rendimiento",
+      "@if proporciona 'type narrowing': si el usuario no es nulo, TS lo sabe dentro del bloque",
+      "Bloque @empty dentro de @for para cuando el array está vacío",
+      "No es necesario importar NgIf, NgFor o CommonModule",
+      "Uso de esquemáticos para la auto-migración"
     ],
     "followUps": [
       {
-        "question": "Why is track mandatory in @for?",
-        "answerHint": "track tells Angular how to identify items for DOM reconciliation. Without it, Angular would re-create all DOM elements on any change. Mandatory to prevent this common performance mistake."
+        "question": "¿Por qué track es obligatorio en @for?",
+        "answerHint": "Indica a Angular cómo identificar items para la reconciliación del DOM. Sin él, Angular recrearía todos los elementos ante cualquier cambio. Es obligatorio para evitar este error común de rendimiento."
       },
       {
-        "question": "What is the $index variable in @for?",
-        "answerHint": "@for provides implicit variables: $index (0-based position), $first, $last, $even, $odd, $count. Access as: @for (item of items; track item.id; let i = $index) { ... }"
+        "question": "¿Qué es la variable $index en @for?",
+        "answerHint": "@for proporciona variables implícitas: $index (posición), $first, $last, $even, $odd, $count. Se accede como: @for (item of items; track item.id; let i = $index)."
       }
     ],
     "mistakesToAvoid": [
-      "Forgetting track in @for \u2014 compilation error since it's mandatory",
-      "Using *ngIf and @if mixed in the same file \u2014 pick one style",
-      "Not handling @empty state \u2014 users see nothing for empty lists"
+      "Olvidar track en @for (error de compilación)",
+      "Mezclar *ngIf y @if en el mismo archivo (mejor elegir un estilo)",
+      "No manejar el estado @empty, dejando al usuario sin feedback visual"
     ]
   },
   {
@@ -467,31 +466,30 @@
     "topic": "angular",
     "subtopic": "Dependency Injection",
     "difficulty": "advanced",
-    "question": "How do you test Angular components and services with dependency injection?",
-    "interviewerIntent": "Testing with DI is practical daily work. Shows how well the candidate integrates Angular testing with DI concepts.",
-    "answer": "For services: pure unit test without Angular \u2014 create the service directly (new MyService(mockDep)), or use TestBed.configureTestingModule({ providers: [MyService, { provide: DepService, useValue: mockDep }] }). For components: TestBed.configureTestingModule({ imports: [MyComponent], providers: [{ provide: UserService, useValue: mockService }] }) then fixture = TestBed.createComponent(MyComponent). Use NO_ERRORS_SCHEMA for shallow rendering (ignores child component errors) or import child components. For services without Angular DI: prefer plain unit tests \u2014 much faster, no TestBed overhead. TestBed is most valuable for testing component/template interaction and lifecycle hooks.",
-    "shortAnswer": "Service: plain unit test (new Service(mock)) or TestBed. Component: TestBed with { provide: Dep, useValue: mock }. NO_ERRORS_SCHEMA for shallow. Prefer plain tests for pure logic.",
+    "question": "¿Cómo testeas componentes y servicios con inyección de dependencias en Angular?",
+    "interviewerIntent": "Testear con DI es el día a día. Evalúa cómo integra el candidato las pruebas con los conceptos de DI.",
+    "answer": "Para SERVICIOS: prueba unitaria pura sin Angular; crear el servicio directamente (new MyService(mockDep)) o usar TestBed.configureTestingModule({ providers: [MyService, { provide: Dep, useValue: mockDep }] }). Testear la lógica de negocio aislada es rápido y fiable. Para COMPONENTES: usar TestBed, proveer servicios mock, llamar a fixture.detectChanges() para renderizar y realizar aserciones sobre el DOM o interacciones. Para servicios sin DI de Angular: preferir pruebas unitarias planas, son mucho más rápidas y sin sobrecarga de TestBed. TestBed es valioso para probar la interacción con la plantilla y los ganchos de ciclo de vida.",
+    "shortAnswer": "Servicio: test unitario plano (new Service(mock)) o TestBed. Componente: TestBed con { provide: Dep, useValue: mock }. Preferir tests planos para lógica pura.",
     "keyPoints": [
-      "TestBed.configureTestingModule sets up the test injector",
-      "{ provide: RealService, useValue: mockService } overrides the provider",
-      "fixture.detectChanges() triggers ngOnInit and initial rendering",
-      "fixture.debugElement for component queries",
-      "HttpClientTestingModule + HttpTestingController for HTTP testing"
+      "TestBed.configureTestingModule configura el inyector de prueba",
+      "{ provide: RealService, useValue: mockService } sobrescribe el proveedor",
+      "fixture.detectChanges() dispara ngOnInit y el renderizado inicial",
+      "HttpClientTestingModule + HttpTestingController para pruebas HTTP"
     ],
     "followUps": [
       {
-        "question": "What is HttpClientTestingModule?",
-        "answerHint": "Replaces HttpClient with a mock backend. Use httpTestingController.expectOne('/api/users') to assert the request and flush(mockData) to return a response."
+        "question": "¿Qué es HttpClientTestingModule?",
+        "answerHint": "Reemplaza HttpClient con un backend mock. Usa httpTestingController.expectOne('/api/users') para validar la petición y flush(datos) para devolver una respuesta."
       },
       {
-        "question": "When would you use a spy service vs useValue in TestBed?",
-        "answerHint": "useValue for simple mocks (fixed return values). jasmine.createSpyObj or jest.fn() for spies that track calls and can return different values per test."
+        "question": "¿Cuándo usarías un spy frente a useValue en TestBed?",
+        "answerHint": "useValue para mocks simples (valores fijos). jasmine.createSpyObj o jest.fn() para espías que rastrean llamadas y pueden devolver diferentes valores por test."
       }
     ],
     "mistakesToAvoid": [
-      "Using real services in component tests \u2014 tests become integration tests, slow and brittle",
-      "Forgetting fixture.detectChanges() \u2014 component not initialized, template not rendered",
-      "Not calling TestBed.configureTestingModule before each test \u2014 state leaks between tests"
+      "Usar servicios reales en tests de componentes (se vuelven lentos y frágiles)",
+      "Olvidar fixture.detectChanges(); el componente no se inicializa ni se renderiza",
+      "No llamar a TestBed.configureTestingModule antes de cada test"
     ]
   },
   {
@@ -500,9 +498,9 @@
     "topic": "angular",
     "subtopic": "Signals vs RxJS",
     "difficulty": "senior",
-    "question": "When should you use a Signal and when should you use an Observable?",
-    "interviewerIntent": "Test Signal vs Observable judgment",
-    "answer": "I use Signals primarily for synchronous application and UI state.\n\nI use Observables for asynchronous event streams such as HTTP composition, WebSockets, debouncing and cancellation.\n\nThey are complementary. I can transform an Observable into a Signal at the component boundary, but I avoid converting back and forth without a clear reason.",
+    "question": "¿Cuándo deberías usar un Signal y cuándo un Observable?",
+    "interviewerIntent": "Probar el juicio sobre Signals vs Observables",
+    "answer": "Uso Signals principalmente para el estado síncrono de la aplicación y la interfaz de usuario.\n\nUso Observables para flujos de eventos asíncronos como la composición de peticiones HTTP, WebSockets, el uso de debounce y la cancelación.\n\nSon complementarios. Puedo transformar un Observable en un Signal en la frontera del componente, pero evito convertir de un lado a otro sin una razón clara.",
     "tags": [
       "interview-prep",
       "senior-level"
@@ -514,9 +512,9 @@
     "topic": "angular",
     "subtopic": "RxJS",
     "difficulty": "senior",
-    "question": "Why is switchMap commonly used in search fields?",
-    "interviewerIntent": "Verify RxJS operator understanding",
-    "answer": "`switchMap` unsubscribes from the previous inner observable when a new value arrives.\n\nFor a search field, this prevents an older, slower request from overwriting the result of a more recent query.",
+    "question": "¿Por qué es común usar switchMap en los campos de búsqueda?",
+    "interviewerIntent": "Verificar la comprensión de los operadores de RxJS",
+    "answer": "`switchMap` cancela la suscripción del observable interno anterior cuando llega un nuevo valor.\n\nEn un campo de búsqueda, esto evita que una petición más antigua y lenta sobrescriba el resultado de una consulta más reciente.",
     "tags": [
       "interview-prep",
       "senior-level"
@@ -528,9 +526,9 @@
     "topic": "angular",
     "subtopic": "Change Detection",
     "difficulty": "senior",
-    "question": "What causes unnecessary Angular change detection?",
-    "interviewerIntent": "Check performance optimization knowledge",
-    "answer": "Common causes include mutable shared state, expensive template expressions, unstable object references and broad subscriptions.\n\nI reduce it using immutable updates, computed state, appropriate component boundaries, track expressions in loops and by avoiding functions with heavy work directly in templates.",
+    "question": "¿Qué causa una detección de cambios innecesaria en Angular?",
+    "interviewerIntent": "Comprobar conocimientos de optimización de rendimiento",
+    "answer": "Las causas comunes incluyen el estado compartido mutable, expresiones costosas en las plantillas, referencias de objetos inestables y suscripciones demasiado amplias.\n\nLo reduzco usando actualizaciones inmutables, estado computado, límites de componentes adecuados, expresiones de 'track' en los bucles y evitando funciones con trabajo pesado directamente en las plantillas.",
     "tags": [
       "interview-prep",
       "senior-level"
@@ -542,9 +540,9 @@
     "topic": "angular",
     "subtopic": "Security",
     "difficulty": "senior",
-    "question": "Is [innerHTML] safe in Angular?",
-    "interviewerIntent": "Test frontend security awareness",
-    "answer": "Angular sanitizes untrusted HTML in supported contexts, but `[innerHTML]` still requires care.\n\nI would not use `bypassSecurityTrustHtml` for arbitrary user input. For Markdown, I would use a well-maintained parser, disable raw HTML unless required and apply an explicit sanitization policy.",
+    "question": "¿Es seguro usar [innerHTML] en Angular?",
+    "interviewerIntent": "Evaluar la conciencia sobre seguridad frontend",
+    "answer": "Angular sanitiza el HTML no confiable en los contextos soportados, pero `[innerHTML]` requiere precaución.\n\nNo usaría `bypassSecurityTrustHtml` para entradas de usuario arbitrarias. Para Markdown, usaría un parser bien mantenido, desactivaría el HTML puro a menos que fuera necesario y aplicaría una política de sanitización explícita.",
     "tags": [
       "interview-prep",
       "senior-level"
@@ -556,35 +554,30 @@
     "topic": "angular",
     "subtopic": "ng-forms",
     "difficulty": "intermediate",
-    "question": "What is the difference between Template-Driven Forms and Reactive Forms in Angular? When do you choose each?",
-    "interviewerIntent": "Forms are used in virtually every Angular app. Tests practical knowledge and judgment about the right abstraction for the context.",
-    "answer": "Template-Driven Forms are configured in the HTML template using directives like ngModel. Reactive Forms are configured in TypeScript using FormControl, FormGroup, and FormArray \u2014 the template is just a binding. Key differences: Reactive Forms are synchronous (you can access the form value at any time in code), testable without a DOM, and give you full control over validation logic. Template-Driven Forms are simpler for basic forms but harder to test and difficult to implement dynamic fields or complex cross-field validation. For anything beyond a simple login form or search filter, Reactive Forms are the right choice. With Angular 14+, typed forms add compile-time type safety: FormGroup<{ email: FormControl<string>; age: FormControl<number> }> \u2014 form.value.email is string, not any.",
-    "shortAnswer": "Template-Driven: simple, ngModel in HTML, implicit model. Reactive: TypeScript-first, explicit FormGroup/FormControl, synchronous, testable. Choose Reactive for anything beyond trivial forms.",
+    "question": "¿Cuál es la diferencia entre Template-Driven Forms y Reactive Forms en Angular? ¿Cuándo eliges cada uno?",
+    "interviewerIntent": "Los formularios se usan en casi todas las apps. Evalúa el conocimiento práctico y el juicio sobre la abstracción adecuada.",
+    "answer": "Los Template-Driven Forms se configuran en el HTML usando directivas como ngModel. Los Reactive Forms se configuran en TypeScript usando FormControl, FormGroup y FormArray; la plantilla es solo un binding. Diferencias clave: los Reactive Forms son síncronos (acceso al valor en cualquier momento), testeables sin DOM y dan control total sobre la lógica de validación. Los Template-Driven son más simples para formularios básicos pero difíciles de testear y de manejar campos dinámicos o validaciones cruzadas complejas. Para cualquier cosa más allá de un login simple, los Reactive Forms son la elección correcta. Con Angular 14+, los formularios tipados añaden seguridad en tiempo de compilación: FormGroup<{ email: FormControl<string> }> asegura que el valor sea un string.",
+    "shortAnswer": "Template-Driven: simple, ngModel en el HTML, modelo implícito. Reactive: primero TypeScript, FormGroup/FormControl explícitos, síncronos, testeables. Elige Reactive para formularios no triviales.",
     "keyPoints": [
-      "FormControl = single field. FormGroup = related fields. FormArray = dynamic list of fields.",
-      "form.valueChanges returns an Observable \u2014 pipe with debounceTime for live validation",
-      "Validators.required, Validators.email, custom validators as plain functions",
-      "Cross-field validation: add a validator to the FormGroup, not individual controls",
-      "Typed Forms (Angular 14+): FormControl<string> prevents accessing .value as any"
+      "FormControl = un campo. FormGroup = campos relacionados. FormArray = lista dinámica.",
+      "form.valueChanges es un Observable; usar pipe con debounceTime para validación en vivo",
+      "Validación cruzada: añadir el validador al FormGroup, no a controles individuales",
+      "Formularios tipados (Angular 14+): evitan acceder a .value como 'any'"
     ],
     "followUps": [
       {
-        "question": "How do you implement a custom validator in Reactive Forms?",
-        "answerHint": "A validator is a function (control: AbstractControl): ValidationErrors | null. Return null if valid, { myError: true } if invalid. Add as second argument to new FormControl('', [myValidator]) or to FormGroup for cross-field."
+        "question": "¿Cómo implementas un validador personalizado en Reactive Forms?",
+        "answerHint": "Es una función (control: AbstractControl): ValidationErrors | null. Devuelve null si es válido o { error: true } si no lo es. Se añade como argumento al crear el control."
       },
       {
-        "question": "How do you handle a form with a dynamic number of fields (e.g., add/remove phone numbers)?",
-        "answerHint": "FormArray \u2014 an array of FormControls or FormGroups. this.phones = new FormArray([]). addPhone() pushes a new FormControl. Template: @for (ctrl of phones.controls; track $index) { <input [formControl]=\"ctrl\"> }."
-      },
-      {
-        "question": "How do you reset a form after submission?",
-        "answerHint": "form.reset() clears all values and resets touched/dirty state. form.reset({ email: '' }) resets with specific values. This also clears validation error display."
+        "question": "¿Cómo manejas un formulario con número dinámico de campos (ej. añadir teléfonos)?",
+        "answerHint": "Usando FormArray. Es un array de FormControls/Groups. this.phones.push(new FormControl()). En la plantilla se itera con @for sobre phones.controls."
       }
     ],
     "mistakesToAvoid": [
-      "Using Template-Driven Forms for complex validation or dynamic fields \u2014 quickly becomes unmanageable",
-      "Accessing form.value without checking form.valid \u2014 processes invalid data",
-      "Not using typed Forms (Angular 14+) \u2014 loses compile-time type safety for form values"
+      "Usar Template-Driven para validaciones complejas; se vuelve inmanejable rápido",
+      "Acceder a form.value sin comprobar form.valid",
+      "No usar formularios tipados, perdiendo la seguridad de TypeScript en los valores"
     ]
   },
   {
@@ -593,15 +586,14 @@
     "topic": "angular",
     "subtopic": "ng-forms",
     "difficulty": "intermediate",
-    "question": "Which of the following is INVALID or incorrect when using Angular Reactive Forms?",
+    "question": "¿Cuál de las siguientes afirmaciones es INVÁLIDA o incorrecta al usar Angular Reactive Forms?",
     "answer": "D",
     "keyPoints": [
-      "form.setValue() requires ALL fields. form.patchValue() updates only the provided fields.",
-      "Template updates automatically when form value changes \u2014 no manual detection needed",
-      "form.valueChanges is an Observable \u2014 subscribe to react to changes programmatically",
-      "Typed FormControl<string> ensures form.value.name is string, not string|null unless explicitly typed as FormControl<string|null>"
+      "form.setValue() requiere TODOS los campos. form.patchValue() actualiza solo los enviados.",
+      "La plantilla se actualiza automáticamente al cambiar el valor; no requiere detección manual",
+      "form.valueChanges es un Observable para reaccionar a cambios programáticamente"
     ],
-    "explain": "D is invalid. Reactive Forms are synchronous and automatically update the template binding when you call form.setValue() or form.patchValue(). There is no form.detectChanges() \u2014 that method belongs to ChangeDetectorRef and is unrelated to form updates. The form template bindings react immediately to value changes without any manual trigger.",
+    "explain": "La opción D es inválida. Los Reactive Forms son síncronos y actualizan automáticamente el binding de la plantilla al llamar a setValue() o patchValue(). No existe form.detectChanges(); ese método pertenece a ChangeDetectorRef y no está relacionado con la actualización de formularios. Los bindings reaccionan inmediatamente sin disparadores manuales.",
     "choices": [
       {
         "id": "A",
@@ -613,11 +605,11 @@
       },
       {
         "id": "C",
-        "text": "new FormControl<string>('') gives you compile-time type checking on form.value."
+        "text": "new FormControl<string>('') permite la comprobación de tipos en tiempo de compilación sobre form.value."
       },
       {
         "id": "D",
-        "text": "You must call form.detectChanges() after calling form.setValue() to update the template."
+        "text": "Debes llamar a form.detectChanges() tras llamar a form.setValue() para actualizar la plantilla."
       }
     ]
   },
@@ -627,36 +619,32 @@
     "topic": "angular",
     "subtopic": "ng-testing",
     "difficulty": "intermediate",
-    "question": "What is your testing strategy for Angular applications? How do you decide between unit tests, component tests, and integration tests?",
-    "interviewerIntent": "Testing is a real daily practice. Assess whether the candidate has a coherent strategy or just writes tests to pass coverage thresholds.",
-    "answer": "I follow the testing pyramid \u2014 most tests are unit tests (fast, isolated, no DOM), a smaller set are component integration tests (template + logic, TestBed), and a minimal set are E2E (critical user journeys only).\n\nFor SERVICES: I test without TestBed whenever possible. A service with injected dependencies: create it directly with mocked dependencies (new MyService(mockDep)) or use TestBed only when the service has complex DI needs. Testing the business logic in isolation is fast and reliable.\n\nFor COMPONENTS: I use TestBed. I provide mock services, call fixture.detectChanges() to trigger rendering, and assert template output and user interactions. I use componentFixture.debugElement.query(By.css('.submit-btn')).nativeElement.click() to simulate interactions. For signal-based components, testing is simpler \u2014 set signal values and assert computed values or template output.\n\nFor PIPES and DIRECTIVES: always unit test without TestBed \u2014 these are pure transformations.\n\nFor FORMS: test FormGroup creation, validators, and valueChanges in isolation. No DOM needed for the logic.\n\nWhat I don't test: Angular itself (RouterModule, HttpClient) \u2014 I mock those. Component wiring that's already tested by the framework.\n\nMy rule: if a test is slow, it's testing too much. Services should test in milliseconds. Component tests in <100ms. If a test needs a full application bootstrap, it's probably an E2E.",
-    "shortAnswer": "Services: unit test without TestBed. Components: TestBed with mocked services. Pipes/Directives: pure unit. Forms: test logic without DOM. E2E: critical paths only. Slow test = tests too much.",
+    "question": "¿Cuál es tu estrategia de pruebas en Angular? ¿Cómo decides entre tests unitarios, de componente e integración?",
+    "interviewerIntent": "Evaluar si el candidato tiene una estrategia coherente de testing o solo busca cumplir cuotas de cobertura.",
+    "answer": "Sigo la pirámide de pruebas: la mayoría son tests unitarios (rápidos, aislados, sin DOM), un grupo menor de integración de componentes (plantilla + lógica, TestBed) y un mínimo de E2E (flujos críticos). Para SERVICIOS: pruebo sin TestBed siempre que puedo, instanciando la clase con mocks (new Service(mock)). Es más rápido y fiable. Para COMPONENTES: uso TestBed con servicios mock, llamo a fixture.detectChanges() para renderizar y verifico el DOM o las interacciones del usuario. Para PIPES y DIRECTIVAS: siempre test unitario plano, son transformaciones puras. Para FORMULARIOS: pruebo la creación del FormGroup y sus validadores de forma aislada, sin necesidad de DOM. Mi regla: si un test es lento, está probando demasiado. Los servicios deben tardar milisegundos; los componentes, menos de 100ms.",
+    "shortAnswer": "Servicios: test unitario sin TestBed. Componentes: TestBed con servicios mock. Pipes/Directivas: unitarios puros. Formularios: probar lógica sin DOM. E2E: solo caminos críticos. Test lento = error de estrategia.",
     "keyPoints": [
-      "TestBed.configureTestingModule({ imports: [MyComponent], providers: [{ provide: Svc, useValue: mock }] })",
-      "fixture.detectChanges() \u2014 triggers ngOnInit and initial rendering",
-      "By.css() selector for querying the template",
-      "HttpClientTestingModule + HttpTestingController for HTTP in component tests",
-      "Signal-based components: set signal in test, assert computed output"
+      "TestBed.configureTestingModule para configurar el inyector de pruebas",
+      "fixture.detectChanges() dispara el renderizado y ngOnInit",
+      "Selectores By.css() para consultar la plantilla",
+      "HttpClientTestingModule para simular el backend en pruebas",
+      "Componentes basados en signals: cambiar el signal en el test y verificar el resultado"
     ],
     "followUps": [
       {
-        "question": "How do you test a component that uses signals?",
-        "answerHint": "Inject the service, set its signals via service methods (or mock the service to return specific signal values), then call fixture.detectChanges() and assert the template output. Signals are synchronous \u2014 no async needed."
+        "question": "¿Cómo pruebas un componente que usa signals?",
+        "answerHint": "Inyectas el servicio, estableces el valor del signal a través de sus métodos, llamas a fixture.detectChanges() y verificas la salida en la plantilla. Los signals son síncronos, por lo que el test es directo."
       },
       {
-        "question": "What is NO_ERRORS_SCHEMA and when is it appropriate?",
-        "answerHint": "NO_ERRORS_SCHEMA suppresses errors for unknown elements and attributes in the template (child components, external components). Use for shallow rendering \u2014 you want to test THIS component, not its children. Downside: you won't catch template errors from bad bindings."
-      },
-      {
-        "question": "How do you test a debounced search (debounceTime) in a component?",
-        "answerHint": "Use fakeAsync() + tick(300) to advance the virtual clock. fakeAsync wraps the test, tick(ms) simulates time passage, then run detectChanges and assert the result."
+        "question": "¿Qué es NO_ERRORS_SCHEMA y cuándo es apropiado?",
+        "answerHint": "Suprime errores por elementos desconocidos en la plantilla (componentes hijos/externos). Útil para renderizado superficial (shallow rendering) cuando solo quieres probar EL componente actual, no sus hijos."
       }
     ],
     "mistakesToAvoid": [
-      "Not calling fixture.detectChanges() \u2014 component not initialized, template not rendered",
-      "Testing Angular framework behavior (routing, HttpClient) instead of your logic",
-      "Writing tests that pass regardless of implementation (testing mocks, not real behavior)",
-      "Skipping tests for components because 'it's just a template' \u2014 template bugs are real bugs"
+      "No llamar a fixture.detectChanges(); el componente no se inicializa",
+      "Probar el comportamiento del framework (routing, HttpClient) en lugar de tu lógica",
+      "Escribir tests que pasan siempre (probar mocks en lugar de comportamiento real)",
+      "Saltarse tests de componentes pensando que 'es solo una plantilla'; los bugs de plantillas existen"
     ]
   }
 ]

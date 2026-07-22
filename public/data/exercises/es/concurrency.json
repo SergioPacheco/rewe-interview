@@ -3,16 +3,16 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "inter",
     "subtopic": "Thread Safety",
-    "mission": "Two threads call <code>increment()</code> 1000 times each simultaneously. What is the final value of count?",
-    "code": "public class DeliveryCounter {\n    private int count = 0;\n\n    public void increment() {\n        count++;  // read \u2192 add \u2192 write (3 operations, NOT atomic)\n    }\n\n    public int getCount() {\n        return count;\n    }\n}\n\n// Thread A: for(i=0; i<1000; i++) counter.increment();\n// Thread B: for(i=0; i<1000; i++) counter.increment();",
+    "mission": "Dos hilos llaman a <code>increment()</code> 1000 veces cada uno simultáneamente. ¿Cuál es el valor final de count?",
+    "code": "public class DeliveryCounter {\n    private int count = 0;\n\n    public void increment() {\n        count++;  // lectura \u2192 suma \u2192 escritura (3 operaciones, NO es atómico)\n    }\n\n    public int getCount() {\n        return count;\n    }\n}\n\n// Hilo A: for(i=0; i<1000; i++) counter.increment();\n// Hilo B: for(i=0; i<1000; i++) counter.increment();",
     "choices": [
-      "Always 2000",
-      "Between 1000 and 2000 (unpredictable)",
-      "Always 1000",
-      "Throws ConcurrentModificationException"
+      "Siempre 2000",
+      "Entre 1000 y 2000 (impredecible)",
+      "Siempre 1000",
+      "Lanza ConcurrentModificationException"
     ],
-    "answer": "Between 1000 and 2000 (unpredictable)",
-    "explain": "count++ is NOT atomic. It's read-increment-write (3 steps). Two threads can read the same value, both increment to the same result, and one update is lost. This is called a \"lost update\" race condition. Fix: use AtomicInteger.incrementAndGet() or synchronized.",
+    "answer": "Entre 1000 y 2000 (impredecible)",
+    "explain": "count++ NO es atómico. Es una operación de tres pasos: lectura-incremento-escritura. Dos hilos pueden leer el mismo valor, ambos incrementarlo al mismo resultado y una actualización se pierde. Esto se llama condición de carrera de \"actualización perdida\" (lost update). Solución: usar AtomicInteger.incrementAndGet() o synchronized.",
     "topic": "concurrency",
     "id": "concurrency-thread-safety-01"
   },
@@ -20,23 +20,23 @@
     "type": "DESIGN_DECISION",
     "difficulty": "inter",
     "subtopic": "Thread Safety",
-    "question": "A Spring @Service (singleton) needs a counter that tracks total deliveries processed today. Multiple request threads call it simultaneously. How do you implement it?",
+    "question": "Un @Service de Spring (singleton) necesita un contador para rastrear el total de entregas procesadas hoy. Múltiples hilos de peticiones lo llaman simultáneamente. ¿Cómo lo implementas?",
     "options": [
       {
-        "label": "A) private int count field with synchronized increment()",
-        "description": "Lock-based thread safety on a mutable field."
+        "label": "A) Un campo privado int con el método increment() sincronizado (synchronized)",
+        "description": "Seguridad de hilos basada en bloqueos (locks) sobre un campo mutable."
       },
       {
         "label": "B) private AtomicInteger count = new AtomicInteger(0)",
-        "description": "Lock-free atomic operations via CAS (Compare-And-Swap)."
+        "description": "Operaciones atómicas sin bloqueos (lock-free) mediante CAS (Compare-And-Swap)."
       },
       {
-        "label": "C) private int count field (no synchronization needed \u2014 Spring handles it)",
-        "description": "Rely on Spring to make singletons thread-safe."
+        "label": "C) Un campo privado int (no se necesita sincronización, Spring lo gestiona)",
+        "description": "Confiar en que Spring hace que los singletons sean seguros para hilos."
       }
     ],
     "bestOption": 1,
-    "explanation": "AtomicInteger is the correct choice:\n\n```java\n@Service\npublic class DeliveryMetrics {\n    private final AtomicInteger todayCount = new AtomicInteger(0);\n\n    public void recordDelivery() {\n        todayCount.incrementAndGet(); // atomic, lock-free, thread-safe\n    }\n\n    public int getTodayCount() {\n        return todayCount.get();\n    }\n}\n```\n\nWhy NOT C: Spring does NOT make singletons thread-safe. It creates ONE instance shared across ALL request threads. YOU are responsible for thread safety of mutable state.\n\nWhy B over A: AtomicInteger uses CPU-level CAS (no lock, no context switch). synchronized blocks threads. For a simple counter, atomic is simpler and faster.\n\nUse synchronized when: you need to protect a compound operation (read + decide + write) that AtomicInteger can't express in one call.",
+    "explanation": "AtomicInteger es la elección correcta:\n\n```java\n@Service\npublic class DeliveryMetrics {\n    private final AtomicInteger todayCount = new AtomicInteger(0);\n\n    public void recordDelivery() {\n        todayCount.incrementAndGet(); // atómico, sin bloqueos, seguro para hilos\n    }\n\n    public int getTodayCount() {\n        return todayCount.get();\n    }\n}\n```\n\nPor qué NO C: Spring NO hace que los singletons sean seguros para hilos. Crea UNA instancia compartida entre TODOS los hilos de peticiones. TÚ eres responsable de la seguridad de hilos del estado mutable.\n\nPor qué B sobre A: AtomicInteger usa CAS a nivel de CPU (sin bloqueos ni cambios de contexto). synchronized bloquea los hilos. Para un contador simple, atomic es más sencillo y rápido.\n\nUsa synchronized cuando: necesites proteger una operación compuesta (leer + decidir + escribir) que AtomicInteger no pueda expresar en una sola llamada.",
     "tags": [
       "atomic",
       "singleton",
@@ -49,9 +49,9 @@
     "type": "ORAL_ANSWER",
     "difficulty": "senior",
     "subtopic": "CompletableFuture",
-    "question": "You need to call 3 independent services (route, driver, weather) to dispatch a delivery. Each takes 100-300ms. How do you parallelize?",
-    "modelAnswer": "```java\n@Service\npublic class DispatchService {\n\n    private final Executor executor; // injected ManagedExecutorService\n\n    public DispatchResult dispatch(Long deliveryId) {\n        // Launch 3 calls in PARALLEL\n        var routeFuture = CompletableFuture\n            .supplyAsync(() -> routeService.optimize(deliveryId), executor);\n        var driverFuture = CompletableFuture\n            .supplyAsync(() -> driverService.findAvailable(region), executor);\n        var weatherFuture = CompletableFuture\n            .supplyAsync(() -> weatherService.forecast(region), executor);\n\n        // Wait for ALL with timeout\n        CompletableFuture.allOf(routeFuture, driverFuture, weatherFuture)\n            .orTimeout(5, TimeUnit.SECONDS)\n            .join();\n\n        // Combine results\n        return new DispatchResult(\n            routeFuture.join(),\n            driverFuture.join(),\n            weatherFuture.join()\n        );\n    }\n}\n```\n\n**Sequential:** 100 + 200 + 300 = 600ms\n**Parallel:** max(100, 200, 300) = 300ms \u2014 2x faster!\n\nKey rules:\n\u2022 ALWAYS pass an executor (never ForkJoinPool in a server)\n\u2022 ALWAYS set timeout (orTimeout or completeOnTimeout)\n\u2022 Handle exceptions per future (exceptionally) or globally\n\u2022 Don't create unbounded parallelism (limit concurrent calls)",
-    "followUp": "What happens if the weather service is down? How do you handle partial failures?",
+    "question": "Necesitas llamar a 3 servicios independientes (ruta, conductor, clima) para despachar una entrega. Cada uno tarda entre 100-300ms. ¿Cómo los paralelrizas?",
+    "modelAnswer": "```java\n@Service\npublic class DispatchService {\n\n    private final Executor executor; // ManagedExecutorService inyectado\n\n    public DispatchResult dispatch(Long deliveryId) {\n        // Lanzar 3 llamadas en PARALELO\n        var routeFuture = CompletableFuture\n            .supplyAsync(() -> routeService.optimize(deliveryId), executor);\n        var driverFuture = CompletableFuture\n            .supplyAsync(() -> driverService.findAvailable(region), executor);\n        var weatherFuture = CompletableFuture\n            .supplyAsync(() -> weatherService.forecast(region), executor);\n\n        // Esperar a TODOS con un tiempo de espera (timeout)\n        CompletableFuture.allOf(routeFuture, driverFuture, weatherFuture)\n            .orTimeout(5, TimeUnit.SECONDS)\n            .join();\n\n        // Combinar resultados\n        return new DispatchResult(\n            routeFuture.join(),\n            driverFuture.join(),\n            weatherFuture.join()\n        );\n    }\n}\n```\n\n**Secuencial:** 100 + 200 + 300 = 600ms\n**Paralelo:** max(100, 200, 300) = 300ms \u2014 ¡2 veces más rápido!\n\nReglas clave:\n\u2022 SIEMPRE pasa un executor (nunca uses ForkJoinPool.commonPool en un servidor)\n\u2022 SIEMPRE establece un timeout (orTimeout o completeOnTimeout)\n\u2022 Maneja excepciones por cada future (exceptionally) o globalmente\n\u2022 No crees un paralelismo sin límites (limita las llamadas concurrentes)",
+    "followUp": "¿Qué sucede si el servicio de clima está caído? ¿Cómo manejas fallos parciales?",
     "tags": [
       "completable-future",
       "parallel",
@@ -64,16 +64,16 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "inter",
     "subtopic": "CompletableFuture",
-    "mission": "What does this print?",
+    "mission": "¿Qué imprime este código?",
     "code": "CompletableFuture<String> future = CompletableFuture\n    .supplyAsync(() -> {\n        System.out.println(\"1-computing\");\n        return \"REWE\";\n    })\n    .thenApply(s -> {\n        System.out.println(\"2-transforming\");\n        return s + \" Digital\";\n    })\n    .thenApply(s -> {\n        System.out.println(\"3-finalizing\");\n        return s + \" Spain\";\n    });\n\nSystem.out.println(\"4-before-join\");\nString result = future.join();\nSystem.out.println(\"5-result: \" + result);",
     "choices": [
       "1\u21922\u21923\u21924\u21925: REWE Digital Spain",
       "4\u21921\u21922\u21923\u21925: REWE Digital Spain",
-      "Either order for 1-2-3 vs 4, then 5",
-      "4\u21925: REWE Digital Spain (1-2-3 skip)"
+      "Cualquier orden entre 1-2-3 frente a 4, luego el 5",
+      "4\u21925: REWE Digital Spain (se saltan 1-2-3)"
     ],
-    "answer": "Either order for 1-2-3 vs 4, then 5",
-    "explain": "supplyAsync runs on another thread. The main thread continues to print \"4-before-join\". Whether 1-2-3 complete before or after 4 depends on thread scheduling. But join() blocks until all stages complete, so 5 always prints last with the correct result \"REWE Digital Spain\". The thenApply chain is sequential within the async thread.",
+    "answer": "Cualquier orden entre 1-2-3 frente a 4, luego el 5",
+    "explain": "supplyAsync se ejecuta en otro hilo. El hilo principal continúa para imprimir \"4-before-join\". Si los pasos 1-2-3 se completan antes o después del 4 depende de la planificación de hilos del SO. Sin embargo, join() bloquea hasta que todas las etapas terminan, por lo que el 5 siempre se imprime al final con el resultado correcto \"REWE Digital Spain\". La cadena thenApply es secuencial dentro del hilo asíncrono.",
     "topic": "concurrency",
     "id": "concurrency-completablefuture-04"
   },
@@ -81,9 +81,9 @@
     "type": "ORAL_ANSWER",
     "difficulty": "senior",
     "subtopic": "Thread Pools",
-    "question": "How do you size a thread pool? What are the risks of getting it wrong?",
-    "modelAnswer": "**Formula (rule of thumb):**\n```\nCPU-bound tasks: threads = CPU cores\nI/O-bound tasks: threads = cores \u00d7 (1 + waitTime / computeTime)\n```\n\n**Example:** 8 cores, tasks spend 80% waiting (REST calls, DB queries):\nthreads = 8 \u00d7 (1 + 0.8/0.2) = 8 \u00d7 5 = 40 threads\n\n**Too FEW threads:**\n\u2022 Requests queue up waiting for a thread\n\u2022 Latency increases under load\n\u2022 Throughput limited artificially\n\n**Too MANY threads:**\n\u2022 Context switching overhead (OS spends time switching, not working)\n\u2022 Memory wasted (each thread ~1MB stack)\n\u2022 Database connections exhausted (each thread may hold one)\n\u2022 Can overwhelm downstream services\n\n**In Spring Boot:**\n```yaml\nserver.tomcat.threads.max: 200  # max request threads\nserver.tomcat.threads.min-spare: 10\n```\n\n**For async task executor:**\n```java\n@Bean\npublic Executor taskExecutor() {\n    var executor = new ThreadPoolTaskExecutor();\n    executor.setCorePoolSize(10);\n    executor.setMaxPoolSize(20);\n    executor.setQueueCapacity(100);\n    executor.setRejectedExecutionHandler(new CallerRunsPolicy());\n    return executor;\n}\n```\n\nCallerRunsPolicy = if pool is full, the calling thread executes the task (back-pressure).",
-    "followUp": "What happens when both the thread pool AND the queue are full?",
+    "question": "¿Cómo dimensionas un pool de hilos? ¿Cuáles son los riesgos de hacerlo mal?",
+    "modelAnswer": "**Fórmula (regla general):**\n```\nTareas CPU-bound: hilos = núcleos de CPU\nTareas I/O-bound: hilos = núcleos \u00d7 (1 + tiempoEspera / tiempoComputo)\n```\n\n**Ejemplo:** 8 núcleos, las tareas pasan el 80% esperando (llamadas REST, queries a BD):\nhilos = 8 \u00d7 (1 + 0.8/0.2) = 8 \u00d7 5 = 40 hilos\n\n**Pocos hilos (Too FEW):**\n\u2022 Las peticiones se encolan esperando un hilo\n\u2022 La latencia aumenta bajo carga\n\u2022 El rendimiento (throughput) se limita artificialmente\n\n**Demasiados hilos (Too MANY):**\n\u2022 Sobrecarga por cambio de contexto (el SO gasta tiempo cambiando, no trabajando)\n\u2022 Desperdicio de memoria (cada hilo consume ~1MB de stack)\n\u2022 Agotamiento de conexiones de BD (cada hilo puede retener una)\n\u2022 Puede saturar servicios externos (downstream)\n\n**En Spring Boot:**\n```yaml\nserver.tomcat.threads.max: 200  # hilos máximos para peticiones\nserver.tomcat.threads.min-spare: 10\n```\n\n**Para un ejecutor de tareas asíncronas:**\n```java\n@Bean\npublic Executor taskExecutor() {\n    var executor = new ThreadPoolTaskExecutor();\n    executor.setCorePoolSize(10);\n    executor.setMaxPoolSize(20);\n    executor.setQueueCapacity(100);\n    executor.setRejectedExecutionHandler(new CallerRunsPolicy());\n    return executor;\n}\n```\n\nCallerRunsPolicy = si el pool está lleno, el hilo que hace la llamada ejecuta la tarea (mecanismo de contrapresión o back-pressure).",
+    "followUp": "¿Qué sucede cuando tanto el pool de hilos como la cola están llenos?",
     "tags": [
       "thread-pool",
       "sizing",
@@ -96,7 +96,7 @@
     "type": "CODE_REFACTOR",
     "difficulty": "senior",
     "subtopic": "Thread Safety",
-    "question": "What problems do you see in this singleton cache?",
+    "question": "¿Qué problemas ves en esta caché tipo singleton?",
     "code": "@Service\npublic class RouteCache {\n    private Map<String, Route> cache = new HashMap<>();\n    private LocalDateTime lastRefresh = LocalDateTime.now();\n\n    public Route getRoute(String routeId) {\n        if (!cache.containsKey(routeId)) {\n            Route route = routeService.fetch(routeId);\n            cache.put(routeId, route);\n        }\n        return cache.get(routeId);\n    }\n\n    public void refresh() {\n        cache = new HashMap<>();\n        lastRefresh = LocalDateTime.now();\n    }\n}",
     "tags": [
       "concurrent-hashmap",
@@ -105,23 +105,23 @@
     ],
     "topic": "concurrency",
     "id": "concurrency-thread-safety-06",
-    "answer": "**Refactored:**\n```java\n@Service\npublic class RouteCache {\n    private final ConcurrentHashMap<String, Route> cache = new ConcurrentHashMap<>();\n    private volatile LocalDateTime lastRefresh = LocalDateTime.now();\n\n    public Route getRoute(String routeId) {\n        // computeIfAbsent is ATOMIC \u2014 no race condition\n        return cache.computeIfAbsent(routeId, id -> routeService.fetch(id));\n    }\n\n    public void refresh() {\n        cache.clear();\n        lastRefresh = LocalDateTime.now();\n    }\n\n    // Add TTL check\n    public Route getRouteWithTTL(String routeId, Duration ttl) {\n        // Check age, evict if stale, then compute\n        return cache.compute(routeId, (id, existing) -> {\n            if (existing != null && !isExpired(existing, ttl)) return existing;\n            return routeService.fetch(id);\n        });\n    }\n}\n```\n\n**Problems:** HashMap is NOT thread-safe \u2014 concurrent reads/writes cause ConcurrentModificationException or corruption; containsKey + put is not atomic \u2014 two threads may both fetch and put (race condition); Field reassignment in refresh() is not atomic with lastRefresh update; No TTL or max size \u2014 cache grows unbounded; Route objects may be mutable \u2014 shared across threads without protection",
-    "refactoredCode": "@Service\npublic class RouteCache {\n    private final ConcurrentHashMap<String, Route> cache = new ConcurrentHashMap<>();\n    private volatile LocalDateTime lastRefresh = LocalDateTime.now();\n\n    public Route getRoute(String routeId) {\n        // computeIfAbsent is ATOMIC \u2014 no race condition\n        return cache.computeIfAbsent(routeId, id -> routeService.fetch(id));\n    }\n\n    public void refresh() {\n        cache.clear();\n        lastRefresh = LocalDateTime.now();\n    }\n\n    // Add TTL check\n    public Route getRouteWithTTL(String routeId, Duration ttl) {\n        // Check age, evict if stale, then compute\n        return cache.compute(routeId, (id, existing) -> {\n            if (existing != null && !isExpired(existing, ttl)) return existing;\n            return routeService.fetch(id);\n        });\n    }\n}",
+    "answer": "**Refactorizado:**\n```java\n@Service\npublic class RouteCache {\n    private final ConcurrentHashMap<String, Route> cache = new ConcurrentHashMap<>();\n    private volatile LocalDateTime lastRefresh = LocalDateTime.now();\n\n    public Route getRoute(String routeId) {\n        // computeIfAbsent es ATÓMICO \u2014 evita condiciones de carrera\n        return cache.computeIfAbsent(routeId, id -> routeService.fetch(id));\n    }\n\n    public void refresh() {\n        cache.clear();\n        lastRefresh = LocalDateTime.now();\n    }\n\n    // Añadir verificación de TTL\n    public Route getRouteWithTTL(String routeId, Duration ttl) {\n        return cache.compute(routeId, (id, existing) -> {\n            if (existing != null && !isExpired(existing, ttl)) return existing;\n            return routeService.fetch(id);\n        });\n    }\n}\n```\n\n**Problemas:** HashMap NO es seguro para hilos (lecturas/escrituras concurrentes causan ConcurrentModificationException o corrupción); containsKey + put no es atómico (dos hilos pueden intentar traer y guardar el dato a la vez); La reasignación del campo en refresh() no es atómica con la actualización de lastRefresh; No hay TTL ni tamaño máximo (la caché crece sin límites); Los objetos Route podrían ser mutables y compartirse entre hilos sin protección.",
+    "refactoredCode": "@Service\npublic class RouteCache {\n    private final ConcurrentHashMap<String, Route> cache = new ConcurrentHashMap<>();\n    private volatile LocalDateTime lastRefresh = LocalDateTime.now();\n\n    public Route getRoute(String routeId) {\n        return cache.computeIfAbsent(routeId, id -> routeService.fetch(id));\n    }\n\n    public void refresh() {\n        cache.clear();\n        lastRefresh = LocalDateTime.now();\n    }\n\n    public Route getRouteWithTTL(String routeId, Duration ttl) {\n        return cache.compute(routeId, (id, existing) -> {\n            if (existing != null && !isExpired(existing, ttl)) return existing;\n            return routeService.fetch(id);\n        });\n    }\n}",
     "problemsToIdentify": [
-      "HashMap is NOT thread-safe \u2014 concurrent reads/writes cause ConcurrentModificationException or corruption",
-      "containsKey + put is not atomic \u2014 two threads may both fetch and put (race condition)",
-      "Field reassignment in refresh() is not atomic with lastRefresh update",
-      "No TTL or max size \u2014 cache grows unbounded",
-      "Route objects may be mutable \u2014 shared across threads without protection"
+      "HashMap NO es seguro para hilos; lecturas/escrituras concurrentes causan errores o corrupción de datos.",
+      "La combinación containsKey + put no es atómica, permitiendo que dos hilos realicen la misma operación (condición de carrera).",
+      "La reasignación de la instancia de la caché en refresh() no es atómica respecto a la actualización de la fecha de refresco.",
+      "Falta de TTL o límite de tamaño, lo que puede causar fugas de memoria (crecimiento ilimitado).",
+      "Los objetos dentro de la caché podrían ser mutables, lo que genera riesgos al compartirlos entre hilos."
     ]
   },
   {
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "Deadlocks",
-    "question": "What is a deadlock? How do you prevent them?",
-    "modelAnswer": "**Deadlock:** Two threads each hold a lock the other needs. Both wait forever.\n\n```java\n// Thread A: lock(delivery) \u2192 tries to lock(driver) \u2192 WAITS\n// Thread B: lock(driver) \u2192 tries to lock(delivery) \u2192 WAITS\n// Neither can proceed \u2192 DEADLOCK\n```\n\n**Prevention strategies:**\n\n**1. Consistent lock ordering (most common fix):**\n```java\n// Always lock in ID order \u2014 prevents circular wait\nvoid assign(Delivery d, Driver dr) {\n    Object first = d.getId() < dr.getId() ? d : dr;\n    Object second = d.getId() < dr.getId() ? dr : d;\n    synchronized(first) {\n        synchronized(second) {\n            // safe \u2014 both threads use same order\n        }\n    }\n}\n```\n\n**2. Timeout on lock acquisition:**\n```java\nif (lock.tryLock(5, TimeUnit.SECONDS)) {\n    try { /* work */ } finally { lock.unlock(); }\n} else {\n    // couldn't acquire \u2014 retry or fail fast\n}\n```\n\n**3. Avoid nested locks entirely:**\nUse atomic operations, ConcurrentHashMap, or redesign to eliminate shared mutable state.\n\n**4. In database:** use optimistic locking (@Version) instead of SELECT FOR UPDATE when possible.\n\n**Detection:** Thread dump shows threads in BLOCKED state waiting for each other's monitors.",
-    "followUp": "What's the difference between a deadlock and a livelock?",
+    "question": "¿Qué es un deadlock (interbloqueo)? ¿Cómo los previenes?",
+    "modelAnswer": "**Deadlock:** Dos hilos retienen cada uno un bloqueo que el otro necesita. Ambos esperan para siempre.\n\n```java\n// Hilo A: bloquea(entrega) \u2192 intenta bloquear(conductor) \u2192 ESPERA\n// Hilo B: bloquea(conductor) \u2192 intenta bloquear(entrega) \u2192 ESPERA\n// Ninguno puede avanzar \u2192 DEADLOCK\n```\n\n**Estrategias de prevención:**\n\n**1. Orden de bloqueo consistente (solución más común):**\n```java\n// Bloquear siempre siguiendo el orden del ID \u2014 evita la espera circular\nvoid assign(Delivery d, Driver dr) {\n    Object first = d.getId() < dr.getId() ? d : dr;\n    Object second = d.getId() < dr.getId() ? dr : d;\n    synchronized(first) {\n        synchronized(second) {\n            // seguro \u2014 ambos hilos usan el mismo orden\n        }\n    }\n}\n```\n\n**2. Tiempo de espera (timeout) en la adquisición del bloqueo:**\n```java\nif (lock.tryLock(5, TimeUnit.SECONDS)) {\n    try { /* trabajo */ } finally { lock.unlock(); }\n} else {\n    // no se pudo adquirir \u2014 reintentar o fallar rápido\n}\n```\n\n**3. Evitar bloqueos anidados por completo:**\nUsar operaciones atómicas, ConcurrentHashMap o rediseñar para eliminar el estado mutable compartido.\n\n**4. En la base de datos:** usar bloqueo optimista (@Version) en lugar de SELECT FOR UPDATE cuando sea posible.\n\n**Detección:** Un volcado de hilos (thread dump) mostrará hilos en estado BLOCKED esperando por los monitores de cada uno.",
+    "followUp": "¿Cuál es la diferencia entre un deadlock y un livelock?",
     "tags": [
       "deadlock",
       "prevention",
@@ -134,23 +134,23 @@
     "type": "DESIGN_DECISION",
     "difficulty": "senior",
     "subtopic": "Async Patterns",
-    "question": "A delivery completion triggers: (1) invoice creation, (2) driver notification, (3) analytics update. All are non-critical for the main flow. How do you handle them?",
+    "question": "La finalización de una entrega dispara: (1) creación de factura, (2) notificación al conductor, (3) actualización de analíticas. Ninguna es crítica para el flujo principal. ¿Cómo las manejas?",
     "options": [
       {
-        "label": "A) Sequential in same transaction",
-        "description": "Call all three services synchronously within the @Transactional method."
+        "label": "A) Secuencialmente en la misma transacción",
+        "description": "Llamar a los tres servicios de forma síncrona dentro del método @Transactional."
       },
       {
-        "label": "B) CompletableFuture.allOf() \u2014 fire all async, wait for completion",
-        "description": "Async but still wait before responding to the user."
+        "label": "B) CompletableFuture.allOf() \u2014 disparar todo asíncronamente y esperar",
+        "description": "Asíncrono, pero aún se espera antes de responder al usuario."
       },
       {
-        "label": "C) Publish Kafka event \u2014 each consumer handles independently",
-        "description": "Fire-and-forget event. Each downstream service consumes at its own pace."
+        "label": "C) Publicar evento en Kafka \u2014 cada consumidor lo maneja independientemente",
+        "description": "Evento de tipo disparar y olvidar (fire-and-forget). Cada servicio consume a su propio ritmo."
       }
     ],
     "bestOption": 2,
-    "explanation": "Kafka event (C) is correct for non-critical downstream reactions:\n\n```java\n@Transactional\npublic void complete(Long deliveryId) {\n    Delivery d = repo.findById(deliveryId).orElseThrow();\n    d.complete(); // domain logic\n    repo.save(d); // persist\n    // Event published via outbox or after commit\n}\n\n// After TX commits:\neventPublisher.publish(new DeliveryCompleted(deliveryId));\n```\n\n**Why NOT A (synchronous):**\n\u2022 If invoice service is slow (2s) \u2192 user waits 2s\n\u2022 If analytics is down \u2192 delivery completion fails (unacceptable!)\n\u2022 Locks DB connection during all three calls\n\n**Why NOT B (async but wait):**\n\u2022 Still blocks the response until all complete\n\u2022 If one fails, what do you do? Retry? Ignore? Complex error handling in the request path\n\n**Why C (Kafka) is best:**\n\u2022 Response returns immediately after persist (~50ms)\n\u2022 Each consumer processes independently (invoice doesn't block notification)\n\u2022 If one consumer is down, others continue\n\u2022 Retry via Kafka redelivery\n\u2022 Add new consumers later without touching delivery-service",
+    "explanation": "El evento de Kafka (C) es lo correcto para reacciones secundarias no críticas:\n\n```java\n@Transactional\npublic void complete(Long deliveryId) {\n    Delivery d = repo.findById(deliveryId).orElseThrow();\n    d.complete(); // lógica de dominio\n    repo.save(d); // persistencia\n    // El evento se publica vía outbox o después del commit\n}\n\n// Después de que la TX confirma (commit):\neventPublisher.publish(new DeliveryCompleted(deliveryId));\n```\n\n**Por qué NO A (síncrono):**\n\u2022 Si el servicio de facturas es lento (2s) \u2192 el usuario espera 2s.\n\u2022 Si analíticas está caído \u2192 falla la finalización de la entrega (¡inaceptable!).\n\u2022 Bloquea la conexión de BD durante las tres llamadas.\n\n**Por qué NO B (asíncrono pero esperar):**\n\u2022 Sigue bloqueando la respuesta hasta que todos terminen.\n\u2022 Si uno falla, ¿qué haces? ¿Reintentar? ¿Ignorar? Manejo de errores complejo en la ruta de la petición.\n\n**Por qué C (Kafka) es mejor:**\n\u2022 La respuesta vuelve inmediatamente tras persistir (~50ms).\n\u2022 Cada consumidor procesa de forma independiente (factura no bloquea notificación).\n\u2022 Si un consumidor cae, los otros siguen.\n\u2022 Reintento mediante la propia redestribución de Kafka.\n\u2022 Permite añadir nuevos consumidores después sin tocar delivery-service.",
     "tags": [
       "event-driven",
       "kafka",
@@ -163,9 +163,9 @@
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "Volatile & Visibility",
-    "question": "What does the volatile keyword do? When do you need it?",
-    "modelAnswer": "**Problem:** Without volatile, one thread's write may NOT be visible to another thread (CPU cache, compiler optimization).\n\n```java\n// \u274c Thread B may never see the update!\nprivate boolean shutdown = false;\n\n// Thread A: shutdown = true;\n// Thread B: while (!shutdown) { work(); } // may loop forever!\n\n// \u2705 volatile guarantees visibility across threads\nprivate volatile boolean shutdown = false;\n```\n\n**What volatile guarantees:**\n\u2022 Every read sees the latest write (no CPU cache stale value)\n\u2022 Prevents instruction reordering around the volatile access\n\n**What volatile does NOT guarantee:**\n\u2022 Atomicity of compound operations (i++ is still not atomic even if volatile)\n\n**When to use:**\n\u2022 Boolean flags (shutdown, initialized, cancelled)\n\u2022 Single-writer, multiple-readers patterns\n\u2022 Double-checked locking (singleton)\n\n**When NOT enough (need AtomicInteger or synchronized):**\n\u2022 Increment/decrement (read + modify + write)\n\u2022 Check-then-act (if empty \u2192 add)\n\u2022 Multiple fields that must be updated together\n\n**In Spring Boot:** rarely needed directly. Most shared state is in beans (singleton, no mutable fields) or in the database (ACID). Volatile matters for low-level infrastructure code, caches, and flags.",
-    "followUp": "What's the difference between volatile and AtomicReference?",
+    "question": "¿Qué hace la palabra clave volatile? ¿Cuándo la necesitas?",
+    "modelAnswer": "**Problema:** Sin volatile, la escritura de un hilo puede NO ser visible para otro (por caché de CPU u optimizaciones del compilador).\n\n```java\n// \u274c ¡El Hilo B podría nunca ver la actualización!\nprivate boolean shutdown = false;\n\n// Hilo A: shutdown = true;\n// Hilo B: while (!shutdown) { work(); } // ¡Podría buclear para siempre!\n\n// \u2705 volatile garantiza la visibilidad entre hilos\nprivate volatile boolean shutdown = false;\n```\n\n**Lo que garantiza volatile:**\n\u2022 Cada lectura ve la escritura más reciente (sin valores obsoletos en la caché de CPU).\n\u2022 Previene el reordenamiento de instrucciones alrededor del acceso volatile.\n\n**Lo que volatile NO garantiza:**\n\u2022 Atomicidad en operaciones compuestas (i++ sigue sin ser atómico aunque sea volatile).\n\n**Cuándo usarlo:**\n\u2022 Flags booleanos (apagado, inicializado, cancelado).\n\u2022 Patrones de un solo escritor y múltiples lectores.\n\u2022 Bloqueo de doble comprobación (double-checked locking en singletons).\n\n**Cuándo NO es suficiente (necesitas AtomicInteger o synchronized):**\n\u2022 Incremento/decremento (leer + modificar + escribir).\n\u2022 Verificar y luego actuar (check-then-act).\n\u2022 Múltiples campos que deben actualizarse juntos.\n\n**En Spring Boot:** rara vez se necesita directamente. El estado compartido suele estar en beans (singletons sin campos mutables) o en la BD. Volatile importa en código de infraestructura de bajo nivel, cachés y flags.",
+    "followUp": "¿Cuál es la diferencia entre volatile y AtomicReference?",
     "tags": [
       "volatile",
       "visibility",
@@ -178,16 +178,16 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "senior",
     "subtopic": "ConcurrentHashMap",
-    "mission": "Is this code thread-safe?",
-    "code": "ConcurrentHashMap<String, Integer> deliveryCounts = new ConcurrentHashMap<>();\n\n// Multiple threads call this simultaneously for the same driverId:\npublic void recordDelivery(String driverId) {\n    Integer current = deliveryCounts.get(driverId);\n    if (current == null) {\n        deliveryCounts.put(driverId, 1);\n    } else {\n        deliveryCounts.put(driverId, current + 1);\n    }\n}",
+    "mission": "¿Es este código seguro para hilos?",
+    "code": "ConcurrentHashMap<String, Integer> deliveryCounts = new ConcurrentHashMap<>();\n\n// Múltiples hilos llaman a esto simultáneamente para el mismo driverId:\npublic void recordDelivery(String driverId) {\n    Integer current = deliveryCounts.get(driverId);\n    if (current == null) {\n        deliveryCounts.put(driverId, 1);\n    } else {\n        deliveryCounts.put(driverId, current + 1);\n    }\n}",
     "choices": [
-      "Yes \u2014 ConcurrentHashMap handles everything",
-      "No \u2014 get() + put() is not atomic (race condition)",
-      "Yes \u2014 put() is synchronized internally",
-      "No \u2014 Integer is immutable so cannot be updated"
+      "Sí \u2014 ConcurrentHashMap lo gestiona todo",
+      "No \u2014 get() + put() no es atómico (condición de carrera)",
+      "Sí \u2014 put() está sincronizado internamente",
+      "No \u2014 Integer es inmutable y no se puede actualizar"
     ],
-    "answer": "No \u2014 get() + put() is not atomic (race condition)",
-    "explain": "ConcurrentHashMap makes individual operations (get, put) thread-safe, but the COMPOUND operation (get \u2192 check \u2192 put) is NOT atomic. Two threads can both get(null), both put(1) \u2192 lost update. Fix: deliveryCounts.merge(driverId, 1, Integer::sum) \u2014 atomic compound operation.",
+    "answer": "No \u2014 get() + put() no es atómico (condición de carrera)",
+    "explain": "ConcurrentHashMap hace que las operaciones individuales (get, put) sean seguras, pero la operación COMPUESTA (get \u2192 verificar \u2192 put) NO es atómica. Dos hilos pueden obtener null a la vez y ambos poner 1 \u2192 actualización perdida. Solución: deliveryCounts.merge(driverId, 1, Integer::sum) \u2014 operación compuesta atómica.",
     "topic": "concurrency",
     "id": "concurrency-concurrenthashmap-10"
   },
@@ -195,9 +195,9 @@
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "Virtual Threads",
-    "question": "Java 21 introduces Virtual Threads (Project Loom). How do they change concurrency in Spring Boot?",
-    "modelAnswer": "**Traditional threads (Platform threads):**\n\u2022 OS-managed, ~1MB stack each\n\u2022 Limited to thousands (memory + context switching)\n\u2022 Blocking a platform thread = expensive resource wasted\n\n**Virtual threads (Java 21+):**\n\u2022 JVM-managed, very lightweight (~few KB)\n\u2022 Can have MILLIONS simultaneously\n\u2022 Blocking a virtual thread = cheap (JVM suspends it, reuses carrier thread)\n\n**Impact on Spring Boot:**\n```yaml\n# Enable virtual threads in Spring Boot 3.2+\nspring.threads.virtual.enabled=true\n# Now each HTTP request runs on a virtual thread\n```\n\n**What this means:**\n\u2022 Blocking I/O (JDBC, REST calls, file I/O) becomes \"free\" \u2014 no thread pool exhaustion\n\u2022 Can handle 100K+ concurrent requests (each on its own virtual thread)\n\u2022 Thread-per-request model becomes viable again (no need for reactive/WebFlux)\n\n**What DOESN'T change:**\n\u2022 You still need proper synchronization for shared mutable state\n\u2022 Database connections are still limited (pool is the bottleneck now, not threads)\n\u2022 CPU-bound work doesn't benefit (still limited by cores)\n\n**For REWE:** Virtual threads make blocking Spring MVC + JDBC perfectly scalable. No need for reactive (WebFlux) just for concurrency. The team's choice of Spring Boot + blocking stack is future-proof with Java 21.",
-    "followUp": "If virtual threads make blocking cheap, do we still need async programming?",
+    "question": "Java 21 introduce los Hilos Virtuales (Project Loom). ¿Cómo cambian la concurrencia en Spring Boot?",
+    "modelAnswer": "**Hilos tradicionales (Platform threads):**\n\u2022 Gestionados por el SO, ~1MB de stack cada uno.\n\u2022 Limitados a unos pocos miles (por memoria y cambios de contexto).\n\u2022 Bloquear un hilo de plataforma = desperdicio de un recurso costoso.\n\n**Hilos virtuales (Java 21+):**\n\u2022 Gestionados por la JVM, muy ligeros (~pocos KB).\n\u2022 Se pueden tener MILLONES simultáneamente.\n\u2022 Bloquear un hilo virtual = barato (la JVM lo suspende y reutiliza el hilo portador).\n\n**Impacto en Spring Boot:**\n```yaml\n# Habilitar hilos virtuales en Spring Boot 3.2+\nspring.threads.virtual.enabled=true\n# Ahora cada petición HTTP corre en un hilo virtual\n```\n\n**Lo que esto significa:**\n\u2022 La E/S bloqueante (JDBC, llamadas REST) se vuelve \"gratis\" \u2014 no hay agotamiento del pool de hilos.\n\u2022 Puede manejar más de 100k peticiones concurrentes.\n\u2022 El modelo de \"un hilo por petición\" vuelve a ser viable (sin necesidad de WebFlux reactivo).\n\n**Lo que NO cambia:**\n\u2022 Sigues necesitando sincronización adecuada para el estado mutable compartido.\n\u2022 Las conexiones a la BD siguen siendo limitadas (el pool de conexiones es ahora el cuello de botella, no los hilos).\n\u2022 El trabajo pesado de CPU no se beneficia (sigue limitado por los núcleos).",
+    "followUp": "Si los hilos virtuales hacen que bloquear sea barato, ¿seguimos necesitando programación asíncrona?",
     "tags": [
       "virtual-threads",
       "java-21",
@@ -210,9 +210,9 @@
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "Executor Types",
-    "question": "Explain the different ExecutorService types and when to use each.",
-    "modelAnswer": "```java\n// Fixed pool \u2014 known number of threads, predictable resource usage\nExecutorService fixed = Executors.newFixedThreadPool(10);\n// Use: server-side processing with bounded concurrency\n\n// Cached pool \u2014 creates threads as needed, reuses idle ones\nExecutorService cached = Executors.newCachedThreadPool();\n// Use: short-lived tasks with unpredictable volume (DANGEROUS in servers \u2014 unbounded!)\n\n// Single thread \u2014 sequential execution, guaranteed order\nExecutorService single = Executors.newSingleThreadExecutor();\n// Use: tasks that must execute in order (audit log writer)\n\n// Scheduled \u2014 delayed or periodic execution\nScheduledExecutorService scheduled = Executors.newScheduledThreadPool(5);\nscheduled.scheduleAtFixedRate(() -> cleanup(), 0, 1, TimeUnit.HOURS);\n// Use: periodic jobs (cache refresh, health checks)\n\n// Virtual thread per task (Java 21+)\nExecutorService virtual = Executors.newVirtualThreadPerTaskExecutor();\n// Use: massive I/O-bound concurrency\n```\n\n**In Spring Boot (prefer injected beans):**\n```java\n@Bean\npublic TaskExecutor taskExecutor() {\n    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();\n    executor.setCorePoolSize(10);\n    executor.setMaxPoolSize(20);\n    executor.setQueueCapacity(500);\n    executor.setThreadNamePrefix(\"delivery-async-\");\n    return executor;\n}\n```\n\n**Rule:** NEVER use Executors.newCachedThreadPool() in a server \u2014 under load it creates unlimited threads \u2192 OOM.",
-    "followUp": "What happens when you submit a task but the pool AND queue are full?",
+    "question": "Explica los diferentes tipos de ExecutorService y cuándo usar cada uno.",
+    "modelAnswer": "```java\n// Pool fijo \u2014 número de hilos conocido, uso de recursos predecible\nExecutorService fixed = Executors.newFixedThreadPool(10);\n// Uso: procesamiento en el servidor con concurrencia acotada\n\n// Pool en caché \u2014 crea hilos según necesidad, reutiliza los ociosos\nExecutorService cached = Executors.newCachedThreadPool();\n// Uso: tareas cortas con volumen impredecible (PELIGROSO en servidores \u2014 ¡sin límites!)\n\n// Un solo hilo \u2014 ejecución secuencial, orden garantizado\nExecutorService single = Executors.newSingleThreadExecutor();\n// Uso: tareas que deben ejecutarse en orden (escritor de logs de auditoría)\n\n// Programado (Scheduled) \u2014 ejecución retrasada o periódica\nScheduledExecutorService scheduled = Executors.newScheduledThreadPool(5);\nscheduled.scheduleAtFixedRate(() -> cleanup(), 0, 1, TimeUnit.HOURS);\n// Uso: tareas periódicas (refresco de caché, chequeos de salud)\n\n// Hilo virtual por tarea (Java 21+)\nExecutorService virtual = Executors.newVirtualThreadPerTaskExecutor();\n// Uso: concurrencia masiva ligada a E/S\n```\n\n**En Spring Boot (preferir beans inyectados):**\n```java\n@Bean\npublic TaskExecutor taskExecutor() {\n    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();\n    executor.setCorePoolSize(10);\n    executor.setMaxPoolSize(20);\n    executor.setQueueCapacity(500);\n    executor.setThreadNamePrefix(\"delivery-async-\");\n    return executor;\n}\n```\n\n**Regla:** NUNCA uses Executors.newCachedThreadPool() en un servidor; bajo carga crea hilos ilimitados \u2192 OOM.",
+    "followUp": "¿Qué sucede cuando envías una tarea pero tanto el pool como la cola están llenos?",
     "tags": [
       "executor",
       "thread-pool",
@@ -225,9 +225,9 @@
     "type": "ORAL_ANSWER",
     "difficulty": "senior",
     "subtopic": "Immutability",
-    "question": "Why is immutability the best strategy for thread safety? Show examples.",
-    "modelAnswer": "**Immutable objects are ALWAYS thread-safe** \u2014 no synchronization needed, no race conditions possible.\n\n```java\n// \u2705 Immutable \u2014 share freely between threads\npublic record DeliveryEvent(\n    String deliveryId,\n    DeliveryStatus status,\n    Instant timestamp,\n    List<String> stops  // must be unmodifiable!\n) {\n    public DeliveryEvent {\n        stops = List.copyOf(stops); // defensive copy \u2014 truly immutable\n    }\n}\n\n// \u2705 Immutable value object\npublic record RouteSegment(String from, String to, double distanceKm) {}\n\n// \u274c Mutable \u2014 NOT thread-safe without synchronization\npublic class MutableDelivery {\n    private String status;        // can be changed\n    private List<String> stops;   // can be modified\n    public void setStatus(String s) { this.status = s; }\n}\n```\n\n**Immutability strategy for Spring services:**\n```java\n@Service\npublic class DeliveryService {\n    private final DeliveryRepository repo;    // final = safe\n    private final EventPublisher events;      // final = safe\n    // NO mutable fields! All state is method-local or in DB.\n\n    public DeliveryDTO process(CreateRequest req) {\n        // All variables are local to this method = thread-safe by definition\n        var delivery = Delivery.from(req);\n        repo.save(delivery);\n        events.publish(DeliveryEvent.created(delivery));\n        return DeliveryDTO.from(delivery);\n    }\n}\n```\n\n**Hierarchy of thread-safety (prefer top):**\n1. Immutable (no sync needed)\n2. Thread-local (each thread has its own copy)\n3. Atomic operations (CAS-based, lock-free)\n4. Synchronized/Lock (last resort)",
-    "followUp": "How do Java Records help with immutability?",
+    "question": "¿Por qué la inmutabilidad es la mejor estrategia para la seguridad de hilos? Muestra ejemplos.",
+    "modelAnswer": "**Los objetos inmutables son SIEMPRE seguros para hilos** \u2014 no necesitan sincronización ni son posibles las condiciones de carrera.\n\n```java\n// \u2705 Inmutable \u2014 compartir libremente entre hilos\npublic record DeliveryEvent(\n    String deliveryId,\n    DeliveryStatus status,\n    Instant timestamp,\n    List<String> stops  // ¡debe ser inmodificable!\n) {\n    public DeliveryEvent {\n        stops = List.copyOf(stops); // copia defensiva \u2014 inmutabilidad real\n    }\n}\n\n// \u2705 Objeto de valor inmutable\npublic record RouteSegment(String from, String to, double distanceKm) {}\n\n// \u274c Mutable \u2014 NO es seguro para hilos sin sincronización\npublic class MutableDelivery {\n    private String status;        \n    private List<String> stops;   \n    public void setStatus(String s) { this.status = s; }\n}\n```\n\n**Estrategia de inmutabilidad para servicios Spring:**\n```java\n@Service\npublic class DeliveryService {\n    private final DeliveryRepository repo;    // final = seguro\n    private final EventPublisher events;      // final = seguro\n    // ¡SIN campos mutables! Todo el estado es local al método o está en la BD.\n\n    public DeliveryDTO process(CreateRequest req) {\n        // Todas las variables son locales a este método = seguro por definición\n        var delivery = Delivery.from(req);\n        repo.save(delivery);\n        events.publish(DeliveryEvent.created(delivery));\n        return DeliveryDTO.from(delivery);\n    }\n}\n```\n\n**Jerarquía de thread-safety (preferir lo superior):**\n1. Inmutable (sin necesidad de sincronización).\n2. Local al hilo (Thread-local).\n3. Operaciones atómicas (basadas en CAS).\n4. Sincronización/Bloqueo (último recurso).",
+    "followUp": "¿Cómo ayudan los Java Records con la inmutabilidad?",
     "tags": [
       "immutability",
       "records",
@@ -240,23 +240,23 @@
     "type": "DESIGN_DECISION",
     "difficulty": "senior",
     "subtopic": "Concurrent Access",
-    "question": "Two API requests try to dispatch the same delivery simultaneously. How do you prevent double-dispatch?",
+    "question": "Dos peticiones API intentan despachar la misma entrega simultáneamente. ¿Cómo evitas el doble despacho?",
     "options": [
       {
-        "label": "A) Optimistic locking (@Version) \u2014 detect conflict at commit time",
-        "description": "Both read version=1, first commits version=2, second gets OptimisticLockException."
+        "label": "A) Bloqueo optimista (@Version) \u2014 detectar conflicto al hacer commit",
+        "description": "Ambos leen versión=1, el primero confirma versión=2, el segundo recibe OptimisticLockException."
       },
       {
-        "label": "B) Pessimistic locking (SELECT FOR UPDATE) \u2014 prevent concurrent read",
-        "description": "First request locks the row, second waits until first completes."
+        "label": "B) Bloqueo pesimista (SELECT FOR UPDATE) \u2014 prevenir lectura concurrente",
+        "description": "La primera petición bloquea la fila, la segunda espera hasta que la primera termine."
       },
       {
-        "label": "C) Application-level distributed lock (Redis) \u2014 lock before loading",
-        "description": "Acquire Redis lock on deliveryId, process, release."
+        "label": "C) Bloqueo distribuido a nivel de aplicación (Redis) \u2014 bloquear antes de cargar",
+        "description": "Adquirir bloqueo en Redis para el deliveryId, procesar y liberar."
       }
     ],
     "bestOption": 0,
-    "explanation": "Optimistic locking (A) is correct for this scenario:\n\n```java\n@Entity\npublic class Delivery {\n    @Version private Integer version;\n    // ...\n}\n\n@Transactional\npublic void dispatch(Long deliveryId, Long driverId) {\n    Delivery d = repo.findById(deliveryId).orElseThrow();\n    d.dispatch(driverId); // validates status transition\n    repo.save(d);\n    // If another TX committed first \u2192 OptimisticLockException \u2192 retry or 409 Conflict\n}\n```\n\n**Why A over B:** Double-dispatch is a RARE edge case (seconds apart). Optimistic locking has no performance cost for the 99.9% of cases with no conflict. Pessimistic locking blocks ALL concurrent reads (even when no conflict).\n\n**Why A over C:** Redis distributed lock adds infrastructure dependency, network latency, and complexity (lock expiry, dead locks if client crashes). Overkill for single-DB operations.\n\n**Use pessimistic (B) when:** conflicts are FREQUENT (many threads competing for same row constantly).\n**Use distributed lock (C) when:** operation spans multiple services/databases.",
+    "explanation": "El bloqueo optimista (A) es lo correcto para este escenario:\n\n```java\n@Entity\npublic class Delivery {\n    @Version private Integer version;\n    // ...\n}\n\n@Transactional\npublic void dispatch(Long deliveryId, Long driverId) {\n    Delivery d = repo.findById(deliveryId).orElseThrow();\n    d.dispatch(driverId); // valida la transición de estado\n    repo.save(d);\n    // Si otra TX confirmó primero \u2192 OptimisticLockException \u2192 reintentar o 409 Conflict\n}\n```\n\n**Por qué A sobre B:** El doble despacho es un caso de borde RARO. El bloqueo optimista no tiene coste de rendimiento para el 99.9% de los casos sin conflicto. El pesimista bloquea TODAS las lecturas concurrentes.\n\n**Por qué A sobre C:** El bloqueo de Redis añade dependencia de infraestructura y complejidad. Excesivo para operaciones de una sola base de datos.\n\n**Usa pesimista (B) cuando:** los conflictos sean FRECUENTES.\n**Usa bloqueo distribuido (C) cuando:** la operación abarque múltiples servicios o bases de datos.",
     "tags": [
       "optimistic-locking",
       "concurrent-dispatch",
@@ -269,9 +269,9 @@
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "Spring @Async",
-    "question": "How does @Async work in Spring Boot? What are the pitfalls?",
-    "modelAnswer": "```java\n@Configuration\n@EnableAsync\npublic class AsyncConfig {\n    @Bean\n    public Executor asyncExecutor() {\n        var executor = new ThreadPoolTaskExecutor();\n        executor.setCorePoolSize(5);\n        executor.setMaxPoolSize(10);\n        executor.setQueueCapacity(100);\n        executor.setThreadNamePrefix(\"async-\");\n        return executor;\n    }\n}\n\n@Service\npublic class NotificationService {\n\n    @Async  // runs on separate thread from asyncExecutor\n    public void notifyDriver(Delivery delivery) {\n        // slow operation \u2014 doesn't block the caller\n        pushService.send(delivery.getDriverId(), \"New delivery assigned\");\n    }\n\n    @Async\n    public CompletableFuture<Route> optimizeRouteAsync(List<Stop> stops) {\n        Route route = routeService.calculate(stops);\n        return CompletableFuture.completedFuture(route);\n    }\n}\n```\n\n**Pitfalls:**\n\n1. **Self-invocation doesn't work:**\n```java\npublic void process() {\n    this.notifyDriver(delivery); // \u274c @Async is IGNORED (no proxy)\n}\n// Fix: inject the bean and call through the proxy\n```\n\n2. **Exception handling:** Exceptions in @Async void methods are LOST (no caller to catch). Use AsyncUncaughtExceptionHandler.\n\n3. **No transaction propagation:** @Async runs in a NEW thread \u2014 the caller's @Transactional does NOT propagate. The async method needs its own @Transactional if it accesses DB.\n\n4. **Unbounded queue:** Default SimpleAsyncTaskExecutor creates unlimited threads. Always configure a bounded pool.\n\n5. **Testing:** @Async makes tests non-deterministic. In tests, use synchronous executor or CompletableFuture.join().",
-    "followUp": "When would you use @Async vs publishing to Kafka?",
+    "question": "¿Cómo funciona @Async en Spring Boot? ¿Cuáles son las trampas (pitfalls)?",
+    "modelAnswer": "```java\n@Configuration\n@EnableAsync\npublic class AsyncConfig {\n    @Bean\n    public Executor asyncExecutor() {\n        var executor = new ThreadPoolTaskExecutor();\n        executor.setCorePoolSize(5);\n        executor.setMaxPoolSize(10);\n        executor.setQueueCapacity(100);\n        executor.setThreadNamePrefix(\"async-\");\n        return executor;\n    }\n}\n\n@Service\npublic class NotificationService {\n\n    @Async  // corre en un hilo separado del asyncExecutor\n    public void notifyDriver(Delivery delivery) {\n        // operación lenta \u2014 no bloquea al llamador\n        pushService.send(delivery.getDriverId(), \"Nueva entrega asignada\");\n    }\n}\n```\n\n**Trampas:**\n\n1. **La auto-invocación no funciona:** Llamar al método desde la propia clase ignora el proxy y @Async no se aplica.\n2. **Manejo de excepciones:** Las excepciones en métodos @Async que devuelven void se pierden. Se necesita AsyncUncaughtExceptionHandler.\n3. **Sin propagación de transacciones:** @Async corre en un hilo NUEVO, por lo que el @Transactional del llamador NO se propaga.\n4. **Cola sin límites:** El ejecutor por defecto puede crear hilos ilimitados. Siempre hay que configurar un pool acotado.",
+    "followUp": "¿Cuándo usarías @Async frente a publicar en Kafka?",
     "tags": [
       "async",
       "spring",
@@ -286,9 +286,9 @@
     "subtopic": "concurrency-basics",
     "type": "PREDICT_OUTPUT",
     "difficulty": "SENIOR",
-    "question": "What's wrong with this code? Will it ever terminate?\n\n```java\npublic class StopThread {\n    private static boolean stopRequested;\n    \n    public static void main(String[] args) throws Exception {\n        Thread bg = new Thread(() -> {\n            int i = 0;\n            while (!stopRequested) i++;\n        });\n        bg.start();\n        Thread.sleep(1000);\n        stopRequested = true;\n    }\n}\n```",
-    "correctOutput": "It may NEVER terminate. Without synchronization or volatile, the JVM can hoist the read of stopRequested outside the loop (optimization). The background thread may never see the update. Fix: declare `private static volatile boolean stopRequested;`",
-    "explain": "Effective Java Item 78. Synchronization is needed not just for atomicity but for visibility between threads. Without volatile or synchronized, a write by one thread has no guarantee of being visible to another thread."
+    "question": "¿Qué está mal en este código? ¿Terminará alguna vez?\n\n```java\npublic class StopThread {\n    private static boolean stopRequested;\n    \n    public static void main(String[] args) throws Exception {\n        Thread bg = new Thread(() -> {\n            int i = 0;\n            while (!stopRequested) i++;\n        });\n        bg.start();\n        Thread.sleep(1000);\n        stopRequested = true;\n    }\n}\n```",
+    "correctOutput": "Podría no terminar NUNCA. Sin sincronización o volatile, la JVM puede optimizar la lectura de stopRequested sacándola fuera del bucle (hoisting). El hilo de fondo podría no ver nunca la actualización. Solución: declarar `private static volatile boolean stopRequested;`",
+    "explain": "Item 78 de Effective Java. La sincronización es necesaria no solo para la atomicidad sino para la visibilidad entre hilos. Sin volatile o synchronized, no hay garantía de que la escritura de un hilo sea visible para otro."
   },
   {
     "id": "ej-80",
@@ -296,8 +296,8 @@
     "subtopic": "concurrency-basics",
     "type": "ORAL_ANSWER",
     "difficulty": "INTERMEDIATE",
-    "question": "Why prefer ExecutorService over creating threads directly? What executor would you choose for a web server?",
-    "answer": "Direct Thread creation: no control over count (can OOM the OS), no reuse, no queue management, no graceful shutdown. ExecutorService provides: thread pooling, task queueing, lifecycle management (shutdown/awaitTermination), Future for async results, scheduled execution. For web server: Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()) or custom ThreadPoolExecutor with bounded queue. For many short I/O tasks: Executors.newCachedThreadPool(). Java 21: Virtual threads via Executors.newVirtualThreadPerTaskExecutor() for I/O-bound workloads."
+    "question": "¿Por qué preferir ExecutorService en lugar de crear hilos directamente? ¿Qué ejecutor elegirías para un servidor web?",
+    "answer": "Creación directa de hilos: no hay control sobre el conteo (puede colapsar el SO), no hay reutilización, ni gestión de colas, ni apagado elegante. ExecutorService proporciona: pooling de hilos, encolado de tareas, gestión del ciclo de vida y Future para resultados asíncronos. Para un servidor web: Executors.newFixedThreadPool(número de procesadores) o un ThreadPoolExecutor personalizado con cola acotada. Java 21: Hilos virtuales para cargas de trabajo ligadas a E/S."
   },
   {
     "id": "ej-81",
@@ -305,12 +305,12 @@
     "subtopic": "concurrency-basics",
     "type": "FILL_BLANK",
     "difficulty": "INTERMEDIATE",
-    "question": "The three categories of java.util.concurrent utilities are _____, _____, and _____.",
+    "question": "Las tres categorías de utilidades en java.util.concurrent son _____, _____, y _____.",
     "blanks": [
-      "Executor Framework (thread pools)",
-      "Concurrent Collections (ConcurrentHashMap, BlockingQueue)",
-      "Synchronizers (CountDownLatch, Semaphore, CyclicBarrier)"
+      "Executor Framework (pools de hilos)",
+      "Colecciones Concurrentes (ConcurrentHashMap, BlockingQueue)",
+      "Sincronizadores (CountDownLatch, Semaphore, CyclicBarrier)"
     ],
-    "explain": "Effective Java Item 81: These higher-level utilities should be preferred over wait/notify in virtually all new code. ConcurrentHashMap is the concurrent replacement for Collections.synchronizedMap. CountDownLatch is the simplest synchronizer for one-time events."
+    "explain": "Item 81 de Effective Java: Estas utilidades de alto nivel deben preferirse sobre wait/notify en prácticamente todo el código nuevo. ConcurrentHashMap es el reemplazo concurrente para Collections.synchronizedMap."
   }
 ]

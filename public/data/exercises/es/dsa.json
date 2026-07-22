@@ -4,8 +4,8 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "basic",
     "subtopic": "dsa-collections",
-    "mission": "What happens when you call map.get(key) after modifying the key object's field used in hashCode?",
-    "code": "Map<MutableKey, String> map = new HashMap<>();\nMutableKey key = new MutableKey(\"driver-1\");\nmap.put(key, \"Carlos\");\n\nkey.setName(\"driver-2\"); // mutate the key!\nSystem.out.println(map.get(key));",
+    "mission": "¿Qué sucede cuando llamas a map.get(key) después de modificar un campo del objeto clave usado en el hashCode?",
+    "code": "Map<MutableKey, String> map = new HashMap<>();\nMutableKey key = new MutableKey(\"driver-1\");\nmap.put(key, \"Carlos\");\n\nkey.setName(\"driver-2\"); // ¡mutar la clave!\nSystem.out.println(map.get(key));",
     "choices": [
       "Carlos",
       "null",
@@ -13,7 +13,7 @@
       "ConcurrentModificationException"
     ],
     "answer": "null",
-    "explain": "After mutating the key, its hashCode changes. HashMap looks in the new bucket (based on new hash), but the entry is stored in the OLD bucket (based on original hash). The entry is effectively lost \u2014 it still exists in the map but can never be found. This is why keys should be immutable.",
+    "explain": "Después de mutar la clave, su hashCode cambia. El HashMap busca en el nuevo bucket (basado en el nuevo hash), pero la entrada está almacenada en el bucket ANTIGUO (basado en el hash original). La entrada se pierde efectivamente: sigue existiendo en el mapa pero nunca podrá ser encontrada. Por esto las claves deben ser inmutables.",
     "topic": "dsa"
   },
   {
@@ -21,8 +21,8 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "basic",
     "subtopic": "dsa-big-o",
-    "mission": "What is the time complexity of this code?",
-    "code": "public List<Driver> findMatching(List<Driver> drivers, List<String> ids) {\n    List<Driver> result = new ArrayList<>();\n    for (Driver d : drivers) {           // n iterations\n        if (ids.contains(d.getId())) {    // m comparisons each\n            result.add(d);\n        }\n    }\n    return result;\n}",
+    "mission": "¿Cuál es la complejidad temporal de este código?",
+    "code": "public List<Driver> findMatching(List<Driver> drivers, List<String> ids) {\n    List<Driver> result = new ArrayList<>();\n    for (Driver d : drivers) {           // n iteraciones\n        if (ids.contains(d.getId())) {    // m comparaciones cada una\n            result.add(d);\n        }\n    }\n    return result;\n}",
     "choices": [
       "O(n)",
       "O(m)",
@@ -30,7 +30,7 @@
       "O(n + m)"
     ],
     "answer": "O(n \u00d7 m)",
-    "explain": "List.contains() is O(m) because it scans linearly. Called n times \u2192 O(n \u00d7 m). Fix: convert ids to a HashSet first \u2192 O(1) contains \u2192 total becomes O(n + m).",
+    "explain": "List.contains() es O(m) porque realiza un escaneo lineal. Al ser llamado n veces resulta en O(n \u00d7 m). Solución: convertir 'ids' a un HashSet primero \u2192 contains se vuelve O(1) \u2192 el total pasa a ser O(n + m).",
     "topic": "dsa"
   },
   {
@@ -38,7 +38,7 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "inter",
     "subtopic": "dsa-trees",
-    "mission": "What does this TreeMap code print?",
+    "mission": "¿Qué imprime este código de TreeMap?",
     "code": "TreeMap<Integer, String> map = new TreeMap<>();\nmap.put(5, \"five\");\nmap.put(2, \"two\");\nmap.put(8, \"eight\");\nmap.put(1, \"one\");\nmap.put(9, \"nine\");\n\nSystem.out.println(map.firstKey());\nSystem.out.println(map.lastKey());\nSystem.out.println(map.subMap(2, 8).keySet());",
     "choices": [
       "1, 9, [2, 5]",
@@ -47,7 +47,7 @@
       "2, 8, [5]"
     ],
     "answer": "1, 9, [2, 5]",
-    "explain": "TreeMap maintains sorted order. firstKey()=1 (smallest), lastKey()=9 (largest). subMap(2, 8) returns keys >= 2 AND < 8 (exclusive upper bound), so [2, 5]. Key 8 is excluded.",
+    "explain": "TreeMap mantiene un orden ordenado. firstKey()=1 (el menor), lastKey()=9 (el mayor). subMap(2, 8) devuelve las claves >= 2 Y < 8 (límite superior exclusivo), por lo tanto [2, 5]. La clave 8 queda excluida.",
     "topic": "dsa"
   },
   {
@@ -55,8 +55,8 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "inter",
     "subtopic": "dsa-recursion",
-    "mission": "A child can hop 1, 2, or 3 steps at a time. How many ways to climb 4 steps?",
-    "code": "public int countWays(int n, int[] memo) {\n    if (n < 0) return 0;\n    if (n == 0) return 1;\n    if (memo[n] > 0) return memo[n];\n    memo[n] = countWays(n-1, memo) + countWays(n-2, memo) + countWays(n-3, memo);\n    return memo[n];\n}\n// Called with: countWays(4, new int[5])",
+    "mission": "Un niño puede saltar 1, 2 o 3 escalones a la vez. ¿Cuántas formas hay de subir 4 escalones?",
+    "code": "public int countWays(int n, int[] memo) {\n    if (n < 0) return 0;\n    if (n == 0) return 1;\n    if (memo[n] > 0) return memo[n];\n    memo[n] = countWays(n-1, memo) + countWays(n-2, memo) + countWays(n-3, memo);\n    return memo[n];\n}\n// Llamado como: countWays(4, new int[5])",
     "choices": [
       "4",
       "7",
@@ -64,7 +64,7 @@
       "13"
     ],
     "answer": "7",
-    "explain": "f(1)=1, f(2)=2, f(3)=4, f(4)=f(3)+f(2)+f(1)=4+2+1=7. The ways are: {1111, 112, 121, 211, 13, 31, 22}. Memoization makes this O(n) instead of O(3^n).",
+    "explain": "f(1)=1, f(2)=2, f(3)=4, f(4)=f(3)+f(2)+f(1)=4+2+1=7. Las formas son: {1111, 112, 121, 211, 13, 31, 22}. La memoización hace que esto sea O(n) en lugar de O(3^n).",
     "topic": "dsa"
   },
   {
@@ -72,23 +72,23 @@
     "type": "PICK_INVALID",
     "difficulty": "inter",
     "subtopic": "dsa-hashing",
-    "mission": "Which equals/hashCode implementation is BROKEN?",
+    "mission": "¿Qué implementación de equals/hashCode está ROTA?",
     "snippets": [
       {
         "id": "A",
-        "code": "// Option A\npublic boolean equals(Object o) {\n    if (!(o instanceof Driver d)) return false;\n    return Objects.equals(id, d.id);\n}\npublic int hashCode() {\n    return Objects.hash(id);\n}"
+        "code": "// Opción A\npublic boolean equals(Object o) {\n    if (!(o instanceof Driver d)) return false;\n    return Objects.equals(id, d.id);\n}\npublic int hashCode() {\n    return Objects.hash(id);\n}"
       },
       {
         "id": "B",
-        "code": "// Option B\npublic boolean equals(Object o) {\n    if (!(o instanceof Driver d)) return false;\n    return Objects.equals(name, d.name);\n}\npublic int hashCode() {\n    return Objects.hash(id);\n}"
+        "code": "// Opción B\npublic boolean equals(Object o) {\n    if (!(o instanceof Driver d)) return false;\n    return Objects.equals(name, d.name);\n}\npublic int hashCode() {\n    return Objects.hash(id);\n}"
       },
       {
         "id": "C",
-        "code": "// Option C\npublic boolean equals(Object o) {\n    if (this == o) return true;\n    if (!(o instanceof Driver d)) return false;\n    return id != null && id.equals(d.id);\n}\npublic int hashCode() {\n    return getClass().hashCode();\n}"
+        "code": "// Opción C\npublic boolean equals(Object o) {\n    if (this == o) return true;\n    if (!(o instanceof Driver d)) return false;\n    return id != null && id.equals(d.id);\n}\npublic int hashCode() {\n    return getClass().hashCode();\n}"
       }
     ],
     "answer": "B",
-    "explain": "Option B violates the contract: two Drivers with same name but different id would be equals() but have different hashCode(). The rule is: if a.equals(b) then a.hashCode() == b.hashCode(). Option C uses a constant hashCode (degraded performance but not broken). Option A is correct.",
+    "explain": "La opción B viola el contrato: dos objetos Driver con el mismo nombre pero diferente id serían iguales por equals() pero tendrían diferente hashCode(). La regla es: si a.equals(b), entonces a.hashCode() == b.hashCode(). La opción C usa un hashCode constante (degrada el rendimiento pero no rompe el contrato). La opción A es correcta.",
     "topic": "dsa"
   },
   {
@@ -96,95 +96,65 @@
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "dsa-collections",
-    "question": "Explain how HashMap works internally. What happens at load factor 0.75?",
-    "interviewerIntent": "Tests understanding of hash tables, collision resolution, and performance characteristics",
+    "question": "Explica cómo funciona un HashMap internamente. ¿Qué ocurre con un factor de carga (load factor) de 0.75?",
+    "interviewerIntent": "Prueba la comprensión de tablas hash, resolución de colisiones y características de rendimiento.",
     "keyPoints": [
-      "Array of buckets, index = hash(key) % capacity",
-      "Collision \u2192 linked list \u2192 tree (Java 8+ when bucket > 8)",
-      "Load factor 0.75 triggers resize: double capacity + rehash all entries",
-      "Rehashing is O(n) but amortized O(1) over all puts",
-      "Good hashCode distributes keys evenly \u2192 fewer collisions"
-    ],
-    "followUps": [
-      {
-        "question": "When does HashMap degrade from O(1) to O(n)?",
-        "answerHint": "Pathological hashCode returning same value for all keys \u2192 all entries in one bucket as linked list. Java 8 mitigates to O(log n) via tree."
-      },
-      {
-        "question": "Why is initial capacity useful?",
-        "answerHint": "If you know you'll insert 1000 entries, initialCapacity=1334 (1000/0.75) avoids multiple rehashes during population."
-      }
+      "Array de buckets, índice = hash(key) % capacidad",
+      "Colisión \u2192 lista enlazada \u2192 árbol (Java 8+ cuando el bucket > 8)",
+      "El factor de carga 0.75 dispara el redimensionamiento: duplica capacidad + rehash de todas las entradas",
+      "El rehashing es O(n) pero O(1) amortizado sobre todos los 'puts'",
+      "Un buen hashCode distribuye las claves uniformemente \u2192 menos colisiones"
     ],
     "topic": "dsa",
-    "explain": "HashMap uses an array of buckets. Key's hashCode determines bucket index. Collisions are resolved with linked lists (or trees in Java 8+). At 75% capacity, it doubles and rehashes \u2014 O(n) operation that happens infrequently, giving amortized O(1)."
+    "explain": "HashMap utiliza un array de buckets. El hashCode de la clave determina el índice del bucket. Las colisiones se resuelven con listas enlazadas (o árboles en Java 8+). Al llegar al 75% de capacidad, se duplica y se hace rehash; una operación O(n) infrecuente que da un O(1) amortizado."
   },
   {
     "id": "dsa-oral-choose-structure-07",
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "dsa-collections",
-    "question": "Your endpoint processes 50K delivery events per minute. You need to deduplicate by event ID and keep only the last 5 minutes. What data structure?",
-    "interviewerIntent": "Tests ability to choose structure based on real constraints (time window, dedup, throughput)",
+    "question": "Tu endpoint procesa 50,000 eventos de entrega por minuto. Necesitas desduplicar por ID de evento y mantener solo los últimos 5 minutos. ¿Qué estructura de datos usarías?",
+    "interviewerIntent": "Evalúa la capacidad de elegir estructuras basadas en restricciones reales (ventana de tiempo, desduplicación, rendimiento).",
     "keyPoints": [
-      "LinkedHashMap with access-order=false, removeEldestEntry for time-based eviction",
-      "Or ConcurrentHashMap + ScheduledExecutor for cleanup",
-      "NOT TreeMap (don't need sorted access, O(log n) overhead unnecessary)",
-      "Consider external: Redis with TTL for multi-instance dedup"
-    ],
-    "followUps": [
-      {
-        "question": "What if you have multiple pod instances?",
-        "answerHint": "Local map won't work. Need Redis/distributed cache with TTL."
-      },
-      {
-        "question": "Memory impact of 250K entries (50K \u00d7 5min)?",
-        "answerHint": "UUID key (36 bytes) + overhead \u2248 100 bytes/entry \u00d7 250K \u2248 25MB. Acceptable for in-memory."
-      }
+      "LinkedHashMap con access-order=false y removeEldestEntry para eliminación basada en tiempo",
+      "O ConcurrentHashMap + ScheduledExecutor para la limpieza",
+      "NO TreeMap (no se necesita acceso ordenado, la sobrecarga O(log n) es innecesaria)",
+      "Considerar solución externa: Redis con TTL para desduplicación entre múltiples instancias"
     ],
     "topic": "dsa",
-    "explain": "For time-windowed dedup: ConcurrentHashMap<String, Instant> with periodic cleanup (remove entries older than 5min). O(1) contains check per event. For multi-pod: Redis SET with TTL=300s."
+    "explain": "Para desduplicación con ventana de tiempo: ConcurrentHashMap<String, Instant> con limpieza periódica (eliminar entradas de más de 5 min). El chequeo de contains es O(1) por evento. Para múltiples nodos: Redis SET con TTL=300s."
   },
   {
     "id": "dsa-oral-bigo-endpoint-08",
     "type": "ORAL_ANSWER",
     "difficulty": "senior",
     "subtopic": "dsa-big-o",
-    "question": "What's the time complexity of your typical Spring Boot REST endpoint? Decompose it.",
-    "interviewerIntent": "Tests systems thinking \u2014 understanding that endpoint latency is sum of operations, dominated by slowest",
+    "question": "¿Cuál es la complejidad temporal de tu endpoint REST típico de Spring Boot? Descompónlo.",
+    "interviewerIntent": "Prueba el pensamiento sistémico: entender que la latencia del endpoint es la suma de operaciones, dominada por la más lenta.",
     "keyPoints": [
-      "Controller: O(1) \u2014 just dispatching",
-      "Validation: O(n) where n = fields/items to validate",
-      "Service logic: depends on algorithm",
-      "Database query: O(log n) with index, O(n) without",
-      "Serialization: O(m) where m = response size",
-      "Total dominated by database access in most cases"
-    ],
-    "followUps": [
-      {
-        "question": "How does N+1 change this analysis?",
-        "answerHint": "Without N+1: O(1 query). With N+1: O(n queries) where n=results. Each query has network RTT."
-      },
-      {
-        "question": "When does the service layer become the bottleneck?",
-        "answerHint": "When processing collections in-memory: sorting O(n log n), nested loops O(n\u00b2), or external API calls O(n \u00d7 latency)."
-      }
+      "Controlador: O(1) — solo despacho",
+      "Validación: O(n) donde n = campos/ítems a validar",
+      "Lógica de servicio: depende del algoritmo",
+      "Consulta a base de datos: O(log n) con índice, O(n) sin él",
+      "Serialización: O(m) donde m = tamaño de la respuesta",
+      "El total suele estar dominado por el acceso a la base de datos"
     ],
     "topic": "dsa",
-    "explain": "A typical endpoint is O(log n) dominated by indexed DB query. But common mistakes introduce hidden O(n\u00b2): contains() on list inside loop, N+1 queries, loading all entities to filter in Java."
+    "explain": "Un endpoint típico es O(log n) dominado por la consulta indexada a la DB. Pero errores comunes introducen O(n\u00b2) ocultos: contains() en una lista dentro de un bucle, consultas N+1, o cargar todas las entidades para filtrar en Java."
   },
   {
     "id": "dsa-order-steps-09",
     "type": "ORDER_STEPS",
     "difficulty": "basic",
     "subtopic": "dsa-collections",
-    "question": "Order the steps of HashMap.put(key, value):",
+    "question": "Ordena los pasos de HashMap.put(key, value):",
     "steps": [
-      "Call key.hashCode()",
-      "Compute bucket index: hash % capacity",
-      "Check if key already exists in bucket (using equals())",
-      "If exists: replace value. If not: add new entry to bucket",
-      "Check if size > capacity \u00d7 loadFactor",
-      "If threshold exceeded: resize array and rehash all entries"
+      "Llamar a key.hashCode()",
+      "Calcular índice del bucket: hash % capacidad",
+      "Verificar si la clave ya existe en el bucket (usando equals())",
+      "Si existe: reemplazar valor. Si no: añadir nueva entrada al bucket",
+      "Verificar si size > capacidad \u00d7 loadFactor",
+      "Si se supera el umbral: redimensionar array y hacer rehash de todas las entradas"
     ],
     "correctOrder": [
       0,
@@ -194,7 +164,7 @@
       4,
       5
     ],
-    "explanation": "HashMap.put follows this exact sequence: hash \u2192 bucket \u2192 find/insert \u2192 check load. Resize (step 6) only happens when the threshold is exceeded after insertion.",
+    "explanation": "HashMap.put sigue esta secuencia exacta: hash \u2192 bucket \u2192 buscar/insertar \u2192 verificar carga. El redimensionamiento (paso 6) ocurre solo si se supera el umbral tras la inserción.",
     "topic": "dsa"
   },
   {
@@ -202,15 +172,15 @@
     "type": "ORDER_STEPS",
     "difficulty": "basic",
     "subtopic": "dsa-trees",
-    "question": "Order the steps of binary search on a sorted array:",
+    "question": "Ordena los pasos de la búsqueda binaria en un array ordenado:",
     "steps": [
-      "Set low = 0, high = array.length - 1",
-      "Calculate mid = (low + high) / 2",
-      "Compare target with array[mid]",
-      "If equal: return mid (found!)",
-      "If target < array[mid]: set high = mid - 1",
-      "If target > array[mid]: set low = mid + 1",
-      "Repeat while low <= high"
+      "Establecer low = 0, high = array.length - 1",
+      "Calcular mid = (low + high) / 2",
+      "Comparar objetivo con array[mid]",
+      "Si es igual: devolver mid (¡encontrado!)",
+      "Si objetivo < array[mid]: establecer high = mid - 1",
+      "Si objetivo > array[mid]: establecer low = mid + 1",
+      "Repetir mientras low <= high"
     ],
     "correctOrder": [
       0,
@@ -221,7 +191,7 @@
       5,
       6
     ],
-    "explanation": "Binary search halves the search space each iteration \u2192 O(log n). Same principle used in B-Tree index lookups, Collections.binarySearch(), and bisect algorithms.",
+    "explanation": "La búsqueda binaria reduce el espacio de búsqueda a la mitad en cada iteración \u2192 O(log n). Es el mismo principio usado en búsquedas de índices B-Tree y Collections.binarySearch().",
     "topic": "dsa"
   },
   {
@@ -229,16 +199,16 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "senior",
     "subtopic": "dsa-hashing",
-    "mission": "Two threads execute this simultaneously on a regular HashMap. What can happen?",
-    "code": "// Shared state (NOT ConcurrentHashMap)\nMap<String, Integer> map = new HashMap<>();\n\n// Thread 1:\nmap.put(\"count\", map.getOrDefault(\"count\", 0) + 1);\n\n// Thread 2:\nmap.put(\"count\", map.getOrDefault(\"count\", 0) + 1);\n\n// Expected final value: 2",
+    "mission": "Dos hilos ejecutan esto simultáneamente en un HashMap normal. ¿Qué puede pasar?",
+    "code": "// Estado compartido (NO es ConcurrentHashMap)\nMap<String, Integer> map = new HashMap<>();\n\n// Hilo 1:\nmap.put(\"count\", map.getOrDefault(\"count\", 0) + 1);\n\n// Hilo 2:\nmap.put(\"count\", map.getOrDefault(\"count\", 0) + 1);\n\n// Valor final esperado: 2",
     "choices": [
-      "Always 2 (correct)",
-      "Could be 1 (lost update)",
+      "Siempre 2 (correcto)",
+      "Podría ser 1 (actualización perdida)",
       "ConcurrentModificationException",
-      "Could be 1 OR infinite loop (internal corruption)"
+      "Podría ser 1 O un bucle infinito (corrupción interna)"
     ],
-    "answer": "Could be 1 OR infinite loop (internal corruption)",
-    "explain": "HashMap is NOT thread-safe. Race on put can cause: (1) lost update (both read 0, both write 1), (2) internal corruption of the bucket linked list/tree causing infinite loops during resize. Use ConcurrentHashMap with atomic operations like compute() or merge().",
+    "answer": "Podría ser 1 O un bucle infinito (corrupción interna)",
+    "explain": "HashMap NO es seguro para hilos. Una carrera en el put puede causar: (1) actualización perdida (ambos leen 0, ambos escriben 1), (2) corrupción interna de la lista/árbol del bucket causando bucles infinitos durante el resize. Usa ConcurrentHashMap con operaciones atómicas como compute() o merge().",
     "topic": "dsa"
   },
   {
@@ -246,43 +216,33 @@
     "type": "ORAL_ANSWER",
     "difficulty": "senior",
     "subtopic": "dsa-hashing",
-    "question": "How does Kafka decide which partition receives a message? How is this related to hashing?",
-    "interviewerIntent": "Connects data structure knowledge (hashing) to distributed systems (Kafka partitioning)",
+    "question": "¿Cómo decide Kafka qué partición recibe un mensaje? ¿Cómo se relaciona esto con el hashing?",
+    "interviewerIntent": "Conecta el conocimiento de estructuras de datos (hashing) con sistemas distribuidos (particionamiento en Kafka).",
     "keyPoints": [
       "DefaultPartitioner: murmur2(key) % numPartitions",
-      "Same key \u2192 same partition \u2192 ordering guarantee",
-      "Null key \u2192 round-robin (no ordering)",
-      "Adding partitions breaks the hash \u2192 existing keys may go to different partition",
-      "Consistent hashing (used in Kafka Connect) reduces redistribution"
-    ],
-    "followUps": [
-      {
-        "question": "What happens if one key has 10x more events than others?",
-        "answerHint": "Hot partition \u2014 one consumer overloaded. Solution: compound key (driverId + date) or custom partitioner."
-      },
-      {
-        "question": "Why not just use partition = key.hashCode() % n?",
-        "answerHint": "Object.hashCode() is not consistent across JVM restarts. Kafka uses murmur2 which is deterministic regardless of JVM."
-      }
+      "Misma clave \u2192 misma partición \u2192 garantía de orden",
+      "Clave nula \u2192 round-robin (sin orden garantizado)",
+      "Añadir particiones rompe el hash \u2192 las claves existentes pueden ir a particiones diferentes",
+      "El hashing consistente (usado en Kafka Connect) reduce la redistribución"
     ],
     "topic": "dsa",
-    "explain": "Kafka uses murmur2 hash of the message key modulo partition count. This gives: (1) deterministic routing, (2) per-key ordering, (3) even distribution with good keys. Same concept as HashMap bucket assignment, scaled to distributed system."
+    "explain": "Kafka usa el hash murmur2 de la clave del mensaje módulo el conteo de particiones. Esto permite: (1) enrutamiento determinista, (2) orden por clave, (3) distribución uniforme. Es el mismo concepto que la asignación de buckets en un HashMap, escalado a un sistema distribuido."
   },
   {
     "id": "dsa-predict-priority-13",
     "type": "PREDICT_OUTPUT",
     "difficulty": "basic",
     "subtopic": "dsa-queues",
-    "mission": "What does this PriorityQueue print?",
+    "mission": "¿Qué imprime esta PriorityQueue?",
     "code": "PriorityQueue<Integer> pq = new PriorityQueue<>();\npq.offer(5);\npq.offer(1);\npq.offer(3);\npq.offer(2);\npq.offer(4);\n\nSystem.out.println(pq.poll());\nSystem.out.println(pq.poll());\nSystem.out.println(pq.poll());",
     "choices": [
-      "5, 1, 3 (insertion order)",
-      "1, 2, 3 (sorted ascending)",
-      "5, 4, 3 (sorted descending)",
-      "1, 3, 5 (odd numbers first)"
+      "5, 1, 3 (orden de inserción)",
+      "1, 2, 3 (orden ascendente)",
+      "5, 4, 3 (orden descendente)",
+      "1, 3, 5 (números impares primero)"
     ],
-    "answer": "1, 2, 3 (sorted ascending)",
-    "explain": "PriorityQueue is a min-heap by default. poll() always returns the smallest element. Internal order is NOT fully sorted \u2014 only the head is guaranteed to be minimum. O(log n) per poll.",
+    "answer": "1, 2, 3 (orden ascendente)",
+    "explain": "PriorityQueue es un min-heap por defecto. poll() siempre devuelve el elemento más pequeño. El orden interno NO está totalmente ordenado, solo se garantiza que la cabeza sea el mínimo. O(log n) por poll.",
     "topic": "dsa"
   },
   {
@@ -290,7 +250,7 @@
     "type": "FILL_BLANK",
     "difficulty": "basic",
     "subtopic": "dsa-big-o",
-    "question": "ArrayList.get(index) is O(___) because it accesses the internal array directly by index.",
+    "question": "ArrayList.get(index) es O(___) porque accede al array interno directamente por índice.",
     "blank": "___",
     "answer": "1",
     "choices": [
@@ -300,41 +260,31 @@
       "n\u00b2"
     ],
     "topic": "dsa",
-    "explain": "ArrayList stores elements in a contiguous array. Accessing by index is a simple pointer arithmetic operation: base + index \u00d7 elementSize = O(1). This is why ArrayList is preferred for random access."
+    "explain": "ArrayList almacena elementos en un array contiguo. El acceso por índice es una operación aritmética simple de punteros: base + índice \u00d7 tamañoElemento = O(1). Por esto se prefiere ArrayList para acceso aleatorio."
   },
   {
     "id": "dsa-oral-spring-cache-15",
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "dsa-recursion",
-    "question": "How is @Cacheable in Spring Boot conceptually the same as memoization?",
-    "interviewerIntent": "Tests ability to connect academic concepts to production frameworks",
+    "question": "¿Cómo es @Cacheable en Spring Boot conceptualmente igual a la memoización?",
+    "interviewerIntent": "Prueba la capacidad de conectar conceptos académicos con frameworks de producción.",
     "keyPoints": [
-      "Both store computed results keyed by input parameters",
-      "Both trade memory for CPU/time",
-      "Memoization: function-level cache. @Cacheable: service-level cache",
-      "Key difference: @Cacheable can use distributed cache (Redis), has TTL, eviction policies",
-      "Both have invalidation problem: when does cached value become stale?"
-    ],
-    "followUps": [
-      {
-        "question": "When should you NOT cache?",
-        "answerHint": "When data changes frequently, when different users must see different data, when cache invalidation is too complex to get right."
-      },
-      {
-        "question": "How do you handle cache stampede?",
-        "answerHint": "Lock on cache miss (singleflight pattern), probabilistic early expiration, or warm-up on startup."
-      }
+      "Ambos almacenan resultados computados indexados por parámetros de entrada",
+      "Ambos intercambian memoria por CPU/tiempo",
+      "Memoización: caché a nivel de función. @Cacheable: caché a nivel de servicio",
+      "Diferencia clave: @Cacheable puede usar caché distribuida (Redis), tiene TTL y políticas de desalojo",
+      "Ambos tienen el problema de la invalidación: ¿cuándo se vuelve obsoleto el valor?"
     ],
     "topic": "dsa",
-    "explain": "Memoization = local cache of function results. @Cacheable = same concept at service level with production features (TTL, eviction, distribution). Both convert O(expensive) repeated computation to O(1) lookup after first call."
+    "explain": "Memoización = caché local de resultados de funciones. @Cacheable = mismo concepto a nivel de servicio con características de producción (TTL, desalojo, distribución). Ambos convierten una computación repetitiva costosa O(n) en una búsqueda O(1) tras la primera llamada."
   },
   {
     "id": "dsa-bigo-sorting-01",
     "type": "PREDICT_OUTPUT",
     "difficulty": "basic",
     "subtopic": "dsa-big-o",
-    "mission": "You call Collections.sort() on a list of 1 million deliveries. What is the time complexity?",
+    "mission": "Llamas a Collections.sort() en una lista de 1 millón de entregas. ¿Cuál es la complejidad temporal?",
     "choices": [
       "O(n)",
       "O(n log n)",
@@ -342,7 +292,7 @@
       "O(log n)"
     ],
     "answer": "O(n log n)",
-    "explain": "Java's Collections.sort() uses TimSort (merge sort variant). Best case O(n) for nearly sorted data, worst/average case O(n log n). For 1M elements: ~20M comparisons (1M \u00d7 log\u2082(1M) \u2248 1M \u00d7 20). Fast enough for in-memory sorting.",
+    "explain": "Collections.sort() de Java usa TimSort. En el mejor caso es O(n) para datos casi ordenados, y el caso promedio/peor es O(n log n). Para 1M de elementos son aproximadamente 20M de comparaciones. Suficientemente rápido para ordenación en memoria.",
     "topic": "dsa"
   },
   {
@@ -350,7 +300,7 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "basic",
     "subtopic": "dsa-big-o",
-    "mission": "Sorted array of 1 billion elements. How many comparisons does binary search need in the worst case?",
+    "mission": "Array ordenado de 1,000 millones de elementos. ¿Cuántas comparaciones necesita la búsqueda binaria en el peor de los casos?",
     "choices": [
       "1,000,000,000",
       "30",
@@ -358,7 +308,7 @@
       "100"
     ],
     "answer": "30",
-    "explain": "Binary search is O(log\u2082 n). log\u2082(1,000,000,000) \u2248 30. Each comparison halves the search space. This is why database B-Tree indexes (which use the same principle) can find any row in ~3-4 disk reads even with billions of records.",
+    "explain": "La búsqueda binaria es O(log\u2082 n). log\u2082(1,000,000,000) \u2248 30. Cada comparación reduce el espacio de búsqueda a la mitad. Por esto los índices B-Tree de las bases de datos pueden encontrar cualquier fila con solo 3-4 lecturas de disco incluso con miles de millones de registros.",
     "topic": "dsa"
   },
   {
@@ -366,7 +316,7 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "inter",
     "subtopic": "dsa-big-o",
-    "mission": "What is the complexity of this nested loop?",
+    "mission": "¿Cuál es la complejidad de este bucle anidado?",
     "code": "for (int i = 0; i < n; i++) {\n    for (int j = i; j < n; j++) {\n        process(i, j);\n    }\n}",
     "choices": [
       "O(n)",
@@ -375,7 +325,7 @@
       "O(n\u00b3)"
     ],
     "answer": "O(n\u00b2)",
-    "explain": "Inner loop runs n + (n-1) + (n-2) + ... + 1 = n(n+1)/2 times total. That's O(n\u00b2/2) = O(n\u00b2). The fact that j starts at i (not 0) halves the constant but doesn't change the order of growth. Same complexity as a full nested loop.",
+    "explain": "El bucle interno ejecuta n + (n-1) + ... + 1 = n(n+1)/2 veces. Eso es O(n\u00b2/2) = O(n\u00b2). El hecho de que j comience en i (no en 0) reduce la constante a la mitad pero no cambia el orden de crecimiento.",
     "topic": "dsa"
   },
   {
@@ -383,8 +333,8 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "inter",
     "subtopic": "dsa-collections",
-    "mission": "What is the complexity of this Stream pipeline?",
-    "code": "List<Delivery> result = deliveries.stream()  // n items\n    .filter(d -> d.isActive())               // ?\n    .sorted(comparing(Delivery::date))       // ?\n    .limit(10)                               // ?\n    .toList();",
+    "mission": "¿Cuál es la complejidad de este pipeline de Stream?",
+    "code": "List<Delivery> result = deliveries.stream()  // n items\n    .filter(d -> d.isActive())               \n    .sorted(comparing(Delivery::date))       \n    .limit(10)                               \n    .toList();",
     "choices": [
       "O(n)",
       "O(n log n)",
@@ -392,7 +342,7 @@
       "O(n + n log n)"
     ],
     "answer": "O(n log n)",
-    "explain": "filter is O(n) \u2014 scans all items. sorted is O(n log n) \u2014 sorts ALL matching items even though we only need top 10. limit(10) is O(1) after sort. Total: O(n log n) dominated by sort. Optimization: use a min-heap (PriorityQueue of size 10) for O(n log 10) = O(n).",
+    "explain": "filter es O(n). sorted es O(n log n) ya que ordena TODOS los ítems que pasaron el filtro aunque solo necesitemos los 10 primeros. El total es O(n log n) dominado por el sort.",
     "topic": "dsa"
   },
   {
@@ -400,33 +350,16 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "basic",
     "subtopic": "dsa-recursion",
-    "mission": "This recursive method is called with n=100000. What happens?",
+    "mission": "Este método recursivo se llama con n=100000. ¿Qué sucede?",
     "code": "public int sum(int n) {\n    if (n == 0) return 0;\n    return n + sum(n - 1);\n}",
     "choices": [
-      "Returns 5000050000",
+      "Devuelve 5000050000",
       "StackOverflowError",
-      "Returns 0 (integer overflow)",
+      "Devuelve 0 (desbordamiento de entero)",
       "OutOfMemoryError"
     ],
     "answer": "StackOverflowError",
-    "explain": "Each recursive call adds a frame to the call stack. Default Java stack size is ~512KB-1MB, fitting ~10K-20K frames. With n=100000, it exceeds the stack. Solution: use iterative approach (for loop) or increase stack size (-Xss). Java has no tail-call optimization.",
-    "topic": "dsa"
-  },
-  {
-    "id": "dsa-recursion-dp-06",
-    "type": "PREDICT_OUTPUT",
-    "difficulty": "inter",
-    "subtopic": "dsa-recursion",
-    "mission": "Without memoization, how many times is fib(3) called when computing fib(6)?",
-    "code": "int fib(int n) {\n    if (n <= 1) return n;\n    return fib(n-1) + fib(n-2);\n}\n// Call: fib(6)",
-    "choices": [
-      "1",
-      "3",
-      "4",
-      "5"
-    ],
-    "answer": "4",
-    "explain": "Without memoization, the recursion tree repeats subproblems exponentially. fib(6) calls fib(5)+fib(4). fib(5) calls fib(4)+fib(3). fib(4) appears 2x, fib(3) appears 3-4x. Total calls grow as O(2^n). With memoization: each fib(k) computed once = O(n).",
+    "explain": "Cada llamada recursiva añade un marco a la pila (stack). El tamaño por defecto suele permitir ~10k-20k marcos. Con n=100000 se excede la pila. Java no tiene optimización de llamada de cola (tail-call optimization).",
     "topic": "dsa"
   },
   {
@@ -434,7 +367,7 @@
     "type": "PREDICT_OUTPUT",
     "difficulty": "basic",
     "subtopic": "dsa-trees",
-    "mission": "You insert keys [5, 3, 7, 1, 4, 6, 8] into an empty BST (no balancing). What is the tree height?",
+    "mission": "Insertas las claves [5, 3, 7, 1, 4, 6, 8] en un BST vacío (sin balanceo). ¿Cuál es la altura del árbol?",
     "choices": [
       "2",
       "3",
@@ -442,23 +375,7 @@
       "7"
     ],
     "answer": "2",
-    "explain": "5 becomes root. 3 goes left, 7 goes right. Then 1,4 go under 3 and 6,8 go under 7. Height = 2 (root to any leaf = 2 edges). This is a balanced insertion because the first key (5) is the median. If we inserted [1,3,4,5,6,7,8] instead, height would be 6 (degenerate to linked list).",
-    "topic": "dsa"
-  },
-  {
-    "id": "dsa-trees-complexity-08",
-    "type": "PREDICT_OUTPUT",
-    "difficulty": "inter",
-    "subtopic": "dsa-trees",
-    "mission": "You have a balanced BST with 1 million nodes. What is the maximum number of comparisons to find any key?",
-    "choices": [
-      "1,000,000",
-      "20",
-      "500,000",
-      "1000"
-    ],
-    "answer": "20",
-    "explain": "Balanced BST has height O(log\u2082 n). log\u2082(1,000,000) \u2248 20. Each level requires one comparison. This is identical to binary search on a sorted array. Red-Black trees and AVL trees guarantee O(log n) height by self-balancing after insertions.",
+    "explain": "5 es la raíz. 3 va a la izquierda, 7 a la derecha. Luego 1,4 cuelgan de 3 y 6,8 de 7. La altura es 2 (de la raíz a cualquier hoja hay 2 aristas). Es una inserción balanceada porque el primer elemento es la mediana.",
     "topic": "dsa"
   },
   {
@@ -466,175 +383,85 @@
     "type": "ORDER_EXECUTION",
     "difficulty": "inter",
     "subtopic": "dsa-queues",
-    "mission": "Order the steps of BFS (Breadth-First Search) to find shortest path in unweighted graph:",
+    "mission": "Ordena los pasos de BFS (Búsqueda en anchura) para encontrar el camino más corto en un grafo no pesado:",
     "items": [
       {
         "id": "init",
-        "label": "Create queue, enqueue start node, mark as visited"
+        "label": "Crear cola, encolar nodo inicial, marcar como visitado"
       },
       {
         "id": "dequeue",
-        "label": "Dequeue front node from queue"
+        "label": "Desencolar el nodo frontal de la cola"
       },
       {
         "id": "check",
-        "label": "If dequeued node is target \u2192 return path (found!)"
+        "label": "Si el nodo desencolado es el objetivo \u2192 devolver camino (¡encontrado!)"
       },
       {
         "id": "neighbors",
-        "label": "Get all unvisited neighbors of dequeued node"
+        "label": "Obtener todos los vecinos no visitados del nodo desencolado"
       },
       {
         "id": "enqueue",
-        "label": "Mark neighbors as visited, enqueue them"
+        "label": "Marcar vecinos como visitados, encolarlos"
       },
       {
         "id": "repeat",
-        "label": "Repeat from step 2 while queue is not empty"
+        "label": "Repetir desde el paso 2 mientras la cola no esté vacía"
       }
     ],
     "topic": "dsa",
-    "explain": "BFS explores level by level (breadth-first). The queue ensures FIFO order \u2014 nodes closer to start are processed first. This guarantees the first time we reach the target, it's via the shortest path (in unweighted graphs). Used in: dependency resolution, shortest route (unweighted), social network distance."
-  },
-  {
-    "id": "dsa-queues-stack-10",
-    "type": "PREDICT_OUTPUT",
-    "difficulty": "basic",
-    "subtopic": "dsa-queues",
-    "mission": "What does this code print?",
-    "code": "Deque<String> stack = new ArrayDeque<>();\nstack.push(\"A\");\nstack.push(\"B\");\nstack.push(\"C\");\nSystem.out.println(stack.pop());\nSystem.out.println(stack.pop());",
-    "choices": [
-      "A, B",
-      "C, B",
-      "C, A",
-      "B, C"
-    ],
-    "answer": "C, B",
-    "explain": "Stack is LIFO (Last In, First Out). push() adds to top: [A, B, C] (C on top). pop() removes from top: first pop=C, second pop=B. ArrayDeque is preferred over Stack class in Java (Stack extends Vector which is synchronized \u2014 unnecessary overhead).",
-    "topic": "dsa"
-  },
-  {
-    "id": "dsa-hashing-collision-11",
-    "type": "PREDICT_OUTPUT",
-    "difficulty": "inter",
-    "subtopic": "dsa-hashing",
-    "mission": "HashMap capacity=16. Two keys have hashCode() returning 17 and 33. Do they collide?",
-    "choices": [
-      "No \u2014 different hash codes mean different buckets",
-      "Yes \u2014 both map to bucket index 1 (hash % 16)",
-      "Yes \u2014 both map to bucket index 0",
-      "Depends on equals() implementation"
-    ],
-    "answer": "Yes \u2014 both map to bucket index 1 (hash % 16)",
-    "explain": "Bucket index = hash & (capacity - 1) = hash % 16 for power-of-2 capacity. 17 % 16 = 1. 33 % 16 = 1. Both go to bucket 1 \u2014 collision! They'll be stored as linked list (or tree if >8 entries) in the same bucket. This is why hashCode should distribute values evenly.",
-    "topic": "dsa"
-  },
-  {
-    "id": "dsa-hashing-immutable-12",
-    "type": "ORAL_ANSWER",
-    "difficulty": "inter",
-    "subtopic": "dsa-hashing",
-    "question": "Why does Java recommend using immutable objects as HashMap keys? What happens if you use a mutable key?",
-    "interviewerIntent": "Tests understanding of hash table invariants and defensive programming",
-    "keyPoints": [
-      "hashCode determines bucket placement at put() time",
-      "If key mutates after put(), hashCode changes but entry stays in OLD bucket",
-      "get() with mutated key looks in WRONG bucket \u2192 entry not found (memory leak)",
-      "String, Integer, enum are immutable \u2014 safe keys by design",
-      "If custom key needed: make fields final, no setters"
-    ],
-    "followUps": [
-      {
-        "question": "How does this relate to JPA entity identity?",
-        "answerHint": "JPA entities with @GeneratedValue have null ID before persist. If used as Map key before persist, hashCode changes after persist \u2192 lost entry. Use business key or UUID assigned at construction."
-      },
-      {
-        "question": "Is it safe to use a record as HashMap key?",
-        "answerHint": "Yes! Java records are immutable by design \u2014 all fields are final. Auto-generated hashCode uses all components. Perfect for composite keys."
-      }
-    ],
-    "topic": "dsa",
-    "explain": "HashMap assumes key.hashCode() never changes after insertion. Mutable keys violate this assumption silently \u2014 no exception, just entries that can never be found. The entry still exists in memory (leak) but is inaccessible. Always use immutable keys."
+    "explain": "BFS explora nivel por nivel. La cola asegura el orden FIFO, procesando primero los nodos más cercanos al inicio. Esto garantiza que la primera vez que alcancemos el objetivo sea por el camino más corto."
   },
   {
     "id": "dsa-bigo-amortized-13",
     "type": "ORAL_ANSWER",
     "difficulty": "senior",
     "subtopic": "dsa-big-o",
-    "question": "Explain amortized analysis. Why is ArrayList.add() O(1) amortized despite occasional O(n) resizes?",
-    "interviewerIntent": "Tests understanding of amortized complexity beyond simple worst-case",
+    "question": "Explica el análisis amortizado. ¿Por que ArrayList.add() es O(1) amortizado a pesar de los redimensionamientos O(n)?",
+    "interviewerIntent": "Prueba la comprensión de la complejidad amortizada más allá del peor caso simple.",
     "keyPoints": [
-      "Amortized = average cost over a SEQUENCE of operations (not single operation)",
-      "ArrayList doubles capacity when full: resize costs O(n) but happens after n adds",
-      "Cost of n adds: n (regular) + n (one resize copy) = 2n = O(n) total = O(1) per add",
-      "Same principle: HashMap rehash, StringBuilder expansion, dynamic array in any language",
-      "NOT the same as average-case (amortized is worst-case over sequence)"
-    ],
-    "followUps": [
-      {
-        "question": "When does amortized O(1) matter in practice?",
-        "answerHint": "When building a list in a loop. If add were O(n) worst case without amortization, building a list of n items would be O(n\u00b2). Amortized O(1) means the loop is O(n) total."
-      },
-      {
-        "question": "What is the banker's method for amortized analysis?",
-        "answerHint": "Assign each cheap operation extra 'credit'. When expensive operation happens, pay with accumulated credits. If credits never go negative, the amortized cost is the per-operation charge."
-      }
+      "Amortizado = coste promedio sobre una SECUENCIA de operaciones",
+      "ArrayList duplica capacidad: el resize cuesta O(n) pero ocurre tras n inserciones",
+      "Coste de n adds: n (normales) + n (copia del resize) = 2n = O(n) total \u2192 O(1) por add",
+      "Mismo principio: rehash de HashMap o expansión de StringBuilder",
+      "NO es lo mismo que el caso promedio (el amortizado es peor caso sobre la secuencia)"
     ],
     "topic": "dsa",
-    "explain": "Amortized analysis shows that expensive operations (resize) are rare enough that their cost is 'spread' across many cheap operations. Key insight from CLRS: amortized cost \u2260 average case. It's a GUARANTEE that n operations cost at most f(n) total, regardless of the specific sequence."
+    "explain": "Muestra que las operaciones costosas (resize) son lo suficientemente raras como para que su coste se 'reparta' entre muchas operaciones baratas. Es una GARANTÍA de que n operaciones cuestan como máximo f(n) en total."
   },
   {
     "id": "dsa-collections-when-14",
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "dsa-collections",
-    "question": "When would you use LinkedList instead of ArrayList in Java? Is there ever a good reason?",
-    "interviewerIntent": "Tests nuanced understanding beyond textbook answers",
+    "question": "¿Cuándo usarías LinkedList en lugar de ArrayList en Java? ¿Existe alguna buena razón?",
+    "interviewerIntent": "Prueba una comprensión matizada más allá de las respuestas de libro de texto.",
     "keyPoints": [
-      "Almost never in practice \u2014 ArrayList wins in nearly all real-world scenarios",
-      "LinkedList has O(1) add/remove at head, but ArrayList has better cache locality",
-      "CPU cache lines (64 bytes) favor contiguous memory \u2014 ArrayList iterates 10-100x faster",
-      "Only valid use: large list with frequent insert/remove at known iterator position (rare)",
-      "Deque operations (addFirst/removeLast): use ArrayDeque instead (faster, less memory)"
-    ],
-    "followUps": [
-      {
-        "question": "What about Queue/Deque usage?",
-        "answerHint": "ArrayDeque is faster than LinkedList for queue/deque operations. LinkedList allocates a Node object per element (GC pressure). ArrayDeque uses a circular array."
-      },
-      {
-        "question": "When is the textbook answer 'use LinkedList for frequent insertions' wrong?",
-        "answerHint": "You need to FIND the insertion point first (O(n) traversal). Combined with cache misses during traversal, LinkedList insertion is slower in practice than ArrayList.copyOf() for lists under ~10K elements."
-      }
+      "Casi nunca en la práctica: ArrayList gana en casi todos los escenarios reales",
+      "LinkedList tiene O(1) al inicio/final, pero ArrayList tiene mejor localidad de caché",
+      "La caché de la CPU favorece la memoria contigua: ArrayList itera 10-100 veces más rápido",
+      "Solo es válido para listas enormes con inserciones constantes en una posición de iterador conocida",
+      "Para operaciones de Deque: usar ArrayDeque (más rápido, menos memoria)"
     ],
     "topic": "dsa",
-    "explain": "CLRS teaches LinkedList for O(1) insert/delete at a pointer. In practice on modern hardware, CPU cache dominates. ArrayList's contiguous memory means prefetching works. LinkedList's scattered nodes cause cache misses. Joshua Bloch (Java architect): 'Does anyone actually use LinkedList? I wrote it and I never use it.'"
+    "explain": "En hardware moderno la caché de la CPU domina. La memoria contigua de ArrayList permite el prefetching. Los nodos dispersos de LinkedList causan fallos de caché. Joshua Bloch: '¿Alguien usa realmente LinkedList? Yo la escribí y nunca la uso'."
   },
   {
     "id": "dsa-trees-why-balanced-15",
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "dsa-trees",
-    "question": "Why do balanced trees (Red-Black, AVL) exist? What problem do they solve that a plain BST doesn't?",
-    "interviewerIntent": "Tests understanding of why self-balancing matters for guarantees",
+    "question": "¿Por qué existen los árboles balanceados (Red-Black, AVL)? ¿Qué problema resuelven que un BST normal no?",
+    "interviewerIntent": "Prueba la comprensión de por qué el auto-balanceo importa para las garantías de tiempo.",
     "keyPoints": [
-      "Plain BST: worst case O(n) if insertions are sorted (degenerates to linked list)",
-      "Balanced BST: guarantees O(log n) height regardless of insertion order",
-      "Red-Black tree (Java TreeMap): max height 2*log(n) \u2014 slightly relaxed but faster insert",
-      "AVL tree: strictly balanced (height diff \u2264 1) \u2014 faster lookup, slower insert",
-      "Real-world: TreeMap for sorted access, HashMap for O(1) when order not needed"
-    ],
-    "followUps": [
-      {
-        "question": "Where are Red-Black trees used in Java?",
-        "answerHint": "TreeMap, TreeSet, and inside HashMap (when bucket chain > 8 entries, converted to RB-tree for O(log n) instead of O(n) linear search)."
-      },
-      {
-        "question": "Why does the database use B-Tree instead of Red-Black tree?",
-        "answerHint": "B-Tree has high branching factor (100-500 children per node). Each node = one disk page. Fewer levels = fewer disk I/O operations. Red-Black tree is binary (2 children) = too deep for disk-based access."
-      }
+      "BST normal: peor caso O(n) si las inserciones están ordenadas (degenera en lista enlazada)",
+      "BST balanceado: garantiza altura O(log n) independientemente del orden de inserción",
+      "Red-Black tree (TreeMap de Java): altura máx 2*log(n) — inserción más rápida",
+      "B-Tree (Bases de datos): alto factor de ramificación para minimizar lecturas de disco",
+      "En Java: TreeMap para acceso ordenado, HashMap para O(1) cuando el orden no importa"
     ],
     "topic": "dsa",
-    "explain": "CLRS proves that unbalanced BST has \u0398(n) worst case (sorted input). Self-balancing trees guarantee O(log n) by performing rotations on insert/delete to maintain height invariant. The trade-off is slightly more complex insert (rotations) for guaranteed fast lookup."
+    "explain": "Los árboles auto-balanceados garantizan O(log n) mediante rotaciones en la inserción/borrado para mantener invariantes de altura. Es un compromiso: inserción ligeramente más compleja por una búsqueda rápida garantizada."
   }
 ]

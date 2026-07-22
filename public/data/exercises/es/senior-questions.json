@@ -6,8 +6,8 @@
     "type": "ORAL_ANSWER",
     "difficulty": "senior",
     "question": "A service uses a five-level inheritance hierarchy. A new requirement applies to only two subclasses. How would you change the design without breaking the remaining implementations?",
-    "interviewerIntent": "Tests refactoring judgment \u2014 composition vs inheritance, interface segregation.",
-    "answer": "I'd extract the new behavior into an interface or composition-based capability. The two subclasses implement/compose it; the others remain unchanged. If the hierarchy is deep, this is a signal to flatten it \u2014 replace inheritance with strategy/composition where subtypes differ in behavior, not identity.",
+    "interviewerIntent": "Tests refactoring judgment — composition vs inheritance, interface segregation.",
+    "answer": "I'd extract the new behavior into an interface or composition-based capability. The two subclasses implement/compose it; the others remain unchanged. If the hierarchy is deep, this is a signal to flatten it — replace inheritance with strategy/composition where subtypes differ in behavior, not identity.",
     "keyPoints": [
       "Extract interface for new capability",
       "Composition over deep inheritance",
@@ -23,7 +23,7 @@
       {
         "type": "REAL_EXPERIENCE",
         "question": "Have you refactored a deep inheritance hierarchy?",
-        "hint": "SGN3 document generation: Template Method (3 levels). New document type needed different behavior \u2014 extracted varying steps into strategy objects instead of adding subclass."
+        "hint": "SGN3 document generation: Template Method (3 levels). New document type needed different behavior — extracted varying steps into strategy objects instead of adding subclass."
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE",
@@ -40,7 +40,7 @@
     "difficulty": "senior",
     "question": "Explain a real situation where polymorphism removed conditional logic from your code. What was the original code structure?",
     "interviewerIntent": "Tests whether candidate uses OOP in practice, not just theory.",
-    "answer": "[REAL EXAMPLE REQUIRED \u2014 document generation or notification routing in SGN3 where switch/case on type was replaced by polymorphic dispatch]",
+    "answer": "[REAL EXAMPLE REQUIRED — document generation or notification routing in SGN3 where switch/case on type was replaced by polymorphic dispatch]",
     "keyPoints": [
       "Show before (switch chain) vs after (polymorphism)",
       "Explain why worth refactoring",
@@ -50,7 +50,7 @@
       {
         "type": "CHALLENGE_CHOICE",
         "question": "When would you keep the conditional instead of polymorphism?",
-        "hint": "2-3 stable cases \u2014 polymorphism for 2 cases is over-engineering."
+        "hint": "2-3 stable cases — polymorphism for 2 cases is over-engineering."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -66,7 +66,7 @@
     "answer": "The entry becomes unreachable via get() because the hash bucket was computed from the original hashCode. After mutation, the new hashCode points to a different bucket. The object exists in the map (memory leak) but cannot be found. containsKey returns false, size unchanged.",
     "keyPoints": [
       "Hash bucket at insertion time",
-      "Mutation \u2192 wrong bucket",
+      "Mutation → wrong bucket",
       "Orphaned entry (leak)",
       "equals/hashCode contract violation"
     ],
@@ -87,7 +87,7 @@
     "difficulty": "senior",
     "question": "A Spring singleton service contains a mutable HashMap used as a cache. What concurrency problems can occur?",
     "interviewerIntent": "Tests thread safety understanding in web apps.",
-    "answer": "Multiple request threads access the singleton simultaneously. HashMap is not thread-safe \u2014 concurrent put() corrupts internal structure. Even ConcurrentHashMap doesn't protect compound operations (check-then-act). Fixes: ConcurrentHashMap with computeIfAbsent, or dedicated cache with TTL and max size.",
+    "answer": "Multiple request threads access the singleton simultaneously. HashMap is not thread-safe — concurrent put() corrupts internal structure. Even ConcurrentHashMap doesn't protect compound operations (check-then-act). Fixes: ConcurrentHashMap with computeIfAbsent, or dedicated cache with TTL and max size.",
     "keyPoints": [
       "Singleton = shared across threads",
       "HashMap corruption under concurrency",
@@ -140,7 +140,7 @@
     "difficulty": "senior",
     "question": "Describe a memory leak that can happen in Java even though the JVM has garbage collection.",
     "interviewerIntent": "Tests understanding of reachability-based GC.",
-    "answer": "(1) Static collections without eviction (cache growing forever). (2) Listeners registered but never deregistered. (3) ThreadLocal not cleaned in thread pools. (4) Classloader leaks on hot-redeploy. (5) Unclosed resources (direct ByteBuffers, JDBC). The GC only collects unreachable objects \u2014 if a reference chain from GC root exists, the object lives forever.",
+    "answer": "(1) Static collections without eviction (cache growing forever). (2) Listeners registered but never deregistered. (3) ThreadLocal not cleaned in thread pools. (4) Classloader leaks on hot-redeploy. (5) Unclosed resources (direct ByteBuffers, JDBC). The GC only collects unreachable objects — if a reference chain from GC root exists, the object lives forever.",
     "keyPoints": [
       "Static collections without eviction",
       "Listeners never deregistered",
@@ -181,7 +181,7 @@
       {
         "type": "REAL_EXPERIENCE",
         "question": "Your actual case?",
-        "hint": "26,705 inscriptions, ~48k queries from JSF lazy loads during render. Pagination (50/page) + batch IN. 16min \u2192 2sec."
+        "hint": "26,705 inscriptions, ~48k queries from JSF lazy loads during render. Pagination (50/page) + batch IN. 16min → 2sec."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -194,7 +194,7 @@
     "difficulty": "senior",
     "question": "You discover an N+1 problem. Compare JOIN FETCH, entity graphs, batch fetching, and DTO queries. When is each dangerous?",
     "interviewerIntent": "Tests depth beyond 'just use JOIN FETCH'.",
-    "answer": "JOIN FETCH: dangerous with pagination (duplicates) or multiple collections (Cartesian). Entity graphs: same risk, harder to debug. Batch (@BatchSize): safe for moderate N, palliative. DTO projection: safest for read-only \u2014 no managed entities, no lazy traps. Choice depends on read/write, collection count, result size.",
+    "answer": "JOIN FETCH: dangerous with pagination (duplicates) or multiple collections (Cartesian). Entity graphs: same risk, harder to debug. Batch (@BatchSize): safe for moderate N, palliative. DTO projection: safest for read-only — no managed entities, no lazy traps. Choice depends on read/write, collection count, result size.",
     "keyPoints": [
       "JOIN FETCH + pagination = broken",
       "Multiple collections = Cartesian",
@@ -205,7 +205,7 @@
       {
         "type": "CHALLENGE_CHOICE",
         "question": "Why does JOIN FETCH + pagination produce wrong results?",
-        "hint": "JOIN multiplies rows. Hibernate deduplicates in memory AFTER fetching all. LIMIT/OFFSET in SQL happens before dedup \u2192 wrong results."
+        "hint": "JOIN multiplies rows. Hibernate deduplicates in memory AFTER fetching all. LIMIT/OFFSET in SQL happens before dedup → wrong results."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -218,7 +218,7 @@
     "difficulty": "senior",
     "question": "Two logistics planners assign the same vehicle simultaneously. How do you prevent a lost update?",
     "interviewerIntent": "Tests concurrency control.",
-    "answer": "Optimistic locking: @Version column. Second planner gets OptimisticLockException \u2192 'vehicle just assigned, refresh'. Pessimistic (SELECT FOR UPDATE) blocks but reduces throughput. For rare conflicts: optimistic is better. If frequent: reservation pattern or queue-based assignment.",
+    "answer": "Optimistic locking: @Version column. Second planner gets OptimisticLockException → 'vehicle just assigned, refresh'. Pessimistic (SELECT FOR UPDATE) blocks but reduces throughput. For rare conflicts: optimistic is better. If frequent: reservation pattern or queue-based assignment.",
     "keyPoints": [
       "@Version for optimistic",
       "User sees conflict message",
@@ -254,7 +254,7 @@
       {
         "type": "REAL_EXPERIENCE",
         "question": "Seen this in production?",
-        "hint": "SGN3: unit filter returning 80% of records for large units \u2014 seq scan was correct. Fix: more selective filters (status, date range)."
+        "hint": "SGN3: unit filter returning 80% of records for large units — seq scan was correct. Fix: more selective filters (status, date range)."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -267,7 +267,7 @@
     "difficulty": "senior",
     "question": "A query is fast in staging but slow in production. Which differences would you inspect?",
     "interviewerIntent": "Tests environment-aware diagnosis.",
-    "answer": "(1) Data volume \u2014 different selectivity. (2) Statistics \u2014 real vs uniform distribution. (3) Concurrent load \u2014 I/O contention. (4) Table bloat \u2014 dead tuples. (5) Memory settings (work_mem). (6) Parallel query settings. (7) Buffer cache state. Diagnosis: EXPLAIN ANALYZE on both, compare estimates vs actuals.",
+    "answer": "(1) Data volume — different selectivity. (2) Statistics — real vs uniform distribution. (3) Concurrent load — I/O contention. (4) Table bloat — dead tuples. (5) Memory settings (work_mem). (6) Parallel query settings. (7) Buffer cache state. Diagnosis: EXPLAIN ANALYZE on both, compare estimates vs actuals.",
     "keyPoints": [
       "Volume changes selectivity",
       "Stats differ",
@@ -292,7 +292,7 @@
     "difficulty": "senior",
     "question": "You have extensive Jakarta EE experience but are joining a Spring Boot team. Which concepts transfer directly, and which require special attention?",
     "interviewerIntent": "Tests self-awareness about gaps.",
-    "answer": "Transfers: DI (CDI\u2192Spring), TX (JTA\u2192@Transactional), JPA, REST (JAX-RS\u2192MVC), validation, testing. Attention: (1) Proxy @Transactional (self-invocation trap \u2014 different from EJB CMT). (2) Auto-configuration magic. (3) Spring Security vs Shiro. (4) Spring Data abstraction. (5) Reactive stack (no Jakarta EE equivalent). (6) application.yml vs standalone.xml.",
+    "answer": "Transfers: DI (CDI→Spring), TX (JTA→@Transactional), JPA, REST (JAX-RS→MVC), validation, testing. Attention: (1) Proxy @Transactional (self-invocation trap — different from EJB CMT). (2) Auto-configuration magic. (3) Spring Security vs Shiro. (4) Spring Data abstraction. (5) Reactive stack (no Jakarta EE equivalent). (6) application.yml vs standalone.xml.",
     "keyPoints": [
       "DI/TX/JPA/REST transfer",
       "Proxy TX self-invocation trap",
@@ -316,7 +316,7 @@
     "difficulty": "senior",
     "question": "Why might @Transactional not work when one method calls another in the same class?",
     "interviewerIntent": "Tests proxy mechanism understanding.",
-    "answer": "Spring @Transactional uses dynamic proxy. External calls \u2192 proxy \u2192 interceptor. Internal calls (this.method()) bypass proxy \u2014 annotation ignored. In EJB, CMT applies to ALL public methods regardless. Fix: separate bean, self-injection, or TransactionTemplate.",
+    "answer": "Spring @Transactional uses dynamic proxy. External calls → proxy → interceptor. Internal calls (this.method()) bypass proxy — annotation ignored. In EJB, CMT applies to ALL public methods regardless. Fix: separate bean, self-injection, or TransactionTemplate.",
     "keyPoints": [
       "Proxy-based interception",
       "Self-invocation bypasses",
@@ -340,10 +340,10 @@
     "difficulty": "senior",
     "question": "A Kafka consumer completes the database update but crashes before committing the offset. What happens after restart?",
     "interviewerIntent": "Tests at-least-once semantics understanding.",
-    "answer": "Consumer reads from last committed offset \u2192 reprocesses message. DB update happens AGAIN. Without idempotency: duplicates. Fix: INSERT ON CONFLICT, conditional UPDATE WHERE status = EXPECTED, or dedup table with message ID.",
+    "answer": "Consumer reads from last committed offset → reprocesses message. DB update happens AGAIN. Without idempotency: duplicates. Fix: INSERT ON CONFLICT, conditional UPDATE WHERE status = EXPECTED, or dedup table with message ID.",
     "keyPoints": [
-      "Uncommitted offset \u2192 reprocess",
-      "DB already updated \u2192 duplicate",
+      "Uncommitted offset → reprocess",
+      "DB already updated → duplicate",
       "Idempotent consumer mandatory",
       "INSERT ON CONFLICT"
     ],
@@ -369,7 +369,7 @@
     "difficulty": "senior",
     "question": "A malformed event retries continuously and blocks processing. How do you handle it?",
     "interviewerIntent": "Tests poison pill handling.",
-    "answer": "Poison pill problem. (1) Limit retries (3-5 + backoff). (2) After max \u2192 Dead Letter Topic. (3) Log full payload + error. (4) Continue other messages. (5) Alert on DLT. (6) Replay tool after fix. Consumer must progress, not block indefinitely.",
+    "answer": "Poison pill problem. (1) Limit retries (3-5 + backoff). (2) After max → Dead Letter Topic. (3) Log full payload + error. (4) Continue other messages. (5) Alert on DLT. (6) Replay tool after fix. Consumer must progress, not block indefinitely.",
     "keyPoints": [
       "Poison pill blocks partition",
       "Max retries + DLT",
@@ -380,7 +380,7 @@
       {
         "type": "REAL_EXPERIENCE",
         "question": "Current system?",
-        "hint": "Artemis max-delivery-attempts \u2192 DLQ. MDB throws exception for redelivery. Monitor DLQ depth."
+        "hint": "Artemis max-delivery-attempts → DLQ. MDB throws exception for redelivery. Monitor DLQ depth."
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE"
@@ -404,7 +404,7 @@
       {
         "type": "REAL_EXPERIENCE",
         "question": "Why does SGN use JMS not Kafka?",
-        "hint": "Embedded Artemis in WildFly \u2014 zero ops overhead, same JVM, JTA transactions. 80 queues at our volume doesn't justify Kafka operational complexity."
+        "hint": "Embedded Artemis in WildFly — zero ops overhead, same JVM, JTA transactions. 80 queues at our volume doesn't justify Kafka operational complexity."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -428,7 +428,7 @@
       {
         "type": "FAILURE_SCENARIO",
         "question": "Driver confirmed delivery, central shows cancelled 1h ago. Which wins?",
-        "hint": "Physical delivery happened \u2014 can't un-deliver. Mark 'delivered despite cancellation', trigger compensation."
+        "hint": "Physical delivery happened — can't un-deliver. Mark 'delivered despite cancellation', trigger compensation."
       }
     ],
     "experienceLevel": "INFERENCE"
@@ -441,9 +441,9 @@
     "difficulty": "senior",
     "question": "The driver confirms delivery twice because the app didn't receive the first acknowledgment. What must the backend guarantee?",
     "interviewerIntent": "Tests idempotency for mobile scenarios.",
-    "answer": "Idempotent: same confirmation twice \u2192 same result. (1) Unique key (delivery_id + driver_id + type). (2) INSERT ON CONFLICT or conditional UPDATE WHERE status = IN_TRANSIT. (3) Return success on duplicate (don't error). (4) Downstream (invoice, notification) also idempotent or gated on transition.",
+    "answer": "Idempotent: same confirmation twice → same result. (1) Unique key (delivery_id + driver_id + type). (2) INSERT ON CONFLICT or conditional UPDATE WHERE status = IN_TRANSIT. (3) Return success on duplicate (don't error). (4) Downstream (invoice, notification) also idempotent or gated on transition.",
     "keyPoints": [
-      "Same input \u2192 same output",
+      "Same input → same output",
       "ON CONFLICT or conditional UPDATE",
       "Success on duplicate",
       "Downstream also idempotent"
@@ -481,7 +481,7 @@
       {
         "type": "CHALLENGE_CHOICE",
         "question": "Why not just increase timeout to 30s?",
-        "hint": "30s timeout \u00d7 100 concurrent requests = 3000 request-seconds of blocked threads. Pool exhaustion. This is exactly why we separate TX from external calls."
+        "hint": "30s timeout × 100 concurrent requests = 3000 request-seconds of blocked threads. Pool exhaustion. This is exactly why we separate TX from external calls."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -505,7 +505,7 @@
       {
         "type": "REAL_EXPERIENCE",
         "question": "How do you trace requests currently?",
-        "hint": "SGN3: Glowroot for single-service tracing (transaction \u2192 queries). No distributed tracing (single deployment). For cross-module: log with business ID (id_matricula, id_turma) + Kibana search."
+        "hint": "SGN3: Glowroot for single-service tracing (transaction → queries). No distributed tracing (single deployment). For cross-module: log with business ID (id_matricula, id_turma) + Kibana search."
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE"
@@ -518,11 +518,11 @@
     "difficulty": "senior",
     "question": "Tell me about the most significant production-performance problem you personally diagnosed. What evidence changed your initial hypothesis?",
     "interviewerIntent": "Tests real diagnosis and intellectual honesty.",
-    "answer": "Inscription listing: 16 minutes. Initial hypothesis: missing index. Evidence that changed it: Glowroot showed not ONE slow query but ~48,000 fast queries (20-40ms each). Problem wasn't query speed \u2014 it was query COUNT. Root cause: JSF lazy loads for 26,705 records. Fix: pagination + batch. The index hypothesis was wrong.",
+    "answer": "Inscription listing: 16 minutes. Initial hypothesis: missing index. Evidence that changed it: Glowroot showed not ONE slow query but ~48,000 fast queries (20-40ms each). Problem wasn't query speed — it was query COUNT. Root cause: JSF lazy loads for 26,705 records. Fix: pagination + batch. The index hypothesis was wrong.",
     "keyPoints": [
       "Initial hypothesis was wrong",
       "Evidence: count not speed",
-      "48k \u00d7 20ms = 16min",
+      "48k × 20ms = 16min",
       "Pagination + batch"
     ],
     "followUps": [
@@ -590,7 +590,7 @@
     "difficulty": "senior",
     "question": "Describe a situation where the best architecture had to be simplified to meet a deadline. What debt did you consciously accept?",
     "interviewerIntent": "Tests pragmatism and trade-off awareness.",
-    "answer": "[REAL EXAMPLE REQUIRED \u2014 e.g., synchronous call instead of outbox because of deadline, documented as tech debt with plan to fix]",
+    "answer": "[REAL EXAMPLE REQUIRED — e.g., synchronous call instead of outbox because of deadline, documented as tech debt with plan to fix]",
     "keyPoints": [
       "Name ideal vs delivered",
       "Conscious decision",

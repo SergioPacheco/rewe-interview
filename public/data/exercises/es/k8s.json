@@ -5,31 +5,27 @@
     "topic": "k8s",
     "subtopic": "Pods",
     "difficulty": "beginner",
-    "question": "What is a Pod in Kubernetes and why is it the smallest deployable unit instead of a container?",
-    "interviewerIntent": "Fundamental K8s concept. Understanding why Pods exist (not just what they are) shows depth.",
-    "answer": "A Pod is the smallest deployable unit in Kubernetes \u2014 it wraps one or more containers that share the same network namespace and storage volumes. They're co-located on the same node and communicate via localhost. The reason for Pods over raw containers: Kubernetes needed a unit of co-scheduling for tightly coupled processes. Example: an app container + a log-shipping sidecar that reads its log files. They must run on the same node and share the filesystem. A Pod models this. In practice, most Pods contain a single container \u2014 the multi-container Pod is for sidecars, init containers, and adapters. Pods are ephemeral \u2014 when a Pod dies, it's not restarted in place; a new Pod with a new IP is created.",
-    "shortAnswer": "Pod = one or more containers sharing network (localhost) and volumes. Smallest schedulable unit. Most pods = 1 container. Multi-container for sidecars. Pods are ephemeral \u2014 replaced, not restarted.",
+    "question": "¿Qué es un Pod en Kubernetes y por qué es la menor unidad desplegable en lugar de un contenedor?",
+    "interviewerIntent": "Concepto fundamental de K8s. Entender por qué existen los Pods (no solo qué son) demuestra profundidad.",
+    "answer": "Un Pod es la unidad más pequeña que se puede desplegar en Kubernetes: envuelve uno o más contenedores que comparten el mismo namespace de red y volúmenes de almacenamiento. Se ubican en el mismo nodo y se comunican vía localhost. La razón de existir de los Pods sobre los contenedores crudos es que Kubernetes necesitaba una unidad de programación conjunta (co-scheduling) para procesos estrechamente acoplados. Ejemplo: un contenedor de aplicación + un sidecar de envío de logs que lee sus archivos. Deben correr en el mismo nodo y compartir el sistema de archivos. Un Pod modela esto. En la práctica, la mayoría de los Pods contienen un solo contenedor; el Pod multi-contenedor se reserva para sidecars, contenedores de inicio (init containers) y adaptadores. Los Pods son efímeros: cuando un Pod muere, no se reinicia en el mismo lugar, sino que se crea uno nuevo con una nueva IP.",
+    "shortAnswer": "Pod = uno o más contenedores compartiendo red (localhost) y volúmenes. Es la unidad mínima de scheduling. La mayoría tienen 1 contenedor; multi-contenedor para sidecars. Son efímeros: se reemplazan, no se reinician.",
     "keyPoints": [
-      "Containers in a Pod share the same IP address and port space",
-      "Containers in a Pod share volumes mounted at the Pod level",
-      "Init containers run to completion before main containers start",
-      "Sidecar pattern: log shipper, service mesh proxy, config reloader",
-      "Pod IP is ephemeral \u2014 use Services for stable addressing"
+      "Los contenedores en un Pod comparten la misma dirección IP y espacio de puertos",
+      "Comparten volúmenes montados a nivel de Pod",
+      "Los init containers se ejecutan hasta completarse antes de que arranquen los contenedores principales",
+      "Patrón Sidecar: recolector de logs, proxy de service mesh, recargador de config",
+      "La IP del Pod es efímera; se usan Services para direccionamiento estable"
     ],
     "followUps": [
       {
-        "question": "What is an init container?",
-        "answerHint": "A container that runs to completion before the main container starts. Used for setup tasks: waiting for a service, initializing a database schema, fetching secrets."
-      },
-      {
-        "question": "How do containers within a Pod communicate?",
-        "answerHint": "Via localhost \u2014 they share the same network namespace. One container on port 8080, another reads from localhost:8080."
+        "question": "¿Qué es un init container?",
+        "answerHint": "Un contenedor que se ejecuta hasta terminar antes de que inicie el principal. Se usa para tareas de configuración: esperar a un servicio, inicializar esquemas de BD o descargar secretos."
       }
     ],
     "mistakesToAvoid": [
-      "Thinking a Pod is a container \u2014 it's a wrapper that can hold multiple",
-      "Expecting a Pod to be restarted in place \u2014 it's replaced with a new Pod",
-      "Putting unrelated services in the same Pod \u2014 defeats independent scaling"
+      "Pensar que un Pod es un contenedor (es un envoltorio)",
+      "Esperar que un Pod se reinicie manteniendo su estado interno (se reemplaza por uno nuevo)",
+      "Poner servicios no relacionados en el mismo Pod (impede el escalado independiente)"
     ]
   },
   {
@@ -38,31 +34,21 @@
     "topic": "k8s",
     "subtopic": "Deployments",
     "difficulty": "intermediate",
-    "question": "What is a Deployment in Kubernetes and how does it manage Pod lifecycle?",
-    "interviewerIntent": "Deployments are the primary way to run stateless apps. Checks understanding of desired state, ReplicaSets, and rolling updates.",
-    "answer": "A Deployment declares the desired state for running Pods: which container image, how many replicas, resource limits, and update strategy. It manages a ReplicaSet, which in turn manages the actual Pods. When you update the image, the Deployment creates a new ReplicaSet and incrementally replaces old Pods with new ones (rolling update by default). If the rollout fails (new Pods not healthy), the Deployment can be rolled back. Key commands: kubectl apply -f deployment.yaml to update, kubectl rollout status to monitor, kubectl rollout undo to revert. The Deployment never manages Pods directly \u2014 it manages ReplicaSets, which manage Pods.",
-    "shortAnswer": "Deployment = desired state declaration. Manages ReplicaSets \u2192 Pods. Rolling update: new ReplicaSet replaces old incrementally. kubectl rollout undo for rollback. Self-healing via desired state.",
+    "question": "¿Qué es un Deployment en Kubernetes y cómo gestiona el ciclo de vida de los Pods?",
+    "interviewerIntent": "Los Deployments son la forma principal de correr apps sin estado. Verifica la comprensión del estado deseado, ReplicaSets y rolling updates.",
+    "answer": "Un Deployment declara el estado deseado para los Pods en ejecución: qué imagen, cuántas réplicas, límites de recursos y estrategia de actualización. Gestiona un ReplicaSet, que a su vez gestiona los Pods reales. Cuando actualizas la imagen, el Deployment crea un nuevo ReplicaSet y reemplaza incrementalmente los Pods antiguos por nuevos (rolling update por defecto). Si el despliegue falla, el Deployment permite hacer un rollback. Comandos clave: 'kubectl apply' para actualizar, 'kubectl rollout status' para monitorear y 'kubectl rollout undo' para revertir. El Deployment nunca gestiona los Pods directamente, lo hace a través de los ReplicaSets.",
+    "shortAnswer": "Deployment = declaración del estado deseado. Gestiona ReplicaSets → Pods. Rolling update: el nuevo ReplicaSet reemplaza al antiguo gradualmente. Permite 'rollout undo'. Autosanación basada en el estado deseado.",
     "keyPoints": [
-      "Deployment \u2192 ReplicaSet \u2192 Pods (three-layer hierarchy)",
-      "Rolling update: maxUnavailable and maxSurge control the rollout speed",
-      "kubectl rollout undo deployment/name for instant rollback",
-      "kubectl rollout history for revision history",
-      "Self-healing: if a Pod dies, ReplicaSet creates a replacement"
+      "Jerarquía: Deployment → ReplicaSet → Pods",
+      "Rolling update: maxUnavailable y maxSurge controlan la velocidad del despliegue",
+      "kubectl rollout undo para rollback instantáneo",
+      "Autosanación: si un Pod muere, el ReplicaSet crea su reemplazo"
     ],
     "followUps": [
       {
-        "question": "What is the difference between a Deployment and a StatefulSet?",
-        "answerHint": "StatefulSet gives Pods stable identities (pod-0, pod-1), stable storage per Pod, and ordered deployment/scaling. Used for databases, Kafka, Elasticsearch."
-      },
-      {
-        "question": "How do you perform a canary deployment in Kubernetes?",
-        "answerHint": "Two Deployments: stable (90% of pods) and canary (10%). Traffic split by pod count if using a single Service with label selector matching both."
+        "question": "¿Cuál es la diferencia entre un Deployment y un StatefulSet?",
+        "answerHint": "StatefulSet otorga identidades estables (pod-0, pod-1), almacenamiento persistente por Pod y despliegue ordenado. Se usa para bases de datos, Kafka o Elasticsearch."
       }
-    ],
-    "mistakesToAvoid": [
-      "Editing Pods directly \u2014 changes are lost when the ReplicaSet replaces them",
-      "Using latest image tag \u2014 rollback is impossible without a specific tag",
-      "Not setting resource requests \u2014 scheduler cannot make good placement decisions"
     ]
   },
   {
@@ -71,31 +57,15 @@
     "topic": "k8s",
     "subtopic": "Services",
     "difficulty": "intermediate",
-    "question": "What is a Kubernetes Service and what types exist? When do you use each?",
-    "interviewerIntent": "Services are the networking primitive. Candidates should know ClusterIP, NodePort, LoadBalancer, and ExternalName without confusing them.",
-    "answer": "A Service provides a stable IP and DNS name for a set of Pods selected by labels. Pod IPs change when Pods are replaced \u2014 Services solve this. Types: ClusterIP (default) \u2014 internal only, reachable within the cluster by DNS name (service.namespace.svc.cluster.local). NodePort \u2014 exposes on a port on every node's IP, reachable from outside. LoadBalancer \u2014 provisions a cloud load balancer (AWS ELB, GCP LB), external traffic enters here. ExternalName \u2014 maps a service name to an external DNS name (no proxying). In practice: ClusterIP for internal service-to-service communication, LoadBalancer (or Ingress in front of ClusterIP) for external access.",
-    "shortAnswer": "ClusterIP = internal only. NodePort = port on every node. LoadBalancer = cloud LB for external. Ingress = HTTP routing rules in front of ClusterIP. Most internal services = ClusterIP.",
+    "question": "¿Qué es un Service en Kubernetes y qué tipos existen?",
+    "interviewerIntent": "Los Services son el primitivo de red. El candidato debe conocer ClusterIP, NodePort, LoadBalancer y ExternalName.",
+    "answer": "Un Service proporciona una IP y un nombre DNS estables para un conjunto de Pods seleccionados por etiquetas (labels). Como las IPs de los Pods cambian al ser reemplazados, los Services resuelven este problema. Tipos: ClusterIP (por defecto), solo interno al clúster. NodePort, expone el servicio en un puerto de cada nodo, accesible desde fuera. LoadBalancer, crea un balanceador de carga en la nube (AWS ELB, etc.). ExternalName, mapea el servicio a un nombre DNS externo. En la práctica: ClusterIP para comunicación interna entre microservicios y LoadBalancer (o Ingress frente a ClusterIP) para acceso externo.",
+    "shortAnswer": "ClusterIP = solo interno. NodePort = puerto en cada nodo. LoadBalancer = balanceador de nube para tráfico externo. Ingress = reglas HTTP frente a ClusterIP.",
     "keyPoints": [
-      "ClusterIP is the default and most common type",
-      "DNS: servicename.namespace.svc.cluster.local",
-      "NodePort range: 30000-32767 by default",
-      "LoadBalancer = NodePort + cloud LB provisioning",
-      "Ingress Controller handles HTTP/HTTPS routing, not the Service itself"
-    ],
-    "followUps": [
-      {
-        "question": "What is an Ingress and how does it differ from a LoadBalancer Service?",
-        "answerHint": "Ingress is an API object that defines HTTP routing rules (path, host-based). An Ingress Controller (nginx, Traefik) implements it. One LoadBalancer for many services vs one LB per LoadBalancer Service."
-      },
-      {
-        "question": "How does Kubernetes DNS work for Services?",
-        "answerHint": "CoreDNS resolves service names. Within same namespace: servicename. Cross-namespace: servicename.namespace. Full: servicename.namespace.svc.cluster.local."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Using LoadBalancer for every service \u2014 one cloud LB per service is expensive",
-      "Forgetting that Service selects Pods by labels \u2014 mismatch = no traffic",
-      "Confusing Service port (what clients connect to) and targetPort (container port)"
+      "ClusterIP es el tipo más común",
+      "DNS: nombre-servicio.namespace.svc.cluster.local",
+      "Rango NodePort: 30000-32767 por defecto",
+      "El Ingress Controller gestiona el ruteo HTTP/HTTPS, no el Service directamente"
     ]
   },
   {
@@ -104,31 +74,15 @@
     "topic": "k8s",
     "subtopic": "ConfigMaps",
     "difficulty": "intermediate",
-    "question": "How do you manage configuration and secrets in Kubernetes? What is the difference between ConfigMap and Secret?",
-    "interviewerIntent": "Config management is daily Kubernetes work. Checks understanding of separation of config from code and Secret handling.",
-    "answer": "ConfigMap stores non-sensitive configuration as key-value pairs or files. Secret stores sensitive data (passwords, tokens, certs) encoded in base64. Both can be consumed as environment variables or mounted as files. Key difference: Secrets are base64-encoded (not encrypted by default \u2014 encrypt etcd at rest for real security), have stricter RBAC defaults, and can integrate with external secret managers (HashiCorp Vault, AWS Secrets Manager via CSI driver). Best practices: never put Secrets in git (use sealed-secrets or external-secrets operator), mount Secrets as files rather than env vars (env vars appear in process listing), and use least-privilege RBAC for Secret access.",
-    "shortAnswer": "ConfigMap = non-sensitive config (env vars or files). Secret = sensitive data (base64, stricter access). Both mounted as env or files. Secret in file > env var. Never commit Secrets to git.",
+    "question": "¿Cómo gestionas la configuración y los secretos en Kubernetes? Diferencia entre ConfigMap y Secret.",
+    "interviewerIntent": "Gestión de configuración diaria. Verifica la separación de configuración y código, y el manejo de datos sensibles.",
+    "answer": "ConfigMap almacena configuración no sensible como pares clave-valor o archivos. Secret almacena datos sensibles (passwords, tokens) codificados en base64. Ambos se inyectan como variables de entorno o se montan como archivos. Diferencia clave: los Secrets tienen codificación base64 (no es cifrado, hay que cifrar etcd para seguridad real) y tienen políticas de acceso (RBAC) más estrictas. Mejores prácticas: nunca subir Secrets a git, montarlos como archivos en lugar de variables de entorno (para evitar que aparezcan en listados de procesos) y usar el principio de mínimo privilegio.",
+    "shortAnswer": "ConfigMap = config no sensible. Secret = datos sensibles (base64). Ambos se montan como env o archivos. Secret en archivo > variable de entorno. Nunca commitear Secrets a git.",
     "keyPoints": [
-      "ConfigMap changes don't auto-restart Pods (unless using a reloader)",
-      "Secret base64 is encoding, not encryption \u2014 encrypt etcd at rest",
-      "External Secrets Operator syncs from Vault/AWS SSM to K8s Secrets",
-      "Sealed Secrets (Bitnami) allows encrypted secrets in git",
-      "Volume-mounted Secrets update automatically (with delay); env var Secrets don't"
-    ],
-    "followUps": [
-      {
-        "question": "How do you handle Secret rotation without downtime?",
-        "answerHint": "Mount as volume \u2014 K8s updates the file when Secret changes. App needs to reload the file (inotify or polling). Env var injection requires pod restart."
-      },
-      {
-        "question": "What is the External Secrets Operator?",
-        "answerHint": "K8s operator that syncs secrets from external stores (AWS SSM, HashiCorp Vault, GCP Secret Manager) into K8s Secrets automatically, with refresh interval."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Committing K8s Secret YAML to git \u2014 base64 is not encryption",
-      "Using env vars for high-security secrets \u2014 visible in kubectl describe pod",
-      "Thinking base64 is secure \u2014 it's just encoding for binary-safe transport"
+      "Los cambios en ConfigMap no reinician los Pods automáticamente",
+      "Base64 es codificación, no cifrado",
+      "External Secrets Operator permite sincronizar desde Vault o AWS Secrets Manager",
+      "Los Secrets montados como volumen se actualizan automáticamente (con retraso)"
     ]
   },
   {
@@ -137,31 +91,14 @@
     "topic": "k8s",
     "subtopic": "Health Checks",
     "difficulty": "intermediate",
-    "question": "What is the difference between liveness, readiness, and startup probes in Kubernetes?",
-    "interviewerIntent": "Critical for production reliability. Misconfigured probes cause cascading failures. Tests understanding of each probe's purpose.",
-    "answer": "Liveness probe: is the container in a broken state that cannot recover? If it fails, K8s kills and restarts the container. Use for deadlock detection, not transient errors. Readiness probe: is the container ready to receive traffic? If it fails, the Pod is removed from the Service endpoints but NOT restarted. Use for warmup, downstream unavailability, or temporary overload. Startup probe: replaces liveness during container initialization \u2014 gives slow-starting apps time to start without triggering liveness restarts. Once startup probe succeeds, liveness takes over. If startup probe fails after failureThreshold, container is killed. Configure startup probe generously (initialDelaySeconds * failureThreshold must exceed worst-case startup time).",
-    "shortAnswer": "Liveness: broken? Restart. Readiness: ready for traffic? Remove from LB if not. Startup: still initializing? Replace liveness during startup for slow apps.",
+    "question": "¿Cuál es la diferencia entre las sondas (probes) liveness, readiness y startup?",
+    "interviewerIntent": "Crítico para la fiabilidad. Probes mal configuradas causan fallos en cascada.",
+    "answer": "Liveness probe determina si el contenedor está en un estado roto del que no puede recuperarse; si falla, K8s reinicia el contenedor. Se usa para detectar interbloqueos (deadlocks). Readiness probe determina si el contenedor está listo para recibir tráfico; si falla, el Pod se elimina de los endpoints del Service pero NO se reinicia. Se usa para calentamiento (warmup) o sobrecarga temporal. Startup probe deshabilita las otras dos durante el inicio; da tiempo a apps lentas para arrancar sin que liveness las mate antes de tiempo.",
+    "shortAnswer": "Liveness: ¿está roto? Reiniciar. Readiness: ¿listo para tráfico? Quitar del balanceador si no. Startup: ¿está iniciando? Pospone las otras para apps lentas.",
     "keyPoints": [
-      "Liveness failure = restart. Readiness failure = remove from Service.",
-      "Never make liveness check external dependencies \u2014 cascades restarts",
-      "Startup probe prevents liveness from killing a slow-starting app",
-      "Readiness can check downstream dependencies safely",
-      "initialDelaySeconds + failureThreshold * periodSeconds = total timeout"
-    ],
-    "followUps": [
-      {
-        "question": "What is a common mistake with liveness probes that causes cascading failures?",
-        "answerHint": "Making liveness check a downstream dependency (database, external service). If the DB is slow, all pods get restarted simultaneously, making the situation worse."
-      },
-      {
-        "question": "What probe types are available besides HTTP?",
-        "answerHint": "httpGet (HTTP GET to endpoint), tcpSocket (checks if port is open), exec (runs a command inside container, 0=healthy). gRPC probe available since K8s 1.24."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Checking external services in liveness probe \u2014 causes pod restart storms",
-      "Not setting startup probe for apps with >30s startup time",
-      "Setting readiness threshold too strict \u2014 temporarily removes healthy pods"
+      "Fallo de liveness = reinicio. Fallo de readiness = fuera del Service.",
+      "Nunca poner dependencias externas en liveness (ej. base de datos) para evitar reinicios en cascada",
+      "Readiness sí puede verificar dependencias necesarias para procesar peticiones"
     ]
   },
   {
@@ -170,31 +107,15 @@
     "topic": "k8s",
     "subtopic": "Deployments",
     "difficulty": "advanced",
-    "question": "How do resource requests and limits work in Kubernetes and why do they matter?",
-    "interviewerIntent": "Resource management is critical for cluster stability. Candidates who understand requests vs limits can prevent noisy neighbor problems.",
-    "answer": "Requests are what the scheduler uses to place Pods on nodes \u2014 a Pod with 256Mi memory request is only scheduled on nodes with at least 256Mi available. Limits are the maximum a container can use \u2014 exceed CPU limit and it's throttled, exceed memory limit and it's OOMKilled. Best practice: set requests equal to the typical usage (p50) and limits to the burst ceiling (p99). CPU limit throttling is common and hurts latency even when the node has spare CPU \u2014 consider not setting CPU limits and only setting requests. Memory limit must be set and should be greater than the JVM heap + overhead. For Java: set -Xmx to ~75% of the memory limit to leave room for metaspace and native memory.",
-    "shortAnswer": "Requests = scheduler placement guarantee. Limits = hard ceiling (CPU throttled, memory OOMKilled). Set requests = typical usage, limits = burst. JVM: -Xmx = 75% of memory limit.",
+    "question": "¿Cómo funcionan los requests y limits de recursos y por qué son importantes?",
+    "interviewerIntent": "Gestión de recursos para la estabilidad del clúster. Previene problemas de 'noisy neighbor'.",
+    "answer": "Los Requests son lo que el scheduler usa para ubicar Pods: un Pod con 256Mi de request solo irá a nodos con ese espacio libre. Los Limits son el techo máximo: si se excede el límite de CPU, el proceso se estrangula (throttling); si se excede el de memoria, el contenedor es matado (OOMKilled). Recomendación: poner requests igual al uso típico (p50) y límites según el pico esperado (p99). En Java, es vital configurar el -Xmx a un ~75% del límite de memoria para dejar espacio a la memoria nativa y al metaspace.",
+    "shortAnswer": "Requests = garantía para el scheduler. Limits = techo máximo (CPU throttled, memoria OOMKilled). JVM: -Xmx al 75% del límite de memoria del contenedor.",
     "keyPoints": [
-      "Requests affect scheduling, limits affect runtime",
-      "CPU throttling is silent and hurts p99 latency",
-      "OOMKilled = memory limit exceeded \u2014 check docker/k8s events",
-      "QoS classes: Guaranteed (req=limit), Burstable (req<limit), BestEffort (no req/limit)",
-      "Guaranteed pods are evicted last under node pressure"
-    ],
-    "followUps": [
-      {
-        "question": "What is a LimitRange?",
-        "answerHint": "A namespace-level policy that sets default requests/limits for containers that don't specify them, and enforces min/max boundaries."
-      },
-      {
-        "question": "What is Vertical Pod Autoscaler?",
-        "answerHint": "VPA automatically adjusts Pod resource requests based on observed usage. Can be in recommendation mode (just suggests) or auto mode (restarts pods with new values)."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Setting CPU limits aggressively \u2014 silent throttling even with free CPU on node",
-      "Not setting memory limits \u2014 a memory leak can eat all node memory",
-      "Setting JVM -Xmx equal to the memory limit \u2014 leaves no room for metaspace"
+      "Requests afectan al scheduling, Limits al tiempo de ejecución",
+      "El throttling de CPU aumenta la latencia p99",
+      "Clases de QoS: Guaranteed (req=limit), Burstable (req<limit), BestEffort",
+      "Los pods 'Guaranteed' son los últimos en ser desalojados ante presión en el nodo"
     ]
   },
   {
@@ -203,31 +124,14 @@
     "topic": "k8s",
     "subtopic": "Services",
     "difficulty": "advanced",
-    "question": "What is an Ingress in Kubernetes and how does it differ from exposing a Service directly?",
-    "interviewerIntent": "Ingress is how HTTP services are exposed in production. Shows understanding of real-world K8s networking.",
-    "answer": "An Ingress is an API object that defines HTTP/HTTPS routing rules \u2014 which hostname and path routes to which backend Service. An Ingress Controller (nginx, Traefik, AWS ALB) implements these rules. Key advantage over LoadBalancer Services: one cloud load balancer for many services (cost-effective), TLS termination at the ingress, path-based routing (/api \u2192 backend, / \u2192 frontend), host-based routing (app.example.com \u2192 app, api.example.com \u2192 api). The Ingress object itself does nothing without a controller. Annotations customize behavior per controller: nginx.ingress.kubernetes.io/rewrite-target, rate limiting, timeouts.",
-    "shortAnswer": "Ingress = HTTP routing rules (host/path \u2192 Service). Ingress Controller implements them. One LB for many services. TLS termination. Path and host-based routing.",
+    "question": "¿Qué es un Ingress y en qué se diferencia de exponer un Service directamente?",
+    "interviewerIntent": "Cómo se exponen servicios HTTP en producción. Entendimiento de redes L7.",
+    "answer": "Un Ingress es un objeto de API que define reglas de ruteo HTTP/HTTPS (basadas en host o ruta). Un Ingress Controller (como nginx o Traefik) implementa estas reglas. La ventaja es que permite usar un solo balanceador de carga de la nube para muchos servicios (ahorro de costes), gestiona la terminación TLS y permite ruteo avanzado (ej. /api → backend, / → frontend). El objeto Ingress no hace nada sin un controlador instalado en el clúster.",
+    "shortAnswer": "Ingress = reglas de ruteo L7 (host/ruta → Service). El Controller las ejecuta. Permite un solo LB para múltiples servicios y gestión centralizada de certificados TLS.",
     "keyPoints": [
-      "Ingress requires an Ingress Controller to function",
-      "TLS: specify secretName containing cert/key",
-      "Path types: Exact, Prefix, ImplementationSpecific",
-      "One Ingress Controller = one cloud LB = significant cost savings",
-      "Ingress replaces manually configuring nginx as a Service"
-    ],
-    "followUps": [
-      {
-        "question": "What is cert-manager and how does it work with Ingress?",
-        "answerHint": "cert-manager automatically provisions and renews TLS certificates (from Let's Encrypt or other CAs) and stores them as K8s Secrets referenced by Ingress tls.secretName."
-      },
-      {
-        "question": "What is the difference between Ingress and Gateway API?",
-        "answerHint": "Gateway API is the successor to Ingress \u2014 more expressive, supports TCP/UDP, better role separation (GatewayClass, Gateway, HTTPRoute). Ingress is still widely used but Gateway API is the future."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Creating an Ingress without an Ingress Controller installed \u2014 nothing happens",
-      "Using LoadBalancer Service for every microservice \u2014 one LB per service is expensive",
-      "Not configuring TLS \u2014 exposing internal services over HTTP"
+      "Ahorro significativo de costes frente a usar un LoadBalancer Service por microservicio",
+      "Soporta ruteo basado en nombres de host (vhosts) y prefijos de ruta",
+      "Gateway API es el sucesor moderno del Ingress, aunque Ingress sigue siendo el estándar"
     ]
   },
   {
@@ -236,31 +140,14 @@
     "topic": "k8s",
     "subtopic": "Health Checks",
     "difficulty": "intermediate",
-    "question": "How do you perform a zero-downtime rolling deployment in Kubernetes?",
-    "interviewerIntent": "Zero-downtime deployments are a production requirement. Tests understanding of readiness probes, PodDisruptionBudgets, and deployment strategy.",
-    "answer": "Zero-downtime rolling deployment requires: (1) Readiness probe configured correctly \u2014 new Pods only receive traffic after they pass the readiness check. (2) Rolling update strategy with minReadySeconds \u2014 waits for the Pod to be stable before proceeding. (3) PodDisruptionBudget \u2014 ensures at least N pods are always available during updates. (4) PreStop hook + terminationGracePeriodSeconds \u2014 gives the old Pod time to finish in-flight requests before being killed. (5) Multiple replicas \u2014 you need at least 2 (ideally 3+) to have zero downtime. Without a readiness probe, K8s sends traffic to Pods before they're ready, causing 503 errors during rollout.",
-    "shortAnswer": "Readiness probe + minReadySeconds + PodDisruptionBudget + PreStop hook + terminationGracePeriodSeconds + multiple replicas. Without readiness probe, traffic hits unready pods = 503s.",
+    "question": "¿Cómo garantizas un despliegue (rolling update) con cero tiempo de inactividad?",
+    "interviewerIntent": "Requisito de producción. Probes, PDBs y estrategias de despliegue.",
+    "answer": "Se requiere: (1) Readiness probe bien configurada: el tráfico solo llega cuando el Pod está listo. (2) Estrategia de rolling update con 'maxSurge' para crear Pods nuevos antes de matar los viejos. (3) PodDisruptionBudget (PDB) para asegurar disponibilidad mínima. (4) PreStop hook con un 'sleep' corto para dar tiempo al balanceador a dejar de enviar tráfico antes de que el proceso reciba el SIGTERM. (5) Al menos 2 o 3 réplicas ejecutándose simultáneamente. Sin la readiness probe, K8s enviará tráfico a Pods que aún están arrancando, causando errores 503.",
+    "shortAnswer": "Readiness probe + PDB + PreStop hook + múltiples réplicas. Sin readiness probe, el tráfico llega a pods no listos y causa 503s durante el despliegue.",
     "keyPoints": [
-      "Readiness probe is the most critical piece \u2014 gates traffic routing",
-      "terminationGracePeriodSeconds must exceed max request duration",
-      "PreStop hook with sleep allows load balancer to deregister pod before SIGTERM",
-      "PodDisruptionBudget: minAvailable or maxUnavailable during voluntary disruptions",
-      "maxSurge: allow extra pods during rollout to maintain full capacity"
-    ],
-    "followUps": [
-      {
-        "question": "What is a PreStop hook and why is it needed?",
-        "answerHint": "A hook that runs before the container receives SIGTERM. Used to add a sleep (e.g., 5s) so the load balancer can deregister the pod before it stops accepting connections."
-      },
-      {
-        "question": "How do you roll back a deployment that is causing errors?",
-        "answerHint": "kubectl rollout undo deployment/name \u2014 instantly reverts to the previous ReplicaSet. kubectl rollout undo --to-revision=N for a specific revision."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Single replica deployment \u2014 any rollout causes downtime",
-      "No readiness probe \u2014 new pods receive traffic before they're ready",
-      "terminationGracePeriodSeconds less than request timeout \u2014 in-flight requests are killed"
+      "La readiness probe es la pieza más crítica para evitar errores en despliegues",
+      "terminationGracePeriodSeconds debe ser mayor que la petición más larga",
+      "El PreStop hook ayuda a mitigar la latencia de propagación de los endpoints"
     ]
   },
   {
@@ -269,31 +156,14 @@
     "topic": "k8s",
     "subtopic": "Pods",
     "difficulty": "intermediate",
-    "question": "What are Kubernetes namespaces and how do you use them for environment isolation?",
-    "interviewerIntent": "Namespaces are the primary multi-tenancy mechanism. Checks practical organization knowledge.",
-    "answer": "Namespaces provide a virtual cluster within a physical cluster \u2014 resources in one namespace are isolated from another by default. Common patterns: one namespace per environment (dev, staging, prod) on a single cluster, or one namespace per team/application. Resources that are namespaced: Pods, Services, Deployments, ConfigMaps, Secrets. Resources that are cluster-scoped: Nodes, PersistentVolumes, ClusterRoles. Network isolation between namespaces requires NetworkPolicy \u2014 namespaces alone do not prevent traffic. RBAC scopes to namespace \u2014 giving a team full access to their namespace without cluster-wide rights. ResourceQuota limits total resources per namespace.",
-    "shortAnswer": "Namespace = virtual cluster within cluster. Namespaced: Pods, Services, Deployments. Cluster-scoped: Nodes, PVs. Network isolation requires NetworkPolicy. RBAC and ResourceQuota scope per namespace.",
+    "question": "¿Qué son los namespaces y cómo se usan para el aislamiento?",
+    "interviewerIntent": "Mecanismo principal de multi-tenancy y organización.",
+    "answer": "Los namespaces proporcionan un clúster virtual dentro del clúster físico. Permiten aislar recursos por entorno (dev, staging, prod) o por equipo. Por defecto, los Pods de distintos namespaces pueden hablar entre sí; el aislamiento real de red requiere NetworkPolicies. El RBAC se puede limitar a nivel de namespace, dando permiso a un equipo solo sobre sus recursos. ResourceQuotas limitan el consumo total de CPU/Memoria por cada namespace.",
+    "shortAnswer": "Namespace = clúster virtual. Útil para separar entornos o equipos. El aislamiento de red real requiere NetworkPolicy. RBAC y cuotas se definen por namespace.",
     "keyPoints": [
-      "Default namespace is where resources land without explicit namespace",
-      "kube-system namespace for K8s internal components",
-      "Cross-namespace DNS: service.other-namespace.svc.cluster.local",
-      "NetworkPolicy required for true network isolation between namespaces",
-      "ResourceQuota: limit CPU, memory, and object counts per namespace"
-    ],
-    "followUps": [
-      {
-        "question": "Can two services in different namespaces have the same name?",
-        "answerHint": "Yes \u2014 they're different objects. service-name in ns-a is service-name.ns-a.svc.cluster.local, different from service-name in ns-b."
-      },
-      {
-        "question": "When should you NOT use namespaces for isolation?",
-        "answerHint": "For strong security boundaries between untrusted workloads \u2014 use separate clusters. Namespaces share the same kernel and control plane."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Assuming namespaces provide network isolation \u2014 they don't without NetworkPolicy",
-      "Putting everything in the default namespace \u2014 no organization or RBAC granularity",
-      "Forgetting to specify namespace in kubectl commands \u2014 operates on default"
+      "Recursos con namespace: Pods, Services, Deployments",
+      "Recursos globales (cluster-scoped): Nodes, PersistentVolumes",
+      "DNS entre namespaces: nombre-servicio.nombre-namespace"
     ]
   },
   {
@@ -302,31 +172,14 @@
     "topic": "k8s",
     "subtopic": "ConfigMaps",
     "difficulty": "intermediate",
-    "question": "How do you pass configuration to a Spring Boot application running in Kubernetes?",
-    "interviewerIntent": "Practical question combining K8s config management with Spring Boot knowledge \u2014 very relevant for backend developers.",
-    "answer": "Multiple options in order of preference: (1) ConfigMap as environment variables: Spring Boot reads all env vars as properties (spring.datasource.url can be set as SPRING_DATASOURCE_URL). (2) ConfigMap mounted as application.properties file: mount to /config/application.properties \u2014 Spring Boot automatically reads files in /config/. (3) Spring Cloud Kubernetes: reads ConfigMaps and Secrets directly from K8s API at startup, supports live reload. (4) Secrets for sensitive values: same approaches but use Secret instead of ConfigMap. Profile activation: set SPRING_PROFILES_ACTIVE env var. The cleanest approach for most apps: ConfigMap for non-sensitive config as env vars, Secrets for credentials mounted as files.",
-    "shortAnswer": "ConfigMap as env vars (SPRING_DATASOURCE_URL) or mounted as /config/application.properties (auto-read by Spring Boot). Secrets for credentials. SPRING_PROFILES_ACTIVE to activate profiles.",
+    "question": "¿Cómo pasas la configuración a una aplicación Spring Boot en Kubernetes?",
+    "interviewerIntent": "Pregunta práctica de integración de K8s y Spring Boot.",
+    "answer": "Hay varias opciones: (1) ConfigMap como variables de entorno: Spring Boot mapea automáticamente nombres como SPRING_DATASOURCE_URL a sus propiedades. (2) Montar el ConfigMap como un archivo 'application.properties' en la ruta /config/. (3) Usar Spring Cloud Kubernetes para leer directamente de la API de K8s. La forma más limpia para la mayoría de apps es usar variables de entorno para config no sensible y Secrets montados como archivos para credenciales.",
+    "shortAnswer": "ConfigMap como env vars o montado como archivo en /config/ (auto-leído por Spring Boot). Secrets para credenciales. SPRING_PROFILES_ACTIVE para los perfiles.",
     "keyPoints": [
-      "Spring Boot reads /config/application.properties automatically",
-      "Env var to property: SPRING_DATASOURCE_URL \u2192 spring.datasource.url",
-      "Spring Cloud Kubernetes enables live config reload without restart",
-      "ConfigMap changes don't restart Pods \u2014 use Reloader operator if needed",
-      "Never put database passwords in ConfigMap \u2014 use Secret"
-    ],
-    "followUps": [
-      {
-        "question": "How do you reload Spring Boot configuration when a ConfigMap changes?",
-        "answerHint": "Stakater Reloader operator watches ConfigMaps/Secrets and triggers rolling restarts. Or Spring Cloud Kubernetes with @RefreshScope for live reload without restart."
-      },
-      {
-        "question": "How do you manage different configs per environment (dev, prod)?",
-        "answerHint": "One ConfigMap per environment/namespace. CI/CD pipeline applies the correct one. Or use Helm values to template ConfigMap content per environment."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Baking config into the Docker image \u2014 defeats the purpose of externalized config",
-      "Using the same ConfigMap across environments \u2014 prod config in dev namespace is a risk",
-      "Not restarting pods after ConfigMap change if app reads config only at startup"
+      "Spring Boot lee automáticamente archivos en /config/",
+      "ConfigMap no reinicia Pods; si la app solo lee al inicio, hay que reiniciar manualmente o usar un reloader",
+      "Nunca poner contraseñas en un ConfigMap; siempre en un Secret"
     ]
   },
   {
@@ -335,31 +188,14 @@
     "topic": "k8s",
     "subtopic": "Deployments",
     "difficulty": "advanced",
-    "question": "What is Horizontal Pod Autoscaling (HPA) and when should you use it?",
-    "interviewerIntent": "HPA is standard for production scalability. Candidates should understand triggers, limitations, and gotchas.",
-    "answer": "HPA automatically scales the number of Pod replicas based on observed metrics \u2014 CPU utilization, memory, or custom metrics (requests per second, queue depth). Configuration: target metric (e.g., 70% CPU), min replicas, max replicas. The controller checks metrics every 15s (configurable) and adjusts. Scale-up is fast (immediate). Scale-down is conservative (5-minute cooldown by default) to avoid flapping. Caveats: HPA requires resource requests to be set (it calculates percentage against the request). For Java/JVM apps: CPU-based HPA is unreliable because JVM pre-allocates CPU \u2014 prefer custom metrics (request rate, latency percentile from Prometheus). Don't use HPA with VPA in auto mode simultaneously.",
-    "shortAnswer": "HPA scales replicas based on CPU/memory/custom metrics. Set resource requests for CPU-based HPA. Scale-down is slow (flap protection). JVM: prefer custom metrics over CPU.",
+    "question": "¿Qué es el Horizontal Pod Autoscaling (HPA) y cuándo deberías usarlo?",
+    "interviewerIntent": "Escalabilidad en producción. Disparadores y limitaciones.",
+    "answer": "El HPA escala automáticamente el número de réplicas basado en métricas como uso de CPU, memoria o métricas personalizadas (ej. peticiones por segundo). Requiere que el clúster tenga instalado el Metrics Server. El HPA calcula el ratio entre el uso actual y el solicitado (request). Para apps Java, el escalado por CPU suele ser poco fiable; es preferible escalar basándose en métricas de negocio o de tráfico (vía Prometheus y KEDA).",
+    "shortAnswer": "HPA escala réplicas según métricas. Requiere definir 'requests' de recursos. En JVM, es mejor escalar por tráfico/cola (KEDA) que por CPU.",
     "keyPoints": [
-      "Requires Metrics Server installed in cluster",
-      "CPU utilization calculated as actual/requested \u2014 requests must be set",
-      "Custom metrics via Prometheus Adapter or KEDA",
-      "Scale-down stabilization window: 5 minutes default",
-      "KEDA (Kubernetes Event-Driven Autoscaling): scale on queue length, DB rows, etc."
-    ],
-    "followUps": [
-      {
-        "question": "What is KEDA and when is it better than HPA?",
-        "answerHint": "KEDA scales workloads on event sources: Kafka topic lag, RabbitMQ queue length, Azure Service Bus, etc. HPA on CPU doesn't capture these workload types well."
-      },
-      {
-        "question": "How do you handle scaling a stateful application?",
-        "answerHint": "StatefulSet with HPA is possible but complex \u2014 stateful apps often have single-writer constraints. Consider scaling read replicas, not the primary."
-      }
-    ],
-    "mistakesToAvoid": [
-      "HPA without resource requests \u2014 target percentage cannot be calculated",
-      "Using CPU HPA for JVM apps \u2014 JVM CPU usage doesn't correlate with load",
-      "Setting max replicas too high without DB connection pool consideration"
+      "Ventana de estabilización: el escalado hacia abajo (scale-down) es lento por defecto para evitar fluctuaciones",
+      "KEDA permite autoescalado basado en eventos (ej. lag en un tópico de Kafka)",
+      "No usar HPA y VPA (Vertical Pod Autoscaler) sobre la misma métrica simultáneamente"
     ]
   },
   {
@@ -368,31 +204,14 @@
     "topic": "k8s",
     "subtopic": "Pods",
     "difficulty": "advanced",
-    "question": "How do you debug a Pod that is stuck in CrashLoopBackOff?",
-    "interviewerIntent": "Practical debugging is a daily Kubernetes skill. Tests systematic troubleshooting approach.",
-    "answer": "Systematic approach: (1) kubectl describe pod <name> \u2014 check Events section for why it's crashing: OOMKilled, liveness probe failure, image pull errors. (2) kubectl logs <pod> \u2014 see the application output before crash. (3) kubectl logs <pod> --previous \u2014 logs from the previous crashed container. (4) Check exit code: 137 = SIGKILL (OOMKilled or external kill), 143 = SIGTERM (graceful shutdown), 1 = application error, 127 = command not found. (5) If no logs: override the command to sleep to keep it running \u2014 kubectl debug or modify deployment to run 'sleep 3600' temporarily. (6) kubectl exec -it <pod> /bin/sh for interactive investigation if the container is still running briefly.",
-    "shortAnswer": "kubectl describe pod (Events: OOMKilled? ImagePullError?), kubectl logs --previous (crashed container logs), check exit code (137=OOM, 1=app error). Override command to sleep for investigation.",
+    "question": "¿Cómo depuras un Pod atrapado en CrashLoopBackOff?",
+    "interviewerIntent": "Resolución de problemas práctica. Enfoque sistemático.",
+    "answer": "Enfoque sistemático: (1) 'kubectl describe pod' para ver los Eventos (¿OOMKilled?, ¿fallo de imagen?). (2) 'kubectl logs' para ver el error de la aplicación. (3) 'kubectl logs --previous' para ver la salida del contenedor justo antes de que muriera. (4) Revisar el exit code: 137 suele ser OOMKilled, 1 es un error de código, 127 es comando no encontrado. Si no hay logs, puedo modificar el despliegue para que ejecute un 'sleep' y así entrar con 'kubectl exec' a investigar.",
+    "shortAnswer": "describe pod (eventos), logs --previous (salida del crash), revisar exit code (137=OOM). Usar sleep para mantener el pod vivo e investigar si es necesario.",
     "keyPoints": [
-      "Events in kubectl describe are the first place to look",
-      "kubectl logs --previous is essential \u2014 crash wipes current logs",
-      "Exit code 137 = OOMKilled. Check memory limits.",
-      "kubectl debug --image=busybox creates an ephemeral debug container",
-      "CrashLoopBackOff itself is just K8s waiting before retrying \u2014 not the root cause"
-    ],
-    "followUps": [
-      {
-        "question": "What does the BackOff in CrashLoopBackOff mean?",
-        "answerHint": "Exponential backoff \u2014 K8s waits 10s, 20s, 40s, 80s... up to 5 minutes between restart attempts. Prevents a broken container from consuming resources in a tight loop."
-      },
-      {
-        "question": "A pod starts, runs for 2 minutes, then crashes repeatedly. How does your debugging approach differ?",
-        "answerHint": "The app starts successfully, so focus on runtime behavior: memory leak (OOM after 2 min), liveness probe too aggressive, external dependency becomes unavailable. Check kubectl logs --previous for the crash output."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Immediately deleting and recreating the pod without collecting logs",
-      "Focusing on CrashLoopBackOff as the error \u2014 it's the symptom, not the cause",
-      "Not checking --previous logs \u2014 the crash output is in the previous container"
+      "CrashLoopBackOff es un síntoma, no la causa: K8s está esperando antes de reintentar",
+      "logs --previous es vital porque el crash borra los logs actuales",
+      "kubectl debug permite crear un contenedor de depuración efímero"
     ]
   },
   {
@@ -401,31 +220,13 @@
     "topic": "k8s",
     "subtopic": "Health Checks",
     "difficulty": "advanced",
-    "question": "How do you implement graceful shutdown for a Java Spring Boot application in Kubernetes?",
-    "interviewerIntent": "Graceful shutdown is required for zero-downtime deployments. Tests understanding of the full shutdown sequence.",
-    "answer": "Full graceful shutdown sequence: (1) K8s removes Pod from Service endpoints (readiness fails or pod is terminating). (2) K8s sends SIGTERM to PID 1. (3) App starts shutdown sequence. (4) In-flight requests complete within grace period. (5) K8s sends SIGKILL after terminationGracePeriodSeconds. For Spring Boot: server.shutdown=graceful in application.properties enables graceful shutdown. spring.lifecycle.timeout-per-shutdown-phase controls per-phase timeout. Set terminationGracePeriodSeconds in pod spec to > max request duration. PreStop hook with sleep 5-10s gives Kubernetes time to remove the pod from load balancer endpoints before SIGTERM arrives \u2014 otherwise requests can arrive after shutdown starts.",
-    "shortAnswer": "server.shutdown=graceful in Spring Boot. terminationGracePeriodSeconds > max request timeout. PreStop sleep 5-10s for LB deregistration lag. SIGTERM triggers shutdown, SIGKILL is the hard cutoff.",
+    "question": "¿Cómo implementas un apagado elegante (graceful shutdown) en Kubernetes?",
+    "interviewerIntent": "Evitar pérdida de peticiones en vuelo durante despliegues.",
+    "answer": "Implica coordinar a K8s y la aplicación: (1) En Spring Boot, activar 'server.shutdown=graceful'. (2) En K8s, usar un PreStop hook con un 'sleep' (ej. 5-10s) para compensar el retraso en la actualización de los balanceadores de carga. (3) Asegurar que 'terminationGracePeriodSeconds' sea mayor que el tiempo que tarda la app en cerrar sus conexiones y terminar las peticiones activas. K8s envía un SIGTERM, espera el periodo de gracia y luego envía un SIGKILL.",
+    "shortAnswer": "Spring: server.shutdown=graceful. K8s: PreStop hook con sleep para evitar tráfico residual y periodo de gracia suficiente. SIGTERM inicia el cierre, SIGKILL es el corte forzado.",
     "keyPoints": [
-      "server.shutdown=graceful \u2014 Spring Boot waits for in-flight requests",
-      "terminationGracePeriodSeconds must be generous (30-60s for most apps)",
-      "PreStop hook: sleep 5s before SIGTERM to allow endpoint deregistration",
-      "SIGKILL is sent after terminationGracePeriodSeconds regardless",
-      "Spring Boot Actuator /actuator/health goes DOWN during shutdown \u2014 remove from LB"
-    ],
-    "followUps": [
-      {
-        "question": "Why is the PreStop sleep necessary even with proper readiness probes?",
-        "answerHint": "There's a propagation delay between K8s marking the pod as terminating and all load balancers/kube-proxies updating their routing tables. The sleep covers this gap."
-      },
-      {
-        "question": "How do you handle in-flight database transactions during shutdown?",
-        "answerHint": "Spring's graceful shutdown waits for active requests. Each request's transaction commits or rolls back before the thread completes. As long as terminationGracePeriodSeconds is long enough, transactions complete normally."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Not setting server.shutdown=graceful \u2014 abrupt shutdown drops in-flight requests",
-      "terminationGracePeriodSeconds < typical request duration \u2014 transactions killed mid-flight",
-      "No PreStop hook \u2014 requests arrive after shutdown starts"
+      "Sin el sleep en el PreStop, puedes recibir peticiones cuando la app ya está cerrando",
+      "El Actuator de Spring Boot marca automáticamente la app como fuera de servicio al recibir el SIGTERM"
     ]
   },
   {
@@ -434,31 +235,13 @@
     "topic": "k8s",
     "subtopic": "Services",
     "difficulty": "intermediate",
-    "question": "What is a Kubernetes NetworkPolicy and why do you need it?",
-    "interviewerIntent": "Security-conscious candidates know that namespaces alone don't isolate network traffic. NetworkPolicy is the K8s firewall.",
-    "answer": "By default, all Pods in a Kubernetes cluster can communicate with each other regardless of namespace \u2014 there's no network isolation. NetworkPolicy defines rules about which Pods can communicate with which other Pods and external endpoints. Rules specify: podSelector (which pods this policy applies to), policyTypes (Ingress, Egress, or both), ingress rules (from which pods/namespaces/CIDRs), egress rules (to which destinations). Requires a CNI plugin that supports NetworkPolicy (Calico, Cilium, Weave Net \u2014 not Flannel by default). Best practice: default-deny-all policy in each namespace, then whitelist required traffic explicitly.",
-    "shortAnswer": "NetworkPolicy = K8s firewall rules. Default: all pods can reach all pods. NetworkPolicy restricts ingress/egress by pod selector, namespace, or CIDR. Requires CNI support (Calico, Cilium).",
+    "question": "¿Qué es una NetworkPolicy y por qué la necesitas?",
+    "interviewerIntent": "Seguridad. Los namespaces no aislan tráfico por sí solos.",
+    "answer": "Por defecto, todos los Pods en un clúster pueden hablar con todos. Una NetworkPolicy es el firewall de K8s: define qué tráfico de entrada (Ingress) y salida (Egress) está permitido basándose en etiquetas, namespaces o rangos IP. Requiere un plugin de red (CNI) compatible como Calico o Cilium. La mejor práctica es denegar todo por defecto y habilitar solo las conexiones necesarias (lista blanca).",
+    "shortAnswer": "NetworkPolicy = firewall de K8s. Por defecto todo está abierto. Restringe tráfico por etiquetas o namespaces. Requiere soporte del CNI (Calico/Cilium).",
     "keyPoints": [
-      "Without NetworkPolicy: full mesh connectivity between all pods",
-      "Requires CNI with NetworkPolicy support \u2014 not all CNIs support it",
-      "Default deny: empty podSelector + policyType Ingress/Egress blocks all",
-      "Whitelist: allow only known sources and destinations",
-      "Cilium extends NetworkPolicy with L7 rules (HTTP method, path)"
-    ],
-    "followUps": [
-      {
-        "question": "How do you allow a pod to reach only its database, not other pods?",
-        "answerHint": "Egress NetworkPolicy on the app pod that allows only traffic to the database pod (by label selector) on port 5432. Deny all other egress."
-      },
-      {
-        "question": "What happens if you apply a NetworkPolicy but your CNI doesn't support it?",
-        "answerHint": "The NetworkPolicy object is created successfully but silently ignored \u2014 traffic is not actually restricted. This gives false security confidence."
-      }
-    ],
-    "mistakesToAvoid": [
-      "Assuming namespaces isolate network traffic \u2014 they don't without NetworkPolicy",
-      "Creating NetworkPolicy with an unsupported CNI and thinking it works",
-      "Allowing egress to 0.0.0.0/0 \u2014 permits exfiltration to external IPs"
+      "Aislamiento de microservicios: que la app solo hable con su BD",
+      "Cilium permite reglas de nivel 7 (por ejemplo, permitir solo GET /health)"
     ]
   },
   {
@@ -467,31 +250,13 @@
     "topic": "k8s",
     "subtopic": "Deployments",
     "difficulty": "intermediate",
-    "question": "What is Helm and how does it simplify Kubernetes deployments?",
-    "interviewerIntent": "Helm is the standard K8s package manager. Checks if candidate has shipped real K8s applications vs just learning from tutorials.",
-    "answer": "Helm is the package manager for Kubernetes. A Helm chart is a collection of templated K8s YAML files with a values.yaml for configuration. 'helm install' renders the templates with values and applies them to the cluster. Key benefits: (1) Reusability \u2014 one chart, many environments via different values files. (2) Versioning \u2014 helm rollback to previous release. (3) Lifecycle management \u2014 helm upgrade, helm uninstall. (4) Community charts \u2014 bitnami, stable repos for common infrastructure (PostgreSQL, Redis, Kafka). Common workflow: helm install myapp ./chart -f values.prod.yaml. Chart testing: helm template to render YAML without applying, helm lint for validation.",
-    "shortAnswer": "Helm = K8s package manager. Chart = templated YAML + values.yaml. helm install/upgrade/rollback. Values files per environment. Community charts for infrastructure components.",
+    "question": "¿Qué es Helm y cómo simplifica los despliegues?",
+    "interviewerIntent": "Gestión de paquetes y ciclos de vida de aplicaciones.",
+    "answer": "Helm es el gestor de paquetes de Kubernetes. Un 'Chart' de Helm es una colección de archivos YAML con plantillas (templates) y un archivo 'values.yaml' para la configuración. Permite reutilizar el mismo despliegue en distintos entornos cambiando solo los valores. Ofrece gestión de versiones, permitiendo hacer 'rollbacks' sencillos de toda una aplicación. Es el estándar para instalar infraestructura (como bases de datos o brokers) en el clúster.",
+    "shortAnswer": "Helm = gestor de paquetes. Chart = plantillas + valores. Permite versionado, rollbacks y estandarizar despliegues entre entornos.",
     "keyPoints": [
-      "Chart structure: Chart.yaml, templates/, values.yaml",
-      "helm template renders without applying \u2014 useful for debugging",
-      "helm upgrade --atomic: rollback automatically on failure",
-      "Subcharts (dependencies) for complex multi-component apps",
-      "Helmfile or ArgoCD for GitOps with Helm"
-    ],
-    "followUps": [
-      {
-        "question": "What is the difference between helm upgrade and helm install?",
-        "answerHint": "helm upgrade updates an existing release. helm install creates a new one. helm upgrade --install does both: installs if not exists, upgrades if exists."
-      },
-      {
-        "question": "What is GitOps and how does it relate to Helm?",
-        "answerHint": "GitOps: git is the source of truth for cluster state. ArgoCD or Flux watches git and applies Helm charts automatically when values or chart versions change."
-      }
-    ],
-    "mistakesToAvoid": [
-      "kubectl apply -f for every deployment in production \u2014 no rollback, no versioning",
-      "Modifying resources managed by Helm directly with kubectl \u2014 causes drift",
-      "Not using --atomic in CI/CD \u2014 broken upgrades leave release in failed state"
+      "helm upgrade --install gestiona todo el ciclo de vida",
+      "Helmfile o ArgoCD suelen usarse para automatizar Helm en GitOps"
     ]
   }
 ]

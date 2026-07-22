@@ -21,10 +21,10 @@ export class DashboardComponent {
   private readonly learnIds = [
     'java', 'oop', 'solid', 'dsa', 'data-persistence', 'spring',
     'rest', 'security', 'concurrency', 'patterns', 'testing',
-    'docker', 'k8s', 'kotlin', 'angular', 'kafka', 'system-design-modeling'
+    'docker', 'k8s', 'kotlin', 'angular', 'kafka'
   ];
 
-  private readonly interviewIds = ['system-design', 'software-architecture', 'behavioral', 'mindset'];
+  private readonly interviewIds = ['software-architecture', 'behavioral', 'mindset'];
   private readonly experienceIds = ['stories', 'portfolio'];
   private readonly reweIds = ['rewe'];
 

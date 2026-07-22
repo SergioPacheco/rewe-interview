@@ -10,7 +10,7 @@
       "Use case: detailed flow (preconditions, steps, extensions, postconditions)",
       "User story: brief value statement (As a... I want... So that...)",
       "Use case = complete specification, user story = conversation starter",
-      "Both valid \u2014 use cases for complex flows, stories for agile backlog"
+      "Both valid — use cases for complex flows, stories for agile backlog"
     ],
     "followUps": [
       {
@@ -18,7 +18,7 @@
         "answerHint": "Complex integrations, regulatory requirements, outsourced development (need detailed spec), systems with many exception paths."
       }
     ],
-    "topic": "system-design-modeling",
+    "topic": "software-architecture",
     "explain": "Use case = comprehensive behavior description. User story = placeholder for a conversation. Use cases from Dennis/Wixom describe full actor-system interaction; user stories from XP are intentionally brief to encourage collaboration."
   },
   {
@@ -34,15 +34,15 @@
       "The included use case replaces the base use case"
     ],
     "answer": "The included use case ALWAYS executes as part of the base use case",
-    "explain": "<<include>> means mandatory sub-behavior. Example: 'Place Order' <<include>> 'Validate Payment' \u2014 payment validation ALWAYS happens. <<extend>> is for optional/conditional behavior.",
-    "topic": "system-design-modeling"
+    "explain": "<<include>> means mandatory sub-behavior. Example: 'Place Order' <<include>> 'Validate Payment' — payment validation ALWAYS happens. <<extend>> is for optional/conditional behavior.",
+    "topic": "software-architecture"
   },
   {
     "id": "sdm-cd-01",
     "type": "PREDICT_OUTPUT",
     "difficulty": "inter",
     "subtopic": "sdm-class-diagrams",
-    "mission": "A Delivery has a filled diamond (\u25c6) pointing to Stop. What does this mean?",
+    "mission": "A Delivery has a filled diamond (◆) pointing to Stop. What does this mean?",
     "choices": [
       "Delivery references Stop (can exist independently)",
       "Delivery OWNS Stop (Stop cannot exist without Delivery)",
@@ -50,8 +50,8 @@
       "Delivery and Stop are the same class"
     ],
     "answer": "Delivery OWNS Stop (Stop cannot exist without Delivery)",
-    "explain": "Filled diamond = Composition (strong ownership). If Delivery is deleted, its Stops are deleted too. In JPA: cascade=ALL, orphanRemoval=true. Open diamond (\u25c7) = Aggregation (weak reference) \u2014 the referenced object can exist independently.",
-    "topic": "system-design-modeling"
+    "explain": "Filled diamond = Composition (strong ownership). If Delivery is deleted, its Stops are deleted too. In JPA: cascade=ALL, orphanRemoval=true. Open diamond (◇) = Aggregation (weak reference) — the referenced object can exist independently.",
+    "topic": "software-architecture"
   },
   {
     "id": "sdm-cd-02",
@@ -59,7 +59,7 @@
     "difficulty": "inter",
     "subtopic": "sdm-class-diagrams",
     "question": "How do you decide between inheritance and composition in your domain model?",
-    "interviewerIntent": "Tests OO design judgment \u2014 composition over inheritance principle",
+    "interviewerIntent": "Tests OO design judgment — composition over inheritance principle",
     "keyPoints": [
       "Inheritance: IS-A relationship (ExpressDelivery IS-A Delivery)",
       "Composition: HAS-A relationship (Delivery HAS-A Route)",
@@ -73,7 +73,7 @@
         "answerHint": "Deep hierarchies where changing base class broke multiple subclasses. Or 'diamond problem' in multiple inheritance. In Java, solved with interfaces + default methods."
       }
     ],
-    "topic": "system-design-modeling",
+    "topic": "software-architecture",
     "explain": "Dennis/Wixom: inheritance for stable taxonomies, composition for flexible behavior. GoF: 'Favor composition over inheritance.' In practice: use inheritance for identity (what it IS), composition for behavior (what it DOES)."
   },
   {
@@ -108,7 +108,7 @@
         "label": "Controller serializes response, returns HTTP status"
       }
     ],
-    "topic": "system-design-modeling",
+    "topic": "software-architecture",
     "explain": "This is the standard layered sequence in Spring Boot. Each layer has a single responsibility. A sequence diagram makes this flow explicit and helps identify where to add cross-cutting concerns (logging, caching, retry)."
   },
   {
@@ -123,7 +123,7 @@
       "2. List options with pros/cons for THIS context (not generic)",
       "3. Identify the MOST IMPORTANT quality attribute (scalability? consistency? time-to-market?)",
       "4. Make decision explicit (ADR)",
-      "5. Define reversal cost \u2014 is this a one-way door or two-way door?"
+      "5. Define reversal cost — is this a one-way door or two-way door?"
     ],
     "followUps": [
       {
@@ -131,8 +131,8 @@
         "answerHint": "A decision easily reversed: library choice, internal API design. Decide fast, adjust later. One-way door: database choice, public API contract, messaging platform. Invest more time upfront."
       }
     ],
-    "topic": "system-design-modeling",
-    "explain": "Senior engineers don't just pick the 'best' technology \u2014 they make decisions in context, document rationale (ADR), and distinguish reversible from irreversible choices. Dennis/Wixom: architecture design is about constraints and trade-offs, not ideal solutions."
+    "topic": "software-architecture",
+    "explain": "Senior engineers don't just pick the 'best' technology — they make decisions in context, document rationale (ADR), and distinguish reversible from irreversible choices. Dennis/Wixom: architecture design is about constraints and trade-offs, not ideal solutions."
   },
   {
     "id": "sdm-data-01",
@@ -148,7 +148,7 @@
     ],
     "answer": "@OneToMany on Delivery, @ManyToOne on Stop",
     "explain": "One Delivery has Many Stops (1:N). The 'owning side' (with FK column) is Stop (@ManyToOne). The 'inverse side' is Delivery (@OneToMany(mappedBy='delivery')). The FK (delivery_id) lives in the stop table.",
-    "topic": "system-design-modeling"
+    "topic": "software-architecture"
   },
   {
     "id": "sdm-data-02",
@@ -170,7 +170,7 @@
         "answerHint": "Event-driven updates (CDC), materialized views with refresh, application-level sync on write, or accept eventual consistency with defined SLA."
       }
     ],
-    "topic": "system-design-modeling",
+    "topic": "software-architecture",
     "explain": "Dennis/Wixom: normalize by default (3NF), denormalize with justification. Senior approach: measure first, denormalize specific read paths, keep normalized source as truth."
   },
   {
@@ -193,8 +193,8 @@
         "answerHint": "State your assumption explicitly: 'I'm assuming X because... If that's wrong, the design would change by...' Shows intellectual honesty and adaptability."
       }
     ],
-    "topic": "system-design-modeling",
-    "explain": "The C4 model provides natural zoom levels. Start broad (system context), zoom in when asked. Always clarify before designing \u2014 jumping to solution without understanding requirements is the #1 red flag."
+    "topic": "software-architecture",
+    "explain": "The C4 model provides natural zoom levels. Start broad (system context), zoom in when asked. Always clarify before designing — jumping to solution without understanding requirements is the #1 red flag."
   },
   {
     "id": "sdm-comm-02",
@@ -210,6 +210,6 @@
     ],
     "answer": "Deployable units (apps, databases, queues)",
     "explain": "C4 levels: L1=System Context (who uses it), L2=Containers (deployable units: Spring Boot app, PostgreSQL, Kafka, Redis), L3=Components (internal modules within a container), L4=Code (class-level, rarely drawn). Container = something that runs and hosts code.",
-    "topic": "system-design-modeling"
+    "topic": "software-architecture"
   }
 ]

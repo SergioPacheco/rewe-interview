@@ -555,7 +555,7 @@ const SUBTOPIC_MAP: Record<string, Record<string, string>> = {
     'Transaction Isolation': 'sql-transactions',
     'Window Functions': 'sql-joins',
   },
-  'system-design': {
+  'software-architecture': {
     'API Design': 'sd-ops',
     'Aggregates': 'sd-data',
     'Anti-Corruption Layer': 'sd-data',

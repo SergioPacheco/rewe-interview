@@ -219,8 +219,7 @@ const TOPIC_PHASES: Record<string, string[]> = {
   solid: ['Separate responsibilities', 'Manage extension and substitution', 'Invert dependencies'],
   java: ['Language essentials', 'Flow and structure', 'Objects and standard APIs', 'Express intent safely', 'Modern concurrency'],
   'data-persistence': ['SQL fundamentals', 'JPA & Hibernate', 'Distributed data (DDIA)', 'Performance & production'],
-  'system-design': ['Shape the flow', 'Protect data and scale', 'Operate the system'],
-  'software-architecture': ['Foundations', 'Domain-Driven Design', 'Architectural Styles', 'Distributed Architecture', 'API & Integration', 'Data Architecture', 'Evolution & Legacy'],
+  'software-architecture': ['Foundations & Modeling', 'Domain-Driven Design', 'Architectural Styles', 'Distributed Systems', 'Data Architecture', 'API & Integration', 'Evolution & Operations'],
   behavioral: ['Adapt and collaborate', 'Lead under pressure', 'Show motivation and judgement'],
   stories: ['Business impact', 'Technical decisions', 'Personal narrative'],
   portfolio: ['Product context', 'Architecture and delivery', 'Interview evidence'],
@@ -239,5 +238,5 @@ const TOPIC_PHASES: Record<string, string[]> = {
 
 /** Explicit phase sizes for topics with uneven distribution */
 const TOPIC_PHASE_SIZES: Record<string, number[]> = {
-  'software-architecture': [3, 12, 3, 1, 1, 1, 1]  // Foundations(3), DDD(12), Styles(3), Distributed(1), API(1), Data(1), Evolution(1)
+  'software-architecture': [7, 12, 3, 4, 3, 1, 2]  // Foundations(7), DDD(12), Styles(3), Distributed(4), Data(3), API(1), Evolution(2)
 };

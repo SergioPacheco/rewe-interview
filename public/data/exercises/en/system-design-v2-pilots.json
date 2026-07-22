@@ -2,12 +2,12 @@
   {
     "schemaVersion": 2,
     "id": "sd-tracking-v2",
-    "topic": "system-design",
+    "topic": "software-architecture",
     "subtopic": "Real-time Delivery Tracking",
     "type": "ORAL_ANSWER",
     "difficulty": "SENIOR",
     "question": "Design a real-time delivery tracking system where customers can see their delivery position on a map, with ETA updates. Drivers send GPS coordinates every 10 seconds. 500 active drivers simultaneously.",
-    "context": "You are in a system-design interview for REWE Digital. The interviewer gave you this problem and is watching how you approach it \u2014 not just what solution you pick.",
+    "context": "You are in a system-design interview for REWE Digital. The interviewer gave you this problem and is watching how you approach it — not just what solution you pick.",
     "knownFacts": [
       "500 active drivers",
       "GPS updates every 10 seconds",
@@ -64,7 +64,7 @@
       {
         "category": "CONSUMERS",
         "question": "How many customers are tracking simultaneously? What's the ratio of watchers to drivers?",
-        "whyItMatters": "If 3 customers watch each driver, that's 1500 WebSocket connections \u2014 one pod handles this. If it's 50 watchers per driver (public tracking page), the fan-out problem changes significantly.",
+        "whyItMatters": "If 3 customers watch each driver, that's 1500 WebSocket connections — one pod handles this. If it's 50 watchers per driver (public tracking page), the fan-out problem changes significantly.",
         "affectedDecisions": [
           "Fan-out strategy",
           "Connection limits per pod",
@@ -99,7 +99,7 @@
       },
       {
         "assumption": "I'll assume we need current position only, not full route history.",
-        "consequence": "A Redis hash (driver_id \u2192 lat/lng/timestamp) suffices for serving. No append-only log needed initially."
+        "consequence": "A Redis hash (driver_id → lat/lng/timestamp) suffices for serving. No append-only log needed initially."
       }
     ],
     "tradeoffs": [
@@ -107,12 +107,12 @@
         "dimensionA": "Freshness (sub-second updates)",
         "dimensionB": "Infrastructure simplicity",
         "domainContext": "At 500 drivers and moderate customer concurrency, the infrastructure cost of WebSocket + Redis pub/sub is real engineering time with minimal user benefit if 5s polling is acceptable.",
-        "consequence": "Choosing sub-second when 5s suffices adds WebSocket gateway, connection state management, reconnection logic, and monitoring complexity \u2014 for no measurable business outcome at this scale."
+        "consequence": "Choosing sub-second when 5s suffices adds WebSocket gateway, connection state management, reconnection logic, and monitoring complexity — for no measurable business outcome at this scale."
       },
       {
         "dimensionA": "Durability (event log of all positions)",
         "dimensionB": "Operational cost",
-        "domainContext": "Storing every GPS ping (50/sec \u00d7 86400 sec/day = 4.3M records/day) requires purpose. If nobody queries history, it's cost without value.",
+        "domainContext": "Storing every GPS ping (50/sec × 86400 sec/day = 4.3M records/day) requires purpose. If nobody queries history, it's cost without value.",
         "consequence": "Adding Kafka for durability when you only need current position is designing for a requirement that doesn't exist yet. Add it when analytics requests it."
       }
     ],
@@ -120,7 +120,7 @@
       {
         "condition": "500 drivers, 5-10s freshness acceptable, current position only",
         "recommendation": "HTTP polling every 5s against Redis cache. Drivers POST GPS to a simple REST endpoint that writes to Redis hash.",
-        "rationale": "50 events/sec ingestion is trivial for any backend. 1500 poll requests every 5s = 300 req/s read \u2014 a single Redis instance handles millions. No Kafka, no WebSocket, no pub/sub.",
+        "rationale": "50 events/sec ingestion is trivial for any backend. 1500 poll requests every 5s = 300 req/s read — a single Redis instance handles millions. No Kafka, no WebSocket, no pub/sub.",
         "costs": [
           "Not truly real-time (5s lag)",
           "Polling creates steady request load even when nothing changes"
@@ -143,7 +143,7 @@
           "Monitoring connection count per pod"
         ],
         "risks": [
-          "WebSocket connections are stateful \u2014 pod restart drops all connections",
+          "WebSocket connections are stateful — pod restart drops all connections",
           "Proxy/firewall may not support WebSocket in all customer networks"
         ],
         "invalidatedBy": [
@@ -227,9 +227,9 @@
       {
         "type": "FAILURE_SCENARIO",
         "question": "A driver's phone loses connectivity for 2 minutes. What does the customer see? What happens to ETA?",
-        "interviewerIntent": "Tests failure mode thinking \u2014 a critical aspect of real-time systems that candidates often ignore.",
+        "interviewerIntent": "Tests failure mode thinking — a critical aspect of real-time systems that candidates often ignore.",
         "strongSignals": [
-          "Staleness detection (no update for 30s \u2192 mark as 'last seen X ago')",
+          "Staleness detection (no update for 30s → mark as 'last seen X ago')",
           "ETA becomes uncertain/range instead of precise",
           "Discusses batch upload of buffered GPS when connectivity returns"
         ],
@@ -245,8 +245,8 @@
         "question": "Calculate the storage and bandwidth for position history if we decide to keep 30 days.",
         "interviewerIntent": "Tests back-of-envelope estimation skills.",
         "strongSignals": [
-          "Calculates: 500 drivers \u00d7 6/min \u00d7 60min \u00d7 24h \u00d7 30d \u2248 130M records",
-          "Estimates record size (~50 bytes: driver_id, lat, lng, timestamp) \u2192 ~6.5GB raw",
+          "Calculates: 500 drivers × 6/min × 60min × 24h × 30d ≈ 130M records",
+          "Estimates record size (~50 bytes: driver_id, lat, lng, timestamp) → ~6.5GB raw",
           "Proposes partitioning by date for easy deletion"
         ],
         "weakSignals": [
@@ -254,7 +254,7 @@
           "Confuses storage with bandwidth",
           "Proposes complex solution for a small data volume"
         ],
-        "hint": "500 \u00d7 6/min \u00d7 1440min/day \u00d7 30d = 130M records. At ~50 bytes each = ~6.5GB. TimescaleDB or partitioned PostgreSQL handles this trivially. Don't over-engineer."
+        "hint": "500 × 6/min × 1440min/day × 30d = 130M records. At ~50 bytes each = ~6.5GB. TimescaleDB or partitioned PostgreSQL handles this trivially. Don't over-engineer."
       },
       {
         "type": "CHALLENGE_CHOICE",
@@ -262,7 +262,7 @@
         "interviewerIntent": "Tests whether candidate knows the actual differences and can evaluate alternatives honestly.",
         "strongSignals": [
           "Acknowledges SSE is simpler (unidirectional, HTTP-based, works through proxies)",
-          "Notes tracking is unidirectional (server\u2192client only) so SSE is valid",
+          "Notes tracking is unidirectional (server→client only) so SSE is valid",
           "Discusses when WebSocket would be needed (bidirectional: chat, interactive maps)"
         ],
         "weakSignals": [
@@ -270,20 +270,20 @@
           "Claims WebSocket is 'always better for real-time'",
           "Cannot explain the actual technical difference"
         ],
-        "hint": "For tracking (server\u2192client only), SSE is arguably better: simpler, auto-reconnects, works through HTTP proxies, no upgrade handshake. WebSocket only needed if client sends data back (chat, interactive control)."
+        "hint": "For tracking (server→client only), SSE is arguably better: simpler, auto-reconnects, works through HTTP proxies, no upgrade handshake. WebSocket only needed if client sends data back (chat, interactive control)."
       }
     ],
     "experienceEvidence": [
       {
         "area": "Event-driven architecture with message queues",
         "level": "PRODUCTION_EXPERIENCE",
-        "evidence": "8 years with JMS/ActiveMQ in SGN3 \u2014 80 queues, 128 MDB consumers, retry/DLQ patterns",
-        "safeWording": "I have extensive production experience with event-driven architecture using JMS and ActiveMQ \u2014 80 queues handling asynchronous processing across modules."
+        "evidence": "8 years with JMS/ActiveMQ in SGN3 — 80 queues, 128 MDB consumers, retry/DLQ patterns",
+        "safeWording": "I have extensive production experience with event-driven architecture using JMS and ActiveMQ — 80 queues handling asynchronous processing across modules."
       },
       {
         "area": "Kafka specifically",
         "level": "STUDIED_NOT_USED",
-        "safeWording": "I have studied Kafka's architecture \u2014 partitions, consumer groups, offset management \u2014 but have not operated it in production. My JMS experience transfers the consumption patterns; Kafka's operational model is what I would need to learn on the job."
+        "safeWording": "I have studied Kafka's architecture — partitions, consumer groups, offset management — but have not operated it in production. My JMS experience transfers the consumption patterns; Kafka's operational model is what I would need to learn on the job."
       },
       {
         "area": "WebSocket / real-time push",
@@ -312,7 +312,7 @@
           "Questions failure behavior"
         ],
         "weakSignals": [
-          "No questions \u2014 jumps to architecture",
+          "No questions — jumps to architecture",
           "Only asks 1 generic question",
           "Assumes all requirements are in the problem statement"
         ]
@@ -405,7 +405,7 @@
         "Honest about Kafka/WebSocket being studied, bridged to JMS experience"
       ],
       "possibleDirections": [
-        "Polling MVP \u2192 WebSocket upgrade path (pragmatic)",
+        "Polling MVP → WebSocket upgrade path (pragmatic)",
         "WebSocket from start with SSE as simpler alternative (technical depth)",
         "Focus on ETA calculation as the hard problem (algorithmic angle)",
         "Focus on multi-tenant fan-out (infrastructure angle)"
@@ -413,7 +413,7 @@
       "commonlyMissedPoints": [
         "SSE as a simpler alternative to WebSocket for unidirectional push",
         "Staleness detection and honest UX when data is stale",
-        "That 50 events/sec is trivially small \u2014 no need for Kafka",
+        "That 50 events/sec is trivially small — no need for Kafka",
         "Cost estimation: Redis memory for 500 drivers is ~50KB total",
         "The ETA recalculation is often harder than the tracking itself"
       ]
@@ -422,11 +422,11 @@
   {
     "schemaVersion": 2,
     "id": "sd-consistency-v2",
-    "topic": "system-design",
+    "topic": "software-architecture",
     "subtopic": "Data Consistency",
     "type": "ORAL_ANSWER",
     "difficulty": "SENIOR",
-    "question": "delivery-service and billing-service have separate databases. How do you ensure a completed delivery always has an invoice \u2014 without distributed transactions?",
+    "question": "delivery-service and billing-service have separate databases. How do you ensure a completed delivery always has an invoice — without distributed transactions?",
     "context": "Microservice architecture. Each service owns its database. No shared DB, no 2PC.",
     "knownFacts": [
       "Two services with separate databases",
@@ -547,7 +547,7 @@
       {
         "condition": "Minutes acceptable, duplicates reconcilable, broker exists",
         "recommendation": "Simple event publish after commit (delivery-completed). Consumer creates invoice with idempotency key (delivery_id). DLQ for retries exhausted.",
-        "rationale": "Simpler than outbox \u2014 no relay process. Small window of event loss possible (crash between commit and publish), but reconciliation job catches these.",
+        "rationale": "Simpler than outbox — no relay process. Small window of event loss possible (crash between commit and publish), but reconciliation job catches these.",
         "costs": [
           "Possible event loss on crash (rare)",
           "Reconciliation job still needed as safety net"
@@ -647,7 +647,7 @@
           "Doesn't discuss recovery time for accumulated backlog",
           "No mention of monitoring during outage"
         ],
-        "hint": "With outbox: events accumulate in broker. After recovery, consumer processes backlog. At 100 deliveries/min \u00d7 20 min = 2000 queued events. Monitor: consumer lag alert, billing-service health check, reconciliation job as safety net."
+        "hint": "With outbox: events accumulate in broker. After recovery, consumer processes backlog. At 100 deliveries/min × 20 min = 2000 queued events. Monitor: consumer lag alert, billing-service health check, reconciliation job as safety net."
       },
       {
         "type": "REAL_EXPERIENCE",
@@ -663,7 +663,7 @@
           "Cannot describe a specific implementation",
           "Vague about what was actually built vs studied"
         ],
-        "hint": "Honest answer: 'Not microservices with separate databases. In SGN, we use JMS queues between modules \u2014 same transactional outbox concept, same idempotency pattern (INSERT ON CONFLICT), same DLQ handling. The consumption reliability transfers directly; what's different is the operational model of Kafka vs embedded Artemis.'"
+        "hint": "Honest answer: 'Not microservices with separate databases. In SGN, we use JMS queues between modules — same transactional outbox concept, same idempotency pattern (INSERT ON CONFLICT), same DLQ handling. The consumption reliability transfers directly; what's different is the operational model of Kafka vs embedded Artemis.'"
       }
     ],
     "experienceEvidence": [
@@ -677,7 +677,7 @@
         "area": "Idempotent consumers",
         "level": "PRODUCTION_EXPERIENCE",
         "evidence": "INSERT ON CONFLICT DO NOTHING pattern in MDB consumers, inbox table pattern",
-        "safeWording": "I implement idempotent consumers using INSERT ON CONFLICT \u2014 the same pattern regardless of whether the broker is JMS or Kafka."
+        "safeWording": "I implement idempotent consumers using INSERT ON CONFLICT — the same pattern regardless of whether the broker is JMS or Kafka."
       },
       {
         "area": "Outbox pattern specifically",
@@ -687,7 +687,7 @@
       {
         "area": "Kafka operations",
         "level": "STUDIED_NOT_USED",
-        "safeWording": "I have not operated Kafka. My broker experience is JMS/Artemis. The consumption patterns (offset management \u2248 acknowledgment, consumer groups \u2248 MDB pooling) are conceptually equivalent but operationally different."
+        "safeWording": "I have not operated Kafka. My broker experience is JMS/Artemis. The consumption patterns (offset management ≈ acknowledgment, consumer groups ≈ MDB pooling) are conceptually equivalent but operationally different."
       }
     ],
     "scoringRubric": [
@@ -779,11 +779,11 @@
         "Outbox pattern deep-dive (compliance angle)",
         "Simple event with reconciliation (pragmatic angle)",
         "Synchronous with circuit breaker (simplicity angle)",
-        "State machine approach (COMPLETED \u2192 INVOICING \u2192 INVOICED)"
+        "State machine approach (COMPLETED → INVOICING → INVOICED)"
       ],
       "commonlyMissedPoints": [
         "The reconciliation job is needed regardless of pattern (safety net)",
-        "Outbox relay can use CDC (Debezium) instead of polling \u2014 lower latency",
+        "Outbox relay can use CDC (Debezium) instead of polling — lower latency",
         "Consumer idempotency key should be the delivery_id, not a generated UUID",
         "Monitor: 'deliveries without invoice after X minutes' is the business metric that matters",
         "Simple synchronous call is valid when services are tightly coupled (don't over-engineer)"
@@ -793,7 +793,7 @@
   {
     "schemaVersion": 2,
     "id": "sd-legacy-migration-v2",
-    "topic": "system-design",
+    "topic": "software-architecture",
     "subtopic": "Event-Driven Architecture",
     "type": "ORAL_ANSWER",
     "difficulty": "SENIOR",
@@ -881,27 +881,27 @@
       },
       {
         "assumption": "The team has basic CI/CD but has not operated multiple services before.",
-        "consequence": "Operational foundation (monitoring, alerting, deployment pipeline for service) must be built as part of the extraction \u2014 not after."
+        "consequence": "Operational foundation (monitoring, alerting, deployment pipeline for service) must be built as part of the extraction — not after."
       }
     ],
     "tradeoffs": [
       {
         "dimensionA": "Speed of extraction",
         "dimensionB": "Safety of extraction",
-        "domainContext": "Extracting quickly (direct cut, new service, decommission old code) is fast but risky \u2014 any missed dependency breaks production. Extracting safely (parallel run, feature flag, gradual traffic shift) is slow but reversible.",
+        "domainContext": "Extracting quickly (direct cut, new service, decommission old code) is fast but risky — any missed dependency breaks production. Extracting safely (parallel run, feature flag, gradual traffic shift) is slow but reversible.",
         "consequence": "For a revenue-critical system with live traffic, safety wins. The cost of a failed extraction (rollback, data inconsistency, downtime) exceeds the cost of going slower."
       },
       {
         "dimensionA": "Database-first split",
         "dimensionB": "Service-first split",
-        "domainContext": "Splitting the database first (driver-assignment gets its own schema, synced via events) makes service extraction clean \u2014 but the data migration is complex. Splitting the service first (separate deployment, shared DB temporarily) is faster but creates distributed monolith risk.",
-        "consequence": "Shared database between services is the most common anti-pattern teams fall into. It works short-term but prevents independent deployment and scaling \u2014 which is the reason for extracting in the first place."
+        "domainContext": "Splitting the database first (driver-assignment gets its own schema, synced via events) makes service extraction clean — but the data migration is complex. Splitting the service first (separate deployment, shared DB temporarily) is faster but creates distributed monolith risk.",
+        "consequence": "Shared database between services is the most common anti-pattern teams fall into. It works short-term but prevents independent deployment and scaling — which is the reason for extracting in the first place."
       }
     ],
     "decisionBranches": [
       {
         "condition": "Clean internal boundary exists, moderate coupling, team has ops experience",
-        "recommendation": "Strangler Fig: deploy driver-assignment as service alongside monolith. Route traffic via feature flag. Both paths active \u2014 compare results. Gradually shift 100% to new service. Decommission old code.",
+        "recommendation": "Strangler Fig: deploy driver-assignment as service alongside monolith. Route traffic via feature flag. Both paths active — compare results. Gradually shift 100% to new service. Decommission old code.",
         "rationale": "Parallel run with comparison is the safest migration strategy. Any discrepancy is caught before users are affected.",
         "costs": [
           "Running both paths temporarily (compute cost, complexity)",
@@ -919,8 +919,8 @@
       },
       {
         "condition": "Deep entanglement, shared tables, limited ops experience",
-        "recommendation": "Phase 1: Refactor inside the monolith \u2014 create explicit interface (internal API/facade) between driver-assignment and other modules. Phase 2 (later): Extract to service once the boundary is clean.",
-        "rationale": "Extracting entangled code creates a distributed monolith \u2014 the worst of both worlds. Cleaning the boundary first makes extraction a deployment concern, not a logic concern.",
+        "recommendation": "Phase 1: Refactor inside the monolith — create explicit interface (internal API/facade) between driver-assignment and other modules. Phase 2 (later): Extract to service once the boundary is clean.",
+        "rationale": "Extracting entangled code creates a distributed monolith — the worst of both worlds. Cleaning the boundary first makes extraction a deployment concern, not a logic concern.",
         "costs": [
           "Refactoring inside monolith takes time with no visible external change",
           "May be hard to justify to management"
@@ -978,7 +978,7 @@
       {
         "type": "FAILURE_SCENARIO",
         "question": "You've extracted the service and it goes down. Driver assignment stops working. What's your blast radius and mitigation?",
-        "interviewerIntent": "Tests operational thinking \u2014 extraction increases failure modes.",
+        "interviewerIntent": "Tests operational thinking — extraction increases failure modes.",
         "strongSignals": [
           "Circuit breaker: fall back to monolith code if service is down",
           "Health check with automatic routing back to monolith",
@@ -1012,7 +1012,7 @@
         "question": "Have you extracted a module from a monolith in production?",
         "interviewerIntent": "Tests honesty about experience level.",
         "strongSignals": [
-          "Describes SGN3 modular monolith honestly \u2014 schemas as boundaries, services as facades",
+          "Describes SGN3 modular monolith honestly — schemas as boundaries, services as facades",
           "Explains why SGN3 hasn't extracted to microservices (shared DB, team size, domain coupling)",
           "Bridges: 'I understand the boundary patterns because I enforce them daily'"
         ],
@@ -1021,7 +1021,7 @@
           "Cannot describe a concrete boundary they maintain",
           "Theoretical answer without operational grounding"
         ],
-        "hint": "Honest: 'SGN3 is a modular monolith \u2014 we enforce module boundaries via schemas and service facades, but haven't extracted to separate deployments. I maintain the discipline that would make extraction possible: clear interfaces, no cross-module direct DB access for writes. The extraction step itself (infrastructure, networking, monitoring) is what I'd learn on the job.'"
+        "hint": "Honest: 'SGN3 is a modular monolith — we enforce module boundaries via schemas and service facades, but haven't extracted to separate deployments. I maintain the discipline that would make extraction possible: clear interfaces, no cross-module direct DB access for writes. The extraction step itself (infrastructure, networking, monitoring) is what I'd learn on the job.'"
       }
     ],
     "experienceEvidence": [
@@ -1029,7 +1029,7 @@
         "area": "Modular monolith with enforced boundaries",
         "level": "PRODUCTION_EXPERIENCE",
         "evidence": "SGN3: schemas per domain, services as facades, cross-module writes only through service layer",
-        "safeWording": "I maintain a modular monolith where I enforce boundaries between modules \u2014 cross-module writes go through service interfaces, each module owns its schema. This is the prerequisite for extraction."
+        "safeWording": "I maintain a modular monolith where I enforce boundaries between modules — cross-module writes go through service interfaces, each module owns its schema. This is the prerequisite for extraction."
       },
       {
         "area": "Microservice extraction specifically",
@@ -1040,7 +1040,7 @@
         "area": "Event-driven decoupling",
         "level": "PRODUCTION_EXPERIENCE",
         "evidence": "JMS between SGN3 modules for async operations (80 queues)",
-        "safeWording": "I use JMS queues for asynchronous decoupling between modules \u2014 same concept as events between services, currently within a single deployment."
+        "safeWording": "I use JMS queues for asynchronous decoupling between modules — same concept as events between services, currently within a single deployment."
       }
     ],
     "scoringRubric": [
@@ -1135,7 +1135,7 @@
       ],
       "commonlyMissedPoints": [
         "The hardest part is the database split, not the service deployment",
-        "A shared database between services is a distributed monolith \u2014 worst of both worlds",
+        "A shared database between services is a distributed monolith — worst of both worlds",
         "Team operational readiness (monitoring, alerting, incident response for distributed systems) is a prerequisite",
         "Feature flags for routing between old and new path enable safe rollback",
         "Shadow mode (compare outputs without affecting users) is the gold standard for validation"
@@ -1145,7 +1145,7 @@
   {
     "schemaVersion": 2,
     "id": "sd-external-integration-v2",
-    "topic": "system-design",
+    "topic": "software-architecture",
     "subtopic": "Resilience",
     "type": "ORAL_ANSWER",
     "difficulty": "SENIOR",
@@ -1174,7 +1174,7 @@
       "objective": "Demonstrate that resilience is not just 'add a circuit breaker'. Show understanding of failure modes, user impact, and the difference between transient and permanent failures.",
       "requiredElements": [
         "Identify that 99.5% means real downtime (not theoretical)",
-        "Distinguish between latency spikes and outages \u2014 different handling",
+        "Distinguish between latency spikes and outages — different handling",
         "Ask whether the user waits synchronously or can be notified later"
       ],
       "avoid": [
@@ -1227,32 +1227,32 @@
     ],
     "assumptionsToDeclare": [
       {
-        "assumption": "Booking can be asynchronous \u2014 customer gets delivery confirmation immediately, booking happens in background.",
+        "assumption": "Booking can be asynchronous — customer gets delivery confirmation immediately, booking happens in background.",
         "consequence": "This allows us to queue bookings and handle API failures without impacting customer experience directly."
       },
       {
         "assumption": "The carrier API does not support idempotency keys.",
-        "consequence": "We must implement our own deduplication \u2014 persist booking intent with a unique key before calling the API, check before retry."
+        "consequence": "We must implement our own deduplication — persist booking intent with a unique key before calling the API, check before retry."
       }
     ],
     "tradeoffs": [
       {
         "dimensionA": "Fast timeout (fail quickly, good UX)",
         "dimensionB": "Completion rate (wait longer, more bookings succeed)",
-        "domainContext": "With 800ms average and 15s spikes, a 3s timeout gives good UX but fails on spikes. A 20s timeout catches spikes but makes the user wait. Async decouples this entirely \u2014 the user never waits.",
+        "domainContext": "With 800ms average and 15s spikes, a 3s timeout gives good UX but fails on spikes. A 20s timeout catches spikes but makes the user wait. Async decouples this entirely — the user never waits.",
         "consequence": "Choosing between fast timeout and completion rate is a false dilemma if booking can be async. The real question is whether the business accepts async confirmation."
       },
       {
         "dimensionA": "Simple retry (fewer components)",
         "dimensionB": "Circuit breaker (protect against prolonged outage)",
-        "domainContext": "Simple retry with backoff handles transient failures (spikes). Circuit breaker prevents wasting resources calling an API that's fully down. At 99.5% availability, full outages happen ~3.6h/month \u2014 circuit breaker is justified.",
+        "domainContext": "Simple retry with backoff handles transient failures (spikes). Circuit breaker prevents wasting resources calling an API that's fully down. At 99.5% availability, full outages happen ~3.6h/month — circuit breaker is justified.",
         "consequence": "Circuit breaker without retry underneath is incomplete. Retry without circuit breaker during extended outage wastes threads and may exhaust connection pools."
       }
     ],
     "decisionBranches": [
       {
         "condition": "Async booking acceptable, retry in minutes is fine",
-        "recommendation": "Accept delivery immediately. Queue booking request (persistent \u2014 survives restart). Worker drains queue with: timeout 5s, retry 3x with exponential backoff, circuit breaker on 5 consecutive failures. Failed after retries \u2192 DLQ + alert.",
+        "recommendation": "Accept delivery immediately. Queue booking request (persistent — survives restart). Worker drains queue with: timeout 5s, retry 3x with exponential backoff, circuit breaker on 5 consecutive failures. Failed after retries → DLQ + alert.",
         "rationale": "Customer never sees the API's unreliability. Most transient failures resolve within minutes. Persistent queue means no booking lost on service restart.",
         "costs": [
           "Async means customer doesn't know booking status immediately",
@@ -1260,7 +1260,7 @@
           "DLQ monitoring"
         ],
         "risks": [
-          "If carrier is down for hours, bookings accumulate \u2014 need capacity planning for drain",
+          "If carrier is down for hours, bookings accumulate — need capacity planning for drain",
           "Customer may ask 'is my delivery booked?' before confirmation arrives"
         ],
         "invalidatedBy": [
@@ -1273,7 +1273,7 @@
         "recommendation": "Timeout at 5 seconds. Retry once immediately (transient network issue). If both fail: return provisional confirmation to customer ('booking in progress'), queue for async retry, notify customer of final status.",
         "rationale": "5s timeout + 1 retry covers 95% of successes. For the remaining 5%, degrade gracefully to async rather than showing error.",
         "costs": [
-          "More complex UX (provisional \u2192 confirmed)",
+          "More complex UX (provisional → confirmed)",
           "Customer notification system needed",
           "State machine for booking status"
         ],
@@ -1350,7 +1350,7 @@
         "interviewerIntent": "Tests whether candidate can defend architecture or admits simplicity wins.",
         "strongSignals": [
           "Acknowledges 20s timeout is simpler",
-          "Explains cost: thread held for 20s under load \u2192 pool exhaustion risk",
+          "Explains cost: thread held for 20s under load → pool exhaustion risk",
           "Calculates: at 100 concurrent requests with 20s timeout, need 100 threads blocked on carrier alone",
           "Names the threshold where simplicity stops working"
         ],
@@ -1359,7 +1359,7 @@
           "Cannot explain the resource cost of long timeouts",
           "Over-engineers without justifying the complexity"
         ],
-        "hint": "20s timeout is valid at low volume. At 100 req/s with 15s spikes: 100 \u00d7 15s = 1500 request-seconds of blocked threads. If thread pool is 200, half is consumed by carrier waits. This is where async/circuit breaker become necessary \u2014 when synchronous blocking threatens the entire service."
+        "hint": "20s timeout is valid at low volume. At 100 req/s with 15s spikes: 100 × 15s = 1500 request-seconds of blocked threads. If thread pool is 200, half is consumed by carrier waits. This is where async/circuit breaker become necessary — when synchronous blocking threatens the entire service."
       },
       {
         "type": "REAL_EXPERIENCE",
@@ -1389,7 +1389,7 @@
         "area": "Transaction boundary separation for external calls",
         "level": "PRODUCTION_EXPERIENCE",
         "evidence": "Enforced pattern: @TransactionAttribute(NOT_SUPPORTED) on orchestrators that call external APIs, preventing connection pool exhaustion.",
-        "safeWording": "I enforce separating database transactions from external calls \u2014 external I/O must not hold a JDBC connection. This prevents connection pool exhaustion when external services are slow."
+        "safeWording": "I enforce separating database transactions from external calls — external I/O must not hold a JDBC connection. This prevents connection pool exhaustion when external services are slow."
       },
       {
         "area": "Circuit breaker pattern specifically",
@@ -1399,8 +1399,8 @@
       {
         "area": "Async processing for resilience",
         "level": "PRODUCTION_EXPERIENCE",
-        "evidence": "JMS queues for Moodle integration, email sending, Educacenso \u2014 all non-critical paths that should not block the user.",
-        "safeWording": "Non-critical external integrations go through JMS queues \u2014 if the external service is down, messages queue and process when it recovers. The user is never blocked."
+        "evidence": "JMS queues for Moodle integration, email sending, Educacenso — all non-critical paths that should not block the user.",
+        "safeWording": "Non-critical external integrations go through JMS queues — if the external service is down, messages queue and process when it recovers. The user is never blocked."
       }
     ],
     "scoringRubric": [
@@ -1498,14 +1498,14 @@
         "Idempotency without API support requires client-side deduplication",
         "15-second spikes are more impactful than full outages (full outages trigger circuit breaker; spikes hold threads)",
         "Connection pool exhaustion from slow external calls inside transactions (SGN3's exact problem)",
-        "The simple solution (longer timeout) actually works at low volume \u2014 don't over-engineer"
+        "The simple solution (longer timeout) actually works at low volume — don't over-engineer"
       ]
     }
   },
   {
     "schemaVersion": 2,
     "id": "sd-investigation-v2",
-    "topic": "system-design",
+    "topic": "software-architecture",
     "subtopic": "Observability",
     "type": "ORAL_ANSWER",
     "difficulty": "SENIOR",
@@ -1531,7 +1531,7 @@
       "followUpSeconds": 60
     },
     "openingGuidance": {
-      "objective": "Demonstrate systematic decomposition \u2014 not guessing. Show that you can narrow down the cause methodically: is it database? External call? New code? GC? Contention?",
+      "objective": "Demonstrate systematic decomposition — not guessing. Show that you can narrow down the cause methodically: is it database? External call? New code? GC? Contention?",
       "requiredElements": [
         "State the investigation method (decompose latency by component)",
         "Acknowledge correlation with deploy is strong signal but not proof of causation",
@@ -1625,7 +1625,7 @@
       {
         "condition": "APM trace shows latency spread across many small operations (no single bottleneck)",
         "recommendation": "Look for N+1 pattern: many small queries/calls that sum to 2s. Check if the new feature iterates over a collection and makes a call per item.",
-        "rationale": "N+1 doesn't show as one slow operation \u2014 it shows as many fast operations. 100 queries \u00d7 20ms each = 2 seconds but no single query appears slow.",
+        "rationale": "N+1 doesn't show as one slow operation — it shows as many fast operations. 100 queries × 20ms each = 2 seconds but no single query appears slow.",
         "costs": [
           "Harder to identify without counting query instances in the trace",
           "Fix (batch loading) may require refactoring"
@@ -1675,12 +1675,12 @@
           "Doesn't ask if the count is new",
           "Cannot identify N+1 from the symptom description"
         ],
-        "hint": "50 queries \u00d7 40ms = 2s. Classic N+1. The new feature probably loads a list then loops fetching details. Fix: batch load details in one query (IN clause or JOIN FETCH). Validate: query count drops from 50 to 2-3."
+        "hint": "50 queries × 40ms = 2s. Classic N+1. The new feature probably loads a list then loops fetching details. Fix: batch load details in one query (IN clause or JOIN FETCH). Validate: query count drops from 50 to 2-3."
       },
       {
         "type": "OPERATIONS",
         "question": "While you investigate, the support team is getting complaints. Do you rollback now or continue investigating?",
-        "interviewerIntent": "Tests operational judgment \u2014 balancing investigation with user impact.",
+        "interviewerIntent": "Tests operational judgment — balancing investigation with user impact.",
         "strongSignals": [
           "Asks: how severe is the user impact? (degraded but working vs broken)",
           "If critical: rollback AND investigate in parallel on staging",
@@ -1692,7 +1692,7 @@
           "Rollbacks immediately without any diagnosis",
           "Doesn't mention communication to stakeholders"
         ],
-        "hint": "Decision framework: if SLA is breached or revenue impacted \u2192 rollback immediately, investigate post-rollback. If degraded but within SLA \u2192 time-box investigation (30 min), rollback if unresolved. Always: communicate status to team and stakeholders."
+        "hint": "Decision framework: if SLA is breached or revenue impacted → rollback immediately, investigate post-rollback. If degraded but within SLA → time-box investigation (30 min), rollback if unresolved. Always: communicate status to team and stakeholders."
       },
       {
         "type": "REAL_EXPERIENCE",
@@ -1700,7 +1700,7 @@
         "interviewerIntent": "Expects the real inscription listing story or another concrete case.",
         "strongSignals": [
           "Tells the real story: 26,705 inscriptions, 48k queries, Glowroot diagnosis",
-          "Describes the methodology: APM \u2192 identify dominant cost \u2192 fix root cause \u2192 verify",
+          "Describes the methodology: APM → identify dominant cost → fix root cause → verify",
           "Shows the same systematic approach proposed in this answer"
         ],
         "weakSignals": [
@@ -1715,19 +1715,19 @@
       {
         "area": "Production performance investigation",
         "level": "PRODUCTION_EXPERIENCE",
-        "evidence": "Inscription listing: 16min\u21922s using Glowroot traces to identify 48k queries. Daily use of Glowroot for latency diagnosis.",
-        "safeWording": "I investigate production performance issues daily using Glowroot (APM). My most significant case: a listing taking 16 minutes \u2014 traced to 48,000 queries from an N+1 pattern. Fixed with pagination and batch loading, verified at 2 seconds."
+        "evidence": "Inscription listing: 16min→2s using Glowroot traces to identify 48k queries. Daily use of Glowroot for latency diagnosis.",
+        "safeWording": "I investigate production performance issues daily using Glowroot (APM). My most significant case: a listing taking 16 minutes — traced to 48,000 queries from an N+1 pattern. Fixed with pagination and batch loading, verified at 2 seconds."
       },
       {
         "area": "EXPLAIN ANALYZE for query optimization",
         "level": "PRODUCTION_EXPERIENCE",
         "evidence": "Regular use for identifying missing indexes, sequential scans, cartesian products in SGN PostgreSQL",
-        "safeWording": "I regularly use EXPLAIN ANALYZE to diagnose slow queries \u2014 identifying sequential scans, missing indexes, and join issues in our PostgreSQL production database."
+        "safeWording": "I regularly use EXPLAIN ANALYZE to diagnose slow queries — identifying sequential scans, missing indexes, and join issues in our PostgreSQL production database."
       },
       {
         "area": "Distributed tracing (Jaeger/Zipkin/OpenTelemetry)",
         "level": "STUDIED_NOT_USED",
-        "safeWording": "My APM experience is Glowroot (single-service tracing). I have not used distributed tracing (Jaeger/Zipkin) across multiple services. The investigation methodology transfers \u2014 decompose latency by component \u2014 but the tooling is different."
+        "safeWording": "My APM experience is Glowroot (single-service tracing). I have not used distributed tracing (Jaeger/Zipkin) across multiple services. The investigation methodology transfers — decompose latency by component — but the tooling is different."
       }
     ],
     "scoringRubric": [
@@ -1819,7 +1819,7 @@
     "coachDebrief": {
       "strongAnswerElements": [
         "Started with APM trace analysis, not guessing",
-        "Presented conditional paths: DB, external call, or N+1 \u2014 depending on what trace shows",
+        "Presented conditional paths: DB, external call, or N+1 — depending on what trace shows",
         "Discussed rollback decision with clear criteria (impact severity determines urgency)",
         "Connected to real experience: Glowroot, EXPLAIN ANALYZE, inscription listing case",
         "Honest about distributed tracing being studied, single-service APM being real"
@@ -1831,7 +1831,7 @@
         "Contention investigation (thread pool, connection pool, locks)"
       ],
       "commonlyMissedPoints": [
-        "N+1 doesn't appear as one slow query \u2014 it appears as many fast queries summing to seconds",
+        "N+1 doesn't appear as one slow query — it appears as many fast queries summing to seconds",
         "Deploy correlation is strong but not proof (could be coincidence with data growth or external service change)",
         "Load-correlated vs constant degradation tells you different things",
         "Rollback decision depends on business impact, not engineering preference",

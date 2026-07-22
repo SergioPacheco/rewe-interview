@@ -840,5 +840,429 @@
       "No domain events — contexts call each other synchronously"
     ],
     "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-sd-scaling-1",
+    "topic": "software-architecture",
+    "subtopic": "sd-scaling",
+    "difficulty": "SENIOR",
+    "question": "Un listado en producción se volvió inutilizable a medida que crecía el volumen de datos. ¿Cómo lo diagnosticarías y decidirías entre optimizar la consulta, usar caché o escalar el sistema?",
+    "context": "Use the SGN3 enrollment listing as an evidence-based case. Distinguish dataset size from concurrent traffic.",
+    "clarifyingQuestions": [
+      "Is the problem one slow request, high concurrent load, or both?",
+      "What are the latency SLO and current latency distribution?",
+      "How many rows and SQL statements does one request process?",
+      "Is the endpoint read-heavy, and how fresh must the data be?",
+      "Which measurements identify the dominant cost: application, database, network, or lock contention?"
+    ],
+    "shortAnswer": "Primero separaría la ineficiencia de la consulta de los problemas de capacidad. En el caso de SGN3 el problema era un listado de 26.705 registros, no 26.705 usuarios concurrentes. Tras rediseñar las consultas, la paginación y las proyecciones, la petición pasó de unas 48.000 consultas SQL a unas diez y alrededor de dos segundos.",
+    "detailedAnswer": "I start with a workload model and evidence, not an infrastructure prescription. Dataset size, request concurrency, arrival rate, and latency are different dimensions and lead to different solutions.\n\n**Diagnosis:**\n1. Define the SLO and reproduce the request with representative data.\n2. Use APM and database statistics to split time across application code, SQL execution, locks, and network.\n3. Inspect query count and plans; a large number of individually fast statements can still dominate latency.\n4. Check whether fetching multiple collections multiplies rows and whether the endpoint loads fields it never renders.\n\n**SGN3 case:**\n- The page listed a dataset of 26,705 enrollment records; this number was not a concurrency measurement.\n- One request generated roughly 48,000 statements through nested lazy loading and row multiplication.\n- The read path was redesigned with a simpler count, bounded pagination, deterministic ordering, DTO projections, a targeted LATERAL join, and batch loading for the remaining relationships.\n- The measured result was roughly ten statements and about two seconds, down from approximately sixteen minutes in the pathological case.\n\n**Decision order:**\n- Fix avoidable work first.\n- Add or adjust indexes based on actual plans and selectivity.\n- Cache only when staleness, invalidation, and hit rate are understood.\n- Scale horizontally when the optimized request is acceptable but aggregate capacity is insufficient.\n\nThe exact figures should be quoted only if they can be supported by the original trace or incident record.",
+    "keyPoints": [
+      "Dataset size is not the same as concurrent-user count",
+      "Define an SLO and measure before selecting a remedy",
+      "Many individually fast queries can create severe request latency",
+      "Remove unnecessary work before adding cache or servers",
+      "Validate every optimization with representative data and before/after measurements"
+    ],
+    "redFlags": [
+      "Calling a record count a concurrency figure",
+      "Prescribing cache or horizontal scaling before locating the bottleneck",
+      "Quoting performance numbers that cannot be explained or reproduced",
+      "Optimizing one query while ignoring total statements per request"
+    ],
+    "followUps": [
+      {
+        "question": "When would caching be the right next step after query optimization?",
+        "hint": "Discuss read frequency, acceptable staleness, invalidation, hit rate, and memory cost."
+      },
+      {
+        "question": "How would you test whether the endpoint also has a concurrency problem?",
+        "hint": "Use a representative load profile and observe throughput, pool saturation, locks, and latency percentiles."
+      },
+      {
+        "question": "Why can a sequential scan still be the correct database plan?",
+        "hint": "It may be cheaper when a query reads a large fraction of a table or the table is small."
+      }
+    ],
+    "tradeoffs": [
+      "DTO projections reduce hydration cost but create a query-specific read model",
+      "Exact total counts add work and may be optional for cursor-based interfaces",
+      "A PostgreSQL-specific LATERAL join trades portability for a simpler or faster read path",
+      "Caching improves repeated reads but introduces staleness and invalidation complexity"
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 enrollment-listing performance investigation",
+      "description": "A listing over 26,705 records generated roughly 48,000 SQL statements per request. APM-guided query redesign, pagination, projections, a targeted LATERAL join, and batch loading reduced it to about ten statements and roughly two seconds. The figures describe dataset and request behavior, not simultaneous users."
+    }
+  },
+  {
+    "id": "interview-sd-events-1",
+    "topic": "software-architecture",
+    "subtopic": "sd-events",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo diseñarías la confirmación de entregas para que el estado, las notificaciones, la facturación y la analítica evolucionen de forma independiente?",
+    "context": "Treat the logistics domain as a design exercise. State assumptions instead of presenting inferred REWE internals as facts.",
+    "clarifyingQuestions": [
+      "What acknowledgement must the driver receive synchronously?",
+      "What throughput and end-to-end latency are expected?",
+      "Which updates require ordering, and what is their business key?",
+      "Which consumers may be eventually consistent?",
+      "What are the recovery and audit requirements when a consumer is unavailable?"
+    ],
+    "shortAnswer": "Confirmaría la entrega tras almacenarla de forma duradera y publicaría un evento versionado mediante un transactional outbox. Los consumidores deben ser idempotentes y usar la misma clave de partición cuando el orden sea importante.",
+    "detailedAnswer": "A reasonable design is:\n\n1. The driver API authenticates the caller, validates the state transition, and assigns an event ID and delivery version.\n2. One local transaction updates the delivery aggregate and inserts an outbox record. This removes the database/Kafka dual-write window; it does not make publication exactly once.\n3. An outbox dispatcher publishes the event at least once. All events for a delivery use `delivery_id` as the key if per-delivery order is required.\n4. Notification, billing, tracking, and analytics consume independently. Each consumer records its own progress and applies an idempotent state transition.\n5. Retries use bounded backoff and jitter. Non-retriable or repeatedly failing records can move to a parking topic with alerting and a controlled replay process.\n\nImportant design details:\n- Include event schema version, event ID, aggregate ID, aggregate version, occurrence time, and correlation/causation IDs.\n- Reject or ignore stale aggregate versions according to domain rules; timestamps alone are not a safe ordering mechanism.\n- Define which outcome the driver sees if durable storage succeeds but downstream processing is delayed.\n- Monitor outbox age, publish failures, consumer lag, retry counts, and time from confirmation to each business outcome.\n\nThis pattern is transferable from durable JMS processing, but Kafka partitioning, offsets, and consumer rebalancing still require technology-specific experience.",
+    "keyPoints": [
+      "Persist business state and outbox record atomically",
+      "Outbox publication is normally at least once, so consumers remain idempotent",
+      "Partition by the entity whose event order must be preserved",
+      "Use aggregate versions rather than timestamps alone for stale-event handling",
+      "Define recovery, replay, and observability per consumer"
+    ],
+    "redFlags": [
+      "Claiming that an outbox makes end-to-end delivery exactly once",
+      "Publishing after the database commit with no recovery mechanism",
+      "Using retries without idempotency or a bounded retry policy",
+      "Sending every failure to a DLQ without considering ordering and replay"
+    ],
+    "followUps": [
+      {
+        "question": "What failure window does the transactional outbox close, and what failure modes remain?",
+        "hint": "It closes the local database/event-record dual write; publication duplicates, lag, and consumer failures remain."
+      },
+      {
+        "question": "How would you evolve the event schema without breaking consumers?",
+        "hint": "Prefer backward-compatible additions, explicit versions, consumer contract tests, and a migration window."
+      },
+      {
+        "question": "When would a synchronous call be preferable to an event?",
+        "hint": "When the caller needs an immediate authoritative result and the dependency is part of the same availability boundary."
+      }
+    ],
+    "tradeoffs": [
+      "Asynchronous consumers improve decoupling but introduce eventual consistency",
+      "The outbox adds storage, a dispatcher, monitoring, and cleanup work",
+      "Per-delivery ordering can constrain parallelism for unusually hot deliveries",
+      "A parking topic protects throughput but requires operational ownership and safe replay"
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferable durable-messaging experience",
+      "description": "SGN3 uses JMS consumers for independent integration work with retry, dead-letter handling, and idempotent processing. Those reliability concerns transfer, while Kafka partitioning, offsets, transactions, and rebalancing must not be presented as direct production experience."
+    }
+  },
+  {
+    "id": "interview-sd-data-1",
+    "topic": "software-architecture",
+    "subtopic": "sd-data",
+    "difficulty": "SENIOR",
+    "question": "Un cliente ve una entrega como completada mientras la facturación sigue pendiente. ¿Cómo razonarías sobre la consistencia y la recuperación?",
+    "context": "The goal is to make the business invariant, consistency boundary, and repair strategy explicit.",
+    "clarifyingQuestions": [
+      "Which system owns the authoritative delivery state?",
+      "Must billing complete before the driver receives confirmation?",
+      "What inconsistency window is acceptable?",
+      "Can billing be retried safely, and is the operation idempotent?",
+      "What evidence is required for audit and reconciliation?"
+    ],
+    "shortAnswer": "Primero definiría la invariante de negocio y la fuente de verdad. Si la consistencia eventual es aceptable, utilizaría eventos duraderos, idempotencia, reintentos limitados y reconciliación automática.",
+    "detailedAnswer": "Consistency is a business decision before it is a database setting. The design should answer:\n\n- **Invariant:** Is a delivery allowed to be complete before billing succeeds?\n- **Authority:** Which service owns delivery state, billing state, and the mapping between them?\n- **Consistency target:** Is the requirement immediate consistency, eventual consistency within an SLO, or a compensating workflow?\n\nFor an eventually consistent workflow:\n1. Commit the authoritative delivery transition once.\n2. Publish a durable, versioned event.\n3. Make billing idempotent using the delivery/event identity and a uniqueness constraint or equivalent business key.\n4. Retry only failures likely to be transient, with an overall deadline.\n5. Record terminal failure explicitly rather than silently dropping it.\n6. Run reconciliation that compares authoritative states and repairs or escalates discrepancies older than the allowed window.\n\nA saga may coordinate several steps when compensation is meaningful, but it does not provide ACID isolation across services. Compensation is a new business action, not a database rollback. For an invariant that truly cannot tolerate an intermediate state, keeping the data and transaction in one consistency boundary can be safer than distributing it.",
+    "keyPoints": [
+      "Define the business invariant and source of truth first",
+      "Eventual consistency needs a measurable convergence SLO",
+      "Retries require idempotency and an overall deadline",
+      "Reconciliation is part of the design, not an emergency script",
+      "Some invariants are evidence that data should remain in one transaction boundary"
+    ],
+    "redFlags": [
+      "Saying eventual consistency without defining an acceptable inconsistency window",
+      "Treating saga compensation as an automatic database rollback",
+      "Relying on retries without a durable failure state or reconciliation",
+      "Splitting a strong invariant across services only to follow a microservice style"
+    ],
+    "followUps": [
+      {
+        "question": "What would a reconciliation job compare?",
+        "hint": "Authoritative IDs, versions, expected state transitions, event publication state, and age beyond the convergence SLO."
+      },
+      {
+        "question": "When would you choose orchestration over choreography for a saga?",
+        "hint": "Discuss workflow visibility, coupling, number of steps, ownership, and failure handling."
+      },
+      {
+        "question": "How do optimistic locking and idempotency solve different problems?",
+        "hint": "Optimistic locking detects concurrent updates to one state; idempotency makes repeated requests or events safe."
+      }
+    ],
+    "tradeoffs": [
+      "A single transaction boundary simplifies invariants but increases coupling",
+      "Eventual consistency improves autonomy but requires retries, reconciliation, and user-visible intermediate states",
+      "Orchestration centralizes workflow visibility but can become a coupling hub",
+      "Choreography keeps participants independent but makes end-to-end reasoning harder"
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "interview-sd-ops-1",
+    "topic": "software-architecture",
+    "subtopic": "sd-ops",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo harías observable un servicio en producción y convertirías sus objetivos de fiabilidad en alertas accionables?",
+    "shortAnswer": "Parto de objetivos visibles para el usuario (SLIs y SLOs). Después defino métricas, trazas, logs y perfiles, generando alertas sobre síntomas reales y no sobre cualquier pico de infraestructura.",
+    "detailedAnswer": "Observability should help answer new questions about a system, not merely produce dashboards.\n\n**Start from service behavior:**\n- SLIs: successful-request ratio, latency distribution, event-processing delay, stale-data age, or business completion rate.\n- SLOs: explicit targets over a window, agreed with product and operations.\n- Alerts: urgent when users are at risk and action is possible; tickets or dashboards for slower trends.\n\n**Signals:**\n- Metrics for rates, latency percentiles, saturation, and alerting.\n- Distributed traces for causal request flow and dependency latency.\n- Structured logs for discrete events and diagnostic context.\n- Profiles when CPU, allocation, lock contention, or wall-clock hotspots need code-level analysis.\n\n**Correlation and hygiene:**\n- Propagate trace and correlation context across HTTP and messaging.\n- Include stable business identifiers only when policy allows it; avoid secrets and unnecessary PII.\n- Control cardinality in metric labels.\n- Sample traces deliberately while retaining errors or diagnostically valuable exemplars.\n\nA useful incident flow starts with an SLO symptom, narrows by service and dependency metrics, follows representative traces, and uses logs or profiles for the remaining detail. Alerts should name the affected objective and link to a runbook.",
+    "keyPoints": [
+      "Begin with user-visible SLIs and SLOs",
+      "Alert on actionable symptoms and error-budget burn",
+      "Use metrics, traces, logs, and profiles for different questions",
+      "Propagate correlation across synchronous and asynchronous boundaries",
+      "Control sensitive data and high-cardinality dimensions"
+    ],
+    "redFlags": [
+      "Alerting on every CPU spike without a user-impact hypothesis",
+      "Using average latency while ignoring tail behavior",
+      "Logging secrets or unrestricted personal data for convenience",
+      "Collecting telemetry with no retention, ownership, or incident workflow"
+    ],
+    "followUps": [
+      {
+        "question": "Why can p95 latency still hide a serious problem?",
+        "hint": "A small but important traffic segment or p99 tail can be unhealthy while p95 remains acceptable."
+      },
+      {
+        "question": "What makes an alert actionable?",
+        "hint": "Clear user impact, urgency, ownership, diagnostic context, and a known response."
+      },
+      {
+        "question": "How would you observe an asynchronous delivery-confirmation flow?",
+        "hint": "Track event age, outbox delay, consumer lag, processing outcome, retries, and correlation across stages."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 production diagnostics",
+      "description": "Glowroot traces and JVM metrics, Kibana logs, and PostgreSQL statistics were correlated to diagnose request-level query amplification. This is direct observability experience, while distributed tracing across microservices should be described as a next-step capability rather than claimed production use."
+    }
+  },
+  {
+    "id": "interview-sdm-1",
+    "topic": "software-architecture",
+    "subtopic": "sdm-use-cases",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo traduces los requisitos de negocio en un diseño técnico?",
+    "shortAnswer": "Empiezo por los casos de uso para definir QUÉ debe hacer el sistema. Después modelo el dominio, diseño las interacciones y finalmente selecciono la arquitectura, manteniendo siempre la trazabilidad con las necesidades del negocio.",
+    "detailedAnswer": "**My approach (learned from Dennis/Wixom Systems Analysis & Design):**\n\n1. **Requirements gathering:** Interviews, existing systems analysis, documentation review\n2. **Use case modeling:** Capture actor goals as structured use cases (not just user stories)\n3. **Domain modeling:** Class diagram with entities, attributes, relationships, constraints\n4. **Process/interaction modeling:** Sequence diagrams for complex flows, activity diagrams for parallel processes\n5. **Architecture design:** Choose patterns (microservices, event-driven, etc.) based on quality attributes\n6. **Validation:** Walk through use cases against the design — does every scenario have a clear path?\n\n**Key principle:** Design should be TRACEABLE — every class should relate to a domain concept, every endpoint to a use case, every event to a business trigger.",
+    "keyPoints": [
+      "Start with WHAT (use cases) before HOW (implementation)",
+      "Domain model drives the class structure",
+      "Sequence diagrams validate the interaction design",
+      "Architecture choices depend on quality attributes (not trends)",
+      "Traceability: requirements → design → code"
+    ],
+    "redFlags": [
+      "Jumping to code/framework without understanding requirements",
+      "Designing for resume (microservices when monolith suffices)",
+      "No validation step (design that doesn't cover all use cases)",
+      "Ignoring non-functional requirements (performance, security)"
+    ],
+    "followUps": [
+      {
+        "question": "How do you handle requirements that change mid-project?",
+        "hint": "Impact analysis on existing design (which diagrams/components affected?), negotiate scope, update ADRs if architecture decision changes."
+      },
+      {
+        "question": "What artifacts do you produce at each stage and who reviews them?",
+        "hint": "Use case spec → reviewed by PO/stakeholders. Class diagram → reviewed by team. Sequence → reviewed by devs. ADR → reviewed by architect/tech lead."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 module design",
+      "description": "Used domain analysis and use case mapping to design enrollment and certification modules. Class diagrams drove JPA entities; sequence diagrams validated multi-service interactions (SGN3 → senai-services → LDAP/Moodle)."
+    }
+  },
+  {
+    "id": "interview-sdm-2",
+    "topic": "software-architecture",
+    "subtopic": "sdm-class-diagrams",
+    "difficulty": "SENIOR",
+    "question": "Diseña el modelo de dominio para un sistema de seguimiento de entregas. ¿Qué entidades, relaciones y restricciones definirías?",
+    "shortAnswer": "Las entidades principales serían Entrega, Conductor, Ruta, Parada y Vehículo. Defino relaciones, restricciones de negocio, una máquina de estados para la entrega y reglas de integridad tanto en el dominio como en la base de datos.",
+    "detailedAnswer": "**Domain Model:**\n\n```\nDelivery (id, status, priority, scheduledAt, completedAt)\n  ├── 1:1 → Driver (assigned)\n  ├── 1:1 → Route (calculated path)\n  ├── 1:N → Stop (ordered delivery points)  [COMPOSITION]\n  └── 1:N → DeliveryEvent (status changes) [COMPOSITION]\n\nDriver (id, name, license, status, maxCapacity)\n  ├── 1:1 → Vehicle\n  └── N:M → Zone (service areas)\n\nStop (id, sequence, address, type[PICKUP|DROPOFF], status, actualArrival)\n\nRoute (id, distance, estimatedDuration, optimizedAt)\n  └── 1:N → RouteSegment (between consecutive stops)\n```\n\n**Design decisions:**\n- Delivery→Stop is COMPOSITION (stops don't exist without delivery)\n- Delivery→Driver is AGGREGATION (driver exists independently)\n- Status as enum with state machine (PLANNED→DISPATCHED→IN_TRANSIT→DELIVERED/FAILED)\n- DeliveryEvent for event sourcing of status changes (audit trail)\n\n**Constraints:**\n- `UNIQUE(driver_id) WHERE status IN ('DISPATCHED','IN_TRANSIT')` — max 1 active delivery per driver\n- `CHECK(sequence > 0)` — stops are ordered\n- `NOT NULL(scheduled_at)` — every delivery must have a schedule",
+    "keyPoints": [
+      "Identify aggregates (Delivery is the aggregate root)",
+      "Composition vs aggregation drives cascade behavior",
+      "State machine for status transitions",
+      "Event sourcing for audit trail",
+      "Constraints expressed at domain AND database level"
+    ],
+    "redFlags": [
+      "Flat model without relationships",
+      "No consideration of ownership/lifecycle",
+      "Missing constraints (business rules not captured in model)",
+      "Over-engineering (too many entities for the scope asked)"
+    ],
+    "followUps": [
+      {
+        "question": "How would you handle a driver reassignment mid-delivery?",
+        "hint": "Create ReassignmentEvent, update driver reference, keep history. Consider: do stops change? Does route need recalculation? State machine must allow transition."
+      },
+      {
+        "question": "How do you decide the level of detail in your diagrams?",
+        "hint": "Audience-driven: C4 Level 1 for executives, Level 2 for team alignment, Level 3 for implementation. More detail ≠ better — show what decisions the diagram needs to support."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 enrollment domain model",
+      "description": "Designed domain model for enrollment system with complex relationships: Student → Enrollment → Class → Course, with status state machines, waitlist priority queues, and capacity constraints enforced at both application and database level."
+    }
+  },
+  {
+    "id": "interview-sdm-3",
+    "topic": "software-architecture",
+    "subtopic": "sdm-sequence-diagrams",
+    "difficulty": "INTERMEDIATE",
+    "question": "Explícame cómo diseñarías el flujo para asignar una entrega a un conductor.",
+    "shortAnswer": "El flujo comienza con la solicitud del dispatcher, valida el conductor, comprueba disponibilidad y capacidad, calcula la ruta, persiste la entrega y publica un evento. Lo representaría mediante un diagrama de secuencia con puntos de fallo y límites transaccionales.",
+    "detailedAnswer": "**Sequence (happy path):**\n\n1. `Dispatcher → API: POST /deliveries (driver_id, stops[])`\n2. `API → AuthFilter: validate token, check DISPATCHER role`\n3. `API → DeliveryService.assign(request)`\n4. `Service → DriverRepository: findById(driverId) — verify exists and AVAILABLE`\n5. `Service → RouteOptimizer: calculateRoute(stops) — external service call`\n6. `Service → DeliveryRepository: save(delivery) — status=PLANNED`\n7. `Service → EventPublisher: publish(DeliveryAssigned) — async via Kafka`\n8. `API → Dispatcher: 201 Created + delivery DTO`\n\n**Failure handling:**\n- Step 4 fails (driver busy): return 409 Conflict\n- Step 5 fails (route service down): return 503, delivery NOT created\n- Step 7 fails (Kafka down): delivery IS created, event goes to outbox for retry\n\n**Key design decision:** Step 5 (external call) happens BEFORE persist. If route optimization is slow, consider: async pattern (create delivery as PENDING, optimize in background, notify when ready).",
+    "keyPoints": [
+      "Clear layering visible in sequence",
+      "External calls identified (route optimizer)",
+      "Failure handling at each step",
+      "Transaction boundary explicit (what's atomic?)",
+      "Async vs sync decision for expensive operations"
+    ],
+    "redFlags": [
+      "No failure handling in the flow",
+      "External call inside database transaction",
+      "No consideration of concurrent assignments (two dispatchers, same driver)",
+      "Mixing presentation and business logic"
+    ],
+    "followUps": [
+      {
+        "question": "What if two dispatchers try to assign the same driver simultaneously?",
+        "hint": "Optimistic locking on driver status (version field), or pessimistic lock (SELECT FOR UPDATE). First one wins, second gets 409 Conflict."
+      },
+      {
+        "question": "How do you validate your model against real production behavior?",
+        "hint": "Structured walkthroughs with scenarios, prototype critical paths, load test assumptions about data volumes, compare with observability data from existing systems."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 enrollment flow design",
+      "description": "Designed complex enrollment assignment flow: student selects class → check prerequisites → check capacity → reserve seat → payment → confirm. Used sequence diagrams to identify where external calls (LDAP, Moodle) should be separated from transactions."
+    }
+  },
+  {
+    "id": "interview-sdm-4",
+    "topic": "software-architecture",
+    "subtopic": "sdm-architecture",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo decides entre un monolito y microservicios para un proyecto nuevo?",
+    "shortAnswer": "Empiezo evaluando el equipo y los límites del dominio. Un monolito modular suele ser la mejor opción inicial; los microservicios solo se justifican cuando existen necesidades reales de despliegue independiente, escalado o autonomía de equipos.",
+    "detailedAnswer": "**Decision framework:**\n\n1. **Team size and structure:** 1 team (2-8 people) → monolith. Multiple teams → consider splitting.\n2. **Domain boundaries:** Clear bounded contexts with minimal shared data → microservices viable. Highly interconnected domain → monolith avoids distributed transactions.\n3. **Scaling requirements:** Different parts need different scaling (CPU vs I/O) → separate services. Uniform load → monolith scales horizontally fine.\n4. **Deployment independence:** Need to deploy one part without touching another → microservices. Deploy together → monolith is simpler.\n5. **Technology diversity:** Need different languages/DBs per component → microservices. Same stack → monolith avoids integration overhead.\n\n**My default path:**\nModular monolith → extract services when you FEEL THE PAIN (not preventively).\n\n**Signs you need to split:**\n- Merge conflicts between teams\n- One slow component blocks entire deploy pipeline\n- One component needs 10x more resources than others\n- Regulatory requirement for isolation",
+    "keyPoints": [
+      "Start simple (monolith), extract when pain is real",
+      "Team structure drives architecture (Conway's Law)",
+      "Microservices have COST: network, consistency, debugging, infrastructure",
+      "Modular monolith is a valid long-term architecture",
+      "Decision should be in an ADR with reversal cost assessed"
+    ],
+    "redFlags": [
+      "'Microservices are always better'",
+      "No consideration of operational complexity",
+      "Ignoring Conway's Law (architecture mirrors team structure)",
+      "Starting distributed without distributed systems experience"
+    ],
+    "followUps": [
+      {
+        "question": "What is the worst thing about microservices?",
+        "hint": "Distributed transactions, debugging across services (tracing), data consistency (eventual), operational complexity (deploy/monitor N services), and the fallacy that services are independent (they share the business domain)."
+      },
+      {
+        "question": "When do you invest in formal modeling vs. just writing code?",
+        "hint": "Formal modeling pays off when: multiple teams coordinate, the cost of being wrong is high, or the domain is genuinely complex. Skip it for well-understood CRUD or spikes."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 monolith + satellite architecture",
+      "description": "SGN3 is a modular monolith (modules by schema: enrollment, class, diary, certification) with senai-services as a satellite for integrations. The domain is highly coupled (enrollment↔class↔diary↔financial) which makes JOIN-based queries essential — microservices would require distributed transactions or eventual consistency for basic operations."
+    }
+  },
+  {
+    "id": "interview-sdm-5",
+    "topic": "software-architecture",
+    "subtopic": "sdm-data-modeling",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo abordas el modelado de datos para una nueva funcionalidad?",
+    "shortAnswer": "Empiezo por el dominio y las relaciones entre entidades, normalizo hasta 3FN, defino restricciones e índices según los patrones de acceso y solo desnormalizo cuando existen evidencias de rendimiento.",
+    "detailedAnswer": "**My process:**\n\n1. **Identify entities** from use cases (nouns = potential entities)\n2. **Define relationships** and cardinality (1:1, 1:N, N:M)\n3. **Choose primary keys** (surrogate vs natural — I prefer surrogate with unique constraint on business key)\n4. **Normalize to 3NF** (eliminate repeating groups, partial dependencies, transitive dependencies)\n5. **Define constraints** (NOT NULL, UNIQUE, FK, CHECK — business rules in the schema)\n6. **Analyze access patterns** (main queries → do I need specific indexes? denormalized views?)\n7. **Consider evolution** (will this schema need to change? use nullable columns for new optional fields)\n\n**Practical rules:**\n- Every table has a surrogate PK (BIGSERIAL or UUID)\n- Every FK has an index\n- Soft delete (deleted_at) for entities that might need recovery\n- created_at/updated_at on every table (audit baseline)\n- Enum-like values in a reference table (not hardcoded)",
+    "keyPoints": [
+      "Domain-first modeling (entities from requirements)",
+      "Normalize by default, denormalize with evidence",
+      "Constraints ARE documentation (enforce rules at DB level)",
+      "Access patterns drive index design",
+      "Plan for evolution (nullable new columns, not breaking changes)"
+    ],
+    "redFlags": [
+      "Designing schema from UI mockups instead of domain",
+      "No foreign keys ('we'll enforce in application code')",
+      "No indexes beyond PK",
+      "Premature denormalization without measured need"
+    ],
+    "followUps": [
+      {
+        "question": "How do you handle schema migrations in production?",
+        "hint": "Flyway/Liquibase for versioned migrations. Backward-compatible changes (add column nullable, add table). Never rename/delete columns in one step — add new, migrate data, deprecate old, remove later."
+      },
+      {
+        "question": "How do you communicate technical tradeoffs to non-technical stakeholders?",
+        "hint": "Frame in business terms: cost, risk, time-to-market, user impact. Use analogies. Show options with consequences, not just the 'best' choice."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 PostgreSQL with 2000+ tables",
+      "description": "Worked with a mature schema (2000+ tables across 15+ schemas). Applied normalization principles for new tables while understanding that legacy denormalization exists for historical reasons. Designed composite indexes based on EXPLAIN ANALYZE of actual query patterns."
+    }
+  },
+  {
+    "id": "interview-sdm-6",
+    "topic": "software-architecture",
+    "subtopic": "sdm-communication",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo comunicas una arquitectura técnica a personas no técnicas?",
+    "shortAnswer": "Utilizo analogías, distintos niveles de detalle y me centro en el impacto para el negocio. Evito la jerga técnica y relaciono cada decisión arquitectónica con beneficios como menor coste, mayor fiabilidad o menor tiempo de entrega.",
+    "detailedAnswer": "**Techniques I use:**\n\n1. **C4 Level 1 (Context):** Box diagram showing users and external systems. Non-technical people understand this immediately.\n\n2. **Analogies for complex concepts:**\n   - Microservices = 'different departments with their own phone line'\n   - Kafka = 'bulletin board where anyone can post and read'\n   - Load balancer = 'receptionist directing calls to available agents'\n   - Database replication = 'backup copies in different safes'\n\n3. **Impact-first communication:**\n   - NOT: 'We need to implement event-driven architecture with Kafka'\n   - YES: 'With this approach, adding a new notification channel takes 1 day instead of 2 weeks, and if one system goes down, others keep working'\n\n4. **Risk communication:**\n   - 'This decision is like choosing between a highway (fast but expensive) and a local road (slower but cheaper). Here's why I recommend...'",
+    "keyPoints": [
+      "Match diagram complexity to audience",
+      "Translate tech decisions to business impact",
+      "Use analogies for complex concepts",
+      "C4 Level 1 works for any audience",
+      "Focus on WHY (business value) not WHAT (technology)"
+    ],
+    "redFlags": [
+      "Using jargon with non-technical audience",
+      "Over-detailed diagrams for executives",
+      "Defending technology without connecting to business value",
+      "Not adapting communication style to audience"
+    ],
+    "followUps": [
+      {
+        "question": "How do you handle pushback from business on a technical decision?",
+        "hint": "Translate to their language: cost, time, risk. Present alternatives with trade-offs in business terms. If they still disagree, document the risk and respect the decision — business owns priorities."
+      },
+      {
+        "question": "How do you evolve a design after initial deployment reveals unexpected patterns?",
+        "hint": "Observability first (metrics, traces), then iterate: ADR for the change, impact analysis on existing contracts, incremental migration rather than big-bang redesign."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 architecture communication",
+      "description": "Regularly communicated technical decisions to analysts and project managers. Used component diagrams to explain module boundaries, sequence diagrams simplified as flow charts for business validation, and ADR-style justifications for architecture choices."
+    }
   }
 ]

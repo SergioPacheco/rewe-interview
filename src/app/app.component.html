@@ -26,7 +26,7 @@
               routerLinkActive="topbar__link--active"
               [routerLinkActiveOptions]="{ exact: true }"
             >
-              Home
+              {{ 'nav.home' | t }}
             </a>
 
             <a
@@ -34,7 +34,7 @@
               class="topbar__link"
               routerLinkActive="topbar__link--active"
             >
-              Practice
+              {{ 'nav.practice' | t }}
             </a>
 
             <a
@@ -42,7 +42,7 @@
               class="topbar__link"
               routerLinkActive="topbar__link--active"
             >
-              Resume
+              {{ 'nav.resume' | t }}
             </a>
 
             <a
@@ -50,7 +50,7 @@
               class="topbar__link"
               routerLinkActive="topbar__link--active"
             >
-              My Stories
+              {{ 'nav.myStories' | t }}
             </a>
           </nav>
         </div>
@@ -61,7 +61,7 @@
               <circle cx="12" cy="12" r="8"/>
               <path d="M12 8v4l3 2"/>
             </svg>
-            <span>My progress</span>
+            <span>{{ 'nav.myProgress' | t }}</span>
           </a>
 
           <a routerLink="/topic/rewe" class="topbar__utility">
@@ -69,8 +69,17 @@
               <circle cx="12" cy="8" r="3.5"/>
               <path d="M5.5 20c0-4 3-7 6.5-7s6.5 3 6.5 7"/>
             </svg>
-            <span>Mock interview</span>
+            <span>{{ 'nav.mockInterview' | t }}</span>
           </a>
+
+          <button
+            class="topbar__utility topbar__locale-btn"
+            type="button"
+            (click)="toggleLocale()"
+            [attr.aria-label]="'Switch to ' + (i18n.locale() === 'en' ? 'Español' : 'English')"
+          >
+            <span>{{ i18n.locale() === 'en' ? '🇪🇸 ES' : '🇬🇧 EN' }}</span>
+          </button>
         </nav>
       </div>
     </div>
@@ -87,7 +96,7 @@
           <input
             class="catbar__search-input"
             type="search"
-            placeholder="Topics, exercises or concepts"
+            [placeholder]="'search.placeholder' | t"
             [ngModel]="searchQuery()"
             (ngModelChange)="onSearch($event)"
           />
@@ -96,7 +105,7 @@
               type="button"
               class="catbar__search-clear"
               (click)="onSearch('')"
-              aria-label="Clear search"
+              [attr.aria-label]="'search.clearLabel' | t"
             >×</button>
           }
         </label>
@@ -109,7 +118,7 @@
               <rect x="3" y="13" width="8" height="8" rx="1.5"/>
               <path d="M16 14v7m-3-3.5h6"/>
             </svg>
-            <span class="catbar__label">OOP</span>
+            <span class="catbar__label">{{ 'catbar.oop' | t }}</span>
           </a>
 
           <a routerLink="/topic/collections" class="catbar__item" routerLinkActive="catbar__item--active">
@@ -117,7 +126,7 @@
               <path d="M4 6h16M4 12h16M4 18h10"/>
               <circle cx="20" cy="18" r="2"/>
             </svg>
-            <span class="catbar__label">Java</span>
+            <span class="catbar__label">{{ 'catbar.java' | t }}</span>
           </a>
 
           <a routerLink="/topic/spring" class="catbar__item" routerLinkActive="catbar__item--active">
@@ -125,7 +134,7 @@
               <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c1.3 0 2.5-.3 3.6-.7"/>
               <path d="M8 12c2-2 4-2 6 0s4 2 6 0"/>
             </svg>
-            <span class="catbar__label">Spring</span>
+            <span class="catbar__label">{{ 'catbar.spring' | t }}</span>
           </a>
 
           <a routerLink="/topic/kafka" class="catbar__item" routerLinkActive="catbar__item--active">
@@ -133,7 +142,7 @@
               <path d="M4 4l7 7M4 20l7-7M13 12h8"/>
               <circle cx="12" cy="12" r="2"/>
             </svg>
-            <span class="catbar__label">Kafka</span>
+            <span class="catbar__label">{{ 'catbar.kafka' | t }}</span>
           </a>
 
           <a routerLink="/topic/system-design" class="catbar__item" routerLinkActive="catbar__item--active">
@@ -141,7 +150,7 @@
               <rect x="2" y="3" width="20" height="14" rx="2"/>
               <path d="M8 21h8M12 17v4"/>
             </svg>
-            <span class="catbar__label">Design</span>
+            <span class="catbar__label">{{ 'catbar.design' | t }}</span>
           </a>
         </nav>
       </div>
@@ -158,7 +167,7 @@
         @if (getTopicsByGroup(group.group).length > 0) {
           <div class="sidebar__group">
             <h3 class="sidebar__group-label" [attr.data-group]="group.group">
-              {{ group.label }}
+              {{ 'sidebar.groups.' + group.group | t }}
             </h3>
             @for (topic of getTopicsByGroup(group.group); track topic.id) {
               <div class="sidebar__topic">
@@ -181,7 +190,7 @@
                         [routerLink]="['/quiz', topic.id]"
                         (click)="closeSidebarOnMobile()"
                       >
-                        🎯 Practice All
+                        {{ 'sidebar.practiceAll' | t }}
                       </a>
                     }
                     @for (phase of getSubtopicGroups(topic); track phase.label) {

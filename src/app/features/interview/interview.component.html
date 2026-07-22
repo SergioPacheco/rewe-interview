@@ -97,12 +97,24 @@
 
         <!-- Detailed Explanation -->
         <section class="interview-section">
-          <button class="interview-section__toggle" (click)="toggleSection('detailed')"
-                  [class.interview-section__toggle--open]="isExpanded('detailed')">
-            <span class="interview-section__icon">📖</span>
-            <span class="interview-section__title">Detailed Explanation</span>
-            <span class="interview-section__arrow">{{ isExpanded('detailed') ? '▼' : '▶' }}</span>
-          </button>
+          <div class="interview-section__header">
+            <button class="interview-section__toggle" (click)="toggleSection('detailed')"
+                    [class.interview-section__toggle--open]="isExpanded('detailed')">
+              <span class="interview-section__icon">📖</span>
+              <span class="interview-section__title">Detailed Explanation</span>
+              <span class="interview-section__arrow">{{ isExpanded('detailed') ? '▼' : '▶' }}</span>
+            </button>
+            <button
+              type="button"
+              class="interview-section__listen"
+              [class.interview-section__listen--active]="readingSection() === 'detailed'"
+              aria-label="Read aloud"
+              title="Listen"
+              (click)="toggleSectionAudio(q.detailedAnswer, 'detailed')"
+            >
+              {{ readingSection() === 'detailed' ? '■' : '🔊' }}
+            </button>
+          </div>
           @if (isExpanded('detailed')) {
             <div class="interview-section__body">
               <div class="detailed-answer" [innerHTML]="q.detailedAnswer | markdown"></div>
@@ -112,12 +124,24 @@
 
         <!-- Key Points -->
         <section class="interview-section">
-          <button class="interview-section__toggle" (click)="toggleSection('keypoints')"
-                  [class.interview-section__toggle--open]="isExpanded('keypoints')">
-            <span class="interview-section__icon">✅</span>
-            <span class="interview-section__title">Key Points</span>
-            <span class="interview-section__arrow">{{ isExpanded('keypoints') ? '▼' : '▶' }}</span>
-          </button>
+          <div class="interview-section__header">
+            <button class="interview-section__toggle" (click)="toggleSection('keypoints')"
+                    [class.interview-section__toggle--open]="isExpanded('keypoints')">
+              <span class="interview-section__icon">✅</span>
+              <span class="interview-section__title">Key Points</span>
+              <span class="interview-section__arrow">{{ isExpanded('keypoints') ? '▼' : '▶' }}</span>
+            </button>
+            <button
+              type="button"
+              class="interview-section__listen"
+              [class.interview-section__listen--active]="readingSection() === 'keypoints'"
+              aria-label="Read key points aloud"
+              title="Listen"
+              (click)="toggleSectionAudio(toSpeechList(q.keyPoints), 'keypoints')"
+            >
+              {{ readingSection() === 'keypoints' ? '■' : '🔊' }}
+            </button>
+          </div>
           @if (isExpanded('keypoints')) {
             <div class="interview-section__body">
               <ul class="key-points">
@@ -182,12 +206,24 @@
         <!-- Follow-up Questions -->
         @if (q.followUps && q.followUps.length > 0) {
           <section class="interview-section">
-            <button class="interview-section__toggle" (click)="toggleSection('followups')"
-                    [class.interview-section__toggle--open]="isExpanded('followups')">
-              <span class="interview-section__icon">🔄</span>
-              <span class="interview-section__title">Follow-up Questions</span>
-              <span class="interview-section__arrow">{{ isExpanded('followups') ? '▼' : '▶' }}</span>
-            </button>
+            <div class="interview-section__header">
+              <button class="interview-section__toggle" (click)="toggleSection('followups')"
+                      [class.interview-section__toggle--open]="isExpanded('followups')">
+                <span class="interview-section__icon">🔄</span>
+                <span class="interview-section__title">Follow-up Questions</span>
+                <span class="interview-section__arrow">{{ isExpanded('followups') ? '▼' : '▶' }}</span>
+              </button>
+              <button
+                type="button"
+                class="interview-section__listen"
+                [class.interview-section__listen--active]="readingSection() === 'followups'"
+                aria-label="Read follow-ups aloud"
+                title="Listen"
+                (click)="toggleSectionAudio(toSpeechFollowUps(q.followUps), 'followups')"
+              >
+                {{ readingSection() === 'followups' ? '■' : '🔊' }}
+              </button>
+            </div>
             @if (isExpanded('followups')) {
               <div class="interview-section__body">
                 @for (fu of q.followUps; track fu.question) {
@@ -209,12 +245,24 @@
         <!-- Red Flags -->
         @if (q.redFlags && q.redFlags.length > 0) {
           <section class="interview-section">
-            <button class="interview-section__toggle" (click)="toggleSection('redflags')"
-                    [class.interview-section__toggle--open]="isExpanded('redflags')">
-              <span class="interview-section__icon">🚩</span>
-              <span class="interview-section__title">Pitfalls to Avoid</span>
-              <span class="interview-section__arrow">{{ isExpanded('redflags') ? '▼' : '▶' }}</span>
-            </button>
+            <div class="interview-section__header">
+              <button class="interview-section__toggle" (click)="toggleSection('redflags')"
+                      [class.interview-section__toggle--open]="isExpanded('redflags')">
+                <span class="interview-section__icon">🚩</span>
+                <span class="interview-section__title">Pitfalls to Avoid</span>
+                <span class="interview-section__arrow">{{ isExpanded('redflags') ? '▼' : '▶' }}</span>
+              </button>
+              <button
+                type="button"
+                class="interview-section__listen"
+                [class.interview-section__listen--active]="readingSection() === 'redflags'"
+                aria-label="Read pitfalls aloud"
+                title="Listen"
+                (click)="toggleSectionAudio(toSpeechList(q.redFlags), 'redflags')"
+              >
+                {{ readingSection() === 'redflags' ? '■' : '🔊' }}
+              </button>
+            </div>
             @if (isExpanded('redflags')) {
               <div class="interview-section__body">
                 <ul class="red-flags">

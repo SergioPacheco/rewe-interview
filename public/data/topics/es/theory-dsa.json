@@ -1,0 +1,126 @@
+[
+  {
+    "id": "theory-dsa-big-o",
+    "title": "Big-O en la práctica — Lo que realmente necesitan los desarrolladores Java",
+    "sections": [
+      {
+        "heading": "Por qué importa en las entrevistas",
+        "content": "A los ingenieros senior no les piden demostrar O(n log n) para mergesort. Les preguntan:\n• \"¿Por qué este endpoint es lento?\"\n• \"¿Escalará esto cuando tengamos 10x usuarios?\"\n• \"¿Cuál es el coste de este bucle dentro de otro bucle?\"\n\nLa respuesta siempre vuelve a entender qué operaciones son O(1), O(log n), O(n) u O(n²) en el código que escribes a diario."
+      },
+      {
+        "heading": "Java Collections — costes de operación",
+        "content": "```java\n// HashMap — O(1) promedio para get/put/containsKey\nMap<String, Delivery> cache = new HashMap<>();\ncache.get(\"D-42\");           // O(1) — hash + equals\ncache.put(\"D-43\", delivery); // O(1) amortizado\n\n// TreeMap — O(log n) para get/put (ordenado)\nTreeMap<Instant, Event> timeline = new TreeMap<>();\ntimeline.subMap(from, to);   // O(log n + k) — k = resultados\n\n// ArrayList — acceso aleatorio O(1), búsqueda O(n)\nList<Driver> drivers = new ArrayList<>();\ndrivers.get(5);              // O(1) — índice de array\ndrivers.contains(driver);    // O(n) — recorrido lineal\nndrivers.add(driver);         // O(1) amortizado, O(n) peor caso (resize)\n\n// LinkedList — O(1) añadir/eliminar en extremos, O(n) acceso aleatorio\nDeque<Task> queue = new LinkedList<>();\nqueue.addFirst(task);        // O(1)\nqueue.get(50);               // O(n) — hay que recorrerla\n```\n\n**Insight senior:** Conocer estos costes te ayuda a detectar bugs de rendimiento al instante. Si ves `.contains()` dentro de un bucle sobre un ArrayList, eso es O(n²). Cámbialo por un HashSet."
+      },
+      {
+        "heading": "Trampas comunes de complejidad en Spring Boot",
+        "content": "```java\n// ❌ O(n²) — contains() dentro de un bucle\npublic List<Delivery> filterActive(List<Delivery> all, List<String> activeIds) {\n    return all.stream()\n        .filter(d -> activeIds.contains(d.getId())) // O(n) por elemento\n        .toList();\n}\n// Con 10K deliveries × 5K activeIds = 50M comparaciones\n\n// ✅ O(n) — búsqueda en HashSet\npublic List<Delivery> filterActive(List<Delivery> all, List<String> activeIds) {\n    Set<String> idSet = new HashSet<>(activeIds); // O(n) una vez\n    return all.stream()\n        .filter(d -> idSet.contains(d.getId()))    // O(1) por elemento\n        .toList();\n}\n```\n\n```java\n// ❌ O(n) por solicitud — cargar todas las entidades y luego filtrar\n@GetMapping(\"/deliveries\")\npublic List<DeliveryDTO> getByStatus(@RequestParam String status) {\n    return repo.findAll().stream()   // carga TODAS desde la DB\n        .filter(d -> d.getStatus().equals(status))\n        .map(this::toDto).toList();\n}\n\n// ✅ O(log n) — deja que la base de datos haga el filtrado\n@GetMapping(\"/deliveries\")\npublic List<DeliveryDTO> getByStatus(@RequestParam String status) {\n    return repo.findByStatus(status).stream() // consulta indexada\n        .map(this::toDto).toList();\n}\n```"
+      },
+      {
+        "heading": "Complejidad amortizada — por qué ArrayList.add es O(1)",
+        "content": "ArrayList duplica su array interno cuando se llena. Una copia cara O(n) ocurre, pero las siguientes n inserciones son O(1). Promediado = O(1) amortizado.\n\nEl mismo principio aplica a:\n• Rehashing de HashMap (con factor de carga 0.75)\n• Expansión del buffer interno de StringBuilder\n• Acumulación de lotes en Kafka producer\n\n**Consejo de entrevista:** Cuando te pregunten \"¿ArrayList.add es O(1) o O(n)?\" — la respuesta correcta es \"O(1) amortizado, O(n) en el peor caso durante el resize.\""
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-big-o"
+  },
+  {
+    "id": "theory-dsa-collections",
+    "title": "Colecciones en profundidad — Elegir la estructura correcta",
+    "sections": [
+      {
+        "heading": "Matriz de decisión",
+        "content": "**Cuándo usar qué:**\n\n| Necesidad | Estructura | Por qué |\n|------|-----------|-----|\n| Búsqueda rápida por clave | HashMap | get/put O(1) |\n| Iteración ordenada | TreeMap | O(log n), orden natural |\n| Elementos únicos | HashSet | contains O(1) |\n| Orden de inserción preservado | LinkedHashMap | O(1) + orden |\n| Procesamiento FIFO | ArrayDeque | add/poll O(1), sin sobrecarga de sincronización |\n| Mapa seguro para hilos | ConcurrentHashMap | Lock striping, sin lock global |\n| Cola segura para hilos | BlockingQueue | Patrón productor-consumidor |\n| Instantánea inmutable | List.of() / Map.of() | Sin copia defensiva necesaria |"
+      },
+      {
+        "heading": "HashMap internals (favorita de entrevistas)",
+        "content": "```java\n// Cómo funciona HashMap:\n// 1. hashCode() → índice del bucket\n// 2. Si hay colisión → lista enlazada en el bucket\n// 3. Java 8+: si el bucket supera 8 entradas → árbol (O(log n) en lugar de O(n))\n\n// Por qué importa el contrato hashCode + equals:\npublic class DriverKey {\n    private final String id;\n    private final String region;\n\n    @Override\n    public int hashCode() {\n        return Objects.hash(id, region); // DEBE usar los mismos campos que equals\n    }\n\n    @Override\n    public boolean equals(Object o) {\n        if (this == o) return true;\n        if (!(o instanceof DriverKey dk)) return false;\n        return id.equals(dk.id) && region.equals(dk.region);\n    }\n}\n\n// ❌ ROTO: campo mutable usado en hashCode\npublic class MutableKey {\n    private String name; // puede cambiar después del put\n    public int hashCode() { return name.hashCode(); }\n    // Si name cambia → el objeto queda en el bucket equivocado → perdido para siempre\n}\n```\n\n**Factor de carga 0.75:** Cuando el 75% de los buckets está lleno, HashMap duplica y rehace el hashing de todo. Por eso importa la capacidad inicial para mapas de tamaño conocido:\n```java\n// Evita múltiples rehashes para 1000 entradas\nMap<String, Driver> map = new HashMap<>(1400); // 1000/0.75 ≈ 1334\n```"
+      },
+      {
+        "heading": "ConcurrentHashMap — contexto multihilo en Spring Boot",
+        "content": "```java\n// Spring Boot ejecuta requests en paralelo → el estado compartido necesita seguridad\n\n// ❌ Condición de carrera\nprivate Map<String, AtomicInteger> counters = new HashMap<>();\npublic void increment(String key) {\n    counters.computeIfAbsent(key, k -> new AtomicInteger()).incrementAndGet();\n    // HashMap.computeIfAbsent NO es thread-safe\n}\n\n// ✅ Seguro para hilos\nprivate ConcurrentHashMap<String, AtomicInteger> counters = new ConcurrentHashMap<>();\npublic void increment(String key) {\n    counters.computeIfAbsent(key, k -> new AtomicInteger()).incrementAndGet();\n    // ConcurrentHashMap.computeIfAbsent SÍ es atómico para la clave\n}\n```\n\n**Insight clave:** ConcurrentHashMap usa lock striping (segmentos), no un único lock global. Varios hilos pueden escribir en segmentos distintos simultáneamente."
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-collections"
+  },
+  {
+    "id": "theory-dsa-recursion",
+    "title": "Recursión y memoización — de la teoría a producción",
+    "sections": [
+      {
+        "heading": "El patrón",
+        "content": "Toda solución recursiva tiene:\n1. **Caso base** — cuándo parar\n2. **Caso recursivo** — dividir el problema en subproblemas más pequeños\n3. **Memoización** (opcional) — cachear subproblemas repetidos\n\n```java\n// Clásico: Fibonacci\n// ❌ O(2^n) — exponencial sin memoización\npublic int fib(int n) {\n    if (n <= 1) return n;\n    return fib(n - 1) + fib(n - 2); // ¡los mismos subproblemas se recalculan!\n}\n\n// ✅ O(n) — con memoización\npublic int fib(int n, int[] memo) {\n    if (n <= 1) return n;\n    if (memo[n] != 0) return memo[n];  // ya calculado\n    memo[n] = fib(n - 1, memo) + fib(n - 2, memo);\n    return memo[n];\n}\n```"
+      },
+      {
+        "heading": "Recursión en código de producción",
+        "content": "No escribirás Fibonacci en REWE. Pero la recursión aparece en:\n\n```java\n// 1. Recorrido de árboles (jerarquías de categorías)\n@Entity\npublic class Category {\n    @ManyToOne\n    private Category parent;\n    @OneToMany(mappedBy = \"parent\")\n    private List<Category> children;\n}\n\npublic List<Category> getAllDescendants(Category root) {\n    List<Category> result = new ArrayList<>();\n    result.add(root);\n    for (Category child : root.getChildren()) {\n        result.addAll(getAllDescendants(child)); // recursivo\n    }\n    return result;\n}\n\n// 2. Optimización de rutas (backtracking)\npublic Route findOptimalRoute(List<Stop> remaining, Stop current, Route partial) {\n    if (remaining.isEmpty()) return partial;\n    Route best = null;\n    for (Stop next : remaining) {\n        Route candidate = findOptimalRoute(\n            without(remaining, next), next, partial.add(next));\n        if (best == null || candidate.cost() < best.cost())\n            best = candidate;\n    }\n    return best;\n}\n\n// 3. Análisis de JSON/Config (estructuras anidadas)\npublic Map<String, Object> flatten(Map<String, Object> nested, String prefix) {\n    Map<String, Object> flat = new HashMap<>();\n    for (var entry : nested.entrySet()) {\n        String key = prefix.isEmpty() ? entry.getKey() : prefix + \".\" + entry.getKey();\n        if (entry.getValue() instanceof Map m) {\n            flat.putAll(flatten(m, key)); // recursión en mapas anidados\n        } else {\n            flat.put(key, entry.getValue());\n        }\n    }\n    return flat;\n}\n```"
+      },
+      {
+        "heading": "Memoización → caché (mismo concepto, escala de producción)",
+        "content": "La memoización ES caching aplicado a resultados de funciones:\n\n```java\n// Académico: array memo\nint[] memo = new int[n + 1];\n\n// Producción: Spring Cache (¡mismo principio!)\n@Cacheable(\"route-costs\")\npublic BigDecimal calculateRouteCost(String routeId) {\n    // cálculo caro — solo se ejecuta una vez por routeId\n    return routeService.computeCost(routeId);\n}\n\n// Producción: ConcurrentHashMap como caché local\nprivate final Map<String, DriverStats> statsCache = new ConcurrentHashMap<>();\n\npublic DriverStats getStats(String driverId) {\n    return statsCache.computeIfAbsent(driverId,\n        id -> heavyStatsCalculation(id)); // se calcula una sola vez\n}\n```\n\n**Conexión con entrevistas:** Cuando te pregunten sobre recursión, muestra que entiendes el puente hacia el caching de producción: mismo problema (cálculo repetido), misma solución (guardar y reutilizar)."
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-recursion"
+  },
+  {
+    "id": "theory-dsa-trees",
+    "title": "Árboles en sistemas reales — B-Tree, Trie y por qué importa",
+    "sections": [
+      {
+        "heading": "B-Tree — el índice de toda base de datos",
+        "content": "Cuando creas un índice en PostgreSQL/MySQL, es un **B-Tree**:\n\n```java\nCREATE INDEX idx_delivery_status ON delivery(status, scheduled_at);\n\n-- Qué ocurre internamente:\n-- B-Tree con factor de ramificación ~100-500\n-- Cada nodo = una página de disco (8KB)\n-- Profundidad = log₁₀₀(filas) ≈ 3-4 niveles para millones de filas\n-- → Encontrar una fila = 3-4 lecturas de disco\n\n-- Por eso la búsqueda indexada es O(log n)\n-- Y un full table scan es O(n) — debe leer TODAS las páginas\n```\n\n**Conexión senior:**\n• El orden de un índice compuesto importa (regla del prefijo más a la izquierda) porque el B-Tree está ordenado de izquierda a derecha\n• Las consultas por rango (BETWEEN, >, <) solo benefician a la ÚLTIMA columna del índice compuesto\n• Por eso pones primero las columnas de igualdad y al final las de rango/ordenación"
+      },
+      {
+        "heading": "TreeMap — datos ordenados en Java",
+        "content": "```java\n// TreeMap = Red-Black Tree (BST auto-balanceado)\n// Úsalo cuando necesitas acceso ordenado o consultas por rango EN MEMORIA\n\n// Caso de uso: almacén de eventos con ventana temporal\nTreeMap<Instant, DeliveryEvent> events = new TreeMap<>();\n\n// Obtener todos los eventos de la última hora — O(log n + k)\nInstant oneHourAgo = Instant.now().minus(Duration.ofHours(1));\nSortedMap<Instant, DeliveryEvent> recent = events.tailMap(oneHourAgo);\n\n// Obtener primero/último — O(log n)\nDeliveryEvent earliest = events.firstEntry().getValue();\nDeliveryEvent latest = events.lastEntry().getValue();\n\n// vs HashMap: estas operaciones requerirían ordenar todas las entradas\n```\n\n**Cuándo usar TreeMap frente a HashMap:**\n• Necesitas iteración ordenada\n• Necesitas consultas por rango (subMap, headMap, tailMap)\n• Necesitas floor/ceiling (clave más cercana)\n\n**Cuándo usar HashMap frente a TreeMap:**\n• Solo necesitas get/put por clave exacta (O(1) vs O(log n))\n• No necesitas orden"
+      },
+      {
+        "heading": "Trie — autocompletado y routing",
+        "content": "```java\n// Trie (árbol de prefijos) — lookup O(m) donde m = longitud de la clave\n// Usado en: autocompletado, routing IP, coincidencia de URLs\n\n// Spring Boot usa una estructura similar internamente para rutas:\n// /api/deliveries/{id}\n// /api/deliveries/{id}/status\n// /api/drivers/{id}\n// → despacho tipo árbol: /api → deliveries|drivers → {id} → status\n\n// Ejemplo de autocompletado:\npublic class AutocompleteService {\n    private final TrieNode root = new TrieNode();\n\n    public void index(String word) {\n        TrieNode node = root;\n        for (char c : word.toCharArray()) {\n            node = node.children.computeIfAbsent(c, k -> new TrieNode());\n        }\n        node.isWord = true;\n    }\n\n    public List<String> suggest(String prefix, int limit) {\n        TrieNode node = root;\n        for (char c : prefix.toCharArray()) {\n            node = node.children.get(c);\n            if (node == null) return List.of(); // sin coincidencia\n        }\n        return collectWords(node, prefix, limit);\n    }\n}\n```"
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-trees"
+  },
+  {
+    "id": "theory-dsa-queues",
+    "title": "Colas y pilas en arquitectura",
+    "sections": [
+      {
+        "heading": "Cola — de estructura de datos a Kafka",
+        "content": "Una cola es FIFO. Ese mismo concepto escala desde memoria a distribuido:\n\n```java\n// Nivel 1: Cola en memoria (un solo JVM)\nQueue<Task> tasks = new ArrayDeque<>();\ntasks.offer(new Task(\"process-delivery\"));\nTask next = tasks.poll(); // FIFO\n\n// Nivel 2: BlockingQueue (productor-consumidor en el mismo JVM)\nBlockingQueue<DeliveryEvent> queue = new LinkedBlockingQueue<>(1000);\n// Hilo productor:\nqueue.put(event); // bloquea si está llena\n// Hilo consumidor:\nDeliveryEvent e = queue.take(); // bloquea si está vacía\n\n// Nivel 3: Kafka (cola distribuida entre servicios)\n// El mismo concepto FIFO, pero:\n// - Persistente (sobrevive reinicios)\n// - Particionada (consumidores paralelos)\n// - Reproducible (el consumidor puede releer)\n@KafkaListener(topics = \"delivery-events\")\npublic void handle(DeliveryEvent event) {\n    // misma lógica de consumidor, distinta escala\n}\n```"
+      },
+      {
+        "heading": "Pila — call stack, undo y parsing",
+        "content": "```java\n// La pila de llamadas de la JVM ES una estructura de pila:\n// main() → deliveryService.create() → validator.validate() → ...\n// StackOverflowError = recursión demasiado profunda (pila agotada)\n\n// Uso práctico: operaciones undo\nDeque<Command> undoStack = new ArrayDeque<>();\n\npublic void execute(Command cmd) {\n    cmd.execute();\n    undoStack.push(cmd); // LIFO\n}\n\npublic void undo() {\n    if (!undoStack.isEmpty()) {\n        Command last = undoStack.pop();\n        last.undo();\n    }\n}\n\n// Uso práctico: recorrido DFS (pila explícita en vez de recursión)\npublic List<Category> dfs(Category root) {\n    Deque<Category> stack = new ArrayDeque<>();\n    List<Category> visited = new ArrayList<>();\n    stack.push(root);\n    while (!stack.isEmpty()) {\n        Category current = stack.pop();\n        visited.add(current);\n        current.getChildren().forEach(stack::push);\n    }\n    return visited;\n}\n```"
+      },
+      {
+        "heading": "Priority Queue — planificación de tareas",
+        "content": "```java\n// PriorityQueue = estructura heap = O(log n) insert/poll\n// Caso de uso: procesar entregas por prioridad\n\nPriorityQueue<Delivery> priorityQueue = new PriorityQueue<>(\n    Comparator.comparing(Delivery::getPriority)\n             .thenComparing(Delivery::getScheduledAt)\n);\n\npriorityQueue.offer(expressDelivery);   // O(log n)\npriorityQueue.offer(standardDelivery);  // O(log n)\n\nDelivery next = priorityQueue.poll();   // siempre la prioridad más alta, O(log n)\n// → expressDelivery sale primero sin importar el orden de inserción\n\n// Mismo concepto en sistemas distribuidos:\n// Kafka: particionar por nivel de prioridad\n// Spring @Async: PriorityBlockingQueue como cola del pool de hilos\n```"
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-queues"
+  },
+  {
+    "id": "theory-dsa-hashing",
+    "title": "Hashing y igualdad — de hashCode a particionado Kafka",
+    "sections": [
+      {
+        "heading": "Contrato hashCode/equals",
+        "content": "```java\n// LAS REGLAS:\n// 1. Si a.equals(b) → a.hashCode() == b.hashCode()  (OBLIGATORIO)\n// 2. Si a.hashCode() == b.hashCode() → a.equals(b) NO está garantizado (hay colisiones)\n// 3. hashCode debe ser consistente dentro de la misma ejecución de JVM\n// 4. Solo usar campos INMUTABLES en hashCode\n\n// ✅ Correcto: record de Java (genera automáticamente hashCode/equals correctos)\npublic record DeliveryId(String region, Long sequence) {}\n// Los records generan: equals con todos los campos, hashCode con todos los campos\n\n// ✅ Correcto: implementación manual\n@Entity\npublic class Driver {\n    @Id private Long id;\n    private String licenseNumber;\n\n    @Override\n    public boolean equals(Object o) {\n        if (this == o) return true;\n        if (!(o instanceof Driver d)) return false;\n        return Objects.equals(id, d.id); // usar clave de negocio o PK\n    }\n\n    @Override\n    public int hashCode() {\n        return Objects.hash(id); // ¡mismo campo que equals!\n    }\n}\n\n// ❌ ROTO: usa un campo mutable\npublic int hashCode() {\n    return Objects.hash(status); // status cambia → objeto perdido en HashMap\n}\n```"
+      },
+      {
+        "heading": "Consistent hashing — asignación de particiones Kafka",
+        "content": "Kafka decide qué partición recibe un mensaje usando hashing:\n\n```java\n// Partitioner por defecto de Kafka:\npartition = hash(key) % numPartitions\n\n// Los eventos del mismo driver siempre van a la misma partición → ¡ordenados!\nkafkaTemplate.send(\"driver-events\", driverId, event);\n// driverId = key → hash(driverId) % 6 = siempre partición 3\n// Todos los eventos de este driver llegan en orden\n\n// Por qué importa:\n// - La garantía de orden es POR PARTICIÓN\n// - Si necesitas que los eventos de la entidad X estén ordenados → usa el ID de X como key\n// - Si no necesitas orden → usa round-robin (key null)\n```\n\n**Consistent hashing en caching (Redis Cluster):**\nCuando añades o quitas un nodo de Redis, el consistent hashing asegura que solo ~1/n de las keys se muevan, no todas. Mismo principio que el rebalanceo de particiones en Kafka."
+      },
+      {
+        "heading": "Equals en JPA — la trampa de la identidad de entidad",
+        "content": "```java\n// Entidades JPA: equals/hashCode es COMPLICADO\n// Problema: ¡el ID es null antes de persistir!\n\n// ❌ Usar @Id antes de persistir\n@Entity\npublic class Delivery {\n    @Id @GeneratedValue private Long id;\n\n    public boolean equals(Object o) {\n        if (!(o instanceof Delivery d)) return false;\n        return Objects.equals(id, d.id); // ambos null antes de persistir → ¡todas iguales!\n    }\n}\n\n// ✅ Opción 1: clave natural/de negocio\npublic boolean equals(Object o) {\n    if (!(o instanceof Delivery d)) return false;\n    return Objects.equals(trackingNumber, d.trackingNumber);\n}\n\n// ✅ Opción 2: UUID asignado en el constructor\n@Entity\npublic class Delivery {\n    @Id @GeneratedValue private Long id;\n    @Column(unique = true)\n    private final UUID uuid = UUID.randomUUID(); // ¡definido al crear!\n\n    public boolean equals(Object o) {\n        if (!(o instanceof Delivery d)) return false;\n        return uuid.equals(d.uuid);\n    }\n    public int hashCode() { return uuid.hashCode(); }\n}\n```\n\n**Consejo de entrevista:** Esta es una pregunta frecuente en roles senior de Java. Demuestra que entiendes POR QUÉ el equals por defecto de Object falla con ciclos de detach/merge en JPA."
+      }
+    ],
+    "topic": "dsa",
+    "subtopic": "dsa-hashing"
+  }
+]

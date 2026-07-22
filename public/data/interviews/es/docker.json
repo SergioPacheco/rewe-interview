@@ -1,0 +1,144 @@
+[
+  {
+    "id": "interview-docker-1",
+    "topic": "docker",
+    "subtopic": "docker-basics",
+    "difficulty": "PRINCIPIANTE",
+    "question": "¿Cuál es la diferencia entre una imagen, un contenedor y un volumen?",
+    "shortAnswer": "Una imagen es un paquete inmutable, identificado por contenido, que contiene capas del sistema de archivos y metadatos de ejecución. Un contenedor es una instancia de esa imagen con configuración de procesos y su propia capa de escritura; puede estar en ejecución o detenido. Detener un contenedor no elimina esa capa, pero eliminar el contenedor sí lo hace. Un volumen almacena datos fuera de la capa de escritura para que puedan perdurar y compartirse independientemente del contenedor.",
+    "detailedAnswer": "**Imagen**:\n- Capas de solo lectura más metadatos como el entrypoint, valores por defecto del entorno y puertos expuestos.\n- Identificada por un digest (resumen) de contenido; una etiqueta (tag) es solo una referencia mutable a una imagen.\n- Las capas compartidas pueden ser reutilizadas por muchos contenedores.\n\n**Contenedor**:\n- Una instancia creada con aislamiento, configuraciones de tiempo de ejecución y una capa de escritura sobre la imagen.\n- Puede estar en estado creado, en ejecución, pausado o detenido.\n- `docker stop` detiene su proceso pero normalmente mantiene el contenedor y la capa de escritura.\n- `docker rm` elimina el contenedor y su capa de escritura; `--rm` solicita la eliminación automática al salir.\n\n**Volumen o bind mount**:\n- Almacena datos fuera de la capa de escritura del contenedor.\n- Un volumen con nombre tiene su propio ciclo de vida y normalmente sobrevive a la eliminación del contenedor.\n- Un bind mount mapea una ruta del host y acopla la carga de trabajo al diseño de ese host.\n\nLas aplicaciones deben diseñarse de modo que los contenedores sean reemplazables. El estado duradero pertenece a un volumen o servicio externo, mientras que los cachés y archivos temporales pueden permanecer intencionalmente como efímeros.",
+    "keyPoints": [
+      "Una imagen es contenido inmutable; una etiqueta puede cambiar de referencia",
+      "Un contenedor puede existir estando detenido",
+      "Detenerlo no elimina normalmente la capa de escritura",
+      "Eliminar el contenedor elimina su capa de escritura",
+      "Los volúmenes tienen un ciclo de vida independiente de un contenedor particular"
+    ],
+    "redFlags": [
+      "Decir que los datos se pierden simplemente porque un contenedor se detiene",
+      "Tratar una etiqueta de imagen como una identidad inmutable",
+      "Almacenar datos requeridos de la base de datos solo en la capa del contenedor",
+      "Describir un contenedor como una máquina virtual completa"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué sucede con un archivo escrito dentro de un contenedor después de un `docker stop` y `docker start`?",
+        "hint": "Normalmente permanece en la capa de escritura de ese contenedor; desaparece cuando el contenedor se elimina, a menos que estuviera montado en otro lugar."
+      },
+      {
+        "question": "¿Cuándo elegirías un bind mount en lugar de un volumen con nombre?",
+        "hint": "A menudo para la edición de código fuente local o cuando se requiere una ruta explícita del host; hay que tener en cuenta los permisos y el acoplamiento al host."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "realExperience": {
+      "title": "Despliegue contenedorizado SGN3",
+      "description": "SGN3 se ejecuta en OKD a partir de imágenes de aplicación WildFly construidas en CI, con réplicas reemplazables y estado de negocio persistente mantenido fuera de cada contenedor."
+    }
+  },
+  {
+    "id": "interview-docker-2",
+    "topic": "docker",
+    "subtopic": "docker-basics",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cómo logras que una construcción (build) de Docker sea eficiente, segura y reproducible?",
+    "shortAnswer": "Utilizo construcciones multietapa (multi-stage), una imagen base de ejecución pequeña y adecuada, un usuario de ejecución que no sea root y `.dockerignore`. Organizo las entradas de dependencias estables antes que el código fuente que cambia frecuentemente y utilizo cachés de BuildKit o montajes de secretos donde sea necesario. Para la reproducibilidad, fijo la imagen base por digest y bloqueo las dependencias descargadas; la inmutabilidad de una imagen construida no significa que dos builds a partir de entradas mutables coincidan.",
+    "detailedAnswer": "Estos objetivos se solapan pero no son idénticos:\n\n**Eficiencia**:\n- Las builds multietapa mantienen a los compiladores y gestores de paquetes fuera de la imagen de ejecución.\n- Copiar los manifiestos de dependencias antes del código fuente permite que la resolución de dependencias se almacene en caché.\n- Usar `.dockerignore` para reducir el contexto de build e inclusiones accidentales.\n- Usar montajes de caché de BuildKit para cachés de gestores de paquetes en lugar de integrarlos en la imagen final.\n- Combinar comandos cuando el comportamiento atómico del gestor de paquetes lo requiera, pero sin buscar el menor número de capas a expensas de la capacidad de caché y la claridad.\n\n**Seguridad**:\n- Ejecutar como un usuario dedicado no-root siempre que la aplicación lo permita.\n- Incluir solo los paquetes de ejecución requeridos y actualizarlos deliberadamente.\n- Usar montajes de secretos/SSH de BuildKit para credenciales de construcción; `ARG`, `ENV` y `COPY` pueden persistir valores sensibles en los metadatos o capas.\n- Escanear la imagen resultante y registrar la procedencia/SBOM según el proceso de entrega.\n\n**Reproducibilidad/Auditoría**:\n- Fijar la imagen base mediante un digest; incluso las etiquetas de versión pueden actualizarse.\n- Bloquear versiones/checksums de dependencias de la aplicación y del SO y controlar las entradas de red.\n- Construir el artefacto una vez, identificarlo por digest y promover ese mismo artefacto a través de los entornos.\n\nUn digest fijado sacrifica las actualizaciones automáticas por un mantenimiento deliberado, por lo que la automatización debería alertar o proponer actualizaciones revisadas.",
+    "keyPoints": [
+      "Las builds multietapa separan las herramientas de construcción del runtime",
+      "El orden amigable con la caché sigue a las entradas estables",
+      "Fijar digests base y entradas de dependencias para la reproducibilidad",
+      "Usar montajes de secretos de construcción en lugar de copiar credenciales",
+      "Promover un solo digest en lugar de reconstruir por entorno"
+    ],
+    "redFlags": [
+      "Equiparar la inmutabilidad de la imagen con construcciones reproducibles",
+      "Asumir que una etiqueta de versión no puede cambiar",
+      "Pasar secretos a través de ARG o COPY en el Dockerfile",
+      "Optimizar solo el recuento de capas ignorando el comportamiento de la caché y la seguridad"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué `FROM eclipse-temurin:21` no es totalmente reproducible?",
+        "hint": "La etiqueta es una referencia mutable; hay que fijar el digest resuelto y gestionar las actualizaciones deliberadamente."
+      },
+      {
+        "question": "¿Cómo puede una build usar una credencial de repositorio privado sin almacenarla en una capa?",
+        "hint": "Utilizando un secreto de BuildKit o un montaje SSH solo para la instrucción RUN pertinente."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "realExperience": {
+      "title": "Pipeline de construcción de imágenes SGN3",
+      "description": "El pipeline de CI separa la construcción de Maven de la imagen de ejecución de WildFly, reutiliza capas de dependencias estables y ejecuta la carga de trabajo desplegada bajo las restricciones de seguridad de OKD."
+    }
+  },
+  {
+    "id": "interview-docker-3",
+    "topic": "docker",
+    "subtopic": "docker-compose",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cómo diseñarías una configuración de Docker Compose que sea útil y predecible para el desarrollo local?",
+    "shortAnswer": "Modelaría solo los servicios necesarios para el flujo de trabajo local, fijaría sus versiones, añadiría health checks (verificaciones de salud), usaría volúmenes con nombre deliberadamente y expondría los puertos mínimos. La forma corta de `depends_on` define el orden de inicio, no la disponibilidad de la aplicación, por lo que o bien la app reintenta las dependencias o Compose espera a una condición de salud declarada. Mantengo los secretos y las sobreescrituras específicas del entorno fuera del archivo base y documento los comandos de reinicio que pueden eliminar datos.",
+    "detailedAnswer": "Una configuración de Compose mantenible incluye:\n\n- Referencias de imagen estables y contextos de construcción explícitos.\n- Una red por defecto donde los servicios usen nombres DNS en lugar de `localhost`.\n- Health checks para dependencias como PostgreSQL.\n- Reintentos/backoff en la aplicación, ya que las dependencias pueden dejar de estar disponibles también después del inicio.\n- Volúmenes con nombre para datos que deban sobrevivir al reemplazo del contenedor, y volúmenes de prueba desechables donde el aislamiento importe.\n- Publicación mínima de puertos del host; el tráfico entre contenedores no requiere exponer todos los puertos en el host.\n- Un archivo de entorno de ejemplo con nombres y valores por defecto seguros, no credenciales reales.\n- Perfiles o archivos de override para herramientas opcionales.\n\n`depends_on` en su forma corta controla el orden de creación/inicio pero no garantiza que la dependencia esté lista. Las dependencias en forma larga pueden esperar a `service_healthy` cuando existe un health check, pero la resiliencia sigue perteneciendo a la aplicación.\n\nSé explícito sobre el ciclo de vida: `docker compose down` elimina los contenedores y la red del proyecto; `down -v` también elimina los volúmenes con nombre declarados y puede destruir datos locales de la base de datos. Una configuración de 'un solo comando' es reproducible solo en la medida en que las imágenes, dependencias y entradas de inicialización estén controladas.",
+    "keyPoints": [
+      "Los nombres de servicio proporcionan DNS dentro de la red de Compose",
+      "El orden de inicio no es lo mismo que la disponibilidad (readiness)",
+      "Los health checks complementan el comportamiento de reintento de la aplicación",
+      "Los volúmenes con nombre sobreviven al reemplazo ordinario del contenedor",
+      "`down -v` es un reinicio destructivo y debe documentarse como tal"
+    ],
+    "redFlags": [
+      "Asumir que la forma corta de depends_on espera a una base de datos usable",
+      "Subir credenciales reales al archivo Compose",
+      "Publicar todos los puertos internos de los servicios al host",
+      "Ejecutar `down -v` sin reconocer que elimina los datos de los volúmenes con nombre"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué la aplicación debería seguir reintentando si Compose espera a una base de datos saludable al inicio?",
+        "hint": "La salud inicial es solo una señal en un momento dado; la base de datos puede fallar o reiniciarse más tarde."
+      },
+      {
+        "question": "¿Cómo darías a cada ejecución de test de integración un estado de base de datos aislado?",
+        "hint": "Usando un proyecto/volumen distinto o un ciclo de vida de contenedor efímero, aplicando luego las migraciones y fixtures deterministas."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "realExperience": {
+      "title": "Dependencias locales SGN3 con Compose",
+      "description": "PostgreSQL y ActiveMQ Artemis se ejecutan como dependencias locales de Compose, mientras que WildFly puede ejecutarse desde el IDE para un ciclo de edición/despliegue más rápido. Los ciclos de vida de datos persistentes y desechables se tratan explícitamente."
+    }
+  },
+  {
+    "id": "interview-docker-runtime-1",
+    "topic": "docker",
+    "subtopic": "docker-basics",
+    "difficulty": "INTERMEDIO",
+    "question": "Un contenedor arranca localmente pero finaliza inmediatamente en CI. ¿Cuál es tu enfoque de depuración?",
+    "shortAnswer": "Inspecciono el código de salida del contenedor, los logs, el comando efectivo y el entorno antes de cambiar la imagen. Comparo el digest inmutable de la imagen y la configuración de ejecución entre entornos, luego verifico la semántica del entrypoint/comando, los permisos del sistema de archivos, la configuración requerida, la arquitectura y los límites de recursos. Evito convertir el contenedor en un estado manual no reproducible; la solución debe estar en la imagen o en la configuración de ejecución declarada.",
+    "detailedAnswer": "Un contenedor finaliza cuando su proceso principal termina, por lo que `docker ps -a`, `docker logs`, la salida de inspect y el código de salida proporcionan la evidencia inicial. Las causas comunes incluyen un entrypoint incorrecto o un comando en forma de shell, una variable de entorno faltante, un proceso que se ejecuta en segundo plano (daemonize), un usuario no-root incapaz de escribir en un directorio, un bind mount que oculta archivos de la imagen, una arquitectura de CPU incompatible o una finalización por falta de memoria (OOM). CI también puede inyectar configuraciones de comando, directorio de trabajo, secretos o red diferentes a las de Compose local.\n\nReproduzco el error usando el mismo digest de imagen y la mayor parte posible de la configuración de ejecución de CI. Sobreescribir el entrypoint puede ayudar a inspeccionar el sistema de archivos brevemente, pero es un paso de diagnóstico, no la solución. Añado una validación de inicio clara y un log de fallos estructurado para la configuración requerida; no imprimo secretos. Si el problema es de disponibilidad (readiness) en lugar de salida inmediata, distingo la vitalidad (liveness) del proceso de que el servicio esté listo para aceptar trabajo.\n\nEl cambio final debe hacer que el comportamiento sea determinista: comando explícito, propiedad (ownership) correcta en la imagen, contrato de entorno documentado y un smoke test automatizado que arranque la imagen de producción.",
+    "keyPoints": [
+      "El ciclo de vida de un contenedor sigue a su proceso principal y código de salida",
+      "Compara el digest de la imagen y la configuración de ejecución declarada, no solo el código fuente",
+      "Verifica comandos, permisos, montajes, configuración y límites de recursos sistemáticamente",
+      "Haz que la corrección sea reproducible en la imagen o en la definición del despliegue"
+    ],
+    "redFlags": [
+      "Asumir que un contenedor detenido significa que Docker falló",
+      "Depurar añadiendo permanentemente una shell interactiva o usuario root en producción",
+      "Comparar solo ramas de código mientras CI ejecuta un digest de imagen diferente"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué sugiere a menudo el código de salida 137 y cómo lo confirmarías?",
+        "hint": "Normalmente indica un SIGKILL, a menudo debido a una condición de falta de memoria (OOM); inspecciona el estado/eventos del runtime y los límites de memoria configurados."
+      },
+      {
+        "question": "¿Cómo puede un bind mount hacer que una imagen que funciona falle localmente?",
+        "hint": "Puede ocultar un directorio o archivo que estaba presente en la imagen debajo de la ruta montada del host."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+  }
+]

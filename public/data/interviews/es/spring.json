@@ -1,0 +1,303 @@
+[
+  {
+    "id": "interview-spring-1",
+    "topic": "spring",
+    "subtopic": "spring-di",
+    "difficulty": "BEGINNER",
+    "question": "¿Qué problema resuelve la inyección de dependencias, y cómo eliges un estilo de inyección en Spring?",
+    "shortAnswer": "La inyección de dependencias significa que una clase recibe sus colaboradores en lugar de localizarlos o construirlos. El contenedor de Spring resuelve el grafo de objetos y gestiona el ciclo de vida de los beans, lo que hace explícitas las dependencias y reemplazables las implementaciones. Prefiero la inyección por constructor para los colaboradores obligatorios porque admite campos inmutables y pruebas unitarias sencillas; los setters pueden representar una reconfiguración genuinamente opcional. La inyección por campo funciona, pero oculta los requisitos y acopla las pruebas a la reflexión o a un contenedor.",
+    "detailedAnswer": "La inyección de dependencias es una forma de Inversión de Control. Un servicio declara lo que necesita y la raíz de composición/contenedor decide qué objetos satisfacen esas necesidades. El beneficio no es la anotación `@Autowired` en sí; es la separación entre el comportamiento de negocio y la construcción de objetos.\n\nEn Spring:\n- Un componente con un único constructor puede recibir beans sin necesidad de anotar ese constructor.\n- La inyección por constructor expone las dependencias obligatorias, permite campos `final` y falla temprano cuando el grafo no puede construirse.\n- La inyección por setter puede modelar una dependencia que es realmente opcional o reemplazable, aunque las dependencias opcionales deben usarse de forma deliberada.\n- La inyección por campo es concisa, pero oculta el contrato de construcción y hace menos directas las pruebas fuera del contenedor.\n- `@Qualifier`, `@Primary` o un método `@Bean` explícito resuelven la ambigüedad intencional entre varios candidatos.\n\nDepender de una interfaz es útil cuando hay alternativas significativas o un límite que proteger, pero crear una interfaz para cada clase no es requisito de la DI. El alcance (scope) y el ciclo de vida también importan: inyectar una dependencia con alcance de solicitud o prototipo en un singleton puede requerir un proxy/provider en lugar de suponer que aparece un objeto nuevo en cada uso.",
+    "keyPoints": [
+      "La DI separa la construcción de objetos del comportamiento de negocio",
+      "La inyección por constructor hace explícitas las dependencias obligatorias",
+      "Las interfaces son útiles en límites reales, no obligatorias para cada bean",
+      "Los calificadores y la configuración explícita resuelven múltiples candidatos",
+      "El alcance del bean forma parte del contrato de dependencia"
+    ],
+    "redFlags": [
+      "Definir la DI únicamente como usar `@Autowired`",
+      "Construir colaboradores de infraestructura dentro de métodos de negocio",
+      "Usar inyección por campo mientras se afirma que la clase es fácil de instanciar de forma aislada",
+      "Ignorar el alcance al inyectar beans de vida más corta en singletons"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué ocurre cuando dos beans implementan la misma interfaz?",
+        "hint": "Hacer explícita la selección con un calificador, un bean primario, un perfil/condición o un método de configuración; de lo contrario, la ambigüedad hace fallar el arranque."
+      },
+      {
+        "question": "¿Crearías una interfaz solo para que Mockito pueda simular una dependencia?",
+        "hint": "No necesariamente. Definir interfaces para límites arquitectónicos o alternativas; el mocking moderno puede sustituir clases, y una preocupación de pruebas por sí sola no debería dictar cada abstracción de producción."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferencia desde Jakarta CDI",
+      "description": "La experiencia en producción con CDI abarca grafos de objetos gestionados por el contenedor, alcances, calificadores y sustitución. Las reglas de resolución de beans de Spring y las convenciones de inyección por constructor son la capa específica del framework."
+    }
+  },
+  {
+    "id": "interview-spring-2",
+    "topic": "spring",
+    "subtopic": "spring-di",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo decide la auto-configuración de Spring Boot qué crear, y cómo depuras un bean inesperado?",
+    "shortAnswer": "`@SpringBootApplication` habilita la auto-configuración. Boot importa clases candidatas de auto-configuración y evalúa condiciones según el classpath, las propiedades, el tipo de aplicación y los beans existentes. Muchos valores por defecto usan `@ConditionalOnMissingBean`, así que la configuración del usuario puede hacer que se retiren, pero eso no aplica a todos los beans. Inspecciono el informe de evaluación de condiciones y el origen del bean antes de excluir configuración o sobrescribirla de forma deliberada.",
+    "detailedAnswer": "La auto-configuración es configuración condicional, no magia en tiempo de ejecución:\n\n1. `@SpringBootApplication` incluye `@EnableAutoConfiguration`.\n2. Boot descubre candidatos de auto-configuración registrados por las bibliotecas (las bibliotecas modernas de Boot usan `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`).\n3. Condiciones como `@ConditionalOnClass`, `@ConditionalOnProperty`, `@ConditionalOnWebApplication` y `@ConditionalOnMissingBean` deciden si una configuración o bean se aplica.\n4. Las propiedades de configuración vinculan valores externos a objetos tipados.\n5. Los beans definidos por el usuario solo hacen que una auto-configuración se retire cuando sus condiciones así lo indican; definir cualquier bean no anula globalmente Boot.\n\nPara diagnosticar, inicia la aplicación con el informe de condiciones en modo debug o inspecciona el endpoint de condiciones de Actuator en un entorno seguro. Verifica qué condición coincidió, de dónde vino la definición del bean y si el orden de configuración/la información de tipo afectó a `@ConditionalOnMissingBean`. Prefiere primero un bean o propiedad específica del usuario. Excluye una auto-configuración solo cuando toda la funcionalidad sea inapropiada, porque la exclusión también elimina sus demás valores por defecto.",
+    "keyPoints": [
+      "La auto-configuración importa candidatos y evalúa condiciones",
+      "La presencia en el classpath es solo una condición posible entre otras",
+      "El comportamiento de retirada depende de condiciones explícitas de bean faltante",
+      "El informe de condiciones explica las coincidencias positivas y negativas",
+      "Las sobrescrituras dirigidas suelen ser más acotadas que excluir toda una auto-configuración"
+    ],
+    "redFlags": [
+      "Llamar a la auto-configuración magia sin explicar las condiciones",
+      "Confundir el escaneo de componentes con las importaciones de auto-configuración",
+      "Suponer que todo bean auto-configurado se retira ante cualquier bean del usuario",
+      "Excluir una configuración antes de investigar por qué coincidió"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo se puede deshabilitar una auto-configuración concreta?",
+        "hint": "Usar la exclusión por anotación o `spring.autoconfigure.exclude`, pero primero verificar que una propiedad o sobrescritura de bean más acotada no encaje mejor."
+      },
+      {
+        "question": "¿Por qué debe usarse `@ConditionalOnMissingBean` con cuidado en la auto-configuración personalizada?",
+        "hint": "Ve las definiciones de bean procesadas hasta ese momento, así que el orden de la auto-configuración y los tipos de retorno precisos afectan el resultado."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-spring-3",
+    "topic": "spring",
+    "subtopic": "spring-transactions",
+    "difficulty": "SENIOR",
+    "question": "¿Dónde debería estar el límite de una transacción en Spring, y cuándo se justifica `REQUIRES_NEW`?",
+    "shortAnswer": "Coloco la transacción alrededor de un único límite de consistencia de base de datos, normalmente una operación de servicio pública, y mantengo las llamadas remotas lentas fuera cuando es posible. `REQUIRED` se une o crea la transacción habitual. `REQUIRES_NEW` la suspende e inicia una transacción física independiente, así que solo la uso cuando el resultado interno debe confirmarse de forma independiente y ese resultado parcial es aceptable. Necesita otra conexión y puede agotar el pool bajo carga.",
+    "detailedAnswer": "La propagación describe cómo participa un método cuando ya puede existir una transacción:\n\n- `REQUIRED` se une a la transacción actual o crea una. Un ámbito interno que se marca como rollback-only puede provocar `UnexpectedRollbackException` cuando el llamante externo intenta confirmar.\n- `REQUIRES_NEW` suspende la transacción externa y abre una transacción física independiente. Su confirmación sobrevive a un rollback externo, lo cual es útil solo cuando el dominio acepta esa división; por ejemplo, registrar un intento de forma independiente de una operación de negocio fallida. No garantiza que una auditoría sobreviva a un fallo del proceso/base de datos.\n- `NESTED` normalmente usa puntos de guardado (savepoints) de JDBC dentro de una sola transacción física y no equivale a `REQUIRES_NEW`; el soporte depende del gestor de transacciones/recurso.\n- `SUPPORTS`, `MANDATORY`, `NOT_SUPPORTED` y `NEVER` expresan otras restricciones de participación y deben usarse para un límite claro, no como decoración memorizada.\n\nEn el modo proxy por defecto, solo se aplican los aspectos a las llamadas que pasan por el proxy; la auto-invocación no inicia una propagación distinta. Las transacciones imperativas están ligadas al hilo y no fluyen automáticamente hacia un hilo recién creado. Por defecto, las excepciones en tiempo de ejecución y los errores provocan rollback, mientras que las excepciones comprobadas requieren una regla explícita salvo que se hayan cambiado los valores por defecto globales.\n\nMantén la transacción corta. Una llamada a una API remota dentro de ella retiene bloqueos/conexiones y no se vuelve atómica solo por la anotación; los patrones de outbox/saga/idempotencia pueden ser más apropiados.",
+    "keyPoints": [
+      "Los límites de transacción siguen una unidad de consistencia de negocio",
+      "REQUIRES_NEW confirma de forma independiente y cambia la semántica de fallos",
+      "REQUIRES_NEW necesita otra conexión mientras la externa sigue retenida",
+      "El modo proxy por defecto no aplica aspectos a la auto-invocación",
+      "Las llamadas remotas no se vuelven transaccionales gracias a `@Transactional`"
+    ],
+    "redFlags": [
+      "Usar REQUIRES_NEW como solución genérica para problemas de rollback",
+      "Ignorar la inconsistencia de confirmación independiente y el dimensionamiento del pool",
+      "Esperar que la auto-invocación aplique un nuevo modo de propagación",
+      "Mantener abierta una transacción de base de datos durante trabajo de red no acotado"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué REQUIRES_NEW puede agotar un pool de conexiones?",
+        "hint": "La transacción externa mantiene su conexión mientras cada hilo solicita otra para la transacción interna independiente."
+      },
+      {
+        "question": "¿Qué hace rollback por defecto cuando un método transaccional de Spring lanza una excepción comprobada?",
+        "hint": "El comportamiento tradicional por defecto no hace rollback para excepciones comprobadas; configura una regla de rollback o una política global de todas las excepciones cuando ese sea el contrato deseado."
+      },
+      {
+        "question": "¿Cómo publicarías un evento solo después de que se confirme un cambio en la base de datos?",
+        "hint": "Un outbox transaccional es robusto ante caídas; un callback after-commit por sí solo aún tiene una ventana de fallo en la publicación."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferencia desde transacciones gestionadas por el contenedor en Jakarta EE",
+      "description": "La experiencia en producción con CMT incluye propagación al estilo REQUIRED/REQUIRES_NEW y el uso de NOT_SUPPORTED alrededor de la orquestación con sistemas remotos. El comportamiento del proxy de Spring y la configuración de rollback son diferencias específicas del framework."
+    }
+  },
+  {
+    "id": "interview-spring-4",
+    "topic": "spring",
+    "subtopic": "spring-rest",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo diseñas un manejo de errores consistente y seguro para una API HTTP de Spring Boot?",
+    "shortAnswer": "Centralizo el mapeo de transporte con `@RestControllerAdvice` o `ResponseEntityExceptionHandler`, mientras el código de dominio lanza fallos a nivel de dominio en lugar de excepciones HTTP. Cada fallo se mapea a un estado según la semántica de la API y un tipo/código de problema estable y legible por máquina. `ProblemDetail` de Spring admite RFC 9457. Expongo detalle accionable al cliente, mantengo las trazas de pila y los detalles internos en registros seguros, y adjunto un identificador de correlación.",
+    "detailedAnswer": "Un contrato de errores útil tiene dos capas:\n\n1. La capa de dominio/aplicación expresa fallos como no encontrado, transición inválida, conflicto o dependencia no disponible sin conocer los tipos de respuesta del controlador.\n2. Un advice centralizado los mapea a estado HTTP, cabeceras y un cuerpo estable. `ProblemDetail` de Spring puede representar campos de RFC 9457 como `type`, `title`, `status`, `detail` e `instance`, además de extensiones documentadas como violaciones de validación o un ID de traza.\n\nEl estado es contextual:\n- una entrada malformada o una violación de Bean Validation suele mapearse a 400;\n- un recurso faltante, a 404;\n- una actualización que entra en conflicto con el estado actual del recurso puede mapearse a 409;\n- autenticación/autorización a 401/403;\n- un defecto inesperado a 500 con un mensaje genérico al cliente.\n\nNo toda regla de negocio es automáticamente un 409. Define el contrato y haz que los clientes dependan de un tipo/código estable en lugar de analizar texto humano. Registra las excepciones una sola vez en el límite con correlación de solicitud y contexto seguro; evita cuerpos de solicitud sin procesar, credenciales y datos personales. Para sobrecarga transitoria o fallos de dependencias, considera 503 y un `Retry-After` significativo solo cuando la indicación de reintento sea honesta.",
+    "keyPoints": [
+      "Mantener los fallos de dominio independientes de los tipos de transporte HTTP",
+      "Centralizar los mapeos y usar identificadores de problema estables y legibles por máquina",
+      "Elegir los códigos de estado según la semántica HTTP específica",
+      "No exponer trazas de pila ni datos de diagnóstico sensibles",
+      "Probar el estado, el contrato del cuerpo y el tipo de contenido en las rutas de error"
+    ],
+    "redFlags": [
+      "Devolver 500 para todos los fallos",
+      "Devolver directamente un mensaje de excepción o una traza de pila",
+      "Obligar a los clientes a analizar texto humano localizado",
+      "Capturar la misma excepción de forma independiente en cada controlador"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué debería contener una respuesta de error de validación?",
+        "hint": "Un tipo de problema estable más violaciones estructuradas como campo/ruta y código; evitar exponer secretos rechazados o depender solo de prosa."
+      },
+      {
+        "question": "¿Cuándo es más apropiado 409 Conflict que 400?",
+        "hint": "Cuando la representación se entiende pero no puede aplicarse porque entra en conflicto con el estado actual, como una versión obsoleta o una transición de estado inválida."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferencia desde contratos de error HTTP en producción",
+      "description": "La experiencia en producción con el mapeo de errores de JAX-RS y las excepciones de dominio se traslada a la selección de estados, los payloads seguros y el manejo centralizado. ProblemDetail de Spring y el comportamiento del controller-advice son la capa específica del framework."
+    }
+  },
+  {
+    "id": "interview-spring-5",
+    "topic": "spring",
+    "subtopic": "spring-data",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo diagnosticas un problema N+1 en Spring Data JPA y eliges una solución que aún pagine correctamente?",
+    "clarifyingQuestions": [
+      "¿Qué llamada al repositorio y qué acceso a la relación generan las consultas repetidas?",
+      "¿El endpoint devuelve entidades, proyecciones o un DTO paginado?",
+      "¿Cuántas sentencias SQL y filas de resultado produce una solicitud?"
+    ],
+    "shortAnswer": "Confirmo el N+1 a partir del número de consultas SQL de una solicitud, en lugar de cambiar los mapeos a ciegas. Para un grafo to-one acotado, puedo usar un entity graph o un fetch join; para datos to-many paginados, suelo paginar primero los IDs del padre y luego cargar los hijos por separado, usar batch fetching, o devolver una proyección. Comparo el número de consultas y la multiplicación de filas porque un único fetch join gigante puede ser más lento o hacer incorrecta la paginación.",
+    "detailedAnswer": "Spring Data ofrece varias herramientas de plan de carga, cada una con límites:\n\n- `@EntityGraph` o `join fetch` de JPQL pueden cargar las asociaciones requeridas para un método de repositorio en particular.\n- El batch fetching reduce las cargas perezosas repetidas sin unir a cada hijo en un solo resultado.\n- Las proyecciones DTO de interfaz/clase seleccionan los campos necesarios para un endpoint de lectura y evitan exponer entidades gestionadas.\n- Una consulta en dos pasos puede obtener una página de IDs del padre y luego cargar las relaciones necesarias para esos IDs.\n\nUn fetch join de colección con `Pageable` es arriesgado porque las filas SQL representan pares padre-hijo, no padres distintos. Según la consulta/proveedor, la paginación puede realizarse en memoria o producir una página inesperada. Obtener varias colecciones to-many puede multiplicar las filas y puede alcanzar límites específicos del proveedor sobre múltiples "bags".\n\nLa detección debe usar conteos de SQL/consultas en una prueba o en una traza de APM. Añade una prueba de regresión de integración que ejecute el patrón de acceso y, cuando sea práctico, verifique un presupuesto de número de consultas o al menos confirme el plan de carga previsto. Evita establecer las relaciones globalmente como EAGER; se aplica a casos de uso no relacionados y puede crear un problema de rendimiento distinto.",
+    "keyPoints": [
+      "Confirmar el patrón de acceso repetido antes de cambiar los mapeos",
+      "Los entity graphs y los fetch joins son herramientas por caso de uso",
+      "Los fetch joins to-many necesitan cuidado especial con Pageable",
+      "El batching, las proyecciones y la carga en dos pasos preservan conjuntos de resultados acotados",
+      "Medir las filas de resultado y la memoria además del número de consultas"
+    ],
+    "redFlags": [
+      "Cambiar todas las relaciones a EAGER",
+      "Aplicar fetch join a varias colecciones sin medir el crecimiento de filas",
+      "Combinar un fetch join to-many con paginación sin verificar el SQL generado",
+      "Afirmar que el N+1 está resuelto solo porque una traza se volvió más rápida"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué `join fetch` más `Pageable` puede ser incorrecto o ineficiente?",
+        "hint": "El límite SQL aplica a las filas unidas en lugar de a las entidades padre distintas, así que los proveedores pueden advertir, paginar en memoria o producir páginas sorprendentes."
+      },
+      {
+        "question": "¿Cómo evitarías que este error de rendimiento regrese?",
+        "hint": "Añadir una prueba de integración para la ruta de acceso real, observar el número/forma de las consultas, y mantener alertas o paneles de APM para la latencia del endpoint y las llamadas a la base de datos."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferencia desde trabajo de rendimiento en Hibernate/JPA",
+      "description": "Para cerca de 26,705 registros de matrícula en un período, un listado generaba aproximadamente 48,000 consultas de relación. Las proyecciones, la paginación y la reestructuración de consultas lo redujeron a cerca de 10 consultas y mejoraron la latencia de aproximadamente 16 minutos a unos 2 segundos. El diagnóstico se transfiere directamente; las anotaciones de Spring Data son la interfaz específica del framework."
+    }
+  },
+  {
+    "id": "interview-spring-6",
+    "topic": "spring",
+    "subtopic": "spring-testing",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cuándo usas una prueba unitaria simple, una porción (slice) de prueba de Spring y `@SpringBootTest`?",
+    "shortAnswer": "Uso JUnit/Mockito simple para lógica de negocio que no necesita comportamiento del contenedor. Una porción como `@WebMvcTest` o `@DataJpaTest` carga una parte enfocada de Spring para verificar el cableado de MVC/seguridad o de persistencia. `@SpringBootTest` es para un número menor de flujos que necesitan el contexto completo de la aplicación. Elijo el alcance más estrecho que pueda revelar el fallo y uso el motor de base de datos de producción cuando el comportamiento de la base de datos importa.",
+    "detailedAnswer": "Las anotaciones responden a preguntas distintas:\n\n- **Prueba unitaria simple**: instanciar la clase y proporcionar fakes/mocks. Ideal para pruebas rápidas de política y transformación; cargar Spring aquí añade tiempo sin aportar confianza.\n- **`@WebMvcTest`**: infraestructura MVC enfocada, como controladores, serialización, validación y seguridad web configurada. Los servicios colaboradores normalmente se proporcionan como dobles de prueba. No demuestra el comportamiento del repositorio/base de datos.\n- **`@DataJpaTest`**: repositorios, mapeos y comportamiento de persistencia enfocados. Configura un contenedor real de PostgreSQL cuando el dialecto, el SQL nativo o las migraciones importan; una base de datos embebida no es intrínsecamente incorrecta para pruebas agnósticas de la base de datos, pero no puede validar comportamiento específico de PostgreSQL.\n- **`@SpringBootTest`**: configuración completa de la aplicación, útil para integración selectiva entre capas o comprobaciones de arranque. Es más lenta, y una prueba de carga de contexto exitosa por sí sola demuestra poco.\n\nTestcontainers puede proporcionar infraestructura controlada, mientras que las conexiones de servicio de Spring Boot pueden simplificar propiedades de conexión dinámicas. El aislamiento de estado aún requiere diseño. El rollback transaccional de las pruebas puede no cubrir trabajo realizado en otro hilo o a través de una solicitud real al servidor que use otra transacción.\n\nEvita reglas fijas de porcentaje de pruebas. Deja que el riesgo determine el alcance, y mantén los fallos diagnosticables no usando el contexto completo para cada caso.",
+    "keyPoints": [
+      "Las pruebas unitarias simples no necesitan un contexto de Spring",
+      "Las porciones (slices) verifican un límite del framework enfocado",
+      "SpringBootTest verifica interacciones selectas de contexto completo",
+      "Usar el motor de base de datos real para afirmaciones específicas del motor",
+      "Las anotaciones de prueba transaccionales no hacen rollback de cada efecto entre hilos/servidores"
+    ],
+    "redFlags": [
+      "Usar SpringBootTest para cada regla a nivel unitario",
+      "Suponer que WebMvcTest demuestra el comportamiento del servicio o la persistencia",
+      "Suponer que una base de datos embebida es idéntica a PostgreSQL",
+      "Depender del rollback sin entender los límites de transacción/hilo"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué te da un WebMvcTest que no te da una prueba unitaria directa del controlador?",
+        "hint": "Mapeo real de solicitudes MVC, conversión de argumentos, validación, serialización y comportamiento configurado de filtros/seguridad dentro de la porción."
+      },
+      {
+        "question": "¿Cuándo puede una prueba de integración dejar datos atrás a pesar de `@Transactional`?",
+        "hint": "Cuando el trabajo de la aplicación se ejecuta en otra transacción o hilo, como una solicitud HTTP real al servidor o un procesamiento asíncrono."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferencia desde pruebas de integración con JUnit, Mockito y CDI",
+      "description": "Las pruebas en producción separan las pruebas unitarias de negocio simples, las pruebas de cableado CDI y las pruebas de consultas respaldadas por PostgreSQL. Las porciones de Spring y las anotaciones de contexto completo aplican la misma decisión de alcance mediante herramientas específicas de Spring."
+    }
+  },
+  {
+    "id": "interview-spring-7",
+    "topic": "spring",
+    "subtopic": "spring-config",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo haces que la configuración de Spring Boot sea segura y predecible entre entornos?",
+    "shortAnswer": "Mantengo los valores por defecto no secretos junto a la aplicación, vinculo los ajustes relacionados en `@ConfigurationProperties` validados, y proporciono los valores específicos de cada entorno a través de la plataforma de despliegue. No resumo la precedencia de Spring como una regla de cuatro elementos: tiene un orden de fuentes de propiedades documentado, y la línea de comandos, el sistema, el entorno y las fuentes de datos de configuración pueden sobrescribirse entre sí. Pruebo la configuración efectiva y gestiono los secretos con un mecanismo de secretos dedicado y un plan de rotación.",
+    "detailedAnswer": "Un enfoque robusto separa la propiedad y valida el resultado final:\n\n- Mantener valores por defecto seguros y portables en la configuración empaquetada. Usar documentos específicos de perfil solo para grupos coherentes de ajustes, no como un almacén de secretos ni una copia de cada entorno.\n- Vincular ajustes estructurados con `@ConfigurationProperties` y Bean Validation, de modo que una URL faltante, una duración inválida o un tamaño de pool negativo hagan fallar el arranque con un mensaje útil.\n- Seguir el orden de precedencia de fuentes de propiedades documentado por Spring Boot. Los argumentos de línea de comandos tienen alta precedencia sobre los datos de configuración, mientras que las propiedades del sistema y las variables de entorno pueden sobrescribir los archivos empaquetados; las pruebas y las herramientas de desarrollo añaden otras fuentes. Diagnosticar el origen efectivo en lugar de depender de una lista simplificada de memoria.\n- Usar ConfigMaps de Kubernetes o un servicio de configuración para la configuración ordinaria, y un gestor de secretos/Secret de la plataforma con privilegio mínimo para las credenciales. Un Secret de Kubernetes no está cifrado solo porque esté codificado en base64.\n- Decidir si los cambios requieren reinicio, actualización del contexto o consulta dinámica. Las variables de entorno no se actualizan dentro de un proceso en ejecución; los archivos montados pueden actualizarse, pero la aplicación debe recargarlos de forma segura.\n- Mantener las diferencias de entorno inmutables fuera del artefacto y promover el mismo digest de artefacto entre etapas.\n\nLos perfiles no sustituyen las pruebas de combinaciones. Añade pruebas de arranque/contrato para la configuración de producción requerida y expón solo metadatos de diagnóstico seguros.",
+    "keyPoints": [
+      "Usar propiedades de configuración tipadas y validadas",
+      "Confiar en la precedencia de fuentes de propiedades documentada, no en una lista simplificada",
+      "Separar la configuración ordinaria de la gestión de secretos",
+      "Definir el comportamiento de reinicio o recarga para los valores rotados",
+      "Promover el mismo artefacto con ajustes de entorno externalizados"
+    ],
+    "redFlags": [
+      "Subir credenciales en archivos de perfil",
+      "Usar búsquedas de cadenas sin validar en todo el código de negocio",
+      "Suponer que las variables de entorno modificadas actualizan una JVM en ejecución",
+      "Usar perfiles para ocultar combinaciones no probadas y conflictos de precedencia"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo averiguas qué fuente de propiedades proporcionó un valor inesperado?",
+        "hint": "Usar diagnósticos de configuración seguros/información de origen de Actuator en un entorno protegido, e inspeccionar las entradas de despliegue; no exponer valores secretos."
+      },
+      {
+        "question": "¿Puede rotar un Secret de Kubernetes sin reiniciar la aplicación?",
+        "hint": "Depende de la entrega: las variables de entorno requieren reinicio, el contenido montado puede actualizarse, y la aplicación/cliente debe admitir una recarga segura o la renovación de arrendamiento."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferencia desde MicroProfile Config y OKD",
+      "description": "Los despliegues en producción combinan valores por defecto seguros empaquetados con configuración de entorno proporcionada por OKD. Spring Boot añade su propio modelo de vinculación y precedencia, que debe aprenderse y probarse de forma explícita."
+    }
+  },
+  {
+    "id": "interview-spring-8",
+    "topic": "spring",
+    "subtopic": "spring-actuator",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo expondrías Spring Boot Actuator de forma segura y lo usarías para la salud y observabilidad en Kubernetes?",
+    "shortAnswer": "Expongo solo los endpoints que operaciones realmente necesita, los protejo mediante política de red y autorización, y evito publicar datos sensibles de entorno o de heap. Actuator proporciona grupos de salud para liveness y readiness, y métricas respaldadas por Micrometer. La liveness debería reflejar la recuperabilidad interna, no una dependencia compartida. Las comprobaciones de dependencias en readiness necesitan una decisión a nivel de sistema, porque hacer que todas las réplicas queden not-ready puede eliminar todos los endpoints del Service.",
+    "detailedAnswer": "Los endpoints de Actuator son APIs operativas, no paneles públicos automáticos. Por defecto, Spring Boot solo expone health por HTTP/JMX; los demás endpoints deben habilitarse/exponerse de forma deliberada y protegerse. Definir un `SecurityFilterChain` personalizado también significa que la aplicación es dueña de las reglas de acceso a Actuator. Endpoints como `env`, `configprops`, los loggers y el heap dump pueden revelar o alterar estado sensible incluso cuando algunos valores están saneados.\n\nPara Kubernetes, Boot expone grupos de salud como `/actuator/health/liveness` y `/actuator/health/readiness` a partir del estado de disponibilidad de la aplicación. La liveness no debería depender de una base de datos externa: el reinicio no puede repararla y los reinicios simultáneos amplifican el fallo. Boot no añade indicadores de salud externos a readiness por defecto. Añade una dependencia solo después de decidir que una instancia con esa dependencia no disponible debería dejar de recibir tráfico; de lo contrario, un fallo compartido puede dejar not-ready a todos los endpoints.\n\nSi la gestión (management) se ejecuta en un puerto/contexto separado, su prueba (probe) puede tener éxito mientras el conector web principal está roto. Exponer rutas de prueba adicionales en el puerto principal del servidor puede probar la misma infraestructura.\n\nLas métricas usan Micrometer y pueden exportarse a un sistema de monitoreo, donde las distribuciones de latencia de las solicitudes, los errores, la JVM/GC, los pools y las señales de negocio necesitan etiquetas útiles sin cardinalidad ilimitada. La salud indica el estado de servicio actual; las métricas y alertas explican las tendencias y la degradación. No incluyas secretos, IDs de usuario ni valores por solicitud como etiquetas de métrica.",
+    "keyPoints": [
+      "Exponer y autorizar solo los endpoints de Actuator necesarios",
+      "La liveness representa la recuperabilidad interna, no la salud de una dependencia compartida",
+      "Las comprobaciones de dependencias en readiness pueden eliminar todas las réplicas del tráfico",
+      "Probar la ruta de servicio principal cuando un puerto de gestión separado podría ocultar un fallo",
+      "Controlar la cardinalidad de las etiquetas de métrica y los datos sensibles"
+    ],
+    "redFlags": [
+      "Exponer todos los endpoints de Actuator públicamente",
+      "Añadir una base de datos compartida a la liveness",
+      "Suponer que el puerto de gestión demuestra que el puerto HTTP principal está sano",
+      "Usar IDs de usuario, URLs con identificadores o IDs de solicitud como etiquetas de métrica"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué Spring Boot omite indicadores de dependencias adicionales de readiness por defecto?",
+        "hint": "El fallo de una dependencia compartida podría dejar not-ready a todas las instancias de la aplicación y eliminar todos los destinos de enrutamiento; incluirla es una elección específica del sistema."
+      },
+      {
+        "question": "¿Qué endpoints de Actuator expondrías a internet público?",
+        "hint": "Normalmente ninguno directamente; incluso el detalle de salud debería minimizarse y el acceso enrutarse a través de los controles internos de prueba/monitoreo de la plataforma."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferencia desde MicroProfile Health en OKD",
+      "description": "Los endpoints de salud en producción distinguen la liveness de la aplicación de la readiness para el tráfico en OKD. Los grupos de salud de Actuator y Micrometer son la implementación específica de Spring que hay que validar."
+    }
+  }
+]

@@ -1,0 +1,427 @@
+[
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Strategy Pattern",
+    "question": "You need to calculate delivery pricing. Standard deliveries use flat rate, express uses distance-based, same-day uses time-window surcharges. New pricing models are added every quarter. How do you design this?",
+    "options": [
+      {
+        "label": "A) switch/case in PricingService for each delivery type",
+        "description": "One method with conditions per type, updated when new types arrive."
+      },
+      {
+        "label": "B) Strategy pattern \u2014 PricingStrategy interface with implementations per type",
+        "description": "Each pricing model is a class. New model = new class, no modification."
+      },
+      {
+        "label": "C) Database-driven rules engine with configurable formulas",
+        "description": "Store pricing rules in DB, evaluate dynamically at runtime."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Strategy pattern is ideal here:\n\n```java\npublic interface PricingStrategy {\n    BigDecimal calculate(Delivery delivery);\n}\n\n@Component(\"STANDARD\") class FlatRatePricing implements PricingStrategy { ... }\n@Component(\"EXPRESS\") class DistancePricing implements PricingStrategy { ... }\n@Component(\"SAME_DAY\") class TimeSurchargePricing implements PricingStrategy { ... }\n\n@Service\npublic class PricingService {\n    private final Map<String, PricingStrategy> strategies;\n    public BigDecimal price(Delivery d) {\n        return strategies.get(d.getType().name()).calculate(d);\n    }\n}\n```\n\nNew pricing model every quarter = one new class. Open/Closed principle satisfied.\nOption C is over-engineering for 3-5 pricing types.",
+    "tags": [
+      "strategy",
+      "open-closed",
+      "pricing"
+    ],
+    "topic": "patterns",
+    "id": "patterns-strategy-pattern-01"
+  },
+  {
+    "type": "CODE_REFACTOR",
+    "difficulty": "inter",
+    "subtopic": "Strategy Pattern",
+    "question": "Refactor this notification sender to use Strategy:",
+    "code": "public class NotificationService {\n    public void notify(Delivery delivery, String channel) {\n        if (channel.equals(\"EMAIL\")) {\n            String body = \"Your delivery \" + delivery.getId() + \" is on the way\";\n            emailClient.send(delivery.getCustomerEmail(), \"Delivery Update\", body);\n        } else if (channel.equals(\"SMS\")) {\n            String msg = \"Delivery \" + delivery.getId() + \" arriving in \" + delivery.getEta() + \" min\";\n            smsClient.send(delivery.getCustomerPhone(), msg);\n        } else if (channel.equals(\"PUSH\")) {\n            pushClient.send(delivery.getCustomerId(), \"Delivery arriving!\", delivery.getEta());\n        } else if (channel.equals(\"WEBHOOK\")) {\n            webhookClient.post(delivery.getCallbackUrl(), toJson(delivery));\n        }\n    }\n}",
+    "tags": [
+      "strategy",
+      "refactoring",
+      "open-closed"
+    ],
+    "topic": "patterns",
+    "id": "patterns-strategy-pattern-02",
+    "answer": "**Refactored:**\n```java\npublic interface NotificationChannel {\n    String channelName();\n    void send(Delivery delivery);\n}\n\n@Component class EmailNotification implements NotificationChannel { ... }\n@Component class SmsNotification implements NotificationChannel { ... }\n@Component class PushNotification implements NotificationChannel { ... }\n@Component class WebhookNotification implements NotificationChannel { ... }\n\n@Service\npublic class NotificationService {\n    private final Map<String, NotificationChannel> channels;\n\n    public NotificationService(List<NotificationChannel> all) {\n        this.channels = all.stream()\n            .collect(Collectors.toMap(NotificationChannel::channelName, c -> c));\n    }\n\n    public void notify(Delivery delivery, String channel) {\n        channels.get(channel).send(delivery);\n    }\n}\n```\n\n**Problems:** Every new channel requires modifying this class (violates Open/Closed); Mixed responsibilities: message formatting + sending in one method; Hard to test individual channels in isolation; No way to add channel-specific retry/error handling",
+    "refactoredCode": "public interface NotificationChannel {\n    String channelName();\n    void send(Delivery delivery);\n}\n\n@Component class EmailNotification implements NotificationChannel { ... }\n@Component class SmsNotification implements NotificationChannel { ... }\n@Component class PushNotification implements NotificationChannel { ... }\n@Component class WebhookNotification implements NotificationChannel { ... }\n\n@Service\npublic class NotificationService {\n    private final Map<String, NotificationChannel> channels;\n\n    public NotificationService(List<NotificationChannel> all) {\n        this.channels = all.stream()\n            .collect(Collectors.toMap(NotificationChannel::channelName, c -> c));\n    }\n\n    public void notify(Delivery delivery, String channel) {\n        channels.get(channel).send(delivery);\n    }\n}",
+    "problemsToIdentify": [
+      "Every new channel requires modifying this class (violates Open/Closed)",
+      "Mixed responsibilities: message formatting + sending in one method",
+      "Hard to test individual channels in isolation",
+      "No way to add channel-specific retry/error handling"
+    ]
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Factory Pattern",
+    "question": "When would you use Factory Method vs Abstract Factory vs simple static factory?",
+    "modelAnswer": "**Static factory method** (simplest \u2014 most common in practice):\n```java\n// Instead of constructors with unclear intent\nDelivery delivery = Delivery.planned(driverId, route);\nDelivery delivery = Delivery.fromRequest(createRequest);\n```\nUse when: creation logic is simple, just needs a readable name.\n\n**Factory Method** (one product, subclass decides which):\n```java\n// Abstract creator\nabstract class NotificationFactory {\n    abstract Notification createNotification(DeliveryEvent event);\n}\n// Concrete creators\nclass UrgentNotificationFactory extends NotificationFactory { ... }\nclass StandardNotificationFactory extends NotificationFactory { ... }\n```\nUse when: framework where subclasses determine which product to create.\n\n**Abstract Factory** (family of related products):\n```java\ninterface LogisticsUIFactory {\n    Button createButton();\n    Table createTable();\n    Form createForm();\n}\nclass DesktopLogisticsUI implements LogisticsUIFactory { ... }\nclass MobileLogisticsUI implements LogisticsUIFactory { ... }\n```\nUse when: creating families of objects that must be used together.\n\n**In practice at REWE:** 90% of the time you need a static factory or a simple @Component factory class. Gang-of-Four Factory Method and Abstract Factory are rare in microservices.",
+    "tags": [
+      "factory",
+      "creation-patterns",
+      "pragmatism"
+    ],
+    "topic": "patterns",
+    "id": "patterns-factory-pattern-03"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "Builder Pattern",
+    "mission": "What does this print?",
+    "code": "Delivery d = Delivery.builder()\n    .id(1L)\n    .status(DeliveryStatus.PLANNED)\n    .driverId(\"D-42\")\n    .stops(List.of(\"Warehouse\", \"Store A\", \"Store B\"))\n    .build();\n\nSystem.out.println(d.getStops().size());\nSystem.out.println(d.getStatus());",
+    "choices": [
+      "3\\nPLANNED",
+      "0\\nPLANNED",
+      "3\\nnull",
+      "Compilation error"
+    ],
+    "answer": "3\\nPLANNED",
+    "explain": "The builder sets all fields. stops has 3 elements from List.of(). status is explicitly set to PLANNED. Builder creates the object with all values provided.",
+    "topic": "patterns",
+    "id": "patterns-builder-pattern-04"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Observer Pattern",
+    "question": "Compare Spring @EventListener, CDI Events (@Observes), and Kafka events. When do you use each?",
+    "modelAnswer": "**Spring @EventListener (in-process, synchronous by default):**\n```java\n// Same JVM, same transaction context\n@EventListener\npublic void onDeliveryCompleted(DeliveryCompletedEvent e) { ... }\n\n// Can be async with @Async\n@Async @EventListener\npublic void onDeliveryCompleted(DeliveryCompletedEvent e) { ... }\n```\nUse when: decoupling within same service, same deployment unit.\n\n**CDI @Observes (Java EE equivalent):**\n```java\npublic void onDeliveryCompleted(@Observes DeliveryCompletedEvent e) { ... }\n// @Observes(during = AFTER_SUCCESS) \u2014 after TX commits\n```\nSame concept, different annotation. Both are in-process.\n\n**Kafka (inter-service, persistent, replayable):**\n```java\n@KafkaListener(topics = \"delivery-completed\")\npublic void handle(DeliveryCompletedEvent e) { ... }\n```\nUse when: cross-service communication, independent failure domains, replay needed.\n\n**Decision matrix:**\n| Need | Spring Event | Kafka |\n|------|:---:|:---:|\n| Same service | \u2705 | \u274c overkill |\n| Cross-service | \u274c | \u2705 |\n| Replay/audit | \u274c | \u2705 |\n| Must not lose | \u274c (in-memory) | \u2705 (persistent) |\n| Transactional | \u2705 (same TX) | \u274c (separate TX) |",
+    "tags": [
+      "observer",
+      "events",
+      "spring-vs-kafka"
+    ],
+    "topic": "patterns",
+    "id": "patterns-observer-pattern-05"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "senior",
+    "subtopic": "Template Method",
+    "question": "Multiple delivery types (Standard, Express, Frozen) share the same flow: validate \u2192 assign driver \u2192 optimize route \u2192 dispatch. But each type has different validation rules and route constraints. How do you design this?",
+    "options": [
+      {
+        "label": "A) Template Method \u2014 abstract base class defines flow, subclasses override specific steps",
+        "description": "BaseDeliveryProcessor.process() calls validate(), assignDriver(), optimizeRoute(), dispatch(). Subclasses override validate() and optimizeRoute()."
+      },
+      {
+        "label": "B) Strategy \u2014 inject different validators and route optimizers",
+        "description": "DeliveryProcessor composed with injected ValidationStrategy and RouteStrategy."
+      },
+      {
+        "label": "C) Chain of Responsibility \u2014 each step is a handler in a chain",
+        "description": "ValidateHandler \u2192 AssignHandler \u2192 RouteHandler \u2192 DispatchHandler pipeline."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Option B (Strategy/Composition) is preferred in Spring Boot:\n\nTemplate Method (A) uses inheritance \u2014 each delivery type is a subclass. This creates a rigid hierarchy and makes testing harder (must subclass to test).\n\nStrategy/Composition (B) uses injection \u2014 more flexible:\n```java\n@Service\npublic class DeliveryProcessor {\n    private final Map<DeliveryType, DeliveryValidator> validators;\n    private final Map<DeliveryType, RouteOptimizer> optimizers;\n\n    public void process(Delivery delivery) {\n        validators.get(delivery.getType()).validate(delivery);\n        driverAssigner.assign(delivery); // shared step\n        optimizers.get(delivery.getType()).optimize(delivery);\n        dispatcher.dispatch(delivery); // shared step\n    }\n}\n```\n\nAdvantages over Template Method:\n- No class hierarchy to maintain\n- Each validator/optimizer independently testable\n- Can combine strategies at runtime\n- Spring DI handles wiring naturally",
+    "tags": [
+      "template-method",
+      "strategy",
+      "composition-over-inheritance"
+    ],
+    "topic": "patterns",
+    "id": "patterns-template-method-06"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Decorator Pattern",
+    "question": "How can you add logging, metrics, and retry to a service call without cluttering the business logic?",
+    "modelAnswer": "Decorator pattern \u2014 wrap the same interface with cross-cutting concerns:\n\n```java\npublic interface RouteOptimizer {\n    Route optimize(List<Stop> stops);\n}\n\n// Core implementation\n@Component(\"core\")\nclass GoogleRouteOptimizer implements RouteOptimizer {\n    public Route optimize(List<Stop> stops) {\n        return googleMapsClient.directions(stops);\n    }\n}\n\n// Decorator: adds logging\nclass LoggingRouteOptimizer implements RouteOptimizer {\n    private final RouteOptimizer delegate;\n    public Route optimize(List<Stop> stops) {\n        log.info(\"Optimizing route for {} stops\", stops.size());\n        Route r = delegate.optimize(stops);\n        log.info(\"Route optimized: {} km, {} min\", r.distance(), r.duration());\n        return r;\n    }\n}\n\n// Decorator: adds metrics\nclass MeteredRouteOptimizer implements RouteOptimizer {\n    private final RouteOptimizer delegate;\n    public Route optimize(List<Stop> stops) {\n        var timer = metrics.timer(\"route.optimize\").start();\n        try { return delegate.optimize(stops); }\n        finally { timer.stop(); }\n    }\n}\n```\n\n**In Spring Boot, AOP often replaces manual decorators:**\n```java\n@Around(\"@annotation(Timed)\")\npublic Object timeExecution(ProceedingJoinPoint pjp) throws Throwable {\n    // Same as MeteredRouteOptimizer but declarative\n}\n```\n\nUse explicit decorators when you need fine control. Use AOP for generic cross-cutting.",
+    "tags": [
+      "decorator",
+      "aop",
+      "cross-cutting"
+    ],
+    "topic": "patterns",
+    "id": "patterns-decorator-pattern-07"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Singleton",
+    "question": "How do you create a singleton in Spring Boot? Is the GoF Singleton pattern still relevant?",
+    "options": [
+      {
+        "label": "A) Classic GoF: private constructor + static getInstance() with double-check locking",
+        "description": "Traditional pattern with synchronized access to single instance."
+      },
+      {
+        "label": "B) Spring @Service/@Component \u2014 singleton by default",
+        "description": "Spring manages lifecycle, creates one instance, injects everywhere."
+      },
+      {
+        "label": "C) Enum singleton: enum with single value INSTANCE",
+        "description": "Josh Bloch's effective Java approach \u2014 serialization-safe, thread-safe."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "In Spring Boot, you NEVER write the GoF Singleton pattern manually:\n\n```java\n// \u2705 Spring singleton (default scope)\n@Service\npublic class DeliveryService {\n    // ONE instance created by Spring, shared across all injection points\n    // Thread-safe as long as no mutable instance fields\n}\n\n// \u274c Never do this in Spring applications\npublic class DeliveryService {\n    private static DeliveryService INSTANCE;\n    private DeliveryService() {}\n    public static synchronized DeliveryService getInstance() { ... }\n}\n```\n\n**Why Spring's approach wins:**\n- Lifecycle managed by container (creation, destruction, proxying)\n- Easily replaceable in tests (mock injection)\n- No static state (cleaner)\n- Supports scopes (change from singleton to prototype if needed)\n\n**When GoF/Enum singleton still applies:**\n- Utility classes outside Spring context (rare)\n- Library code that can't depend on Spring",
+    "tags": [
+      "singleton",
+      "spring",
+      "di"
+    ],
+    "topic": "patterns",
+    "id": "patterns-singleton-08"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Anti-patterns",
+    "question": "What are the most common design pattern anti-patterns you've seen in enterprise Java?",
+    "modelAnswer": "**1. Pattern Overuse (Patternitis):**\nCreating Strategy + Factory + Builder for a simple if/else with 2 cases that will never grow. 3 classes where 5 lines of code suffice.\n\n**2. God Factory:**\nOne factory that creates EVERYTHING \u2014 becomes a dependency magnet. Fix: multiple focused factories or just var Spring DI handle it.\n\n**3. Inheritance for code reuse (not-a-pattern):**\nBaseService, BaseRepository, AbstractController \u2014 using inheritance as code-sharing mechanism instead of composition.\n\n**4. Observer spaghetti:**\n20 event listeners triggered by one event, each triggering sub-events, creating untraceable execution flows. Fix: limit event chains to 2 levels max.\n\n**5. Premature abstraction:**\nInterface with single implementation \"because maybe someday.\" YAGNI \u2014 create the interface when the second implementation appears.\n\n**My rules:**\n- Pattern must solve a CURRENT problem (not future imagined one)\n- If the team needs documentation to understand it \u2192 too complex\n- Prefer simple composition over named patterns\n- \"I used a pattern\" is never the goal \u2014 \"I solved the problem clearly\" is",
+    "tags": [
+      "anti-patterns",
+      "pragmatism",
+      "over-engineering"
+    ],
+    "topic": "patterns",
+    "id": "patterns-anti-patterns-09"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Repository Pattern",
+    "question": "Is Spring Data's Repository a design pattern? How does it relate to the GoF patterns?",
+    "modelAnswer": "**Repository pattern (DDD, not GoF):**\nAn abstraction over data access that presents a collection-like interface to the domain layer. The domain doesn't know about SQL, JPA, or the database.\n\n```java\n// The pattern: domain-oriented interface\npublic interface DeliveryRepository {\n    Optional<Delivery> findById(Long id);\n    List<Delivery> findActiveByDriver(Long driverId);\n    void save(Delivery delivery);\n}\n\n// Spring Data JPA implements it at runtime!\npublic interface DeliveryRepository extends JpaRepository<Delivery, Long> {\n    List<Delivery> findByDriverIdAndStatus(Long driverId, DeliveryStatus status);\n}\n```\n\n**How it relates to GoF:**\n- It's a specialized **Facade** (hides JPA/SQL complexity)\n- Uses **Template Method** internally (Spring implements query generation)\n- Combined with **Strategy** when you have multiple data sources\n\n**When to add custom implementation:**\n```java\npublic interface DeliveryRepositoryCustom {\n    List<DeliveryDTO> searchWithComplexFilters(SearchCriteria criteria);\n}\n\n@Repository\npublic class DeliveryRepositoryImpl implements DeliveryRepositoryCustom {\n    @PersistenceContext private EntityManager em;\n    // Complex Criteria API or native SQL here\n}\n```",
+    "tags": [
+      "repository",
+      "ddd",
+      "spring-data"
+    ],
+    "topic": "patterns",
+    "id": "patterns-repository-pattern-10"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "senior",
+    "subtopic": "Chain of Responsibility",
+    "question": "Delivery validation has 8 rules: check driver availability, check vehicle capacity, check route feasibility, check time window, check customer blacklist, check payment, check regulatory compliance, check weather. How do you organize these?",
+    "options": [
+      {
+        "label": "A) One validate() method with 8 if-checks sequentially",
+        "description": "Single method, returns first error found."
+      },
+      {
+        "label": "B) Chain of Responsibility \u2014 each rule is a Validator, executed in sequence",
+        "description": "List of validators, each can pass or reject. Collect all errors."
+      },
+      {
+        "label": "C) Specification pattern \u2014 compose boolean predicates",
+        "description": "Each rule is a Specification, combined with and/or, evaluated as one."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Chain of Responsibility (B) scales best for 8+ independent rules:\n\n```java\npublic interface DeliveryValidator {\n    ValidationResult validate(Delivery delivery);\n    int order(); // execution priority\n}\n\n@Component class DriverAvailabilityValidator implements DeliveryValidator { ... }\n@Component class VehicleCapacityValidator implements DeliveryValidator { ... }\n@Component class RouteValidator implements DeliveryValidator { ... }\n// ... one class per rule\n\n@Service\npublic class DeliveryValidationChain {\n    private final List<DeliveryValidator> validators;\n\n    public DeliveryValidationChain(List<DeliveryValidator> validators) {\n        this.validators = validators.stream()\n            .sorted(Comparator.comparingInt(DeliveryValidator::order))\n            .toList();\n    }\n\n    public ValidationResult validateAll(Delivery delivery) {\n        return validators.stream()\n            .map(v -> v.validate(delivery))\n            .filter(ValidationResult::hasErrors)\n            .findFirst()  // fail-fast\n            .orElse(ValidationResult.ok());\n    }\n}\n```\n\nAdding rule #9 = one new class. Each rule independently testable. Order configurable.",
+    "tags": [
+      "chain-of-responsibility",
+      "validation",
+      "scalability"
+    ],
+    "topic": "patterns",
+    "id": "patterns-chain-of-responsibility-11"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Adapter Pattern",
+    "question": "You need to integrate with a third-party route optimization API that has a completely different interface than what your service expects. How do you handle this?",
+    "modelAnswer": "Adapter pattern \u2014 translate between incompatible interfaces:\n\n```java\n// Your domain interface (what your service expects)\npublic interface RouteOptimizer {\n    Route optimize(List<Stop> stops, VehicleType vehicle);\n}\n\n// Third-party client (what the external API offers)\npublic class ExternalRoutingClient {\n    public ExternalRouteResponse calculateRoute(\n        List<ExternalWaypoint> waypoints, String vehicleClass, String apiKey) { ... }\n}\n\n// Adapter: translates your interface \u2192 their interface\n@Component\npublic class ExternalRouteAdapter implements RouteOptimizer {\n\n    private final ExternalRoutingClient client;\n    private final String apiKey;\n\n    public Route optimize(List<Stop> stops, VehicleType vehicle) {\n        // Translate input\n        List<ExternalWaypoint> waypoints = stops.stream()\n            .map(s -> new ExternalWaypoint(s.getLat(), s.getLng(), s.getName()))\n            .toList();\n        String vehicleClass = mapVehicleType(vehicle);\n\n        // Call external\n        ExternalRouteResponse response = client.calculateRoute(waypoints, vehicleClass, apiKey);\n\n        // Translate output\n        return new Route(\n            response.getPoints().stream().map(this::toStop).toList(),\n            response.getTotalDistanceKm(),\n            Duration.ofSeconds(response.getDurationSec())\n        );\n    }\n}\n```\n\n**Benefits:**\n- Your business code never touches the external API's types\n- Switch providers: write a new adapter, same interface\n- Testable: mock the interface, not the HTTP client",
+    "tags": [
+      "adapter",
+      "integration",
+      "clean-architecture"
+    ],
+    "topic": "patterns",
+    "id": "patterns-adapter-pattern-12"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "CQRS light",
+    "question": "The delivery-service has complex write operations (validation, events, state machine) but simple read queries (list, filter, sort). A colleague suggests CQRS. Is it worth it?",
+    "modelAnswer": "**CQRS (Command Query Responsibility Segregation):**\nSeparate the write model (commands) from the read model (queries).\n\n**Full CQRS (separate databases):**\n```\nCommands \u2192 Write DB (normalized, consistent)\nEvents \u2192 Read DB (denormalized, optimized for queries)\n```\nOverkill for most services. Complex sync, eventual consistency.\n\n**CQRS Light (same DB, separate code paths) \u2014 PRAGMATIC:**\n```java\n// Write side: rich domain model, business rules\n@Service class DeliveryCommandService {\n    @Transactional\n    public void dispatch(DispatchCommand cmd) {\n        Delivery d = repo.findById(cmd.id()).orElseThrow();\n        d.dispatch(cmd.driverId()); // domain logic, validation\n        repo.save(d);\n        events.publish(new DeliveryDispatched(d));\n    }\n}\n\n// Read side: simple DTOs, optimized queries\n@Service class DeliveryQueryService {\n    @Transactional(readOnly = true)\n    public Page<DeliveryListDTO> search(DeliveryFilter filter, Pageable page) {\n        return repo.search(filter, page); // direct DTO projection, no domain model\n    }\n}\n```\n\n**For REWE delivery-service:** CQRS Light is the sweet spot.\n- Writes go through domain model (validation, events, state machine)\n- Reads bypass domain model (DTO projections, optimized queries)\n- Same database, same deployment, no sync issues\n- Clear separation of concerns without infrastructure complexity",
+    "tags": [
+      "cqrs",
+      "architecture",
+      "pragmatism"
+    ],
+    "topic": "patterns",
+    "id": "patterns-cqrs-light-13"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "Strategy with Spring DI",
+    "mission": "What does this code print when called with <code>type = \"EXPRESS\"</code>?",
+    "code": "interface PricingStrategy {\n    BigDecimal calculate(int distanceKm);\n    String type();\n}\n\n@Component class StandardPricing implements PricingStrategy {\n    public BigDecimal calculate(int km) { return new BigDecimal(\"5.00\"); }\n    public String type() { return \"STANDARD\"; }\n}\n\n@Component class ExpressPricing implements PricingStrategy {\n    public BigDecimal calculate(int km) { return new BigDecimal(\"5.00\").add(BigDecimal.valueOf(km * 0.5)); }\n    public String type() { return \"EXPRESS\"; }\n}\n\n@Service class PricingService {\n    private final Map<String, PricingStrategy> map;\n    PricingService(List<PricingStrategy> all) {\n        this.map = all.stream().collect(Collectors.toMap(PricingStrategy::type, s -> s));\n    }\n    public void printPrice(String type, int km) {\n        System.out.println(map.get(type).calculate(km));\n    }\n}\n\n// Called with:\npricingService.printPrice(\"EXPRESS\", 20);",
+    "choices": [
+      "5.00",
+      "15.00",
+      "15.0",
+      "10.00"
+    ],
+    "answer": "15.0",
+    "explain": "ExpressPricing: 5.00 + (20 \u00d7 0.5) = 5.00 + 10.0 = 15.0. BigDecimal.valueOf(km * 0.5) creates BigDecimal(\"10.0\") (one decimal place from double). add() produces 15.0. BigDecimal.toString() preserves scale.",
+    "topic": "patterns",
+    "id": "patterns-strategy-with-spring-di-14"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "State Machine",
+    "question": "A delivery has states: PLANNED \u2192 DISPATCHED \u2192 IN_TRANSIT \u2192 DELIVERED (or FAILED from any active state). How do you implement the state machine to prevent invalid transitions?",
+    "modelAnswer": "**Simple state machine in the entity (no framework needed):**\n\n```java\npublic enum DeliveryStatus {\n    PLANNED, DISPATCHED, IN_TRANSIT, DELIVERED, FAILED;\n\n    private static final Map<DeliveryStatus, Set<DeliveryStatus>> TRANSITIONS = Map.of(\n        PLANNED, Set.of(DISPATCHED, FAILED),\n        DISPATCHED, Set.of(IN_TRANSIT, FAILED),\n        IN_TRANSIT, Set.of(DELIVERED, FAILED),\n        DELIVERED, Set.of(),  // terminal\n        FAILED, Set.of()     // terminal\n    );\n\n    public boolean canTransitionTo(DeliveryStatus target) {\n        return TRANSITIONS.getOrDefault(this, Set.of()).contains(target);\n    }\n}\n\n@Entity\npublic class Delivery {\n    @Enumerated(EnumType.STRING)\n    private DeliveryStatus status = DeliveryStatus.PLANNED;\n\n    public void transitionTo(DeliveryStatus newStatus) {\n        if (!status.canTransitionTo(newStatus)) {\n            throw new IllegalStateException(\n                \"Cannot transition from \" + status + \" to \" + newStatus);\n        }\n        this.status = newStatus;\n    }\n\n    public void dispatch() { transitionTo(DeliveryStatus.DISPATCHED); }\n    public void complete() { transitionTo(DeliveryStatus.DELIVERED); }\n    public void fail(String reason) { transitionTo(DeliveryStatus.FAILED); }\n}\n```\n\n**For more complex state machines** (10+ states, conditions, actions):\nConsider Spring State Machine framework. For 5 states like delivery \u2192 keep it simple in the entity.",
+    "tags": [
+      "state-machine",
+      "domain-model",
+      "valid-transitions"
+    ],
+    "topic": "patterns",
+    "id": "patterns-state-machine-15"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Patterns Summary",
+    "question": "If you could only use 5 design patterns for the rest of your career in microservices, which would you choose?",
+    "modelAnswer": "My top 5 for microservices (daily use):\n\n**1. Strategy** \u2014 swappable algorithms, polymorphic dispatch. Used in every service with multiple implementations of an interface (pricing, notifications, validation).\n\n**2. Builder** \u2014 complex object construction. Used for DTOs, test data, configuration objects. Lombok @Builder makes it zero-cost.\n\n**3. Repository** \u2014 data access abstraction. Spring Data gives it for free. Clean boundary between domain and persistence.\n\n**4. Adapter** \u2014 external integration isolation. Every third-party API gets wrapped in an adapter. Internal code never touches external types.\n\n**5. Observer/Event** \u2014 decoupled reactions. Spring @EventListener for in-process, Kafka for cross-service. Core pattern of event-driven architecture.\n\n**Honorable mentions:**\n- Factory (simple static factories, not Abstract Factory)\n- Decorator (cross-cutting concerns, rarely hand-coded with AOP available)\n- Chain of Responsibility (validation pipelines)\n\n**What I almost NEVER use in microservices:**\n- Singleton (Spring handles this)\n- Abstract Factory (too complex for simple services)\n- Visitor (almost never appropriate)\n- Prototype (rarely needed with DI)",
+    "tags": [
+      "summary",
+      "pragmatism",
+      "microservices"
+    ],
+    "topic": "patterns",
+    "id": "patterns-patterns-summary-16"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Builder vs Record",
+    "question": "For a delivery creation request DTO with 6 required fields and 3 optional fields, what approach do you use in modern Java?",
+    "options": [
+      {
+        "label": "A) Java Record with all fields in constructor",
+        "description": "record CreateDeliveryRequest(String driverId, String routeId, ...) {}"
+      },
+      {
+        "label": "B) Class with Builder pattern (Lombok @Builder)",
+        "description": "Class with private constructor + builder for clarity on optional vs required."
+      },
+      {
+        "label": "C) Record + @JsonCreator for optional defaults",
+        "description": "Record with Jackson defaults for optional fields."
+      }
+    ],
+    "bestOption": 2,
+    "explanation": "Option C \u2014 Record with defaults is the modern Java approach for DTOs:\n\n```java\npublic record CreateDeliveryRequest(\n    @NotBlank String driverId,\n    @NotNull String routeId,\n    @NotNull @Future LocalDateTime scheduledAt,\n    @NotNull DeliveryType type,\n    @Size(min = 1) List<StopRequest> stops,\n    @NotBlank String customerId,\n    // Optional with defaults\n    Priority priority,     // nullable = not required\n    String notes,          // nullable\n    Integer maxRetries     // nullable\n) {\n    public CreateDeliveryRequest {\n        if (priority == null) priority = Priority.NORMAL;\n        if (maxRetries == null) maxRetries = 3;\n        if (notes == null) notes = \"\";\n    }\n}\n```\n\n**Why Record over Builder for DTOs:**\n- Immutable by default (thread-safe)\n- Less code (no getters/setters/equals/hashCode)\n- Jackson deserializes directly\n- Bean Validation works on constructor params\n\n**Use Builder when:** 15+ fields, complex construction logic, test data factories.",
+    "tags": [
+      "builder",
+      "records",
+      "modern-java"
+    ],
+    "topic": "patterns",
+    "id": "patterns-builder-vs-record-17"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Facade Pattern",
+    "question": "The delivery dispatch flow involves 5 services: validation, driver assignment, route optimization, notification, and event publishing. How do you simplify this for the controller?",
+    "modelAnswer": "Facade pattern \u2014 one entry point orchestrates multiple subsystems:\n\n```java\n// The Facade \u2014 simple interface for the controller\n@Service\npublic class DeliveryDispatchFacade {\n\n    private final DeliveryValidator validator;\n    private final DriverAssignmentService driverService;\n    private final RouteOptimizer routeOptimizer;\n    private final NotificationService notifier;\n    private final EventPublisher events;\n\n    @Transactional\n    public DispatchResult dispatch(DispatchRequest request) {\n        // Orchestrates 5 services behind one method\n        validator.validateForDispatch(request);\n        Driver driver = driverService.assignBestAvailable(request);\n        Route route = routeOptimizer.optimize(request.getStops(), driver.getVehicle());\n        Delivery delivery = createAndPersist(request, driver, route);\n        notifier.notifyDriver(driver, delivery);\n        events.publish(new DeliveryDispatched(delivery));\n        return DispatchResult.success(delivery);\n    }\n}\n\n// Controller stays thin\n@PostMapping(\"/{id}/dispatch\")\npublic ResponseEntity<DispatchResult> dispatch(@PathVariable Long id) {\n    return ResponseEntity.ok(dispatchFacade.dispatch(new DispatchRequest(id)));\n}\n```\n\n**Facade vs Service:**\nIn practice, most @Service classes in Spring ARE facades \u2014 they orchestrate lower-level components. The pattern name just makes the intent explicit.",
+    "tags": [
+      "facade",
+      "orchestration",
+      "clean-code"
+    ],
+    "topic": "patterns",
+    "id": "patterns-facade-pattern-18"
+  },
+  {
+    "id": "interview-patterns-01",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Pattern Selection",
+    "difficulty": "interview",
+    "question": "When should you use a design pattern?",
+    "interviewerIntent": "Assess pragmatic use of patterns",
+    "answer": "I use a design pattern when it solves a real and recurring design problem.\n\nExamples include duplicated workflows, complex conditionals, interchangeable behaviour or difficult object creation.\n\nI do not apply patterns only because they are well known.\n\nThe pattern should make the design easier to understand and change, not merely add more classes.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-patterns-02",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Template Method",
+    "difficulty": "interview",
+    "question": "Explain the Template Method pattern.",
+    "interviewerIntent": "Check real-world pattern application",
+    "answer": "Template Method is a behavioural pattern that defines the skeleton of an algorithm in a base class.\n\nThe base class controls the overall sequence, while subclasses implement or customise selected steps.\n\nFor a document-generation system, the common flow could be:\n1. Validate the request.\n2. Load business data.\n3. Build the document content.\n4. Generate the file.\n5. Store audit information.\n\nThe base class keeps this sequence consistent, while each document type implements its specific data and content rules.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-patterns-03",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Pattern Selection",
+    "difficulty": "interview",
+    "question": "What is the difference between Template Method and Strategy?",
+    "interviewerIntent": "Distinguish related patterns",
+    "answer": "Template Method uses inheritance. A base class defines the workflow and subclasses customise specific steps.\n\nStrategy uses composition. A class delegates a variable behaviour to an interchangeable object.\n\nI use Template Method when the overall algorithm is stable and only some steps vary.\n\nI use Strategy when complete behaviours need to be changed independently at runtime or without inheritance.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-patterns-04",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Strategy",
+    "difficulty": "interview",
+    "question": "Explain the Strategy pattern.",
+    "interviewerIntent": "Verify Strategy pattern understanding",
+    "answer": "Strategy defines a family of interchangeable algorithms behind a common interface.\n\nFor example, different discount-calculation strategies can implement the same interface.\n\nThe order service selects or receives the appropriate strategy without containing a large conditional statement.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-patterns-05",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Factory",
+    "difficulty": "interview",
+    "question": "Explain the Factory pattern.",
+    "interviewerIntent": "Check Factory usage",
+    "answer": "Factory centralises object creation.\n\nIt is useful when the caller should not know the details required to instantiate a concrete implementation.\n\nFor example, a document-generator factory may return the correct generator based on the requested document type.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-patterns-06",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Builder",
+    "difficulty": "interview",
+    "question": "Explain the Builder pattern.",
+    "interviewerIntent": "Verify Builder understanding",
+    "answer": "Builder helps create complex objects step by step.\n\nIt is useful when an object has many optional fields or when construction should be readable and controlled.\n\nIt can also help create immutable objects.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  }
+]

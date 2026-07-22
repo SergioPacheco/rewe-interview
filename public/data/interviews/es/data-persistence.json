@@ -1,0 +1,507 @@
+[
+  {
+    "id": "interview-sql-1",
+    "topic": "data-persistence",
+    "subtopic": "dp-indexing",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo decides si una consulta necesita un índice y qué debería contener dicho índice?",
+    "shortAnswer": "Comienzo a partir de una consulta medida y su patrón de acceso, no de una regla como 'indexar cada columna del WHERE'. Inspecciono el plan de ejecución, el recuento de filas, la selectividad, los joins y el ordenamiento; luego diseño el índice más pequeño que soporte los predicados importantes. También tengo en cuenta el costo de escritura, el almacenamiento y los índices duplicados, y verifico el resultado con datos representativos.",
+    "detailedAnswer": "Un índice útil se define por la carga de trabajo:\n\n1. Identificar una consulta importante: frecuencia, objetivo de latencia y filas devueltas.\n2. Inspeccionar `EXPLAIN`; usar `EXPLAIN (ANALYZE, BUFFERS)` solo donde la ejecución de la sentencia sea segura.\n3. Alinear el índice con predicados de igualdad/rango, claves de join y cualquier ordenamiento que permita evitar un 'sort' explícito.\n4. Para un árbol B (B-tree) compuesto, las restricciones en las columnas iniciales (leading columns) suelen ser la forma más eficiente de limitar el rango escaneado, aunque se pueden aplicar predicados en columnas posteriores. El PostgreSQL actual puede elegir un 'skip scan' para algunos predicados no iniciales cuando su modelo de costos espera que eso ayude. Verifica la versión y el plan real; 'la columna más selectiva primero' no es una regla universal.\n5. Considerar un índice de cobertura (covering index) con `INCLUDE`, un índice parcial para un subconjunto estable, o un índice de expresión cuando la consulta utiliza la misma expresión.\n6. Medir las lecturas y escrituras después del cambio y eliminar índices redundantes.\n\nUn escaneo secuencial (sequential scan) no es prueba de que falte un índice. PostgreSQL puede preferirlo correctamente para una tabla pequeña, una consulta que devuelve una gran fracción de la tabla, o cuando las lecturas aleatorias al 'heap' costarían más. Un índice se justifica por el plan observado y la carga de trabajo, no solo por el nombre del nodo.",
+    "keyPoints": [
+      "Diseñar índices a partir de patrones de consulta medidos",
+      "Las columnas iniciales suelen importar más, pero las características del planificador deciden el uso",
+      "Un escaneo secuencial puede ser el plan correcto más económico",
+      "Los índices parciales, de expresión y de cobertura resuelven diferentes patrones de acceso",
+      "Cada índice añade costo de escritura, mantenimiento y almacenamiento"
+    ],
+    "redFlags": [
+      "Proponer índices sin ver la consulta o el plan",
+      "Tratar cada escaneo secuencial como un defecto",
+      "Ignorar la amplificación de escritura y los índices redundantes",
+      "Afirmar que una sola regla de ordenamiento de índices compuestos funciona para cada consulta"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuándo es adecuado un índice parcial?",
+        "hint": "Cuando las consultas importantes se dirigen repetidamente a un subconjunto estable y su predicado implica el predicado del índice, como las filas no procesadas."
+      },
+      {
+        "question": "¿Por qué PostgreSQL podría elegir un escaneo secuencial incluso si existe un índice adecuado?",
+        "hint": "La tabla puede ser pequeña o la consulta puede leer suficientes filas como para que la E/S secuencial sea más barata que muchas búsquedas en el índice y en el heap."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Optimización de consultas SGN3",
+      "description": "Se utilizaron trazas de APM y planes de PostgreSQL para optimizar un listado de inscripciones que cubría unos 26,705 registros. La eliminación de N+1, proyecciones, paginación e índices específicos redujeron aproximadamente 48,000 consultas a unas 10, y la latencia de unos 16 minutos a unos 2 segundos."
+    }
+  },
+  {
+    "id": "interview-sql-2",
+    "topic": "data-persistence",
+    "subtopic": "dp-transactions",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo eliges un nivel de aislamiento de transacciones y qué cambia en PostgreSQL?",
+    "shortAnswer": "Elijo el nivel más bajo que preserve el invariante de negocio, luego diseño para conflictos y reintentos. En PostgreSQL, READ COMMITTED otorga a cada sentencia un nuevo snapshot confirmado; REPEATABLE READ mantiene un snapshot de la transacción pero aún puede permitir anomalías de serialización; SERIALIZABLE evita esas anomalías abortando la transacción en conflicto. READ UNCOMMITTED se comporta como READ COMMITTED en PostgreSQL.",
+    "detailedAnswer": "Los nombres de SQL son portables, pero el comportamiento exacto es específico de la base de datos. En PostgreSQL:\n\n- **READ COMMITTED**: cada sentencia ve los datos confirmados antes de que esa sentencia comenzara. Se evitan lecturas sucias (dirty reads), pero dos lecturas en una transacción pueden ver estados confirmados diferentes. Se ajusta a muchas operaciones OLTP cortas cuyo invariante es forzado por restricciones o sentencias atómicas.\n- **REPEATABLE READ**: la transacción lee de un snapshot estable. PostgreSQL también evita lecturas fantasma (phantom reads) en este nivel, pero aún pueden ocurrir anomalías de serialización (como el write skew). Las actualizaciones concurrentes pueden causar fallos que requieren un reintento.\n- **SERIALIZABLE**: las transacciones se comportan como si se hubieran ejecutado en un orden serial. PostgreSQL utiliza Serializable Snapshot Isolation (SSI) y puede abortar una transacción con un fallo de serialización; la aplicación debe reintentar toda la unidad de trabajo.\n- **READ UNCOMMITTED**: PostgreSQL lo trata como READ COMMITTED.\n\nEl aislamiento es solo una herramienta. Las restricciones UNIQUE/CHECK, las actualizaciones atómicas, los bloqueos de fila y el versionado optimista pueden expresar un invariante de forma más directa. Un mayor aislamiento no es automáticamente la respuesta correcta: cambia la contención y el comportamiento de reintentos, por lo que la decisión debe nombrar la anomalía que se quiere evitar.",
+    "keyPoints": [
+      "Elegir el aislamiento a partir de un invariante y una anomalía concretos",
+      "PostgreSQL READ COMMITTED utiliza un snapshot por sentencia",
+      "PostgreSQL REPEATABLE READ evita fantasmas pero no todas las anomalías de serialización",
+      "SERIALIZABLE requiere una estrategia de reintentos",
+      "Restricciones, bloqueos y concurrencia optimista pueden complementar el aislamiento"
+    ],
+    "redFlags": [
+      "Describir niveles de aislamiento sin comportamiento específico de la base de datos",
+      "Usar SERIALIZABLE sin manejar fallos de serialización",
+      "Asumir que el aislamiento alto por sí solo arregla cada condición de carrera",
+      "Mantener una transacción abierta durante llamadas remotas lentas sin justificación"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué debe reintentar una aplicación tras un fallo de serialización?",
+        "hint": "La transacción completa, usando reintentos limitados y usualmente con jitter/backoff; reintentar solo la última sentencia puede violar la decisión original."
+      },
+      {
+        "question": "¿Cuándo sería preferible el bloqueo optimista a SERIALIZABLE?",
+        "hint": "Para ediciones dirigidas por el usuario donde los conflictos son poco comunes y la aplicación puede reportar o reintentar un desajuste de versión explícitamente."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Transacciones PostgreSQL SGN3",
+      "description": "Se utilizó READ COMMITTED para operaciones estándar y columnas de versión optimista para ediciones concurrentes, eligiendo la detección de conflictos explícita en lugar de elevar el aislamiento de forma global."
+    }
+  },
+  {
+    "id": "interview-sql-3",
+    "topic": "data-persistence",
+    "subtopic": "dp-query-optimization",
+    "difficulty": "INTERMEDIATE",
+    "question": "Un endpoint de producción es lento. ¿Cómo determinas si el SQL es la causa y cómo lo mejoras de forma segura?",
+    "clarifyingQuestions": [
+      "¿La latencia está en una consulta, en muchas consultas repetidas, en esperas de bloqueo o en otra dependencia?",
+      "¿Tenemos un conjunto de parámetros y un volumen de datos representativos?",
+      "¿Se puede ejecutar la sentencia de forma segura en una réplica o en una copia de pre-producción (staging)?"
+    ],
+    "shortAnswer": "Primero trazo la solicitud para separar una consulta lenta de llamadas N+1 o esperas de bloqueo. Para una sentencia candidata, inspecciono `EXPLAIN`, y en un entorno seguro, `EXPLAIN (ANALYZE, BUFFERS)`. Comparo las estimaciones con las filas reales, los bucles (loops), la E/S y el comportamiento de ordenamiento, cambio una cosa a la vez y verifico tanto la latencia como el impacto en la carga de trabajo antes y después del despliegue.",
+    "detailedAnswer": "Una investigación disciplinada es más amplia que buscar un escaneo secuencial:\n\n1. Usar APM y estadísticas de la base de datos para localizar el tiempo: duración de la consulta, recuento de consultas, espera en el pool de conexiones, bloqueos y llamadas remotas.\n2. Capturar el SQL real y los valores de los parámetros representativos. La distribución de parámetros puede cambiar el mejor plan.\n3. Leer `EXPLAIN` primero. `EXPLAIN ANALYZE` ejecuta realmente la sentencia; úsalo con precaución en producción, especialmente para DML, funciones costosas o bloqueos. Una réplica o dataset similar a producción es más seguro.\n4. Inspeccionar el tiempo total, filas reales frente a estimadas, `loops`, buffers, ordenamientos que se desbordan al disco y tiempo de espera. Un bucle anidado (nested loop) o un escaneo secuencial no son inherentemente malos.\n5. Un gran desajuste en la estimación puede provenir de estadísticas obsoletas, sesgo (skew), columnas correlacionadas o planes sensibles a parámetros.\n6. Corregir la causa raíz: eliminar el acceso N+1, traer menos columnas/filas, reescribir la consulta, actualizar estadísticas, añadir un índice específico o acortar el alcance del bloqueo.\n7. Comparar los planes antes y después, y monitorear el throughput, las escrituras y la latencia del percentil 99 tras el lanzamiento.\n\nPara DML reversible, una transacción seguida de un rollback puede proteger el estado de la base de datos, pero no neutraliza cada efecto secundario externo que una función o trigger podría causar.",
+    "keyPoints": [
+      "Trazar toda la solicitud antes de culpar a una sola consulta",
+      "EXPLAIN ANALYZE ejecuta la sentencia",
+      "Los nodos del plan son evidencia a interpretar, no diagnósticos automáticos",
+      "Los errores de estimación pueden reflejar estadísticas, sesgo, correlación o parámetros",
+      "Verificar la solución con datos realistas y monitoreo post-lanzamiento"
+    ],
+    "redFlags": [
+      "Ejecutar EXPLAIN ANALYZE en DML de producción no seguro",
+      "Equiparar escaneo secuencial con falta de índice",
+      "Añadir índices antes de medir el recuento de consultas y las esperas de bloqueo",
+      "Hacer benchmarks solo con datos de desarrollo minúsculos"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué te indican `rows` y `loops` en un plan real?",
+        "hint": "Las filas y el tiempo reales son por cada bucle para un nodo ejecutado repetidamente; multiplícalos por loops para entender el trabajo total."
+      },
+      {
+        "question": "¿Cómo puedes detectar un problema N+1 a nivel de aplicación?",
+        "hint": "Correlaciona una traza de solicitud con SQL similar repetido y recuentos de consultas; el plan de una sola consulta no puede revelar todo el patrón de llamadas."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Investigación de rendimiento de inscripciones SGN3",
+      "description": "Se utilizó Glowroot y planes de PostgreSQL para encontrar accesos a relaciones repetidos en un listado de unos 26,705 registros. Proyecciones, paginación, reestructuración de consultas e índices redujeron unas 48,000 consultas a unas 10 y el tiempo de respuesta de unos 16 minutos a unos 2 segundos."
+    }
+  },
+  {
+    "id": "interview-sql-4",
+    "topic": "data-persistence",
+    "subtopic": "dp-joins-patterns",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿En qué se diferencian INNER JOIN y LEFT JOIN, y cómo puede la ubicación de un predicado cambiar el resultado silenciosamente?",
+    "shortAnswer": "INNER JOIN mantiene solo las combinaciones de filas que coinciden. LEFT JOIN preserva cada fila del lado izquierdo y rellena las columnas del lado derecho no coincidentes con NULL. Con un LEFT JOIN, un predicado sobre la tabla derecha en el `WHERE` suele eliminar esas filas extendidas con NULL y convierte efectivamente el resultado en un inner join; coloca el predicado en el `ON` cuando defina qué filas del lado derecho pueden coincidir.",
+    "detailedAnswer": "Considera clientes y pedidos:\n\n```sql\nSELECT c.id, o.id\nFROM customer c\nLEFT JOIN orders o\n  ON o.customer_id = c.id\n AND o.status = 'OPEN';\n```\n\nEsto devuelve a cada cliente y solo los pedidos abiertos que coincidan. Mover `o.status = 'OPEN'` al `WHERE` rechaza filas donde `o` es NULL, por lo que los clientes sin pedidos abiertos desaparecen. Eso puede ser correcto, pero entonces es semánticamente cercano a un inner join.\n\nLa corrección de un join también requiere razonar sobre la cardinalidad. Un join uno-a-muchos duplica intencionalmente la fila izquierda una vez por cada coincidencia; añadir `DISTINCT` puede ocultar un error de modelado o agregación. Antes de tunear, define el grano de fila deseado, la opcionalidad esperada y si las filas no coincidentes deben sobrevivir. Luego inspecciona claves, índices de claves foráneas y el plan.",
+    "keyPoints": [
+      "INNER JOIN requiere coincidencia; LEFT JOIN preserva el lado izquierdo",
+      "Un predicado WHERE en el lado derecho puede rechazar nulos de un LEFT JOIN",
+      "ON filtra filas coincidentes; WHERE filtra el resultado unido",
+      "Definir el grano de fila deseado antes de tratar duplicados como un bug",
+      "El tipo de join es una decisión de corrección antes que de rendimiento"
+    ],
+    "redFlags": [
+      "Usar LEFT JOIN por defecto sin explicar la preservación de filas",
+      "Añadir DISTINCT para ocultar duplicación no explicada",
+      "Mover predicados entre ON y WHERE sin comprobar la semántica",
+      "Discutir la velocidad del join antes de definir el resultado esperado"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo devolverías clientes que no tienen pedidos?",
+        "hint": "LEFT JOIN y filtrar con `WHERE o.id IS NULL`, o usar `NOT EXISTS`; compara planes para la carga de trabajo real."
+      },
+      {
+        "question": "¿Por qué unir dos relaciones uno-a-muchos puede inflar un agregado?",
+        "hint": "El resultado contiene el producto cruzado de ambos conjuntos hijos por cada padre; agrega cada lado primero o consúltalos por separado."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-sql-plan-1",
+    "topic": "data-persistence",
+    "subtopic": "dp-query-optimization",
+    "difficulty": "SENIOR",
+    "question": "Una consulta es rápida con datos de prueba pero agota el tiempo en producción. ¿Cómo usas un plan de ejecución para mejorarla de forma segura?",
+    "shortAnswer": "Capturo la forma real de la consulta, sus parámetros y estadísticas similares a las de producción, luego leo el plan de ejecución real en lugar de adivinar un índice. Comparo el recuento de filas estimado frente al real, busco escaneos, joins, ordenamientos y desbordamientos (spills) costosos, y verifico la selectividad y los índices. Cambio una causa a la vez, mido bajo carga realista y tengo en cuenta el costo de escritura y las regresiones del plan.",
+    "detailedAnswer": "Un plan de ejecución es evidencia de cómo el optimizador ejecutó una consulta particular con estadísticas y parámetros particulares. La salida de tipo `EXPLAIN ANALYZE` revela filas, tiempos y bucles reales; una gran brecha entre la estimación y lo real a menudo señala estadísticas obsoletas, predicados correlacionados o una distribución de parámetros sesgada. Un escaneo secuencial no es automáticamente malo: puede ser más barato cuando una consulta devuelve gran parte de una tabla pequeña.\n\nReviso la selectividad de predicados y joins, el orden de los índices, si una función o 'cast' impide el uso del índice, la memoria de sort/hash, y si la consulta trae columnas o filas innecesarias. Un índice compuesto debe coincidir con la ruta de acceso de la consulta; añadir cada índice posible ralentiza las escrituras y aumenta el almacenamiento. Si hay un plan sensible a parámetros involucrado, prueba valores representativos en lugar de optimizar un solo valor literal de éxito.\n\nAntes del despliegue, utilizo un dataset similar a producción o una repetición segura (replay), comparo la distribución de latencia y el uso de recursos, y hago que la migración del esquema/índice sea reversible donde sea práctico. Monitorea después del lanzamiento porque la distribución de datos cambia con el tiempo.",
+    "keyPoints": [
+      "Usar planes reales y parámetros representativos",
+      "Comparar la cardinalidad estimada y real",
+      "Optimizar la ruta de acceso, no un índice asumido",
+      "Equilibrar las ganancias en lectura frente al costo de escritura y mantenimiento"
+    ],
+    "redFlags": [
+      "Añadir índices sin inspeccionar el plan",
+      "Llamar defecto a cada escaneo secuencial",
+      "Probar solo un dataset uniforme minúsculo"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué el optimizador puede ignorar un índice?",
+        "hint": "Puede ser menos selectivo o más costoso que un escaneo, inutilizable para el predicado, o basado en estadísticas engañosas."
+      },
+      {
+        "question": "¿Qué te indica una gran diferencia entre filas estimadas y reales?",
+        "hint": "Las suposiciones de cardinalidad del optimizador son inexactas; inspecciona estadísticas, sesgo y correlación de predicados."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-jpa-1",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-fundamentals",
+    "difficulty": "INTERMEDIATE",
+    "question": "Explica el ciclo de vida de una entidad JPA y los errores comunes de los desarrolladores en torno a `merge` y los límites de las transacciones.",
+    "shortAnswer": "Una entidad puede estar en estado: nueva (new), gestionada (managed), desacoplada (detached) o eliminada (removed) en relación con un contexto de persistencia. Los cambios en entidades gestionadas se detectan y sincronizan en el 'flush'; los cambios en desacopladas no. `persist` hace que una entidad nueva sea gestionada, mientras que `merge` copia el estado en una instancia gestionada y devuelve esa instancia — el objeto pasado a `merge` no se vuelve gestionado. El alcance de la transacción y del contexto de persistencia determinan cuándo ocurre el desacoplamiento.",
+    "detailedAnswer": "Los estados son relativos a un `EntityManager`/contexto de persistencia:\n\n- **New**: no gestionada y sin representación persistente en la base de datos.\n- **Managed**: asociada con el contexto. El 'dirty checking' sincroniza los cambios en el flush, que puede ocurrir antes del commit.\n- **Detached**: tiene identidad persistente pero ya no es gestionada por ese contexto; no se rastrean los cambios ordinarios en los campos.\n- **Removed**: gestionada y programada para borrado en el flush.\n\nTransiciones importantes:\n- `persist(newEntity)` asocia una nueva entidad; el SQL puede emitirse inmediatamente o en el flush dependiendo del mapeo.\n- `detach`, `clear` o cerrar el contexto de persistencia desacopla las entidades. Un contexto con alcance de transacción normalmente termina con la transacción.\n- `merge(detached)` copia el estado en una instancia gestionada existente (o cargada/creada) y devuelve la referencia gestionada. Se debe continuar trabajando con la referencia devuelta; la original permanece desacoplada.\n- `remove(managed)` la marca para eliminación.\n\nLos fallos de carga diferida (lazy-loading) suelen ser una señal de diseño: mapea los datos requeridos dentro de la transacción o trae un DTO diseñado para el propósito en lugar de dejar una sesión abierta a través del trabajo de presentación.",
+    "keyPoints": [
+      "El estado del ciclo de vida es relativo a un contexto de persistencia",
+      "El 'dirty checking' aplica a entidades gestionadas en el flush",
+      "`merge` devuelve la instancia gestionada y no adjunta el argumento",
+      "Los contextos de transacción y los extendidos tienen ciclos de vida diferentes",
+      "La carga (fetching) debe coincidir con el caso de uso dentro de un límite deliberado"
+    ],
+    "redFlags": [
+      "Seguir modificando el objeto original después de un merge",
+      "Asumir que el commit es el único momento en que puede ocurrir un flush",
+      "Tratar cada gráfico desacoplado como algo que se debe 'mergear' por completo",
+      "Solucionar errores de lazy-loading dejando la persistencia abierta sin considerar el diseño de la consulta"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué puede pasar si llamas a `persist` con una entidad desacoplada?",
+        "hint": "El proveedor puede lanzar EntityExistsException en esa llamada o una PersistenceException en el flush/commit; `merge` tiene semánticas diferentes."
+      },
+      {
+        "question": "¿Por qué una consulta puede disparar un flush antes del commit de la transacción?",
+        "hint": "Con el modo de flush AUTO, los cambios pendientes pueden necesitar llegar a la base de datos para que la consulta vea un resultado consistente."
+      },
+      {
+        "question": "¿Cuál es la diferencia entre `find` y `getReference`?",
+        "hint": "`find` obtiene el estado o null; `getReference` puede devolver una referencia lazy cuyo primer acceso al estado puede fallar si la fila no existe."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Contextos de persistencia Hibernate SGN3",
+      "description": "Los contextos de persistencia con alcance de transacción en operaciones de negocio sin estado hicieron que los límites del estado de entidad y la carga diferida fueran importantes al mapear datos para los llamadores."
+    }
+  },
+  {
+    "id": "interview-jpa-2",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-relations",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo detectas y solucionas consultas N+1 sin reemplazarlas por un join sobredimensionado?",
+    "clarifyingQuestions": [
+      "¿Se trata de una vista de detalle, una lista paginada o un proceso por lotes?",
+      "¿Qué relaciones y campos necesita realmente la respuesta?",
+      "¿Qué recuento de consultas, recuento de filas y latencia muestra la traza?"
+    ],
+    "shortAnswer": "El problema N+1 aparece cuando una consulta carga los padres y el acceso posterior a relaciones dispara consultas repetidas. Lo confirmo con recuentos de SQL por solicitud, luego elijo un plan de carga para ese caso de uso: fetch join o entity graph para relaciones limitadas, batch fetching o un patrón de dos consultas para colecciones, y proyecciones DTO para modelos de lectura. Verifico el crecimiento de filas del resultado porque unir múltiples relaciones 'muchos' puede ser peor que el N+1.",
+    "detailedAnswer": "El problema no es simplemente 'lazy es malo'. Es un patrón de acceso cuyo plan de carga no coincide con el caso de uso. La detección proviene de una traza de APM, estadísticas de Hibernate o logs de SQL controlados que muestran muchas sentencias estructuralmente similares para una sola operación.\n\nRemedios posibles:\n\n1. **Fetch join / entity graph** para una relación que se necesita en el momento. Suele ser efectivo para asociaciones 'to-one' y colecciones limitadas.\n2. **Batch fetching** para relaciones lazy cuando muchos padres necesitan el mismo tipo de asociación; reduce los viajes de ida y vuelta (round trips) sin construir un conjunto de filas gigantesco.\n3. **Consulta en dos pasos**: traer primero los IDs/entidades padres paginados, luego traer los hijos requeridos con un `WHERE parent_id IN (...)`. Esto preserva la paginación y evita un producto cruzado de múltiples colecciones.\n4. **Proyección DTO** para casos de uso de lectura que necesitan un conjunto conocido de campos, evitando la sobrecarga del gráfico de entidades y del dirty-checking.\n\nLos compromisos (trade-offs) importan. Un fetch join 'to-many' duplica las columnas del padre y puede hacer que la paginación sea incorrecta o forzar el trabajo en memoria dependiendo del proveedor. Cargar dos colecciones independientes multiplica las filas. `EAGER` en el mapeo es un valor global por defecto, no una cura para cada caso de uso. Mide el recuento de consultas, filas devueltas, memoria y latencia en conjunto.",
+    "keyPoints": [
+      "Confirmar el N+1 mediante recuentos de consultas para una operación",
+      "Elegir planes de carga por caso de uso en lugar de hacer todo eager",
+      "Los fetch joins 'to-many' pueden entrar en conflicto con la paginación",
+      "Múltiples colecciones pueden crear un conjunto de filas multiplicativo",
+      "Los DTOs y las consultas en dos pasos suelen ser más claros para modelos de lectura"
+    ],
+    "redFlags": [
+      "Cambiar todas las relaciones a EAGER",
+      "Juzgar solo el recuento de consultas ignorando las filas y la memoria",
+      "Hacer fetch-join de varias colecciones en una consulta paginada sin verificación",
+      "Optimizar antes de confirmar qué acceso dispara las consultas repetidas"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué un fetch join de colección es arriesgado con paginación?",
+        "hint": "Las filas de SQL representan combinaciones padre-hijo, por lo que limitar filas puede no limitar correctamente los padres distintos; pagina los padres primero o usa una carga en dos pasos."
+      },
+      {
+        "question": "¿Cómo evitarías que este patrón N+1 regrese?",
+        "hint": "Usa una prueba de integración representativa o una aserción de recuento de consultas para la página, mantén el plan de carga explícito y monitorea el recuento de consultas a nivel de solicitud en producción."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Página de inscripciones SGN3: de unas 48k a unas 10 consultas",
+      "description": "Para un listado de unos 26,705 registros, las trazas de APM mostraron accesos a relaciones anidados produciendo aproximadamente 48,000 consultas. Proyecciones, paginación, reestructuración de consultas y carga por lotes (batch loading) redujeron la solicitud a unas 10 consultas y la latencia de unos 16 minutos a unos 2 segundos."
+    }
+  },
+  {
+    "id": "interview-jpa-3",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-queries",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cuándo elegirías JPQL, Criteria o SQL nativo, y cómo mantienes segura cada opción?",
+    "shortAnswer": "Uso JPQL cuando la consulta se expresa naturalmente sobre entidades y relaciones, Criteria cuando la composición dinámica o el tipado basado en el metamodelo compensan su verbosidad, y SQL nativo para características de la base de datos o formas de consulta que el proveedor no puede expresar bien. La elección es por consulta. Las tres opciones requieren parámetros vinculados (bound parameters) para valores no confiables — concatenar entrada en JPQL también es propenso a inyecciones.",
+    "detailedAnswer": "**JPQL** es conciso para consultas estables sobre el modelo de entidades, soporta resultados de tipo entidad/DTO y mantiene la portabilidad entre la mayoría de los proveedores. Se basa en strings, por lo que el refactoring y los predicados dinámicos complejos requieren cuidado.\n\n**Criteria API** construye el mismo modelo de consulta de persistencia programáticamente. Es verboso pero útil para filtros opcionales y predicados reutilizables; los metamodelos estáticos generados pueden mejorar la comprobación de tipos. No es automáticamente más rápido que el JPQL equivalente.\n\n**SQL Nativo** es adecuado cuando la base de datos y la versión del proveedor requieren características como el `LATERAL` de PostgreSQL, `DISTINCT ON`, operadores JSON o una agregación especializada. Ofrece control directo sobre el SQL enviado, pero la base de datos sigue eligiendo el plan de ejecución. Aumenta el costo de mapeo, portabilidad y pruebas de integración. Los resultados nativos pueden ser escalares, mapeos orientados a DTO o entidades.\n\nLa seguridad es independiente de la elección:\n```java\n// Vulnerable: la entrada cambia la sintaxis JPQL\n\"select p from Person p where p.name = '\" + input + \"'\"\n\n// Vinculación de valores segura\nquery.setParameter(\"name\", input);\n```\n\nLos identificadores dinámicos o los campos de ordenamiento no suelen ser parámetros de valor, por lo que deben mapearse desde una lista blanca (allow-list). Prueba el SQL nativo contra el motor de base de datos real e inspecciona el SQL generado para las consultas JPQL/Criteria críticas para el rendimiento.",
+    "keyPoints": [
+      "JPQL se ajusta a consultas estables orientadas a entidades",
+      "Criteria ayuda a componer predicados dinámicos pero no es inherentemente más rápido",
+      "El SQL nativo sacrifica portabilidad y simplicidad de mapeo por capacidades de la base de datos",
+      "El optimizador de la base de datos sigue eligiendo el plan para el SQL nativo",
+      "La concatenación en JPQL es vulnerable; vincula valores en cada estilo de consulta"
+    ],
+    "redFlags": [
+      "Elegir un solo lenguaje de consulta para cada caso de uso",
+      "Afirmar que JPQL es seguro incluso cuando se concatenan strings",
+      "Asumir que el SQL nativo garantiza un plan de ejecución particular",
+      "Probar SQL específico de una base de datos solo contra un sustituto en memoria"
+    ],
+    "followUps": [
+      {
+        "question": "¿Puedes parametrizar un nombre de columna o una dirección de ordenamiento?",
+        "hint": "Normalmente no como parámetro de valor; mapea una opción de API restringida a atributos conocidos o fragmentos de consulta."
+      },
+      {
+        "question": "¿Qué deberías hacer tras una actualización masiva (bulk update) en JPQL?",
+        "hint": "El DML masivo se salta la sincronización de estado de las entidades gestionadas, por lo que debes limpiar o refrescar el estado del contexto de persistencia deliberadamente."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "JPQL y SQL específico de PostgreSQL en SGN3",
+      "description": "Se utilizó JPQL para operaciones orientadas a entidades y consultas nativas de PostgreSQL para reportes y características como joins LATERAL, conjuntos de resultados basados en UNION y modelos de lectura masivos, con valores parametrizados de forma consistente."
+    }
+  },
+  {
+    "id": "interview-jpa-fetching-1",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-relations",
+    "difficulty": "SENIOR",
+    "question": "Un endpoint de lista se vuelve lento después de añadir una asociación a una entidad JPA. ¿Cómo lo diagnosticas y solucionas sin cambiar todo a carga 'eager' a ciegas?",
+    "shortAnswer": "Primero mido las consultas reales y la forma de la solicitud. Las asociaciones lazy pueden causar consultas N+1 cuando se recorren por fila, mientras que los mapeos eager pueden sobrecargar la carga (overfetch) y crear otras consultas o joins en casos de uso no relacionados. Mantengo los mapeos conservadores y elijo la carga por caso de uso con un fetch join, entity graph, batch fetching o una proyección DTO, verificando luego el recuento de consultas, la cardinalidad, el comportamiento de la paginación y el uso de memoria.",
+    "detailedAnswer": "El primer paso es la evidencia: habilitar los logs de SQL y parámetros de forma segura, inspeccionar trazas y reproducir con cardinalidad representativa. Un patrón N+1 suele aparecer como una consulta para una página de padres seguida de una consulta por cada padre o colección. Cambiar una relación a EAGER no es una cura general: cambia cada ruta de carga, puede traer datos que nadie necesita y aún así puede emitir selects secundarios.\n\nPara un caso de uso de lectura específico, selecciona los datos intencionalmente. Un fetch join de JPQL o un entity graph pueden cargar una relación 'to-one' eficientemente. Para una relación 'to-many', considera el batch fetching o una consulta delimitada separada; unir una colección con paginación puede multiplicar las filas y hacer que la semántica de la página no sea confiable. Si el endpoint está orientado a lectura, una proyección DTO frecuentemente evita la sobrecarga de la entidad gestionada y los recorridos lazy accidentales. Asegúrate de que los índices soporten los predicados y joins, y distingue el tiempo de base de datos del tiempo de serialización o mapeo.",
+    "keyPoints": [
+      "Confirmar el patrón de consulta y la cardinalidad antes de cambiar mapeos",
+      "EAGER es una elección de mapeo global, no una solución universal para el N+1",
+      "Elegir fetch joins, entity graphs, batching o proyecciones por caso de uso de lectura",
+      "Tratar los fetch joins de colecciones y la paginación con especial cuidado"
+    ],
+    "redFlags": [
+      "Configurar cada asociación como EAGER para silenciar LazyInitializationException",
+      "Traer un join de colección con paginación sin comprobar filas duplicadas y recuentos",
+      "Diagnosticar N+1 solo desde el código fuente sin observar las consultas ejecutadas"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué un fetch join sobre una relación uno-a-muchos puede romper un endpoint paginado?",
+        "hint": "Cada padre puede aparecer una vez por cada hijo en el resultado SQL, por lo que el limit/offset a nivel de fila ya no corresponde limpiamente a los padres."
+      },
+      {
+        "question": "¿Cuándo es preferible una proyección DTO a devolver una entidad gestionada?",
+        "hint": "Cuando el endpoint tiene una forma de lectura específica y no necesita el ciclo de vida de la entidad ni el rastreo de cambios."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-dp-sql-fundamentals",
+    "topic": "data-persistence",
+    "subtopic": "dp-sql-fundamentals",
+    "difficulty": "BEGINNER",
+    "question": "¿Cuáles son los conceptos de SQL más importantes que debe dominar un desarrollador backend y cómo decides entre escribir SQL puro o usar un ORM?",
+    "shortAnswer": "SQL esencial: SELECT con JOINs, GROUP BY, funciones de ventana (window functions), subconsultas/CTEs, transacciones y EXPLAIN. Usa el ORM para CRUD y mapeo de dominio; usa SQL puro cuando necesites control total sobre consultas complejas, rutas críticas de rendimiento o características específicas de la base de datos que el ORM no puede expresar limpiamente.",
+    "detailedAnswer": "**SQL que se debe dominar:**\n1. JOINs (INNER, LEFT, self-join, LATERAL)\n2. Agregación (GROUP BY, HAVING, funciones de ventana)\n3. Subconsultas y CTEs\n4. Aislamiento de transacciones y bloqueos\n5. EXPLAIN ANALYZE para el rendimiento\n\n**Decisión ORM vs SQL puro:**\n- ORM: CRUD estándar, relaciones entre entidades, seguridad de tipos, migraciones.\n- SQL puro: reportes, analítica, operaciones masivas, características específicas (JSONB, particionamiento), consultas críticas donde el ORM genera un SQL ineficiente.\n\n**En la práctica:** 80% ORM + 20% consultas nativas. La clave es saber CUÁNDO el ORM te está perjudicando (N+1, joins innecesarios, falta de pistas para el índice).",
+    "followUps": [
+      {
+        "question": "¿Cómo detectas cuando una consulta generada por el ORM rinde poco?",
+        "hint": "Logs de SQL en desarrollo, slow query log en producción, EXPLAIN en consultas sospechosas, estadísticas de Hibernate, herramientas de APM."
+      },
+      {
+        "question": "¿Qué características de SQL son difíciles o imposibles de expresar mediante JPA/Hibernate?",
+        "hint": "Funciones de ventana, CTEs recursivas, joins LATERAL, INSERT ON CONFLICT, índices parciales, operadores JSONB, DISTINCT ON."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "keyPoints": [
+      "JOINs, GROUP BY, funciones de ventana, CTEs y transacciones son habilidades centrales de SQL",
+      "ORM para CRUD (80%), SQL puro para consultas complejas y rendimiento (20%)",
+      "Saber siempre cuándo tu ORM genera SQL ineficiente — usar EXPLAIN ANALYZE"
+    ],
+    "redFlags": [
+      "No poder explicar la diferencia entre INNER y LEFT JOIN",
+      "No usar nunca SQL puro — confiar ciegamente en el ORM para todas las consultas"
+    ]
+  },
+  {
+    "id": "interview-dp-isolation-mvcc",
+    "topic": "data-persistence",
+    "subtopic": "dp-isolation-mvcc",
+    "difficulty": "SENIOR",
+    "question": "Explica cómo PostgreSQL implementa Snapshot Isolation (MVCC) y qué anomalías no evita.",
+    "shortAnswer": "PostgreSQL utiliza Control de Concurrencia Multi-Versión (MVCC): cada fila tiene IDs de transacción `created_by` y `deleted_by`. Los lectores ven un snapshot consistente (nunca bloquean a los escritores). El aislamiento de snapshot evita lecturas sucias y no repetibles, pero NO evita el sesgo de escritura (write skew) ni fantasmas — esos requieren SERIALIZABLE (SSI en PostgreSQL).",
+    "detailedAnswer": "**Mecánica de MVCC:**\n- Cada transacción obtiene un txid único.\n- UPDATE = marcar fila vieja como eliminada + insertar fila nueva con nuevo txid.\n- Reglas de visibilidad: solo ver filas confirmadas antes de mi snapshot.\n- Los lectores nunca bloquean a los escritores, los escritores nunca bloquean a los lectores.\n\n**Lo que REPEATABLE READ (snapshot) no evita:**\n- Write skew: dos transacciones leen datos solapados, toman decisiones y escriben filas diferentes → se viola el invariante.\n- Ejemplo: dos médicos comprueban '¿soy el único de guardia?' → ambos se van → nadie queda de guardia.\n\n**PostgreSQL SERIALIZABLE (SSI):**\n- Optimista: las transacciones corren sin bloquearse.\n- Al hacer commit: se detectan conflictos y se aborta una.\n- La aplicación DEBE reintentar las transacciones abortadas.",
+    "followUps": [
+      {
+        "question": "¿Cómo se manifiesta el write skew en un sistema de e-commerce real?",
+        "hint": "Venta doble: dos usuarios ven stock=1, ambos compran → el stock queda en negativo. O: dos retiros ven saldo=100, ambos retiran 80 → descubierto bancario."
+      },
+      {
+        "question": "¿Cuándo elegirías SERIALIZABLE frente a SELECT FOR UPDATE?",
+        "hint": "SERIALIZABLE cuando: hay múltiples filas involucradas, no sabes qué filas entrarán en conflicto o el patrón de acceso es complejo. FOR UPDATE cuando: hay una fila específica conocida que proteger."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "keyPoints": [
+      "MVCC: los lectores nunca bloquean a los escritores mediante versionado de filas",
+      "El aislamiento de snapshot evita lecturas sucias pero NO el write skew o los fantasmas",
+      "PostgreSQL SERIALIZABLE usa SSI (optimista) — la aplicación debe reintentar transacciones abortadas"
+    ],
+    "redFlags": [
+      "Confundir niveles de aislamiento o creer que REPEATABLE READ evita todas las anomalías",
+      "No saber qué es el write skew o cómo prevenirlo"
+    ]
+  },
+  {
+    "id": "interview-dp-hibernate-perf",
+    "topic": "data-persistence",
+    "subtopic": "dp-hibernate-performance",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cuáles son los 3 principales problemas de rendimiento de Hibernate que has encontrado y cómo los solucionaste?",
+    "shortAnswer": "1) Consultas N+1: solucionado con JOIN FETCH, @EntityGraph o @BatchSize. 2) Cargar demasiados datos: solucionado con proyecciones DTO y carga diferida (lazy). 3) Transacciones largas reteniendo conexiones: solucionado separando fases de lectura y escritura, o usando transacciones de solo lectura.",
+    "detailedAnswer": "**#1 Problema N+1:**\n- Síntoma: 101 consultas para 100 entidades con una relación.\n- Detección: Logs de SQL, Estadísticas de Hibernate, APM.\n- Solución: JOIN FETCH en JPQL, @EntityGraph, @BatchSize(size=25).\n\n**#2 Sobre-carga (Over-fetching):**\n- Síntoma: SELECT * cargando 30 columnas cuando la UI solo muestra 5.\n- Solución: Proyecciones DTO (SELECT new DTO(...)), proyecciones basadas en interfaces, consultas de Tuple.\n\n**#3 Acaparamiento de conexiones:**\n- Síntoma: agotamiento del pool de conexiones bajo carga.\n- Solución: @Transactional(readOnly=true) para consultas, réplicas de lectura separadas, transacciones cortas.\n\n**#4 Bonus — Sobrecarga de Dirty Checking:**\n- 10k entidades en el contexto de persistencia = 10k comprobaciones en el flush.\n- Solución: sesión sin estado (StatelessSession) para operaciones masivas, llamar a `clear()` entre lotes.",
+    "followUps": [
+      {
+        "question": "¿Cómo procesas 10,000 INSERT/UPDATE con Hibernate sin quedarte sin memoria?",
+        "hint": "Configurar hibernate.jdbc.batch_size=50, hacer flush+clear cada 50 entidades o usar StatelessSession."
+      },
+      {
+        "question": "¿Cómo interactúa la caché de primer nivel de Hibernate con las consultas nativas?",
+        "hint": "Las consultas nativas que devuelven escalares/Tuplas se saltan la L1. Las mapeadas a entidades SÍ la pueblan."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "keyPoints": [
+      "N+1 es el problema #1 — corregir con JOIN FETCH, @EntityGraph o @BatchSize",
+      "Proyecciones DTO para consultas de solo lectura evitan cargar columnas innecesarias",
+      "Mantener las transacciones cortas — separar fase de lectura de fase de escritura"
+    ],
+    "redFlags": [
+      "No poder explicar qué es el N+1 o cómo detectarlo",
+      "Usar carga eager en todas partes como solución generalizada"
+    ]
+  },
+  {
+    "id": "interview-dp-storage-engines",
+    "topic": "data-persistence",
+    "subtopic": "dp-storage-engines",
+    "difficulty": "SENIOR",
+    "question": "Compara los motores de almacenamiento B-Tree y LSM-Tree. ¿Cuándo elegirías cada uno para un sistema de seguimiento de entregas?",
+    "shortAnswer": "B-Trees (PostgreSQL): optimizados para lecturas, latencia predecible, transacciones fuertes — usar para la base de datos OLTP principal (pedidos, repartidores). LSM-Trees (Cassandra, RocksDB): optimizados para escrituras, E/S secuencial, mejor compresión — usar para flujos de eventos (pings de GPS, eventos de entrega, telemetría).",
+    "detailedAnswer": "**B-Tree (PostgreSQL, MySQL InnoDB):**\n- Páginas de tamaño fijo, actualizaciones 'in-place'.\n- Lecturas O(log n), buenos escaneos de rango.\n- Amplificación de escritura (WAL + escritura de página).\n- Latencia predecible.\n\n**LSM-Tree (Cassandra, RocksDB, LevelDB):**\n- Memtable de solo anexado → flush a SSTables ordenadas.\n- Solo escrituras secuenciales (10-100 veces más rápidas).\n- Las lecturas comprueban múltiples SSTables (más lentas).\n- La compactación en segundo plano puede causar picos de latencia.\n\n**Para un sistema de entregas:**\n- Pedidos/rutas/repartidores: PostgreSQL (B-Tree) — consistencia fuerte, consultas complejas.\n- Telemetría GPS: Cassandra (LSM) — millones de escrituras/seg, consistencia eventual aceptable.\n- Búsqueda: Elasticsearch (índice invertido + segmentos LSM).",
+    "followUps": [
+      {
+        "question": "¿Qué es la amplificación de escritura y por qué importa para los SSD?",
+        "hint": "Bytes reales escritos / bytes solicitados por la aplicación. Los SSD tienen ciclos limitados, por lo que una alta amplificación reduce su vida útil."
+      },
+      {
+        "question": "¿Cómo se relaciona el VACUUM de PostgreSQL con MVCC y el almacenamiento?",
+        "hint": "Las tuplas muertas se acumulan. VACUUM marca el espacio como reutilizable. Sin él: hinchazón (bloat) de tablas e índices."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO",
+    "keyPoints": [
+      "B-Trees: optimizados para lectura, latencia predecible, actualizaciones in-place (PostgreSQL)",
+      "LSM-Trees: optimizados para escritura, E/S secuencial, compactación (Cassandra, RocksDB)",
+      "La elección depende del ratio lectura/escritura"
+    ],
+    "redFlags": [
+      "No poder articular ninguna diferencia entre tipos de motores de almacenamiento",
+      "Asumir que una base de datos es la mejor para todas las cargas de trabajo"
+    ]
+  },
+  {
+    "id": "interview-dp-replication",
+    "topic": "data-persistence",
+    "subtopic": "dp-replication",
+    "difficulty": "INTERMEDIATE",
+    "question": "Explica la replicación líder-seguidor (leader-follower) y los tres problemas de consistencia causados por el retraso de replicación.",
+    "shortAnswer": "El líder acepta escrituras, los seguidores reciben el flujo de replicación. Tres problemas: 1) Lectura de tus propias escrituras: el usuario escribe y luego lee de un seguidor desactualizado. 2) Lecturas monotónicas: el usuario ve datos y luego ve datos MÁS ANTIGUOS (al cambiar de seguidor). 3) Prefijo consistente: se viola el orden causal. Soluciones: dirigir lecturas del usuario al líder para sus propios datos, afinidad de sesión o protocolos de consistencia causal.",
+    "detailedAnswer": "**Replicación líder-seguidor (PostgreSQL streaming):**\n- Solo el líder maneja escrituras.\n- Los seguidores aplican registros WAL (típicamente retraso de ms-segundos).\n- Las lecturas pueden ir a cualquier réplica.\n\n**Problema 1 — Lectura de tus escrituras:**\n- El usuario actualiza su perfil (líder), refresca la página (lee del seguidor) → ve datos viejos.\n- Solución: leer los propios datos del usuario desde el líder, o rastrear el timestamp de escritura.\n\n**Problema 2 — Lecturas monotónicas:**\n- El usuario lee del seguidor A (actualizado), luego del seguidor B (retrasado) → parece que retrocede en el tiempo.\n- Solución: afinidad de sesión (vincular al usuario a una réplica).\n\n**Problema 3 — Prefijo consistente:**\n- Escrituras relacionadas causalmente se aplican en orden incorrecto en el seguidor.\n- Solución: escribir datos causalmente dependientes en la misma partición.\n\n**Insight clave:** estos problemas son inherentes a la replicación asíncrona. La aplicación debe estar diseñada para tolerarlos.",
+    "followUps": [
+      {
+        "question": "¿Cómo configurarías réplicas de lectura para un servicio con 10 veces más lecturas que escrituras?",
+        "hint": "Replicación de PostgreSQL + pgpool/HAProxy para balanceo. Monitorear el lag. Dirigir lecturas críticas al primario."
+      },
+      {
+        "question": "¿Qué pasa cuando el líder falla? ¿Cómo funciona el failover?",
+        "hint": "Se promueve un seguidor a líder. Riesgo: pérdida de datos si el seguidor era asíncrono y no tenía lo último."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "keyPoints": [
+      "Líder-seguidor: escrituras solo al líder, seguidores aplican el flujo de replicación",
+      "Tres problemas de lag: lectura-de-tus-escrituras, lecturas monotónicas, prefijo consistente",
+      "Soluciones: dirigir lecturas críticas al líder, afinidad de sesión, aceptar consistencia eventual"
+    ],
+    "redFlags": [
+      "No entender que el retraso de replicación causa anomalías observables",
+      "Creer que las réplicas son siempre instantáneamente consistentes con el líder"
+    ]
+  },
+  {
+    "id": "interview-dp-partitioning",
+    "topic": "data-persistence",
+    "subtopic": "dp-partitioning",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cuándo y cómo particionarías una tabla de base de datos? ¿Cuáles son los compromisos?",
+    "shortAnswer": "Particionar cuando: la tabla supera cientos de GB, las consultas siempre filtran por la clave de partición (fecha, región), o necesitas eliminar datos antiguos eficientemente. PostgreSQL soporta particionamiento por rango y lista. Compromisos: consultas más simples por partición pero las consultas entre particiones son costosas; las restricciones únicas deben incluir la clave de partición.",
+    "detailedAnswer": "**Cuándo particionar:**\n- Tabla > 100GB y creciendo.\n- Las consultas filtran naturalmente por tiempo/región/inquilino.\n- Necesidad de archivar datos viejos eficientemente (DROP PARTITION vs DELETE).\n- Querer ejecución paralela de consultas entre particiones.\n\n**Particionamiento declarativo en PostgreSQL:**\n```sql\nCREATE TABLE events (...) PARTITION BY RANGE (event_time);\nCREATE TABLE events_2026_q3 PARTITION OF events\n  FOR VALUES FROM ('2026-07-01') TO ('2026-10-01');\n```\n\n**Compromisos (Trade-offs):**\n- ✅ Poda de particiones (partition pruning): solo se escanean las particiones relevantes.\n- ✅ Archivo fácil: desacoplar/borrar particiones viejas.\n- ❌ Consultas entre particiones: resultan en operaciones 'scatter-gather' costosas.\n- ❌ Restricciones UNIQUE: deben incluir obligatoriamente la clave de partición.\n- ❌ Claves foráneas: las FK hacia tablas particionadas tienen limitaciones.\n\n**Para un sistema de entregas:** particionar `delivery_events` por mes (las consultas siempre tienen un rango de fechas).",
+    "followUps": [
+      {
+        "question": "¿Cuál es la diferencia entre particionamiento y sharding?",
+        "hint": "Particionamiento: una sola base de datos divide una tabla (mismo servidor). Sharding: distribuye los datos en múltiples servidores independientes."
+      },
+      {
+        "question": "¿Cómo manejas una 'hot partition' (una partición que recibe tráfico desproporcionado)?",
+        "hint": "Prefijar la clave de partición con un hash para repartir escrituras, o dividir más la partición caliente."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "keyPoints": [
+      "Particionar cuando la tabla > 100GB y las consultas filtran por clave de partición",
+      "Estrategias de rango (series temporales) frente a hash (distribución uniforme)",
+      "Compromiso: consultas rápidas por partición pero costosas si cruzan varias"
+    ],
+    "redFlags": [
+      "Confundir particionamiento (un solo DB) con sharding (múltiples nodos)",
+      "No poder nombrar un escenario concreto donde el particionamiento ayude"
+    ]
+  }
+]

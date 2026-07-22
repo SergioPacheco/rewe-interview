@@ -1,0 +1,1294 @@
+[
+  {
+    "id": "spring-transfer-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Java EE \u2192 Spring Boot",
+    "difficulty": "senior",
+    "question": "What experience can you transfer from Java EE to Spring Boot?",
+    "interviewerIntent": "Evaluate honesty about experience level and ability to identify transferable concepts vs technology-specific knowledge.",
+    "shortAnswer": "My Java EE experience gives me strong foundations in dependency injection, transactional services, JPA persistence, REST APIs, asynchronous messaging and layered architecture. These concepts map directly to Spring equivalents \u2014 the APIs differ but the architecture and thinking are the same.",
+    "modelAnswer": "Context: Most of my production experience is with Java EE and Jakarta EE \u2014 CDI, EJB, JPA, JAX-RS, JMS on WildFly.\n\nProblem: Spring Boot uses different annotations and conventions, but solves the same problems: manage component lifecycle, inject dependencies, handle transactions, expose REST endpoints and process messages asynchronously.\n\nDecision: I approach Spring Boot as a different implementation of familiar patterns. CDI @Inject maps to constructor injection. @Stateless maps to @Service with @Transactional. JMS maps to Kafka with @KafkaListener. The architecture I design \u2014 services, repositories, validators, event publishers \u2014 remains the same.\n\nResult: I can design and reason about Spring Boot applications immediately. The learning curve is API-specific (annotations, auto-configuration, Boot conventions) rather than conceptual.\n\nTrade-off: I would not claim deep Spring-specific expertise yet \u2014 things like Spring Security internals, custom auto-configuration or Spring Cloud. But for building transactional services with persistence and messaging, my transfer is direct.",
+    "senaiExample": "CDI-managed Business/Service/Repository layers, JPA entities with Hibernate, REST endpoints with JAX-RS, async processing with JMS/Artemis \u2014 all have direct Spring equivalents.",
+    "reweExample": "The TRAB team uses Spring Boot services with Kafka. My JMS experience transfers to Kafka concepts (producers, consumers, retry, DLQ). My layered architecture transfers to Spring component model.",
+    "keyPoints": [
+      "DI concepts transfer directly (CDI \u2192 Spring)",
+      "Transaction management is conceptually identical",
+      "JPA/Hibernate knowledge is framework-independent",
+      "REST API design is the same",
+      "Messaging patterns transfer (JMS \u2192 Kafka)",
+      "Be honest about what is new (auto-config, Boot conventions)"
+    ],
+    "mistakesToAvoid": [
+      "Claiming CDI and Spring are identical",
+      "Pretending to have Spring production experience",
+      "Undervaluing the transferable knowledge",
+      "Not acknowledging what you still need to learn"
+    ],
+    "followUps": [
+      {
+        "question": "What would you need to learn specifically?",
+        "answerHint": "Spring Boot auto-configuration, application.properties conventions, Spring Security, testing with @SpringBootTest, actuator, Spring-specific transaction propagation nuances."
+      },
+      {
+        "question": "What is the biggest difference between CDI and Spring DI?",
+        "answerHint": "Lifecycle: CDI has contexts (RequestScoped, SessionScoped). Spring is mostly singleton. Auto-configuration is a Spring-specific concept. Constructor injection is preferred in Spring vs field @Inject in CDI."
+      },
+      {
+        "question": "How long would you need to be productive?",
+        "answerHint": "For writing services with JPA and REST: days. For Spring-specific patterns (custom starters, reactive, Cloud): weeks of focused study. The architecture thinking is immediate."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "auto-configuration",
+        "meaning": "Spring Boot detecta classpath e configura beans automaticamente",
+        "example": "Auto-configuration creates a DataSource bean when it finds H2 on the classpath \u2014 no XML needed."
+      },
+      {
+        "term": "convention over configuration",
+        "meaning": "defaults sensatos que eliminam configura\u00e7\u00e3o expl\u00edcita",
+        "example": "Spring Boot follows convention over configuration \u2014 application.properties in src/main/resources is found automatically."
+      },
+      {
+        "term": "opinionated defaults",
+        "meaning": "escolhas pr\u00e9-definidas que podem ser sobrescritas",
+        "example": "Spring Boot provides opinionated defaults \u2014 embedded Tomcat, Jackson for JSON, Hikari for connection pooling."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I identified specific transferable concepts",
+        "weight": 3
+      },
+      {
+        "criterion": "I was honest about gaps",
+        "weight": 3
+      },
+      {
+        "criterion": "I showed the transition is manageable",
+        "weight": 2
+      },
+      {
+        "criterion": "I gave a realistic productivity timeline",
+        "weight": 2
+      }
+    ],
+    "topic": "spring"
+  },
+  {
+    "id": "spring-compare-01",
+    "type": "COMPARE_CONCEPTS",
+    "subtopic": "Java EE \u2192 Spring Boot",
+    "difficulty": "intermediate",
+    "mission": "Compare: <strong>CDI (Java EE)</strong> vs <strong>Spring Dependency Injection</strong>",
+    "conceptA": {
+      "name": "CDI (Jakarta EE)",
+      "definition": "@Inject, @ApplicationScoped, @RequestScoped. Context-aware lifecycle. Field injection common. Discovered via beans.xml or implicit scanning."
+    },
+    "conceptB": {
+      "name": "Spring DI",
+      "definition": "Constructor injection preferred. @Component/@Service/@Repository. Singleton by default. Auto-configuration. No beans.xml \u2014 classpath scanning."
+    },
+    "keyDifference": "CDI is context-aware (Request, Session scopes built-in). Spring is mostly singleton with prototype as exception. Spring adds auto-configuration on top of DI. Constructor injection is the Spring standard.",
+    "javaExample": "CDI: @Inject private MyService service; (field injection). Spring: private final MyService service; via constructor (immutable, testable without reflection).",
+    "interviewAnswer": "Both provide dependency injection and component lifecycle management. CDI has richer scoping (Request, Session, Conversation). Spring favors constructor injection for immutability and testability. Spring adds auto-configuration that CDI does not have. The mental model of \"declare dependencies, container provides them\" is identical.",
+    "topic": "spring",
+    "answer": "**CDI (Jakarta EE):** @Inject, @ApplicationScoped, @RequestScoped. Context-aware lifecycle. Field injection common. Discovered via beans.xml or implicit scanning.\n\n**Spring DI:** Constructor injection preferred. @Component/@Service/@Repository. Singleton by default. Auto-configuration. No beans.xml \u2014 classpath scanning.\n\n\n**Key Difference:** CDI is context-aware (Request, Session scopes built-in). Spring is mostly singleton with prototype as exception. Spring adds auto-configuration on top of DI. Constructor injection is the Spring standard."
+  },
+  {
+    "id": "spring-compare-02",
+    "type": "COMPARE_CONCEPTS",
+    "subtopic": "Java EE \u2192 Spring Boot",
+    "difficulty": "intermediate",
+    "mission": "Compare: <strong>@Stateless (EJB)</strong> vs <strong>@Service (Spring)</strong>",
+    "conceptA": {
+      "name": "@Stateless (EJB)",
+      "definition": "Pooled instances. Container-Managed Transactions by default (CMT). Every public method is transactional. Thread-safe by design (one request per instance)."
+    },
+    "conceptB": {
+      "name": "@Service (Spring)",
+      "definition": "Singleton by default. NOT transactional unless @Transactional added. Thread-safe only if stateless (developer responsibility). No instance pooling."
+    },
+    "keyDifference": "EJB @Stateless = automatically transactional + pooled. Spring @Service = just a named bean, transactions must be explicit with @Transactional. This is a critical difference when migrating.",
+    "javaExample": "@Stateless EnrollmentBusiness { void enroll() {...} } \u2014 every call is transactional. Spring: @Service @Transactional EnrollmentService { void enroll() {...} } \u2014 must add @Transactional explicitly.",
+    "interviewAnswer": "The biggest gotcha migrating from EJB to Spring: in EJB, every public method is transactional by default. In Spring, you must explicitly add @Transactional. Forgetting this means no transaction \u2014 data may not commit properly. I would pay special attention to this during migration.",
+    "topic": "spring",
+    "answer": "**@Stateless (EJB):** Pooled instances. Container-Managed Transactions by default (CMT). Every public method is transactional. Thread-safe by design (one request per instance).\n\n**@Service (Spring):** Singleton by default. NOT transactional unless @Transactional added. Thread-safe only if stateless (developer responsibility). No instance pooling.\n\n\n**Key Difference:** EJB @Stateless = automatically transactional + pooled. Spring @Service = just a named bean, transactions must be explicit with @Transactional. This is a critical difference when migrating."
+  },
+  {
+    "id": "spring-oral-02",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Java EE \u2192 Spring Boot",
+    "difficulty": "intermediate",
+    "question": "What is the difference between an application server and an embedded server?",
+    "interviewerIntent": "Understand if the candidate knows the deployment model change from WildFly to Spring Boot.",
+    "shortAnswer": "An application server (WildFly) provides the runtime and you deploy your app into it (WAR/EAR). Spring Boot embeds the server (Tomcat) inside your application \u2014 you run a standalone JAR. The app owns its runtime, not the other way around.",
+    "modelAnswer": "Context: In my current environment, we deploy WAR files to WildFly. The server provides JPA, JMS, datasources and the web container.\n\nProblem: Application server management is complex \u2014 server configuration, classloader isolation, deployment descriptors. Each environment needs a configured server instance.\n\nDecision: Spring Boot inverts this model. The application embeds Tomcat/Jetty, includes all dependencies in a fat JAR, and starts with java -jar app.jar. Configuration lives in application.properties inside the JAR.\n\nResult: The same JAR runs in development, CI and production. No server to install or configure externally. Docker/Kubernetes just runs the JAR.\n\nTrade-off: You lose some features application servers provide (JMS resource management, built-in clustering, admin console). Spring Boot provides alternatives (Spring Kafka, Spring Session, Actuator) but you configure them in code/properties.",
+    "senaiExample": "WildFly 26 provides JMS (Artemis subsystem), datasources (in standalone.xml), and the web container. Deploying means putting a WAR in the deployments folder.",
+    "reweExample": "Spring Boot services in the TRAB team are containerized JARs. Kubernetes manages scaling and lifecycle. No external application server needed.",
+    "keyPoints": [
+      "App server = deploy INTO (WAR/EAR). Spring Boot = standalone JAR",
+      "Spring Boot embeds Tomcat/Jetty",
+      "Configuration moves from server XML to application.properties",
+      "Better for containers and Kubernetes",
+      "Simpler local development (just run main())"
+    ],
+    "mistakesToAvoid": [
+      "Saying application servers are outdated (they serve a purpose)",
+      "Not mentioning what you lose (managed resources)",
+      "Not connecting to containerized deployment"
+    ],
+    "followUps": [
+      {
+        "question": "How does this affect Kubernetes deployment?",
+        "answerHint": "Perfectly aligned. Docker image = JDK + fat JAR. No server installation inside container. Startup is fast. Scaling is just more replicas."
+      },
+      {
+        "question": "What about JMS resources?",
+        "answerHint": "In WildFly, JMS queues are server-managed. In Spring Boot, you configure Kafka/RabbitMQ as application dependencies \u2014 no external resource management."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "fat JAR",
+        "meaning": "JAR que cont\u00e9m a aplica\u00e7\u00e3o + todas as depend\u00eancias + servidor embarcado",
+        "example": "Spring Boot produces a fat JAR \u2014 everything needed to run in one file."
+      },
+      {
+        "term": "embedded server",
+        "meaning": "servidor web dentro da aplica\u00e7\u00e3o (n\u00e3o externo)",
+        "example": "Tomcat runs embedded inside the Spring Boot JAR \u2014 no external installation needed."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I explained the inversion (deploy into vs standalone)",
+        "weight": 3
+      },
+      {
+        "criterion": "I connected to containerized deployment",
+        "weight": 3
+      },
+      {
+        "criterion": "I mentioned what changes in configuration",
+        "weight": 2
+      },
+      {
+        "criterion": "I acknowledged what you lose from app servers",
+        "weight": 2
+      }
+    ],
+    "topic": "spring"
+  },
+  {
+    "id": "spring-refactor-01",
+    "type": "CODE_REFACTOR",
+    "subtopic": "Java EE \u2192 Spring Boot",
+    "difficulty": "intermediate",
+    "mission": "Translate this <strong>Java EE service</strong> to its Spring Boot equivalent.",
+    "code": "@Stateless\npublic class DeliveryBusiness {\n\n    @Inject\n    private DeliveryRepository repository;\n\n    @Inject\n    private NotificationService notifier;\n\n    // CMT: automatically transactional\n    public Delivery createDelivery(DeliveryRequest req) {\n        Delivery d = Delivery.from(req);\n        repository.save(d);\n        notifier.notify(d);\n        return d;\n    }\n}",
+    "problemsToIdentify": [
+      "@Stateless provides CMT \u2014 every method is transactional automatically",
+      "@Inject uses field injection (CDI standard)",
+      "No explicit transaction annotation needed in EJB",
+      "The logic and structure remain identical in Spring"
+    ],
+    "refactoredCode": "@Service\npublic class DeliveryService {\n\n    private final DeliveryRepository repository;\n    private final NotificationService notifier;\n\n    public DeliveryService(DeliveryRepository repository,\n                           NotificationService notifier) {\n        this.repository = repository;\n        this.notifier = notifier;\n    }\n\n    @Transactional  // MUST be explicit in Spring!\n    public Delivery createDelivery(DeliveryRequest req) {\n        Delivery d = Delivery.from(req);\n        repository.save(d);\n        notifier.notify(d);\n        return d;\n    }\n}",
+    "explain": "@Stateless \u2192 @Service. Field @Inject \u2192 constructor injection (immutable, testable). CMT \u2192 explicit @Transactional. The business logic is IDENTICAL \u2014 only the framework annotations change. Critical: forgetting @Transactional in Spring means no transaction!",
+    "topic": "spring"
+  },
+  {
+    "id": "spring-refactor-02",
+    "type": "CODE_REFACTOR",
+    "subtopic": "Spring Data",
+    "difficulty": "intermediate",
+    "mission": "Translate this <strong>Java EE Repository</strong> to Spring Data JPA.",
+    "code": "@Stateless\npublic class DeliveryRepository {\n\n    @PersistenceContext\n    private EntityManager em;\n\n    public Optional<Delivery> findById(Long id) {\n        return Optional.ofNullable(em.find(Delivery.class, id));\n    }\n\n    public List<Delivery> findByStatus(DeliveryStatus status) {\n        return em.createQuery(\n            \"SELECT d FROM Delivery d WHERE d.status = :status\", Delivery.class)\n            .setParameter(\"status\", status)\n            .getResultList();\n    }\n\n    public void save(Delivery delivery) {\n        em.persist(delivery);\n    }\n}",
+    "problemsToIdentify": [
+      "Manual EntityManager management",
+      "JPQL queries written by hand",
+      "findById is boilerplate that Spring Data provides for free",
+      "save/persist is boilerplate"
+    ],
+    "refactoredCode": "public interface DeliveryRepository extends JpaRepository<Delivery, Long> {\n\n    List<Delivery> findByStatus(DeliveryStatus status);\n\n    // findById(Long) \u2014 FREE from JpaRepository\n    // save(Delivery) \u2014 FREE from JpaRepository\n    // deleteById(Long) \u2014 FREE from JpaRepository\n}\n\n// For complex queries, use @Query:\n// @Query(\"SELECT d FROM Delivery d WHERE d.route.region = :region AND d.status = :status\")\n// List<Delivery> findByRegionAndStatus(@Param(\"region\") String region, @Param(\"status\") DeliveryStatus status);",
+    "explain": "Spring Data JPA generates the implementation from method names. findByStatus() automatically creates the JPQL query. No EntityManager, no boilerplate. For complex queries, use @Query annotation. My JPA/JPQL knowledge transfers directly \u2014 I just write less code.",
+    "topic": "spring"
+  },
+  {
+    "id": "spring-oral-03",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Migration",
+    "difficulty": "senior",
+    "question": "How would you migrate a Java EE service to Spring Boot?",
+    "interviewerIntent": "Assess whether the candidate can think systematically about migration, not just annotation replacement.",
+    "shortAnswer": "I would migrate incrementally: start with the domain model (entities unchanged), then repositories (Spring Data), services (@Service + @Transactional), REST endpoints (@RestController), and finally messaging (JMS \u2192 Kafka). Each layer is testable independently before moving to the next.",
+    "modelAnswer": "Context: Migrating a monolithic Java EE application to Spring Boot requires systematic planning.\n\nDecision: My approach would be layered, bottom-up:\n\n1. Entities: JPA entities work unchanged. @Entity, @Table, relationships \u2014 all the same.\n2. Repositories: Replace manual EntityManager with Spring Data interfaces. Method-name queries replace boilerplate.\n3. Services: @Stateless \u2192 @Service + @Transactional. CDI @Inject \u2192 constructor injection. Same business logic.\n4. REST: JAX-RS @Path/@GET \u2192 Spring @RestController @GetMapping. Same HTTP semantics.\n5. Messaging: JMS @MessageDriven \u2192 @KafkaListener. Different API, same consumer pattern.\n6. Configuration: standalone.xml \u2192 application.yml. Datasource, pools, timeouts \u2014 all configurable.\n7. Testing: Add @SpringBootTest, @DataJpaTest, @WebMvcTest for each layer.\n\nResult: Each layer migrates independently. You can verify correctness at each step before proceeding.\n\nTrade-off: The biggest risks are: forgetting @Transactional (EJB had it implicit), scope differences (EJB pooling vs Spring singleton), and JMS-to-Kafka semantic differences (queue vs log, acknowledgment vs offset).",
+    "senaiExample": "SGN3 has clear layers (Entity \u2192 Repository \u2192 Business \u2192 Service \u2192 WebBean). Each layer would map to a Spring equivalent with minimal logic changes.",
+    "reweExample": "If TRAB had a legacy Java EE service, this layered approach would var the team migrate while keeping the system functional at each step.",
+    "keyPoints": [
+      "Entities: zero changes (JPA is JPA)",
+      "Repositories: Spring Data eliminates boilerplate",
+      "Services: add explicit @Transactional",
+      "REST: annotation swap, same HTTP semantics",
+      "Messaging: biggest conceptual change (JMS \u2192 Kafka)",
+      "Migrate layer by layer, test each"
+    ],
+    "mistakesToAvoid": [
+      "Suggesting a big-bang rewrite",
+      "Forgetting about transaction management differences",
+      "Not mentioning testing at each step",
+      "Treating JMS \u2192 Kafka as a simple annotation swap"
+    ],
+    "followUps": [
+      {
+        "question": "What is the riskiest part?",
+        "answerHint": "Transaction boundaries. EJB CMT is implicit. Missing @Transactional in Spring means silent data loss. Also: JMS acknowledgment semantics differ from Kafka offset management."
+      },
+      {
+        "question": "Would you migrate everything at once?",
+        "answerHint": "No. Strangler Fig pattern \u2014 migrate one bounded context at a time. New features in Spring Boot, legacy stays until replaced."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "strangler fig",
+        "meaning": "padr\u00e3o de migra\u00e7\u00e3o incremental \u2014 novo sistema cresce ao redor do legado",
+        "example": "The strangler fig pattern lets you migrate service by service while the old system continues running."
+      },
+      {
+        "term": "big-bang rewrite",
+        "meaning": "reescrever tudo de uma vez (alto risco)",
+        "example": "A big-bang rewrite is risky \u2014 months of development with no production feedback until the switch."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I described a layered migration approach",
+        "weight": 3
+      },
+      {
+        "criterion": "I identified the riskiest parts",
+        "weight": 3
+      },
+      {
+        "criterion": "I mentioned testing at each step",
+        "weight": 2
+      },
+      {
+        "criterion": "I did not suggest a big-bang rewrite",
+        "weight": 2
+      }
+    ],
+    "topic": "spring"
+  },
+  {
+    "id": "spring-design-01",
+    "type": "DESIGN_DECISION",
+    "subtopic": "Transactions",
+    "difficulty": "senior",
+    "mission": "Your Spring service saves a delivery and publishes a Kafka event. <strong>Where does @Transactional go?</strong>",
+    "options": [
+      {
+        "id": "a",
+        "label": "@Transactional on the entire method",
+        "desc": "save + kafka.send() both inside the transaction."
+      },
+      {
+        "id": "b",
+        "label": "@Transactional only on save, Kafka outside",
+        "desc": "Separate: transactional save, then publish after commit."
+      },
+      {
+        "id": "c",
+        "label": "Transactional outbox pattern",
+        "desc": "Save delivery + outbox event in same TX. Separate publisher reads outbox."
+      }
+    ],
+    "explanation": {
+      "a": {
+        "pros": [
+          "Simple code"
+        ],
+        "cons": [
+          "Kafka publish inside TX holds DB connection during network call",
+          "If Kafka is slow, TX times out",
+          "If Kafka fails, entire TX rolls back (delivery lost)"
+        ],
+        "verdict": "Dangerous. Network call inside transaction risks connection pool exhaustion \u2014 same problem I solved in Java EE."
+      },
+      "b": {
+        "pros": [
+          "DB connection released before Kafka call",
+          "Kafka failure does not roll back delivery"
+        ],
+        "cons": [
+          "If app crashes between save and publish, event is lost",
+          "Inconsistency window"
+        ],
+        "verdict": "Better than A, but event delivery is not guaranteed."
+      },
+      "c": {
+        "pros": [
+          "Atomic local transaction (delivery + outbox)",
+          "Event guaranteed to be published eventually",
+          "No distributed transaction",
+          "Publisher is idempotent"
+        ],
+        "cons": [
+          "Extra table and component",
+          "Slight delay"
+        ],
+        "verdict": "Industry standard. Same pattern I used with JMS at SENAI \u2014 ensuring DB state and message are consistent."
+      }
+    },
+    "nuance": "This is the SAME problem I solved in Java EE: never do I/O (REST, LDAP, JMS/Kafka) inside an active transaction holding a DB connection. The solution (outbox) is framework-independent \u2014 it works in EJB and Spring identically.",
+    "topic": "spring",
+    "bestOption": "c"
+  },
+  {
+    "id": "spring-oral-04",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Auto-configuration",
+    "difficulty": "intermediate",
+    "question": "What is Spring Boot auto-configuration?",
+    "interviewerIntent": "Test whether the candidate understands the mechanism or just memorized the term.",
+    "shortAnswer": "Auto-configuration examines your classpath and existing beans to automatically create and configure beans you would otherwise define manually. It uses @Conditional annotations to decide what to create \u2014 if you already defined a DataSource, it will not create another.",
+    "modelAnswer": "Context: In Java EE, you configure datasources in standalone.xml, JMS in the server subsystem. In Spring Boot, auto-configuration handles defaults.\n\nHow it works: Spring Boot scans META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports for auto-configuration classes. Each class has @Conditional annotations \u2014 they check if certain classes are on classpath, if certain properties exist, or if certain beans are missing.\n\nExample: If H2 is on classpath AND no DataSource bean exists \u2192 auto-create an embedded H2 DataSource. If you define your own DataSource bean \u2192 @ConditionalOnMissingBean skips auto-creation.\n\nKey insight: Auto-configuration is runtime, not compile-time. It does not generate code \u2014 it creates beans conditionally at startup.\n\nComparison with Java EE: WildFly subsystems serve a similar role (auto-detect JMS, datasource, etc.) but configured via XML. Spring Boot's approach is code-driven and overridable via properties.",
+    "senaiExample": "WildFly auto-detects the Artemis subsystem and provides JMS ConnectionFactory. Spring Boot auto-detects spring-kafka on classpath and creates KafkaTemplate.",
+    "reweExample": "When a TRAB service adds spring-boot-starter-data-jpa to dependencies, auto-configuration creates EntityManagerFactory, TransactionManager and repository implementations automatically.",
+    "keyPoints": [
+      "Classpath scanning + @Conditional = auto-configuration",
+      "Runtime, not compile-time",
+      "@ConditionalOnMissingBean lets you override defaults",
+      "Similar concept to WildFly subsystem auto-detection",
+      "Properties can tune the auto-configured beans"
+    ],
+    "mistakesToAvoid": [
+      "Saying it generates code at compile time",
+      "Confusing with annotation processing (Lombok)",
+      "Not mentioning how to override defaults"
+    ],
+    "followUps": [
+      {
+        "question": "How would you disable a specific auto-configuration?",
+        "answerHint": "@SpringBootApplication(exclude = {DataSourceAutoConfiguration.class}) or spring.autoconfigure.exclude property."
+      },
+      {
+        "question": "Can you create your own auto-configuration?",
+        "answerHint": "Yes \u2014 create @Configuration with @Conditional, register in AutoConfiguration.imports. Used for company-wide Spring Boot starters."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "@ConditionalOnMissingBean",
+        "meaning": "cria o bean APENAS se o usu\u00e1rio n\u00e3o definiu um pr\u00f3prio",
+        "example": "Auto-config creates DataSource only @ConditionalOnMissingBean \u2014 your custom bean takes priority."
+      },
+      {
+        "term": "starter",
+        "meaning": "depend\u00eancia que traz auto-configuration + dependencies para um tema",
+        "example": "spring-boot-starter-data-jpa brings JPA, Hibernate, HikariCP and auto-configuration for all of them."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I explained the mechanism (classpath + conditional)",
+        "weight": 3
+      },
+      {
+        "criterion": "I mentioned it is runtime, not compile-time",
+        "weight": 2
+      },
+      {
+        "criterion": "I showed how to override auto-configured beans",
+        "weight": 3
+      },
+      {
+        "criterion": "I compared to Java EE equivalent (server subsystems)",
+        "weight": 2
+      }
+    ],
+    "topic": "spring"
+  },
+  {
+    "id": "spring-fill-01",
+    "type": "FILL_BLANK",
+    "subtopic": "Annotations",
+    "difficulty": "basic",
+    "mission": "In Spring Boot, to make a service <strong>transactional</strong> you must add:",
+    "code": "@Service\npublic class DeliveryService {\n    _____\n    public void processDelivery(DeliveryRequest req) {\n        // Without this, no transaction!\n    }\n}",
+    "blank": "_____",
+    "choices": [
+      "@Transactional",
+      "@Stateless",
+      "@TransactionAttribute",
+      "@Commit"
+    ],
+    "answer": "@Transactional",
+    "explain": "In EJB, @Stateless gives you CMT (automatic transactions). In Spring, you MUST add @Transactional explicitly. This is the #1 migration gotcha \u2014 forgetting @Transactional means no transaction, which can cause silent data loss.",
+    "topic": "spring"
+  },
+  {
+    "id": "spring-fill-02",
+    "type": "FILL_BLANK",
+    "subtopic": "REST",
+    "difficulty": "basic",
+    "mission": "Complete the Spring Boot REST controller equivalent of JAX-RS <strong>@Path + @GET</strong>.",
+    "code": "_____\n@GetMapping(\"/deliveries/{id}\")\npublic ResponseEntity<DeliveryDTO> getDelivery(@PathVariable Long id) {\n    return ResponseEntity.ok(service.findById(id));\n}",
+    "blank": "_____",
+    "choices": [
+      "@RestController",
+      "@Path(\"/api\")",
+      "@Controller",
+      "@WebServlet"
+    ],
+    "answer": "@RestController",
+    "explain": "@RestController = @Controller + @ResponseBody. It replaces JAX-RS @Path + @Produces(MediaType.APPLICATION_JSON). @GetMapping replaces @GET @Path. The HTTP semantics (GET, POST, status codes, content negotiation) are identical.",
+    "topic": "spring"
+  },
+  {
+    "id": "spring-pick-01",
+    "type": "PICK_INVALID",
+    "subtopic": "Migration Risks",
+    "difficulty": "intermediate",
+    "mission": "Which statement about Java EE \u2192 Spring Boot migration is <strong>FALSE</strong>?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "JPA entities work unchanged\nin Spring Boot \u2014 @Entity,\n@Table, relationships are\nthe same JPA standard.",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "@Stateless services are\nautomatically transactional.\nSpring @Service is also\nautomatically transactional.",
+        "valid": false
+      },
+      {
+        "id": "c",
+        "code": "CDI @Inject maps to\nSpring constructor injection.\nSame concept, different API.",
+        "valid": true
+      }
+    ],
+    "answer": "b",
+    "explain": "FALSE: Spring @Service is NOT automatically transactional. You MUST add @Transactional explicitly. This is the most dangerous assumption when migrating from EJB \u2014 forgetting this annotation means data may not persist correctly.",
+    "topic": "spring"
+  },
+  {
+    "id": "spring-predict-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Transaction Proxy",
+    "difficulty": "senior",
+    "mission": "Is method B <strong>transactional</strong>? Think about Spring proxy behavior.",
+    "code": "@Service\npublic class DeliveryService {\n\n    @Transactional\n    public void methodA() {\n        // This IS transactional\n        methodB(); // calling internal method\n    }\n\n    @Transactional(propagation = Propagation.REQUIRES_NEW)\n    public void methodB() {\n        // Is this a NEW transaction?\n        deliveryRepo.save(delivery);\n    }\n}\n\n// External call: deliveryService.methodA();",
+    "choices": [
+      "methodB gets a NEW transaction",
+      "methodB runs in methodA's transaction",
+      "TransactionException",
+      "No transaction at all"
+    ],
+    "answer": "methodB runs in methodA's transaction",
+    "explain": "Spring @Transactional works via PROXY. Self-invocation (calling your own method internally) bypasses the proxy \u2014 REQUIRES_NEW is IGNORED. methodB runs in methodA's transaction. Fix: inject self or extract to another bean. This is the same issue as EJB self-invocation with @TransactionAttribute!",
+    "topic": "spring"
+  },
+  {
+    "id": "spring-oral-05",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Configuration",
+    "difficulty": "intermediate",
+    "question": "How do you handle different environments in Spring Boot?",
+    "interviewerIntent": "Test knowledge of Spring configuration and comparison with Java EE approach.",
+    "shortAnswer": "Spring Profiles: application-dev.yml, application-prod.yml override defaults. Activated via --spring.profiles.active=prod or SPRING_PROFILES_ACTIVE environment variable. This replaces WildFly standalone.xml per-environment configurations.",
+    "modelAnswer": "Context: In Java EE/WildFly, environment config lives in standalone.xml \u2014 datasources, JMS, system properties. Each environment has its own server configuration.\n\nSpring Boot approach: application.yml holds defaults. application-dev.yml, application-prod.yml override per environment. Kubernetes ConfigMaps and Secrets inject environment variables that Spring reads.\n\nKey features:\n- @Profile(\"prod\") beans: only created in production\n- Property placeholders: ${DB_URL:jdbc:h2:mem:test} (env var with fallback)\n- Encrypted secrets via Kubernetes Secrets or Spring Vault\n- Same JAR runs in all environments \u2014 only configuration changes\n\nComparison: WildFly = server-level config (ops team manages). Spring Boot = app-level config (developer owns). In Kubernetes, config is externalized via ConfigMap/Secrets.",
+    "senaiExample": "WildFly standalone.xml defines datasources per environment. Deployment properties in jboss-web.xml. MicroProfile Config for app-level overrides.",
+    "reweExample": "TRAB services use Spring profiles + Kubernetes ConfigMaps. Same Docker image deployed to dev/staging/prod with different SPRING_PROFILES_ACTIVE.",
+    "keyPoints": [
+      "Profiles replace per-environment server config",
+      "Same JAR, different properties per environment",
+      "Kubernetes ConfigMap/Secrets for externalized config",
+      "@Profile beans for environment-specific components"
+    ],
+    "mistakesToAvoid": [
+      "Not mentioning how this works in Kubernetes",
+      "Suggesting different builds per environment",
+      "Not comparing to the Java EE approach"
+    ],
+    "followUps": [
+      {
+        "question": "Where do database credentials go?",
+        "answerHint": "Kubernetes Secrets, mounted as env vars. Never in application.yml committed to Git."
+      },
+      {
+        "question": "How do you test with different profiles locally?",
+        "answerHint": "--spring.profiles.active=local in IDE run config, or application-local.yml with H2 database for fast development."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "profile",
+        "meaning": "conjunto de configura\u00e7\u00f5es ativado por ambiente",
+        "example": "spring.profiles.active=prod activates application-prod.yml settings."
+      },
+      {
+        "term": "externalized configuration",
+        "meaning": "configura\u00e7\u00e3o fora do c\u00f3digo/JAR, injetada pelo ambiente",
+        "example": "Kubernetes injects DB_URL via ConfigMap \u2014 the application reads it at startup."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I explained profiles and per-environment properties",
+        "weight": 3
+      },
+      {
+        "criterion": "I connected to Kubernetes ConfigMap/Secrets",
+        "weight": 3
+      },
+      {
+        "criterion": "I compared to Java EE server-level config",
+        "weight": 2
+      },
+      {
+        "criterion": "I mentioned that the same JAR runs everywhere",
+        "weight": 2
+      }
+    ],
+    "topic": "spring"
+  },
+  {
+    "id": "spring-design-02",
+    "type": "DESIGN_DECISION",
+    "subtopic": "Testing",
+    "difficulty": "intermediate",
+    "mission": "How would you test a <strong>DeliveryService</strong> that calls Repository and KafkaPublisher?",
+    "options": [
+      {
+        "id": "a",
+        "label": "@SpringBootTest (full context)",
+        "desc": "Load entire application context, test everything together."
+      },
+      {
+        "id": "b",
+        "label": "Unit test with Mockito",
+        "desc": "Mock Repository and KafkaPublisher, test service logic only."
+      },
+      {
+        "id": "c",
+        "label": "@DataJpaTest + unit tests separately",
+        "desc": "Repository tested with real DB (@DataJpaTest), service tested with mocks (unit)."
+      }
+    ],
+    "explanation": {
+      "a": {
+        "pros": [
+          "Tests everything integrated",
+          "Catches wiring issues"
+        ],
+        "cons": [
+          "Slow startup (full context)",
+          "Need Kafka running or embedded",
+          "Hard to isolate failures"
+        ],
+        "verdict": "Good for integration/smoke tests. Too slow for TDD cycle."
+      },
+      "b": {
+        "pros": [
+          "Fast",
+          "Isolated",
+          "Tests business logic only",
+          "No Spring context needed"
+        ],
+        "cons": [
+          "Does not catch wiring issues",
+          "Does not test DB queries"
+        ],
+        "verdict": "Best for service business logic. Fast TDD cycle. My standard approach from Java EE (Mockito works the same)."
+      },
+      "c": {
+        "pros": [
+          "Each layer tested appropriately",
+          "Repository with real DB catches SQL issues",
+          "Service with mocks tests logic fast",
+          "Complete coverage with reasonable speed"
+        ],
+        "cons": [
+          "More test classes",
+          "Must maintain both types"
+        ],
+        "verdict": "Industry standard. Matches the testing pyramid \u2014 many unit tests, fewer integration tests."
+      }
+    },
+    "nuance": "My testing approach from Java EE transfers directly. Business logic = unit tests with Mockito. Repository queries = integration tests with Testcontainers or @DataJpaTest. The tools change slightly but the pyramid is the same.",
+    "topic": "spring",
+    "bestOption": "c"
+  },
+  {
+    "id": "spring-followup-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Spring Boot",
+    "difficulty": "senior",
+    "scenario": "The interviewer probes your Spring Boot knowledge after learning about your Java EE background.",
+    "questions": [
+      {
+        "q": "How does Spring Boot handle health checks?",
+        "hint": "Actuator: /actuator/health. Liveness and readiness probes for Kubernetes. Custom health indicators for dependencies. Similar concept to WildFly management interface."
+      },
+      {
+        "q": "What happens if two beans implement the same interface?",
+        "hint": "@Primary marks the default. @Qualifier selects specific one. In CDI: @Alternative + @Priority. Same problem, different annotations."
+      },
+      {
+        "q": "How do you handle exceptions in REST controllers?",
+        "hint": "@ControllerAdvice + @ExceptionHandler. Centralized exception mapping to HTTP status. Same concept as JAX-RS ExceptionMapper."
+      },
+      {
+        "q": "What is Spring Boot Actuator?",
+        "hint": "Production-ready features: health, metrics, info, env, loggers. Exposed as REST endpoints. Comparable to WildFly management API but app-embedded."
+      },
+      {
+        "q": "How does Spring Boot connect to a database?",
+        "hint": "Auto-configuration: finds datasource properties in application.yml \u2192 creates HikariCP pool \u2192 configures EntityManagerFactory. No standalone.xml datasource definition needed."
+      }
+    ],
+    "topic": "spring",
+    "question": "The interviewer probes your Spring Boot knowledge after learning about your Java EE background.",
+    "answer": "**Q: How does Spring Boot handle health checks?**\nActuator: /actuator/health. Liveness and readiness probes for Kubernetes. Custom health indicators for dependencies. Similar concept to WildFly management interface.\n\n**Q: What happens if two beans implement the same interface?**\n@Primary marks the default. @Qualifier selects specific one. In CDI: @Alternative + @Priority. Same problem, different annotations.\n\n**Q: How do you handle exceptions in REST controllers?**\n@ControllerAdvice + @ExceptionHandler. Centralized exception mapping to HTTP status. Same concept as JAX-RS ExceptionMapper.\n\n**Q: What is Spring Boot Actuator?**\nProduction-ready features: health, metrics, info, env, loggers. Exposed as REST endpoints. Comparable to WildFly management API but app-embedded.\n\n**Q: How does Spring Boot connect to a database?**\nAuto-configuration: finds datasource properties in application.yml \u2192 creates HikariCP pool \u2192 configures EntityManagerFactory. No standalone.xml datasource definition needed."
+  },
+  {
+    "id": "spring-oral-06",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Best Practices",
+    "difficulty": "intermediate",
+    "question": "Why does Spring recommend constructor injection over field injection?",
+    "interviewerIntent": "Test understanding of DI best practices and whether the candidate can adapt from CDI field injection.",
+    "shortAnswer": "Constructor injection makes dependencies explicit and immutable (final fields). The object cannot exist without its dependencies. Tests do not need reflection to inject mocks. Missing dependencies are detected at startup, not at runtime.",
+    "modelAnswer": "Context: In CDI/Java EE, field injection with @Inject is the standard. In Spring Boot, constructor injection is strongly preferred.\n\nReasons:\n1. Immutability: fields are final \u2014 no accidental reassignment\n2. Explicit dependencies: visible in the constructor signature\n3. Testability: pass mocks directly in new Service(mockRepo, mockPublisher) \u2014 no reflection\n4. Fail-fast: Spring fails at startup if a dependency cannot be resolved (not at first use)\n5. No framework dependency: tests do not need Spring or Mockito @InjectMocks\n\nComparison with CDI: CDI field injection works via reflection at runtime. The object is created, then fields are set. This means the object exists momentarily without its dependencies \u2014 technically invalid.\n\nMy transition: In my CDI environment, field injection is the convention. Moving to Spring, I would adopt constructor injection immediately \u2014 the benefits for testing and clarity are significant.",
+    "senaiExample": "SGN3 uses @Inject field injection (CDI convention). Tests use Mockito @InjectMocks + @Mock which uses reflection. Spring constructor injection eliminates this need.",
+    "reweExample": "TRAB team follows Spring best practices \u2014 constructor injection with final fields. Kotlin makes this even more concise with primary constructors.",
+    "keyPoints": [
+      "Final fields = immutable dependencies",
+      "No reflection needed for testing",
+      "Fail-fast at startup",
+      "Dependencies visible in constructor signature",
+      "Spring auto-injects single-constructor classes"
+    ],
+    "mistakesToAvoid": [
+      "Saying field injection is wrong everywhere (it works in CDI)",
+      "Not explaining why immutability matters",
+      "Not mentioning testability benefit"
+    ],
+    "followUps": [
+      {
+        "question": "What about Lombok @RequiredArgsConstructor?",
+        "answerHint": "Generates constructor for all final fields. Reduces boilerplate. Common in Spring projects. Kotlin primary constructors serve the same purpose."
+      },
+      {
+        "question": "Is @Autowired needed on the constructor?",
+        "answerHint": "Since Spring 4.3, if a class has exactly one constructor, @Autowired is optional. Spring uses it automatically."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "immutable dependency",
+        "meaning": "depend\u00eancia declarada como final \u2014 n\u00e3o pode ser reatribu\u00edda ap\u00f3s constru\u00e7\u00e3o",
+        "example": "private final DeliveryRepository repo \u2014 once set in constructor, cannot change."
+      },
+      {
+        "term": "fail-fast",
+        "meaning": "falhar imediatamente no startup em vez de em runtime",
+        "example": "Missing bean causes startup failure \u2014 you know immediately, not when the first request arrives."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I explained why constructor injection is preferred",
+        "weight": 3
+      },
+      {
+        "criterion": "I mentioned immutability and testability",
+        "weight": 3
+      },
+      {
+        "criterion": "I compared to CDI field injection honestly",
+        "weight": 2
+      },
+      {
+        "criterion": "I mentioned fail-fast at startup",
+        "weight": 2
+      }
+    ],
+    "topic": "spring"
+  },
+  {
+    "id": "spring-predict-02",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Bean Scope",
+    "difficulty": "intermediate",
+    "mission": "Two requests call deliveryService.getCount(). What is the <strong>counter value</strong> after both?",
+    "code": "@Service  // Default scope = Singleton\npublic class DeliveryService {\n    private int counter = 0;\n\n    public int getCount() {\n        return ++counter;\n    }\n}\n\n// Request 1: deliveryService.getCount() \u2192 ?\n// Request 2: deliveryService.getCount() \u2192 ?",
+    "choices": [
+      "Both return 1",
+      "First=1, Second=2",
+      "Both return 0",
+      "ConcurrentModificationException"
+    ],
+    "answer": "First=1, Second=2",
+    "explain": "Spring @Service is SINGLETON by default \u2014 one instance shared across ALL requests. Mutable state (counter) is shared and incremented by each call. This is a critical difference from EJB @Stateless (pooled instances, no shared mutable state). In Spring, services MUST be stateless or use proper synchronization!",
+    "topic": "spring"
+  },
+  {
+    "id": "spring-pick-02",
+    "type": "PICK_INVALID",
+    "subtopic": "Anti-patterns",
+    "difficulty": "intermediate",
+    "mission": "Which is a <strong>Spring Boot anti-pattern</strong>?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "@Service\nclass DeliveryService {\n  private final DeliveryRepo repo;\n  DeliveryService(DeliveryRepo repo) {\n    this.repo = repo;\n  }\n}",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "@Service\nclass DeliveryService {\n  @Autowired DeliveryRepo repo;\n  @Autowired KafkaTemplate kafka;\n  @Autowired RestTemplate rest;\n  @Autowired JdbcTemplate jdbc;\n  private int requestCount = 0;\n  // Mutable state in singleton!\n}",
+        "valid": false
+      },
+      {
+        "id": "c",
+        "code": "@RestController\nclass DeliveryController {\n  private final DeliveryService svc;\n  DeliveryController(DeliveryService s) {\n    this.svc = s;\n  }\n}",
+        "valid": true
+      }
+    ],
+    "answer": "b",
+    "explain": "Multiple anti-patterns: field injection (not immutable), too many dependencies (God class), and mutable state (requestCount) in a singleton bean. Singletons in Spring are shared across threads \u2014 mutable state causes race conditions. EJB @Stateless avoided this via pooling; Spring does not.",
+    "topic": "spring"
+  },
+  {
+    "id": "spring-compare-03",
+    "type": "COMPARE_CONCEPTS",
+    "subtopic": "Messaging",
+    "difficulty": "senior",
+    "mission": "Compare: <strong>JMS (ActiveMQ)</strong> vs <strong>Kafka</strong> \u2014 for the Java EE to Spring Boot transition",
+    "conceptA": {
+      "name": "JMS / ActiveMQ",
+      "definition": "Point-to-point queues OR pub-sub topics. Message consumed = removed. Broker manages delivery state. @MessageDriven (EJB) or @JmsListener (Spring)."
+    },
+    "conceptB": {
+      "name": "Apache Kafka",
+      "definition": "Append-only distributed log. Messages retained (configurable TTL). Consumers manage their position (offset). Partitions enable parallelism. @KafkaListener in Spring."
+    },
+    "keyDifference": "JMS: message consumed = gone. Kafka: message stays in the log \u2014 replayable. JMS: broker tracks who received what. Kafka: consumer tracks its own offset. Kafka enables event sourcing and replay; JMS does not.",
+    "javaExample": "JMS: @MessageDriven processes one message, acknowledges, message removed from queue. Kafka: @KafkaListener reads from partition at offset, commits offset, message stays in topic for days/weeks.",
+    "interviewAnswer": "My JMS experience gives me strong foundations in async messaging: producers, consumers, retry, DLQ, idempotency. Kafka adds important differences: messages are retained (replayable), consumers manage their own position (offset), partitions enable parallel processing, and consumer groups allow multiple services to read the same events independently. I would transfer my messaging patterns while learning Kafka-specific concepts like offset management, partition keys and consumer group rebalancing.",
+    "topic": "spring",
+    "answer": "**JMS / ActiveMQ:** Point-to-point queues OR pub-sub topics. Message consumed = removed. Broker manages delivery state. @MessageDriven (EJB) or @JmsListener (Spring).\n\n**Apache Kafka:** Append-only distributed log. Messages retained (configurable TTL). Consumers manage their position (offset). Partitions enable parallelism. @KafkaListener in Spring.\n\n\n**Key Difference:** JMS: message consumed = gone. Kafka: message stays in the log \u2014 replayable. JMS: broker tracks who received what. Kafka: consumer tracks its own offset. Kafka enables event sourcing and replay; JMS does not."
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "REST Controller",
+    "question": "In Java EE you use @Path and @GET (JAX-RS). How does Spring MVC handle the same? Show a GET endpoint that returns a delivery by ID with proper error handling.",
+    "modelAnswer": "Spring MVC uses @RestController + @GetMapping:\n\n```java\n@RestController\n@RequestMapping(\"/api/v1/deliveries\")\npublic class DeliveryController {\n\n    private final DeliveryService service;\n\n    // Constructor injection (no @Autowired needed with single constructor)\n    public DeliveryController(DeliveryService service) {\n        this.service = service;\n    }\n\n    @GetMapping(\"/{id}\")\n    public ResponseEntity<DeliveryDTO> findById(@PathVariable Long id) {\n        return ResponseEntity.ok(service.findById(id));\n    }\n}\n```\n\nKey differences from JAX-RS:\n\u2022 @RestController = @Controller + @ResponseBody (auto-serialize to JSON)\n\u2022 @GetMapping = @RequestMapping(method = GET) shortcut\n\u2022 @PathVariable (not @PathParam)\n\u2022 ResponseEntity gives full control over status + headers\n\u2022 Jackson handles serialization (not JSONB)",
+    "tags": [
+      "spring-mvc",
+      "rest",
+      "controller"
+    ],
+    "topic": "spring",
+    "id": "spring-rest-controller-21"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Error Handling",
+    "question": "How do you handle exceptions globally in a Spring Boot REST API?",
+    "options": [
+      {
+        "label": "A) try/catch in every controller method",
+        "description": "Each endpoint catches its own exceptions and returns appropriate status."
+      },
+      {
+        "label": "B) @RestControllerAdvice with @ExceptionHandler methods",
+        "description": "Centralized exception-to-response mapping in one class."
+      },
+      {
+        "label": "C) Custom Filter that catches all exceptions",
+        "description": "Servlet filter wraps all requests in try/catch."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "@RestControllerAdvice is Spring's recommended pattern:\n\n```java\n@RestControllerAdvice\npublic class GlobalExceptionHandler {\n\n    @ExceptionHandler(DeliveryNotFoundException.class)\n    @ResponseStatus(HttpStatus.NOT_FOUND)\n    public ErrorResponse handleNotFound(DeliveryNotFoundException e) {\n        return new ErrorResponse(\"NOT_FOUND\", e.getMessage());\n    }\n\n    @ExceptionHandler(MethodArgumentNotValidException.class)\n    @ResponseStatus(HttpStatus.BAD_REQUEST)\n    public ErrorResponse handleValidation(MethodArgumentNotValidException e) {\n        var errors = e.getBindingResult().getFieldErrors().stream()\n            .map(f -> f.getField() + \": \" + f.getDefaultMessage())\n            .toList();\n        return new ErrorResponse(\"VALIDATION_FAILED\", errors);\n    }\n\n    @ExceptionHandler(Exception.class)\n    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)\n    public ErrorResponse handleUnexpected(Exception e) {\n        log.error(\"Unexpected error\", e);\n        return new ErrorResponse(\"INTERNAL_ERROR\", \"An unexpected error occurred\");\n    }\n}\n```\n\nSame concept as JAX-RS ExceptionMapper<T>, different API.",
+    "tags": [
+      "error-handling",
+      "controller-advice",
+      "spring"
+    ],
+    "topic": "spring",
+    "id": "spring-error-handling-22"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Bean Validation",
+    "question": "How do you validate incoming DTOs in Spring Boot? Compare with Java EE.",
+    "modelAnswer": "Same Bean Validation (Hibernate Validator) in both \u2014 just different triggering:\n\n**Java EE**: @Valid on JAX-RS parameter, ExceptionMapper for ConstraintViolationException\n**Spring**: @Valid on @RequestBody, @RestControllerAdvice for MethodArgumentNotValidException\n\n```java\n// DTO with validation\npublic record CreateDeliveryRequest(\n    @NotBlank String driverId,\n    @NotNull @Future LocalDateTime scheduledAt,\n    @Size(min = 1, max = 50) @Valid List<StopRequest> stops\n) {}\n\n// Controller uses @Valid\n@PostMapping\npublic ResponseEntity<DeliveryDTO> create(@Valid @RequestBody CreateDeliveryRequest req) {\n    Delivery d = service.create(req);\n    URI location = ServletUriComponentsBuilder.fromCurrentRequest()\n        .path(\"/{id}\").buildAndExpand(d.getId()).toUri();\n    return ResponseEntity.created(location).body(toDTO(d));\n}\n```\n\nThe annotations (@NotBlank, @Size, @Future) are IDENTICAL \u2014 same javax.validation / jakarta.validation package.",
+    "tags": [
+      "validation",
+      "bean-validation",
+      "dto"
+    ],
+    "topic": "spring",
+    "id": "spring-bean-validation-23"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "Dependency Injection",
+    "mission": "What happens when Spring Boot starts this application?",
+    "code": "@SpringBootApplication\npublic class DeliveryApp {\n    public static void main(String[] args) {\n        SpringApplication.run(DeliveryApp.class, args);\n    }\n}\n\n@Service\npublic class DeliveryService {\n    public DeliveryService() {\n        System.out.println(\"Service created\");\n    }\n}\n\n@RestController\npublic class DeliveryController {\n    private final DeliveryService service;\n\n    public DeliveryController(DeliveryService service) {\n        System.out.println(\"Controller created\");\n        this.service = service;\n    }\n}",
+    "choices": [
+      "Service created\\nController created",
+      "Controller created\\nService created",
+      "Nothing prints (lazy initialization)",
+      "Exception: circular dependency"
+    ],
+    "answer": "Service created\\nController created",
+    "explain": "Spring creates beans in dependency order. Controller depends on Service, so Service is created first. Both are singletons by default \u2014 created at startup (eager initialization).",
+    "topic": "spring",
+    "id": "spring-dependency-injection-24"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Testing Strategy",
+    "question": "Explain the testing pyramid in Spring Boot. What types of tests do you write and when?",
+    "modelAnswer": "**Testing pyramid (bottom to top):**\n\n**1. Unit tests (80% \u2014 fastest, most numerous):**\n```java\n@ExtendWith(MockitoExtension.class)\nclass DeliveryServiceTest {\n    @Mock DeliveryRepository repo;\n    @InjectMocks DeliveryService service;\n\n    @Test\n    void shouldRejectPastSchedule() {\n        var req = new CreateDeliveryRequest(\"d1\", LocalDateTime.now().minusDays(1), stops);\n        assertThrows(InvalidScheduleException.class, () -> service.create(req));\n    }\n}\n```\nNo Spring context. Milliseconds to run. Tests business logic in isolation.\n\n**2. Slice tests (15% \u2014 targeted context):**\n```java\n@WebMvcTest(DeliveryController.class) // only web layer\n@DataJpaTest // only JPA layer + embedded DB\n```\nPartial Spring context. Tests serialization, queries, config.\n\n**3. Integration tests (5% \u2014 full flow):**\n```java\n@SpringBootTest\n@Testcontainers\nclass DeliveryIntegrationTest { ... }\n```\nFull app + real DB (Testcontainers). Slow. Only critical paths.\n\n**Same pyramid as Java EE** \u2014 only the tools differ (Arquillian \u2192 @SpringBootTest).",
+    "tags": [
+      "testing",
+      "unit-test",
+      "integration-test"
+    ],
+    "topic": "spring",
+    "id": "spring-testing-strategy-25"
+  },
+  {
+    "type": "CODE_REFACTOR",
+    "difficulty": "inter",
+    "subtopic": "Controller Design",
+    "question": "What problems do you see in this controller?",
+    "code": "@RestController\npublic class DeliveryController {\n\n    @Autowired\n    private DeliveryRepository repo;\n\n    @Autowired\n    private EntityManager em;\n\n    @GetMapping(\"/deliveries\")\n    public List<Delivery> getAll() {\n        return repo.findAll();\n    }\n\n    @PostMapping(\"/deliveries\")\n    public Delivery create(@RequestBody Map<String, Object> body) {\n        Delivery d = new Delivery();\n        d.setDriverId((String) body.get(\"driverId\"));\n        d.setScheduledAt(LocalDateTime.parse((String) body.get(\"scheduledAt\")));\n        em.persist(d);\n        return d;\n    }\n}",
+    "tags": [
+      "refactoring",
+      "clean-code",
+      "layering"
+    ],
+    "topic": "spring",
+    "id": "spring-controller-design-26",
+    "answer": "**Refactored:**\n```java\n@RestController\n@RequestMapping(\"/api/v1/deliveries\")\npublic class DeliveryController {\n\n    private final DeliveryService service;\n\n    public DeliveryController(DeliveryService service) {\n        this.service = service;\n    }\n\n    @GetMapping\n    public Page<DeliveryDTO> findAll(Pageable pageable) {\n        return service.findAll(pageable);\n    }\n\n    @PostMapping\n    public ResponseEntity<DeliveryDTO> create(@Valid @RequestBody CreateDeliveryRequest req) {\n        DeliveryDTO dto = service.create(req);\n        URI location = ServletUriComponentsBuilder.fromCurrentRequest()\n            .path(\"/{id}\").buildAndExpand(dto.id()).toUri();\n        return ResponseEntity.created(location).body(dto);\n    }\n}\n```\n\n**Problems:** Controller depends directly on Repository and EntityManager \u2014 bypasses service layer; No validation on input (Map<String, Object> loses type safety); Returns JPA Entity directly \u2014 exposes internal structure to API consumers; No proper status codes (POST should return 201, not 200); Field injection (@Autowired) \u2014 harder to test than constructor injection; findAll() without pagination \u2014 can return millions of rows",
+    "refactoredCode": "@RestController\n@RequestMapping(\"/api/v1/deliveries\")\npublic class DeliveryController {\n\n    private final DeliveryService service;\n\n    public DeliveryController(DeliveryService service) {\n        this.service = service;\n    }\n\n    @GetMapping\n    public Page<DeliveryDTO> findAll(Pageable pageable) {\n        return service.findAll(pageable);\n    }\n\n    @PostMapping\n    public ResponseEntity<DeliveryDTO> create(@Valid @RequestBody CreateDeliveryRequest req) {\n        DeliveryDTO dto = service.create(req);\n        URI location = ServletUriComponentsBuilder.fromCurrentRequest()\n            .path(\"/{id}\").buildAndExpand(dto.id()).toUri();\n        return ResponseEntity.created(location).body(dto);\n    }\n}",
+    "problemsToIdentify": [
+      "Controller depends directly on Repository and EntityManager \u2014 bypasses service layer",
+      "No validation on input (Map<String, Object> loses type safety)",
+      "Returns JPA Entity directly \u2014 exposes internal structure to API consumers",
+      "No proper status codes (POST should return 201, not 200)",
+      "Field injection (@Autowired) \u2014 harder to test than constructor injection",
+      "findAll() without pagination \u2014 can return millions of rows"
+    ]
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Profiles & Configuration",
+    "question": "How do you manage different configurations for dev, staging, and production in Spring Boot?",
+    "modelAnswer": "**Spring Profiles + application-{profile}.yml:**\n\n```yaml\n# application.yml (base \u2014 always loaded)\nspring.application.name: delivery-service\ndelivery.max-retries: 3\n\n# application-dev.yml\nspring.datasource.url: jdbc:postgresql://localhost:5432/delivery\nspring.kafka.bootstrap-servers: localhost:9092\nlogging.level.root: DEBUG\n\n# application-prod.yml\nspring.datasource.url: jdbc:postgresql://prod-rds:5432/delivery\nspring.kafka.bootstrap-servers: kafka-prod-1:9092,kafka-prod-2:9092\nlogging.level.root: WARN\n```\n\n**Activation:**\n```bash\n# In Kubernetes (environment variable)\nSPRING_PROFILES_ACTIVE=prod\n\n# JVM argument\njava -jar app.jar --spring.profiles.active=prod\n```\n\n**Type-safe config (preferred over @Value):**\n```java\n@ConfigurationProperties(prefix = \"delivery\")\npublic record DeliveryProperties(int maxRetries, Duration timeout) {}\n```\n\n**Java EE equivalent**: MicroProfile Config with ConfigSources. Same idea, less structured.",
+    "tags": [
+      "profiles",
+      "configuration",
+      "yml"
+    ],
+    "topic": "spring",
+    "id": "spring-profiles-configuration-27"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Security",
+    "question": "How do you secure a Spring Boot REST API? Authentication + Authorization.",
+    "modelAnswer": "**Spring Security + JWT (common pattern):**\n\n```java\n@Configuration\n@EnableWebSecurity\npublic class SecurityConfig {\n\n    @Bean\n    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {\n        return http\n            .csrf(csrf -> csrf.disable())  // stateless API\n            .sessionManagement(s -> s.sessionCreationPolicy(STATELESS))\n            .authorizeHttpRequests(auth -> auth\n                .requestMatchers(\"/actuator/health/**\").permitAll()\n                .requestMatchers(HttpMethod.GET, \"/api/v1/deliveries/**\").hasRole(\"READER\")\n                .requestMatchers(HttpMethod.POST, \"/api/v1/deliveries/**\").hasRole(\"WRITER\")\n                .anyRequest().authenticated()\n            )\n            .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))\n            .build();\n    }\n}\n```\n\n**Layers:**\n1. **Authentication**: JWT token validated by Spring Security (from OAuth2 provider or API gateway)\n2. **Authorization** (coarse): @PreAuthorize or SecurityFilterChain rules for endpoint access\n3. **Authorization** (fine): Business layer checks resource ownership (\"is this MY delivery?\")\n\n**Java EE equivalent**: Apache Shiro / container-managed security. Same concepts, different API.",
+    "tags": [
+      "security",
+      "jwt",
+      "oauth2"
+    ],
+    "topic": "spring",
+    "id": "spring-security-28"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Actuator",
+    "question": "Your delivery-service runs in Kubernetes. How do you configure health checks?",
+    "options": [
+      {
+        "label": "A) Custom /health endpoint in a controller",
+        "description": "Write a @GetMapping(\"/health\") that returns 200 if app is running."
+      },
+      {
+        "label": "B) Spring Boot Actuator with liveness and readiness probes",
+        "description": "Enable actuator health groups and configure K8s probes to use them."
+      },
+      {
+        "label": "C) Kubernetes exec probe that calls a shell script inside the container",
+        "description": "K8s runs a command inside the pod to check app status."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Spring Boot Actuator provides ready-made, production-grade health:\n\n```yaml\n# application.yml\nmanagement:\n  endpoints.web.exposure.include: health,info,prometheus\n  endpoint.health:\n    show-details: when-authorized\n    probes.enabled: true  # enables /health/liveness and /health/readiness\n  health:\n    db.enabled: true\n    kafka.enabled: true\n```\n\n```yaml\n# Kubernetes deployment\nlivenessProbe:\n  httpGet:\n    path: /actuator/health/liveness\n    port: 8080\n  initialDelaySeconds: 30\nreadinessProbe:\n  httpGet:\n    path: /actuator/health/readiness\n    port: 8080\n  initialDelaySeconds: 10\n```\n\n**Liveness**: Is the app alive? (restart if dead)\n**Readiness**: Can it accept traffic? (remove from load balancer if not ready)\n\nCustom health indicators for critical dependencies (Kafka, external APIs).",
+    "tags": [
+      "actuator",
+      "kubernetes",
+      "health-checks"
+    ],
+    "topic": "spring",
+    "id": "spring-actuator-29"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Spring Data Queries",
+    "question": "How do you write custom queries in Spring Data JPA? Compare method naming, @Query, and native SQL.",
+    "modelAnswer": "**Three approaches (use simplest that works):**\n\n**1. Method name derivation (simple queries):**\n```java\nList<Delivery> findByStatusAndDriverId(DeliveryStatus status, Long driverId);\nList<Delivery> findByScheduledAtAfterOrderByScheduledAtAsc(LocalDateTime after);\nOptional<Delivery> findFirstByDriverIdAndStatus(Long driverId, DeliveryStatus status);\n```\nSpring generates the query from the method name. Great for simple filters.\n\n**2. @Query with JPQL (medium complexity):**\n```java\n@Query(\"SELECT d FROM Delivery d JOIN FETCH d.stops WHERE d.route.id = :routeId AND d.status = 'PLANNED'\")\nList<Delivery> findPlannedForRoute(@Param(\"routeId\") Long routeId);\n```\nWhen method names become too long or you need JOINs/aggregations.\n\n**3. Native SQL (complex/PostgreSQL-specific):**\n```java\n@Query(value = \"SELECT d.* FROM delivery d WHERE d.status = 'ACTIVE' AND ST_DWithin(d.location, ST_MakePoint(:lng, :lat), :radius)\", nativeQuery = true)\nList<Delivery> findNearby(@Param(\"lat\") double lat, @Param(\"lng\") double lng, @Param(\"radius\") double radius);\n```\nWhen you need DB-specific features (PostGIS, window functions, CTEs).\n\n**Rule**: Start with method names. Use @Query when names get unwieldy. Use native only for DB-specific features.",
+    "tags": [
+      "spring-data",
+      "jpql",
+      "queries"
+    ],
+    "topic": "spring",
+    "id": "spring-spring-data-queries-30"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "Transaction Propagation",
+    "mission": "What happens when <code>outer()</code> is called?",
+    "code": "@Service\npublic class DeliveryService {\n\n    @Transactional\n    public void outer() {\n        repo.save(new Delivery(\"D-1\"));\n        try {\n            inner();\n        } catch (RuntimeException e) {\n            System.out.println(\"Caught: \" + e.getMessage());\n        }\n        repo.save(new Delivery(\"D-2\"));\n    }\n\n    @Transactional\n    public void inner() {\n        repo.save(new Delivery(\"D-INNER\"));\n        throw new RuntimeException(\"Fail!\");\n    }\n}",
+    "choices": [
+      "D-1 and D-2 saved, D-INNER rolled back",
+      "ALL rolled back (D-1, D-2, D-INNER)",
+      "D-1, D-2, D-INNER all saved",
+      "Only D-2 and D-INNER saved"
+    ],
+    "answer": "ALL rolled back (D-1, D-2, D-INNER)",
+    "explain": "Self-invocation: inner() is called from the same class, so the @Transactional proxy is NOT applied. Both methods run in the SAME transaction. When inner() throws, the TX is marked for rollback. Even though outer() catches the exception, the TX is already doomed \u2014 commit attempt will throw UnexpectedRollbackException. Fix: inject a separate bean or use TransactionTemplate.",
+    "topic": "spring",
+    "id": "spring-transaction-propagation-31"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Reactive vs Servlet",
+    "question": "Spring offers both Spring MVC (servlet, blocking) and Spring WebFlux (reactive, non-blocking). When would you choose each?",
+    "modelAnswer": "**Spring MVC (servlet stack) \u2014 choose when:**\n- Traditional request/response APIs (90% of use cases)\n- Team knows blocking/imperative programming\n- Using JPA/Hibernate (blocking by nature)\n- Simple mental model, easier debugging\n- REWE transport service: this is the right choice\n\n**Spring WebFlux (reactive) \u2014 choose when:**\n- High concurrency with many waiting connections (chat, streaming)\n- Non-blocking I/O end-to-end (reactive DB drivers like R2DBC)\n- Streaming responses (SSE, WebSocket heavy)\n- Gateways/proxies that mostly wait for backends\n\n**Why NOT WebFlux for REWE transport:**\n- JPA is blocking \u2192 mixing reactive HTTP with blocking DB negates benefits\n- Team learning curve (Mono/Flux are hard to debug)\n- Most endpoints are CRUD \u2192 servlet model is simpler\n- 1000 req/s is easily handled by servlet + thread pool\n\n**Honest answer**: \"For REWE's delivery-service, Spring MVC is the pragmatic choice. The service uses JPA (blocking), team productivity matters, and the load doesn't justify reactive complexity. I'd use WebFlux only for specific use cases like the real-time tracking endpoint (WebSocket/SSE).\"",
+    "tags": [
+      "webflux",
+      "reactive",
+      "architecture-decision"
+    ],
+    "topic": "spring",
+    "id": "spring-reactive-vs-servlet-32"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Logging & Observability",
+    "question": "How do you structure logging in a Spring Boot microservice?",
+    "modelAnswer": "**Structured logging with correlation:**\n\n```java\n// MDC for correlation ID (propagated across services)\n@Component\npublic class CorrelationFilter implements Filter {\n    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) {\n        String correlationId = ((HttpServletRequest) req).getHeader(\"X-Correlation-Id\");\n        if (correlationId == null) correlationId = UUID.randomUUID().toString();\n        MDC.put(\"correlationId\", correlationId);\n        try { chain.doFilter(req, res); }\n        finally { MDC.clear(); }\n    }\n}\n\n// Usage in service (SLF4J)\nlog.info(\"Delivery dispatched. deliveryId={}, driverId={}\", delivery.getId(), driverId);\nlog.warn(\"External service timeout. service=routeOptimizer, durationMs={}\", duration);\nlog.error(\"Failed to create invoice. deliveryId={}\", deliveryId, exception);\n```\n\n```yaml\n# application.yml \u2014 JSON format for Kibana/ELK\nlogging:\n  pattern.console: '{\"time\":\"%d\",\"level\":\"%p\",\"correlationId\":\"%X{correlationId}\",\"msg\":\"%m\"}%n'\n```\n\n**Rules:**\n- Always include business context (deliveryId, driverId)\n- Never log sensitive data (tokens, passwords, PII)\n- INFO for business events, WARN for retries/degradation, ERROR for failures\n- Use structured format (JSON) in production for parsing",
+    "tags": [
+      "logging",
+      "mdc",
+      "observability"
+    ],
+    "topic": "spring",
+    "id": "spring-logging-observability-33"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "senior",
+    "subtopic": "Async Processing",
+    "question": "A delivery creation needs to: (1) validate, (2) persist, (3) optimize route, (4) notify driver. Route optimization takes 3-5 seconds. What do you do?",
+    "options": [
+      {
+        "label": "A) All synchronous \u2014 user waits 5 seconds for full response",
+        "description": "Complete everything before responding to the client."
+      },
+      {
+        "label": "B) Sync for 1+2, then publish event for 3+4 (respond immediately after persist)",
+        "description": "Return 201 after validation + persist. Route + notification happen async via Kafka."
+      },
+      {
+        "label": "C) All async \u2014 accept request, return 202, process everything in background",
+        "description": "Immediately return 202 Accepted. Client polls for status."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Option B is the right balance:\n\n**Sync (must complete before response):**\n- Validation: client needs immediate feedback if invalid\n- Persist: client needs the delivery ID in the response\n- These take <50ms total\n\n**Async (happen after response):**\n- Route optimization: 3-5s, client doesn't need it immediately\n- Driver notification: non-critical, can retry if fails\n\n**Implementation:**\n```java\n@PostMapping\npublic ResponseEntity<DeliveryDTO> create(@Valid @RequestBody CreateDeliveryRequest req) {\n    Delivery d = service.validateAndPersist(req);  // sync: fast\n    eventPublisher.publish(new DeliveryCreated(d));  // triggers async route + notification\n    return ResponseEntity.created(uri).body(toDTO(d));  // respond immediately\n}\n```\n\nClient gets 201 in <100ms. Route appears when consumer processes it. Client can poll GET /deliveries/{id}/route to check.",
+    "tags": [
+      "async",
+      "event-driven",
+      "user-experience"
+    ],
+    "topic": "spring",
+    "id": "spring-async-processing-34"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "basic",
+    "subtopic": "Spring Boot Auto-configuration",
+    "question": "What does @SpringBootApplication do? How does auto-configuration work?",
+    "modelAnswer": "@SpringBootApplication is a shortcut for three annotations:\n\n```java\n@SpringBootConfiguration  // marks as config class (like @Configuration)\n@EnableAutoConfiguration  // the magic \u2014 configures based on classpath\n@ComponentScan            // scans current package + sub-packages for @Component, @Service, etc.\n```\n\n**Auto-configuration process:**\n1. Spring Boot scans META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports\n2. Each auto-config class has @Conditional annotations:\n   - @ConditionalOnClass(DataSource.class) \u2192 \"if JDBC driver is on classpath\"\n   - @ConditionalOnMissingBean(DataSource.class) \u2192 \"if user didn't define their own\"\n3. If conditions met \u2192 configure with sensible defaults\n\n**Example:**\n- You add spring-boot-starter-data-jpa to pom.xml\n- Hibernate is on classpath \u2192 @ConditionalOnClass passes\n- No custom EntityManagerFactory defined \u2192 auto-creates one\n- Reads spring.datasource.url from application.yml \u2192 configures connection\n\n**Override**: define your own @Bean of the same type \u2192 auto-config backs off.\n\n**Java EE equivalent**: Application server provides everything (datasource via JNDI, JPA via server config). Spring Boot does the same but in code/yml.",
+    "tags": [
+      "auto-configuration",
+      "spring-boot",
+      "basics"
+    ],
+    "topic": "spring",
+    "id": "spring-spring-boot-auto-configuration-35"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Testing with MockMvc",
+    "question": "Show how you test a REST controller without starting the full application.",
+    "modelAnswer": "**@WebMvcTest \u2014 loads only the web layer:**\n\n```java\n@WebMvcTest(DeliveryController.class)\nclass DeliveryControllerTest {\n\n    @Autowired\n    private MockMvc mvc;\n\n    @MockBean\n    private DeliveryService service;  // mock the dependency\n\n    @Test\n    void shouldReturnDelivery() throws Exception {\n        var dto = new DeliveryDTO(1L, \"D-42\", DeliveryStatus.PLANNED);\n        when(service.findById(1L)).thenReturn(dto);\n\n        mvc.perform(get(\"/api/v1/deliveries/1\"))\n            .andExpect(status().isOk())\n            .andExpect(jsonPath(\"$.driverId\").value(\"D-42\"))\n            .andExpect(jsonPath(\"$.status\").value(\"PLANNED\"));\n    }\n\n    @Test\n    void shouldReturn404WhenNotFound() throws Exception {\n        when(service.findById(99L)).thenThrow(new DeliveryNotFoundException(99L));\n\n        mvc.perform(get(\"/api/v1/deliveries/99\"))\n            .andExpect(status().isNotFound())\n            .andExpect(jsonPath(\"$.code\").value(\"NOT_FOUND\"));\n    }\n\n    @Test\n    void shouldValidateInput() throws Exception {\n        mvc.perform(post(\"/api/v1/deliveries\")\n                .contentType(MediaType.APPLICATION_JSON)\n                .content(\"{\\\"driverId\\\": \\\"\\\"}\"))  // blank driver\n            .andExpect(status().isBadRequest());\n    }\n}\n```\n\n**What this tests:** serialization, status codes, validation, error handling \u2014 WITHOUT starting the full app or DB.",
+    "tags": [
+      "testing",
+      "mockmvc",
+      "web-layer"
+    ],
+    "topic": "spring",
+    "id": "spring-testing-with-mockmvc-36"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Testcontainers",
+    "question": "How do you test repository queries against a real PostgreSQL database in CI?",
+    "modelAnswer": "**Testcontainers \u2014 real DB in Docker, spun up per test class:**\n\n```java\n@DataJpaTest\n@Testcontainers\n@AutoConfigureTestDatabase(replace = NONE)  // don't use H2!\nclass DeliveryRepositoryTest {\n\n    @Container\n    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(\"postgres:15\")\n        .withDatabaseName(\"testdb\");\n\n    @DynamicPropertySource\n    static void configureProperties(DynamicPropertyRegistry registry) {\n        registry.add(\"spring.datasource.url\", postgres::getJdbcUrl);\n        registry.add(\"spring.datasource.username\", postgres::getUsername);\n        registry.add(\"spring.datasource.password\", postgres::getPassword);\n    }\n\n    @Autowired\n    private DeliveryRepository repo;\n\n    @Test\n    void shouldFindActiveDeliveriesForDriver() {\n        // Arrange\n        repo.save(new Delivery(\"D-42\", ACTIVE, LocalDateTime.now()));\n        repo.save(new Delivery(\"D-42\", COMPLETED, LocalDateTime.now().minusDays(1)));\n        repo.save(new Delivery(\"D-99\", ACTIVE, LocalDateTime.now()));\n\n        // Act\n        var result = repo.findByDriverIdAndStatus(\"D-42\", ACTIVE);\n\n        // Assert\n        assertThat(result).hasSize(1);\n        assertThat(result.get(0).getDriverId()).isEqualTo(\"D-42\");\n    }\n}\n```\n\n**Why not H2:**\n- Doesn't support PostgreSQL-specific features (JSONB, DISTINCT ON, schemas)\n- Query behavior may differ (collation, date handling)\n- False sense of security \u2014 \"works on H2\" doesn't mean \"works on Postgres\"\n\n**In CI**: Docker-in-Docker or Testcontainers Cloud. Adds ~5s startup per test class.",
+    "tags": [
+      "testcontainers",
+      "repository-test",
+      "postgresql"
+    ],
+    "topic": "spring",
+    "id": "spring-testcontainers-37"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Flyway Migrations",
+    "question": "How do you manage database schema changes in Spring Boot?",
+    "modelAnswer": "**Flyway (integrated with Spring Boot):**\n\n```\nsrc/main/resources/db/migration/\n\u251c\u2500\u2500 V1__create_delivery_table.sql\n\u251c\u2500\u2500 V2__add_driver_id_column.sql\n\u251c\u2500\u2500 V3__create_delivery_event_table.sql\n\u2514\u2500\u2500 V4__add_index_on_status.sql\n```\n\n```sql\n-- V1__create_delivery_table.sql\nCREATE TABLE delivery (\n    id BIGSERIAL PRIMARY KEY,\n    driver_id VARCHAR(50),\n    status VARCHAR(20) NOT NULL DEFAULT 'PLANNED',\n    scheduled_at TIMESTAMP NOT NULL,\n    created_at TIMESTAMP NOT NULL DEFAULT NOW()\n);\n```\n\n**Rules:**\n- Never modify a migration after it's been applied (append-only)\n- Migrations must be backward-compatible with running code (for rolling deploys)\n- Breaking changes: two-step (V4: add new column, V5 next sprint: drop old)\n- Naming: V{number}__{description}.sql\n\n**Spring Boot auto-runs** migrations on startup (before app serves traffic). Flyway tracks which have been applied in a flyway_schema_history table.\n\n**Java EE equivalent**: Manual SQL scripts run by DBA, or Liquibase with JBoss module. Same concept, less automation.",
+    "tags": [
+      "flyway",
+      "migrations",
+      "database"
+    ],
+    "topic": "spring",
+    "id": "spring-flyway-migrations-38"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Docker & Deployment",
+    "question": "How do you containerize a Spring Boot application?",
+    "modelAnswer": "**Multi-stage Dockerfile (production-ready):**\n\n```dockerfile\n# Stage 1: Build\nFROM eclipse-temurin:21-jdk AS builder\nWORKDIR /app\nCOPY pom.xml .\nCOPY src ./src\nRUN ./mvnw package -DskipTests\n\n# Stage 2: Run (smaller image)\nFROM eclipse-temurin:21-jre\nWORKDIR /app\nCOPY --from=builder /app/target/delivery-service-*.jar app.jar\n\nEXPOSE 8080\nENTRYPOINT [\"java\", \"-jar\", \"app.jar\"]\n```\n\n**Or use Spring Boot's built-in buildpacks:**\n```bash\n./mvnw spring-boot:build-image -Dspring-boot.build-image.imageName=delivery-service:latest\n```\nNo Dockerfile needed \u2014 Cloud Native Buildpacks create an optimized layered image.\n\n**Java EE comparison:**\n- Java EE: WAR deployed to WildFly (app server is separate infrastructure)\n- Spring Boot: FAT JAR with embedded Tomcat (single artifact, self-contained)\n- Advantage: simpler deployment, predictable behavior, no app server config drift",
+    "tags": [
+      "docker",
+      "deployment",
+      "containerization"
+    ],
+    "topic": "spring",
+    "id": "spring-docker-deployment-39"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Performance & Caching",
+    "question": "How do you implement caching in Spring Boot? Compare with Java EE approach.",
+    "modelAnswer": "**Spring Cache abstraction:**\n\n```java\n@Configuration\n@EnableCaching\npublic class CacheConfig {\n    @Bean\n    public CacheManager cacheManager() {\n        return new ConcurrentMapCacheManager(\"routes\", \"drivers\");\n        // Or RedisCacheManager for distributed cache\n    }\n}\n\n@Service\npublic class RouteService {\n\n    @Cacheable(value = \"routes\", key = \"#routeId\")\n    public RouteDTO findById(Long routeId) {\n        // Called only on cache miss\n        return repo.findById(routeId).map(this::toDTO).orElseThrow();\n    }\n\n    @CacheEvict(value = \"routes\", key = \"#routeId\")\n    public void update(Long routeId, UpdateRouteRequest req) {\n        // Cache entry removed after update\n    }\n\n    @CacheEvict(value = \"routes\", allEntries = true)\n    @Scheduled(fixedRate = 3600000) // every hour\n    public void evictAll() {} // safety net TTL\n}\n```\n\n**Java EE equivalent**: Manual ConcurrentHashMap with TTL, or Infinispan @Cacheable. Same concept.\n\n**When to cache:**\n- Read frequently, changes rarely (route templates, driver profiles)\n- Expensive to compute (price calculations, ETA with traffic)\n- External service results (to reduce calls)\n\n**When NOT to cache:**\n- Rapidly changing data (current delivery status)\n- User-specific data with many variations\n- Data that MUST be real-time consistent",
+    "tags": [
+      "caching",
+      "spring-cache",
+      "redis"
+    ],
+    "topic": "spring",
+    "id": "spring-performance-caching-40"
+  },
+  {
+    "id": "interview-spring-01",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Spring Fundamentals",
+    "difficulty": "interview",
+    "question": "What is the difference between Spring Framework and Spring Boot?",
+    "interviewerIntent": "Distinguish Spring vs Spring Boot",
+    "answer": "Spring Framework provides the core features such as dependency injection, MVC, transaction management, data access and security.\n\nSpring Boot is built on top of Spring and simplifies application setup through auto-configuration, embedded servers, starter dependencies and sensible defaults.\n\nSpring Boot reduces the amount of manual configuration required to start and operate a Spring application.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-02",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "DI & Beans",
+    "difficulty": "interview",
+    "question": "What is dependency injection?",
+    "interviewerIntent": "Check DI understanding and preference",
+    "answer": "Dependency injection means that objects receive their dependencies from the framework instead of creating them directly.\n\nThis reduces coupling, improves testability and centralises object lifecycle management.\n\nI prefer constructor injection because dependencies are explicit and the object can be immutable.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-03",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Auto-configuration",
+    "difficulty": "interview",
+    "question": "How does Spring Boot auto-configuration work?",
+    "interviewerIntent": "Verify auto-configuration understanding",
+    "answer": "Spring Boot examines the classpath, existing beans and configuration properties.\n\nBased on this information, it conditionally creates common infrastructure beans.\n\nFor example, if Spring MVC and an embedded server are present, Boot configures a web application.\n\nDevelopers can override the defaults by defining their own beans or properties.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-04",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Request Lifecycle",
+    "difficulty": "interview",
+    "question": "What happens when an HTTP request reaches a Spring Boot application?",
+    "interviewerIntent": "Test understanding of the full request flow",
+    "answer": "The request first reaches the embedded web server, such as Tomcat.\n\nIt passes through the servlet filter chain, where Spring Security and other filters may run.\n\nThe `DispatcherServlet` receives the request and selects the appropriate controller method.\n\nThe controller calls the application or service layer.\n\nThe service may execute business rules, transactions and repository operations.\n\nThe result returns to the controller, and Spring normally serialises it to JSON using Jackson.\n\nFinally, the HTTP response is sent to the client.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-05",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Transactions",
+    "difficulty": "interview",
+    "question": "How do transactions work in Spring?",
+    "interviewerIntent": "Check transaction management knowledge",
+    "answer": "Spring usually manages transactions through `@Transactional`.\n\nA proxy intercepts the method call, opens or joins a transaction and commits it when the method succeeds.\n\nIf a configured exception occurs, Spring rolls the transaction back.\n\nI normally place transaction boundaries in the service layer because that layer coordinates business operations.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-06",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Transactions",
+    "difficulty": "interview",
+    "question": "What is a common problem with @Transactional?",
+    "interviewerIntent": "Verify awareness of @Transactional pitfalls",
+    "answer": "A common problem is self-invocation.\n\nWhen one method calls another transactional method inside the same class, the call may bypass the Spring proxy, so the transactional behaviour may not be applied.\n\nOther common issues include incorrect propagation, long-running transactions and performing external calls while holding database locks.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-07",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Async Processing",
+    "difficulty": "interview",
+    "question": "How would you handle a long-running operation?",
+    "interviewerIntent": "Test async architecture thinking",
+    "answer": "I would avoid blocking the HTTP request when the operation can be asynchronous.\n\nFor simple internal tasks, `@Async` with a properly configured executor may be sufficient.\n\nFor reliable distributed processing, I would publish a message or event to a broker such as ActiveMQ or Kafka.\n\nThe client could receive a job identifier and check the processing status later.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-08",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Security",
+    "difficulty": "interview",
+    "question": "How would you secure a REST API?",
+    "interviewerIntent": "Check security awareness",
+    "answer": "I would use Spring Security.\n\nFor stateless APIs, authentication is commonly implemented with OAuth 2.0 or JWT-based access tokens.\n\nI would validate authentication, apply authorisation rules at the appropriate level and follow least-privilege principles.\n\nI would also validate input, protect secrets, use TLS, configure CORS carefully and monitor failed authentication attempts.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-adv-01",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Transactions",
+    "difficulty": "senior",
+    "question": "What happens when a @Transactional method calls another transactional method in the same class?",
+    "interviewerIntent": "Test proxy-based transaction awareness",
+    "answer": "Spring transaction management is normally proxy-based. A direct internal call does not pass through the proxy, so the transaction annotation on the called method may not be applied.\n\nI would usually move the transactional boundary to another Spring bean or redesign the service boundary rather than trying to obtain the proxy manually.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-adv-02",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Transactions",
+    "difficulty": "senior",
+    "question": "What is the difference between REQUIRED and REQUIRES_NEW?",
+    "interviewerIntent": "Check propagation understanding",
+    "answer": "REQUIRED joins the current transaction or creates one if none exists.\n\nREQUIRES_NEW suspends the current transaction and starts an independent one. It may be useful for an audit record that must survive a failure in the main operation, but it must be used carefully because it changes atomicity and consumes another database connection.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-adv-03",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Async Processing",
+    "difficulty": "senior",
+    "question": "Why can @Async cause problems with transactions and security context?",
+    "interviewerIntent": "Verify async pitfall awareness",
+    "answer": "The asynchronous method executes on another thread.\n\nThread-bound information such as the current transaction, diagnostic context or security context may not automatically propagate. I would explicitly define the execution model and avoid assuming that the caller's transaction continues in the asynchronous operation.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-spring-adv-04",
+    "type": "ORAL_ANSWER",
+    "topic": "spring",
+    "subtopic": "Production Config",
+    "difficulty": "senior",
+    "question": "How do you configure a production thread pool?",
+    "interviewerIntent": "Test production tuning knowledge",
+    "answer": "I start from the nature of the workload.\n\nCPU-bound work normally uses a pool near the available processor count. I/O-bound work can use more threads, but database connections, external-service limits and memory must also be considered.\n\nThe queue must be bounded, rejection behavior must be defined and pool saturation must be monitored.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  }
+]

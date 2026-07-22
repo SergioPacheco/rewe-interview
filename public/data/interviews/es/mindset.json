@@ -1,0 +1,194 @@
+[
+  {
+    "id": "interview-mindset-1",
+    "topic": "mindset",
+    "subtopic": "ms-thinking",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cómo abordas un problema de ingeniería cuando los requisitos están incompletos o son ambiguos?",
+    "shortAnswer": "Hago visible la ambigüedad antes de proponer una solución. Identifico el resultado esperado, los usuarios, las restricciones y los riesgos; separo los hechos de las suposiciones y pregunto qué incertidumbre podría cambiar más el diseño. Luego, elijo el paso reversible más pequeño que produzca evidencia y acuerdo cómo mediremos el éxito.",
+    "detailedAnswer": "Mi primer objetivo no es eliminar todas las incógnitas, sino encontrar aquellas que podrían hacernos construir algo incorrecto. Replanteo el problema en términos de negocio, listo los hechos confirmados y las suposiciones, y aclaro atributos de calidad como la latencia, disponibilidad, seguridad y fecha de entrega.\n\nLuego, mapeo la superficie de decisión: qué es costoso de revertir, qué se puede probar de forma económica y quién debe participar. Un 'spike' corto, una muestra de datos de producción o una 'rebanada' delgada de extremo a extremo (thin end-to-end slice) a menudo responde más que un largo debate de diseño. Documento las suposiciones actuales y defino un punto de revisión para que la nueva evidencia pueda cambiar la decisión sin que se considere un fracaso.\n\nUna respuesta sólida debe incluir un ejemplo real solo si el candidato puede explicar la ambigüedad original, la pregunta que hizo, la evidencia que reunió y qué cambió como resultado.",
+    "keyPoints": [
+      "Separar hechos confirmados de suposiciones",
+      "Aclarar el resultado y los atributos de calidad relevantes",
+      "Priorizar incertidumbres que podrían cambiar el diseño",
+      "Preferir un experimento pequeño y reversible ante la falta de evidencia",
+      "Definir criterios de éxito y un punto de revisión"
+    ],
+    "redFlags": [
+      "Empieza a diseñar antes de aclarar el problema",
+      "Trata todas las incógnitas como igual de importantes",
+      "Usa la veteranía como sustituto de la evidencia",
+      "No puede explicar cómo se mediría el resultado"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué suposición probarías primero y por qué?"
+      },
+      {
+        "question": "Cuéntame de algún caso donde una aclaración cambió tu solución original."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+  },
+  {
+    "id": "interview-mindset-2",
+    "topic": "mindset",
+    "subtopic": "ms-answering",
+    "difficulty": "PRINCIPIANTE",
+    "question": "¿Qué haces cuando un entrevistador te pregunta sobre una tecnología que no has usado?",
+    "shortAnswer": "Digo claramente qué he hecho y qué no. Luego, conecto la pregunta con experiencia de producción adyacente, razono a partir de principios fundamentales e indico qué verificaría antes de usar esa tecnología. Prefiero dar una respuesta acotada y comprobable que convertir el estudio en supuesta experiencia de producción.",
+    "detailedAnswer": "Utilizo una respuesta de tres partes. Primero, establezco el límite: por ejemplo, 'He estudiado Kafka pero no lo he operado en producción'. Segundo, lo conecto con experiencia relevante, como mensajería duradera, reintentos, colas de mensajes fallidos (DLQ) y consumidores idempotentes con JMS. Tercero, explico las diferencias importantes que necesitaría validar en lugar de insinuar que las herramientas son intercambiables.\n\nSi no conozco un dato, lo digo y explico cómo lo encontraría: documentación, un experimento enfocado, métricas o ayuda de un compañero con experiencia directa. Esto demuestra criterio. Inventar certezas es mucho más arriesgado que mostrar un proceso de aprendizaje disciplinado.\n\nEl límite exacto importa: un proyecto personal práctico, experiencia de producción transferible y la operación en producción son afirmaciones distintas.",
+    "keyPoints": [
+      "Declarar el límite de la experiencia explícitamente",
+      "Conectar solo conceptos genuinamente transferibles",
+      "Reconocer diferencias importantes entre tecnologías",
+      "Razonar de forma comprobable",
+      "Explicar cómo se verificaría la información faltante"
+    ],
+    "redFlags": [
+      "Presenta el estudio o un tutorial como responsabilidad en producción",
+      "Se detiene en un 'no lo sé' sin intentar un análisis razonado",
+      "Afirma que dos tecnologías son equivalentes solo porque comparten categoría",
+      "Adivina comportamientos precisos sin marcarlos como suposiciones"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué partes de tu experiencia con JMS se transfieren a Kafka y cuáles no?"
+      },
+      {
+        "question": "¿Cómo obtendrías suficiente evidencia para hacer una recomendación de producción?"
+      }
+    ],
+    "experienceLevel": "INFERENCIA"
+  },
+  {
+    "id": "interview-mindset-3",
+    "topic": "mindset",
+    "subtopic": "ms-tradeoffs",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo comparas dos soluciones técnicamente viables?",
+    "shortAnswer": "Las comparo bajo los mismos criterios de decisión, no por preferencia personal. Comienzo con los resultados requeridos y las restricciones, incluyo los costes de entrega y operativos, identifico qué compromisos (trade-offs) son reversibles y utilizo evidencia donde las opciones difieren materialmente. La mejor solución es la que se ajusta a este contexto, no la más sofisticada.",
+    "detailedAnswer": "Primero acuerdo una lista corta de criterios ponderados: corrección, tiempo de entrega, rendimiento, comportamiento ante fallos, seguridad, operatividad, mantenibilidad y familiaridad del equipo. No todos los criterios importan por igual en cada decisión.\n\nHago visibles tanto los beneficios como los costes. Por ejemplo, el procesamiento asíncrono puede mejorar el aislamiento y la capacidad de respuesta, pero introduce consistencia eventual, reintentos y conciliación. Una transacción compartida es más simple de razonar, pero aumenta el acoplamiento. También distingo las decisiones de 'puerta de un solo sentido' (difíciles de revertir) de las opciones que son baratas de reconsiderar.\n\nCuando el resultado depende de una afirmación incierta, delimito el tiempo (time-box) para un benchmark o un spike usando datos representativos. Registro la decisión, las suposiciones y las consecuencias para que el equipo pueda revisarlas si esas suposiciones cambian.",
+    "keyPoints": [
+      "Usar criterios comunes ligados al problema",
+      "Incluir costes operativos y organizativos",
+      "Declarar tanto los beneficios como las consecuencias",
+      "Tratar la reversibilidad como un factor de decisión",
+      "Usar evidencia representativa para afirmaciones en disputa"
+    ],
+    "redFlags": [
+      "Elige por novedad o familiaridad personal solamente",
+      "Lista ventajas para una opción y solo desventajas para la otra",
+      "Ignora los costes de despliegue, monitoreo y soporte",
+      "No sabe decir qué evidencia cambiaría su recomendación"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué criterios dominarían para un flujo de trabajo operativamente crítico?"
+      },
+      {
+        "question": "¿Cuándo es más útil un experimento corto que continuar la discusión?"
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+  },
+  {
+    "id": "interview-mindset-4",
+    "topic": "mindset",
+    "subtopic": "ms-whiteboard",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cómo usarías los primeros diez minutos de una entrevista abierta de diseño de sistemas?",
+    "shortAnswer": "Aclararía los usuarios, el flujo de trabajo principal, la escala, los datos y las garantías requeridas antes de dibujar componentes. Declararía suposiciones, definiría un alcance inicial y esbozaría el diseño de extremo a extremo más simple. Luego, dejaría que el riesgo mayor —como la consistencia, disponibilidad o el rendimiento— guíe la discusión profunda.",
+    "detailedAnswer": "Comienzo con un pequeño conjunto de preguntas de alto impacto: quién usa el sistema, cuáles son los flujos principales de escritura y lectura, qué no debe perderse jamás, el tráfico esperado y la retención de datos, y qué tipo de fallo es el más crítico. Si el entrevistador no puede dar un número, propongo una suposición razonable y la etiqueto como tal.\n\nLuego defino el alcance y un modelo de datos mínimo, y dibujo una solicitud o evento desde la entrada hasta su completitud. Solo después de que el flujo básico es coherente, añado caché, colas, particiones o réplicas para cumplir con un requisito declarado. Narro por qué existe cada componente y señalo las rutas de fallo.\n\nReservo tiempo para probar el diseño contra un escenario concreto, resumir los compromisos e identificar qué validaría a continuación. El diagrama apoya al razonamiento; no es la respuesta por sí sola.",
+    "keyPoints": [
+      "Aclarar usuarios, flujo, escala y garantías",
+      "Etiquetar suposiciones en lugar de ocultarlas",
+      "Empezar con un flujo simple de extremo a extremo",
+      "Añadir complejidad solo por un requisito identificado",
+      "Probar una ruta de fallo y resumir los compromisos"
+    ],
+    "redFlags": [
+      "Dibuja inmediatamente su stack preferido",
+      "Inventa la escala de forma silenciosa",
+      "Añade componentes sin explicar el requisito que satisfacen",
+      "Describe solo el camino feliz (happy path)"
+    ],
+    "clarifyingQuestions": [
+      "¿Cuál es el resultado principal para el usuario?",
+      "¿Qué garantía importa más: latencia, disponibilidad, consistencia o durabilidad?",
+      "¿Cuáles son la carga máxima esperada y el periodo de retención?",
+      "¿Qué dependencias están fuera de nuestro control?"
+    ],
+    "followUps": [
+      {
+        "question": "¿Dónde está el primer cuello de botella probable en tu diseño inicial?"
+      },
+      {
+        "question": "¿Cómo se comportaría el sistema durante una caída de un servicio externo?"
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+  },
+  {
+    "id": "interview-mindset-5",
+    "topic": "mindset",
+    "subtopic": "ms-mistakes",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cómo respondes cuando la evidencia muestra que tu decisión técnica o suposición era errónea?",
+    "shortAnswer": "Hago visible el impacto, separo la suposición fallida de la culpa y decido si se necesita primero contención o rollback. Luego comparto la nueva evidencia, reviso la decisión con los responsables, verifico la corrección y registro qué debería cambiar en nuestro proceso. La lección útil es una salvaguarda repetible —por ejemplo, pruebas con volumen representativo—, no simplemente elegir la tecnología opuesta la próxima vez.",
+    "detailedAnswer": "Primero declaro qué cambió: de qué suposición dependía la decisión, qué señal la contradijo y qué usuarios o sistemas están afectados. Si el impacto está activo, la contención va antes que defender el razonamiento original. Comunico la incertidumbre e involucro al responsable de la decisión en lugar de cambiar de dirección silenciosamente.\n\nLuego comparo las opciones actuales con la nueva evidencia. Eso puede significar revertir, estrechar el despliegue, aplicar una corrección hacia adelante (forward fix) o recolectar una medición acotada adicional. Preservo la evidencia, verifico el comportamiento corregido y vigilo efectos secundarios. La responsabilidad significa asumir mi contribución sin reescribir la historia como si el error fuera obvio ni asignar el fallo al 'equipo' mientras me atribuyo la recuperación personalmente.\n\nFinalmente, convierto la lección en una barrera de seguridad que habría expuesto la suposición antes: datos representativos, una prueba de compatibilidad, un SLO, una lista de revisión, criterios explícitos de rollback o un spike de tiempo limitado. Si no cambia ningún comportamiento, la retrospectiva solo ha producido una historia, no un aprendizaje.",
+    "keyPoints": [
+      "Declarar la suposición fallida y la nueva evidencia",
+      "Contener el impacto activo antes de defender la elección original",
+      "Asumir tu parte sin exagerarla",
+      "Describir la contención y la corrección duradera",
+      "Mostrar un cambio reutilizable en el comportamiento o proceso"
+    ],
+    "redFlags": [
+      "Usa un éxito disfrazado sin un error genuino",
+      "Culpa totalmente a otras personas o a la falta de requisitos",
+      "No puede identificar la suposición que falló",
+      "Afirma haber aprendido una lección pero no cambia su comportamiento"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuál fue la señal más temprana de que tu suposición era errónea?"
+      },
+      {
+        "question": "¿Qué haces de forma diferente ahora en decisiones similares?"
+      }
+    ],
+    "experienceLevel": "INFERENCIA"
+  },
+  {
+    "id": "interview-mindset-6",
+    "topic": "mindset",
+    "subtopic": "ms-production",
+    "difficulty": "SENIOR",
+    "question": "¿Qué quieres saber antes de aprobar un cambio arriesgado para producción?",
+    "shortAnswer": "Quiero evidencia de la corrección a escala representativa, un radio de impacto claro, observabilidad para los modos de fallo esperados y una ruta de rollback o contención. También confirmo la responsabilidad: quién vigila el lanzamiento, qué umbrales activan una acción y cómo se concilian los datos si el rollback no puede deshacer una operación de negocio parcial.",
+    "detailedAnswer": "Mi lista de verificación sigue al cambio durante su ciclo de vida. Antes del lanzamiento: pruebas al nivel adecuado, revisión de esquema y compatibilidad, implicaciones de seguridad, suposiciones de capacidad y comportamiento de dependencias. Durante el lanzamiento: exposición escalonada donde sea posible, tableros y logs vinculados a identificadores de negocio, y umbrales explícitos de éxito y aborto. Después del lanzamiento: una ventana de observación definida y conciliación para trabajo asíncrono o parcialmente completado.\n\nEl rollback no siempre es suficiente. Un binario puede revertirse mientras que los datos escritos bajo el nuevo comportamiento permanecen. Para migraciones y flujos distribuidos, quiero planes de corrección hacia adelante (forward-fix) y de conciliación, además del rollback del despliegue.\n\nLa profundidad debe coincidir con el riesgo. Un cambio de UI reversible y de bajo impacto no necesita la misma ceremonia que una migración de base de datos o un cambio en la ejecución de inscripciones, facturación o entregas.",
+    "keyPoints": [
+      "Alinear los controles con el radio de impacto y la reversibilidad",
+      "Probar con datos representativos y comportamiento de dependencias",
+      "Definir umbrales observables de éxito y aborto",
+      "Planificar la conciliación de datos, no solo el rollback del binario",
+      "Asignar la responsabilidad del lanzamiento y de incidentes"
+    ],
+    "redFlags": [
+      "Trata las pruebas unitarias exitosas como evidencia suficiente para cada riesgo",
+      "Tiene un comando de rollback pero no un plan de recuperación de datos",
+      "No puede nombrar las señales de producción a vigilar",
+      "Deja la responsabilidad del monitoreo y la respuesta implícita"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo cambiaría tu plan de lanzamiento para una migración de base de datos?"
+      },
+      {
+        "question": "¿Qué te haría detener o revertir el despliegue?"
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+  }
+]

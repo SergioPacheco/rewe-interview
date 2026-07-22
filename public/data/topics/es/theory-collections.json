@@ -1,0 +1,122 @@
+[
+  {
+    "id": "theory-collections-overview",
+    "title": "Framework de Colecciones — Visión General",
+    "sections": [
+      {
+        "heading": "¿Qué es el Framework de Colecciones?",
+        "content": "El Framework de Colecciones de Java proporciona data structures and algorithms for storing, retrieving and manipulating groups of objects.\n\nIt is organized around <strong>interfaces</strong> (what you can do) and <strong>implementations</strong> (how it's done):\n\n<pre><code>Iterable\n  └── Collection\n        ├── List    → ordered, allows duplicates\n        ├── Set     → unique elements\n        └── Queue   → FIFO processing\n\nMap (separate hierarchy) → key-value pairs</code></pre>\n\n<strong>Golden rule:</strong> Declare using the interface, instantiate using the implementation:\n<pre><code>List&lt;String&gt; stops = new ArrayList&lt;&gt;();  // ✓ program to interface\nArrayList&lt;String&gt; stops = new ArrayList&lt;&gt;();  // ✗ coupled to implementation</code></pre>"
+      },
+      {
+        "heading": "¿Cuándo usar cada uno?",
+        "content": "<table>\n<tr><th>Need</th><th>Use</th><th>Example</th></tr>\n<tr><td>Ordered items, may have duplicates</td><td><code>ArrayList</code></td><td>Delivery stops in order</td></tr>\n<tr><td>Unique items, no order needed</td><td><code>HashSet</code></td><td>Assigned driver IDs today</td></tr>\n<tr><td>Unique items, sorted</td><td><code>TreeSet</code></td><td>Delivery times sorted</td></tr>\n<tr><td>Key → Value lookup</td><td><code>HashMap</code></td><td>Cache delivery by ID</td></tr>\n<tr><td>Key → Value, sorted keys</td><td><code>TreeMap</code></td><td>Schedule by time window</td></tr>\n<tr><td>Insertion-order map</td><td><code>LinkedHashMap</code></td><td>Recently accessed cache</td></tr>\n<tr><td>FIFO processing</td><td><code>ArrayDeque</code></td><td>Task queue</td></tr>\n</table>"
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-basics"
+  },
+  {
+    "id": "theory-collections-list",
+    "title": "List — ArrayList y LinkedList",
+    "sections": [
+      {
+        "heading": "ArrayList",
+        "content": "Backed by a resizable array. The <strong>default choice</strong> for most use cases.\n\n<strong>Performance:</strong>\n• get(index): O(1) — direct array access\n• add(element): O(1) amortized (resizes when full, doubles capacity)\n• add(index, element): O(n) — shifts elements right\n• remove(index): O(n) — shifts elements left\n• contains(element): O(n) — linear scan\n\n<pre><code>List&lt;String&gt; stops = new ArrayList&lt;&gt;();\nstops.add(\"Warehouse\");       // append at end\nstops.add(\"Store A\");\nstops.add(1, \"Priority\");     // insert at index 1, shifts others\nstops.get(0);                 // \"Warehouse\" — O(1)\nstops.remove(0);              // removes \"Warehouse\", shifts left\nstops.size();                 // 2</code></pre>\n\n<strong>Cuándo usarlo:</strong> Casi siempre. CPU cache locality makes it faster than LinkedList even for insertions in practice."
+      },
+      {
+        "heading": "LinkedList",
+        "content": "Doubly-linked list. Each element points to previous and next.\n\n<strong>Performance:</strong>\n• get(index): O(n) — must traverse from start/end\n• add at start/end: O(1)\n• add/remove in middle (if you have the node): O(1)\n• contains: O(n)\n\n<pre><code>LinkedList&lt;String&gt; queue = new LinkedList&lt;&gt;();\nqueue.addFirst(\"urgent\");     // O(1) at head\nqueue.addLast(\"normal\");      // O(1) at tail\nqueue.removeFirst();          // O(1) poll from head</code></pre>\n\n<strong>Cuándo usarlo:</strong> Rara vez. Only when you need frequent add/remove at both ends (use as Deque). For most list operations, ArrayList wins due to cache performance."
+      },
+      {
+        "heading": "Punto clave para la entrevista",
+        "content": "<strong>\"When would you use LinkedList over ArrayList?\"</strong>\n\nThe honest answer: Almost never in practice. ArrayList has better cache locality (elements contiguous in memory). LinkedList has pointer overhead per element. Even for frequent insertions, ArrayList usually wins.\n\nException: Using it as a Deque (double-ended queue) where you only add/remove from ends. But ArrayDeque is often better there too.\n\n<strong>The real interview insight:</strong> Know the Big-O differences, but also know that in practice, ArrayList dominates because modern CPUs heavily favor sequential memory access."
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-basics"
+  },
+  {
+    "id": "theory-collections-map",
+    "title": "Map — HashMap, TreeMap y LinkedHashMap",
+    "sections": [
+      {
+        "heading": "HashMap — El caballo de batalla",
+        "content": "Almacena pares clave-valor. O(1) average for get/put.\n\n<strong>How it works internally:</strong>\n1. Call <code>key.hashCode()</code> → integer\n2. Compute bucket index: <code>hash & (capacity - 1)</code>\n3. If bucket empty → store entry directly\n4. If bucket occupied → collision:\n   • Java 7: linked list in bucket\n   • Java 8+: linked list → red-black tree when chain > 8 entries\n\n<pre><code>Map&lt;Long, Delivery&gt; cache = new HashMap&lt;&gt;();\ncache.put(1001L, delivery);              // store\nDelivery d = cache.get(1001L);           // O(1) lookup\ncache.containsKey(1001L);                // O(1)\ncache.getOrDefault(9999L, fallback);     // default if missing\ncache.putIfAbsent(1001L, newDelivery);   // only if key missing\n\n// Iteration:\nfor (Map.Entry&lt;Long, Delivery&gt; e : cache.entrySet()) {\n    Long id = e.getKey();\n    Delivery del = e.getValue();\n}</code></pre>\n\n<strong>Critical: equals/hashCode contract</strong>\nIf you use a custom object as key:\n• If <code>a.equals(b)</code> → <code>a.hashCode() == b.hashCode()</code> MUST be true\n• Without this, HashMap cannot find your entries"
+      },
+      {
+        "heading": "TreeMap — Claves ordenadas",
+        "content": "Red-black tree. Keys maintained in sorted order. O(log n) operations.\n\n<pre><code>TreeMap&lt;LocalTime, Delivery&gt; schedule = new TreeMap&lt;&gt;();\nschedule.put(LocalTime.of(8, 0), morning);\nschedule.put(LocalTime.of(14, 0), afternoon);\n\n// Range queries:\nschedule.subMap(start, end);    // entries between start and end\nschedule.firstKey();            // earliest time\nschedule.lastKey();             // latest time\nschedule.headMap(noon);         // all before noon</code></pre>\n\n<strong>Cuándo usarlo:</strong> When you need sorted keys, range queries, or first/last access. Delivery scheduling by time window is a perfect use case."
+      },
+      {
+        "heading": "LinkedHashMap — Orden de inserción",
+        "content": "HashMap + doubly-linked list maintaining insertion order.\n\n<pre><code>Map&lt;String, Integer&gt; accessLog = new LinkedHashMap&lt;&gt;();\naccessLog.put(\"route-A\", 1);\naccessLog.put(\"route-B\", 2);\naccessLog.put(\"route-C\", 3);\n// Iteration always: route-A → route-B → route-C</code></pre>\n\n<strong>LRU Cache trick:</strong> Override <code>removeEldestEntry()</code> to auto-evict when size exceeds limit:\n<pre><code>new LinkedHashMap&lt;&gt;(16, 0.75f, true) {  // accessOrder=true\n    protected boolean removeEldestEntry(Map.Entry eldest) {\n        return size() > MAX_CACHE_SIZE;\n    }\n};</code></pre>"
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-basics"
+  },
+  {
+    "id": "theory-collections-set",
+    "title": "Set — HashSet y TreeSet",
+    "sections": [
+      {
+        "heading": "HashSet — Elementos únicos",
+        "content": "Backed by HashMap internally (values are a dummy constant). O(1) add/contains/remove.\n\n<pre><code>Set&lt;String&gt; assignedDrivers = new HashSet&lt;&gt;();\nassignedDrivers.add(\"driver-101\");   // true (added)\nassignedDrivers.add(\"driver-101\");   // false (duplicate ignored)\nassignedDrivers.contains(\"driver-101\");  // O(1)\nassignedDrivers.size();              // 1</code></pre>\n\n<strong>Cuándo usarlo:</strong> When the business rule IS uniqueness — unique stops, unique IDs, deduplication.\n\n<strong>Requires:</strong> Proper <code>equals()</code> and <code>hashCode()</code> on the element type. Without them, \"equal\" objects can appear as duplicates."
+      },
+      {
+        "heading": "Operaciones útiles",
+        "content": "<pre><code>Set&lt;String&gt; a = new HashSet&lt;&gt;(List.of(\"A\", \"B\", \"C\"));\nSet&lt;String&gt; b = new HashSet&lt;&gt;(List.of(\"B\", \"C\", \"D\"));\n\n// Union\nSet&lt;String&gt; union = new HashSet&lt;&gt;(a);\nunion.addAll(b);  // [A, B, C, D]\n\n// Intersection\nSet&lt;String&gt; common = new HashSet&lt;&gt;(a);\ncommon.retainAll(b);  // [B, C]\n\n// Difference\nSet&lt;String&gt; onlyA = new HashSet&lt;&gt;(a);\nonlyA.removeAll(b);  // [A]</code></pre>\n\n<strong>Interview tip:</strong> \"Find common elements between two lists\" → convert to Sets and use retainAll(). O(n) instead of O(n²) nested loops."
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-basics"
+  },
+  {
+    "id": "theory-collections-streams",
+    "title": "API Streams — Transformación de Colecciones",
+    "sections": [
+      {
+        "heading": "¿Qué son los Streams?",
+        "content": "Los Streams proporcionan un <strong>pipeline declarativo</strong> para procesar colecciones. Instead of writing loops, you describe WHAT to do with the data.\n\n<pre><code>// Imperative (loop):\nList&lt;String&gt; lateDrivers = new ArrayList&lt;&gt;();\nfor (Delivery d : deliveries) {\n    if (d.isLate()) {\n        lateDrivers.add(d.getDriverName());\n    }\n}\n\n// Declarative (stream):\nList&lt;String&gt; lateDrivers = deliveries.stream()\n    .filter(d -> d.isLate())\n    .map(Delivery::getDriverName)\n    .collect(Collectors.toList());</code></pre>\n\n<strong>Key concepts:</strong>\n• <strong>Lazy:</strong> nothing happens until a terminal operation is called\n• <strong>Single-use:</strong> a stream can only be consumed once\n• <strong>Non-mutating:</strong> the original collection is unchanged"
+      },
+      {
+        "heading": "Operaciones comunes",
+        "content": "<strong>Intermediate (return a stream — lazy):</strong>\n<pre><code>.filter(predicate)        // keep elements matching condition\n.map(function)            // transform each element\n.flatMap(function)        // flatten nested collections\n.sorted()                 // natural order\n.sorted(comparator)       // custom order\n.distinct()               // remove duplicates\n.limit(n)                 // take first n\n.skip(n)                  // skip first n\n.peek(consumer)           // debug: look without consuming</code></pre>\n\n<strong>Terminal (trigger processing — produce result):</strong>\n<pre><code>.collect(Collectors.toList())    // to List\n.collect(Collectors.toSet())     // to Set\n.collect(Collectors.groupingBy(fn))  // to Map&lt;K, List&lt;V&gt;&gt;\n.count()                         // number of elements\n.findFirst()                     // Optional&lt;T&gt;\n.anyMatch(predicate)             // boolean: any match?\n.allMatch(predicate)             // boolean: all match?\n.forEach(consumer)               // side effect (use carefully)\n.reduce(identity, accumulator)   // combine all into one value\n.toList()                        // Java 16+ shortcut</code></pre>"
+      },
+      {
+        "heading": "Ejemplos reales",
+        "content": "<pre><code>// Group deliveries by status\nMap&lt;Status, List&lt;Delivery&gt;&gt; byStatus = deliveries.stream()\n    .collect(Collectors.groupingBy(Delivery::getStatus));\n\n// Total weight of all deliveries\ndouble totalWeight = deliveries.stream()\n    .mapToDouble(Delivery::getWeight)\n    .sum();\n\n// Find the delivery with longest distance\nOptional&lt;Delivery&gt; longest = deliveries.stream()\n    .max(Comparator.comparing(Delivery::getDistance));\n\n// Unique driver names, sorted\nList&lt;String&gt; drivers = deliveries.stream()\n    .map(Delivery::getDriverName)\n    .distinct()\n    .sorted()\n    .collect(Collectors.toList());\n\n// Comma-separated IDs\nString ids = deliveries.stream()\n    .map(d -> d.getId().toString())\n    .collect(Collectors.joining(\", \"));</code></pre>"
+      },
+      {
+        "heading": "Optional — Se acabaron los NullPointerException",
+        "content": "Optional&lt;T&gt; represents a value that may or may not be present. Forces you to handle the \"missing\" case explicitly.\n\n<pre><code>// Creating:\nOptional&lt;Delivery&gt; found = Optional.ofNullable(result);  // may be null\nOptional&lt;Delivery&gt; sure = Optional.of(delivery);         // never null\nOptional&lt;Delivery&gt; empty = Optional.empty();             // explicitly empty\n\n// Using:\nfound.orElseThrow(() -> new NotFoundException(\"Not found\"));\nfound.orElse(defaultDelivery);\nfound.ifPresent(d -> process(d));\nfound.map(Delivery::getDriverName).orElse(\"Unknown\");\n\n// ❌ NEVER do this:\nif (optional.isPresent()) {\n    return optional.get();  // defeats the purpose!\n}\n\n// ✓ Instead:\nreturn optional.orElseThrow(() -> new NotFoundException(...));</code></pre>\n\n<strong>Rule:</strong> Use Optional as method return type to signal \"might not exist\". Never use as field type or method parameter."
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-basics"
+  },
+  {
+    "id": "theory-java-inheritance-menu",
+    "topic": "collections",
+    "subtopic": "java-inheritance",
+    "title": "Herencia en Java",
+    "sections": [
+      {
+        "heading": "Reglas básicas",
+        "content": "Una subclase hereda el estado y el comportamiento accesibles de su clase padre. Constructors are not inherited; the parent constructor is invoked with super. Java supports single class inheritance and multiple interface implementation."
+      },
+      {
+        "heading": "Sobrescritura",
+        "content": "Un método sobrescrito keeps a compatible signature and cannot reduce visibility. Covariant return types are allowed. Use @Override to let the compiler detect mistakes."
+      },
+      {
+        "heading": "Polimorfismo",
+        "content": "The declared reference type controls what members are accessible at compile time; the runtime object type selects the overridden method implementation."
+      },
+      {
+        "heading": "Recomendaciones",
+        "content": "Prefiere la composición unless the relationship is a stable and honest is-a relationship that satisfies the Liskov Substitution Principle."
+      }
+    ]
+  }
+]

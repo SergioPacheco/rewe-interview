@@ -1,5 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { Topic, Question, TheoryChapter, TopicPriority, TopicGroup } from '../../models';
+import { I18nService } from './i18n.service';
 
 /**
  * Central data service — loads topics, questions, and theory.
@@ -8,6 +9,9 @@ import { Topic, Question, TheoryChapter, TopicPriority, TopicGroup } from '../..
  */
 @Injectable({ providedIn: 'root' })
 export class TopicService {
+
+  private readonly i18n = inject(I18nService);
+  private lastLoadedLocale = '';
 
   // === State ===
   readonly topics = signal<Topic[]>([]);
@@ -31,14 +35,16 @@ export class TopicService {
   readonly totalQuestions = computed(() => this.questions().length);
   readonly totalTheoryChapters = computed(() => this.theory().length);
 
-  /** Load all data (called on app init) */
+  /** Load all data (called on app init and on locale change) */
   async loadAll(): Promise<void> {
     this.loading.set(true);
+    const lang = this.i18n.locale();
+    this.lastLoadedLocale = lang;
     try {
       const [topicsData, questionsData, theoryData] = await Promise.all([
-        this.loadJson<Topic[]>('data/topics/index.json'),
-        this.loadAllQuestions(),
-        this.loadAllTheory()
+        this.loadJson<Topic[]>(`data/topics/${lang}/index.json`),
+        this.loadAllQuestions(lang),
+        this.loadAllTheory(lang)
       ]);
 
       this.topics.set(topicsData);
@@ -94,42 +100,44 @@ export class TopicService {
     return response.json();
   }
 
-  private async loadAllQuestions(): Promise<Question[]> {
+  private async loadAllQuestions(lang: string): Promise<Question[]> {
     const files = [
-      'data/exercises/java-core.json',
-      'data/exercises/java-modern.json',
-      'data/exercises/oop.json',
-      'data/exercises/solid.json',
-      'data/exercises/spring-boot.json',
-      'data/exercises/kafka.json',
-      'data/exercises/data-persistence.json',
-      'data/exercises/rest.json',
-      'data/exercises/concurrency.json',
-      'data/exercises/design-patterns.json',
-      'data/exercises/behavioral.json',
-      'data/exercises/system-design.json',
-      'data/exercises/system-design-v2-pilots.json',
-      'data/exercises/rewe.json',
-      'data/exercises/security.json',
-      'data/exercises/testing.json',
-      'data/exercises/docker.json',
-      'data/exercises/k8s.json',
-      'data/exercises/kotlin.json',
-      'data/exercises/angular.json',
-      'data/exercises/stories.json',
-      'data/exercises/mindset.json',
-      'data/exercises/senior-questions.json'
-      ,'data/exercises/software-architecture.json'
-      ,'data/exercises/practice-coverage.json'
-      ,'data/exercises/dsa.json'
-      ,'data/exercises/system-design-modeling.json'
+      'java-core.json',
+      'java-modern.json',
+      'oop.json',
+      'solid.json',
+      'spring-boot.json',
+      'kafka.json',
+      'data-persistence.json',
+      'rest.json',
+      'concurrency.json',
+      'design-patterns.json',
+      'behavioral.json',
+      'system-design.json',
+      'system-design-v2-pilots.json',
+      'rewe.json',
+      'security.json',
+      'testing.json',
+      'docker.json',
+      'k8s.json',
+      'kotlin.json',
+      'angular.json',
+      'stories.json',
+      'mindset.json',
+      'senior-questions.json'
+      ,'software-architecture.json'
+      ,'practice-coverage.json'
+      ,'dsa.json'
+      ,'system-design-modeling.json'
     ];
 
+    const paths = files.map(f => `data/exercises/${lang}/${f}`);
+
     const results = await Promise.allSettled(
-      files.map(f => this.loadJson<Question[]>(f))
+      paths.map(f => this.loadJson<Question[]>(f))
     );
 
-    this.logRejected(results, files);
+    this.logRejected(results, paths);
 
     const questions = results
       .filter((r): r is PromiseFulfilledResult<Question[]> => r.status === 'fulfilled')
@@ -149,45 +157,47 @@ export class TopicService {
     return topicMap[subtopic] ?? subtopic;
   }
 
-  private async loadAllTheory(): Promise<TheoryChapter[]> {
+  private async loadAllTheory(lang: string): Promise<TheoryChapter[]> {
     const files = [
-      'data/topics/theory-java-basics.json',
-      'data/topics/theory-java-modern.json',
-      'data/topics/theory-rewe.json',
-      'data/topics/theory-portfolio.json',
-      'data/topics/theory-spring-boot.json',
-      'data/topics/theory-spring-senior-projects.json',
-      'data/topics/theory-kafka.json',
-      'data/topics/theory-rest.json',
-      'data/topics/theory-data-persistence.json',
-      'data/topics/theory-solid.json',
-      'data/topics/theory-concurrency.json',
-      'data/topics/theory-patterns.json',
-      'data/topics/theory-docker.json',
-      'data/topics/theory-kubernetes.json',
-      'data/topics/theory-testing.json',
-      'data/topics/theory-kotlin.json',
-      'data/topics/theory-angular.json',
-      'data/topics/theory-collections.json',
-      'data/topics/theory-oop.json',
-      'data/topics/theory-security.json',
-      'data/topics/theory-system-design.json',
-      'data/topics/theory-behavioral.json',
-      'data/topics/theory-stories.json',
-      'data/topics/theory-mindset.json',
-      'data/topics/theory-software-architecture-journey.json'
-      ,'data/topics/theory-software-architecture-day-to-day.json'
-      ,'data/topics/theory-architecture-pack-link.json'
-      ,'data/topics/theory-software-architecture.json'
-      ,'data/topics/theory-dsa.json'
-      ,'data/topics/theory-system-design-modeling.json'
+      'theory-java-basics.json',
+      'theory-java-modern.json',
+      'theory-rewe.json',
+      'theory-portfolio.json',
+      'theory-spring-boot.json',
+      'theory-spring-senior-projects.json',
+      'theory-kafka.json',
+      'theory-rest.json',
+      'theory-data-persistence.json',
+      'theory-solid.json',
+      'theory-concurrency.json',
+      'theory-patterns.json',
+      'theory-docker.json',
+      'theory-kubernetes.json',
+      'theory-testing.json',
+      'theory-kotlin.json',
+      'theory-angular.json',
+      'theory-collections.json',
+      'theory-oop.json',
+      'theory-security.json',
+      'theory-system-design.json',
+      'theory-behavioral.json',
+      'theory-stories.json',
+      'theory-mindset.json',
+      'theory-software-architecture-journey.json'
+      ,'theory-software-architecture-day-to-day.json'
+      ,'theory-architecture-pack-link.json'
+      ,'theory-software-architecture.json'
+      ,'theory-dsa.json'
+      ,'theory-system-design-modeling.json'
     ];
 
+    const paths = files.map(f => `data/topics/${lang}/${f}`);
+
     const results = await Promise.allSettled(
-      files.map(f => this.loadJson<TheoryChapter[]>(f))
+      paths.map(f => this.loadJson<TheoryChapter[]>(f))
     );
 
-    this.logRejected(results, files);
+    this.logRejected(results, paths);
 
     return results
       .filter((r): r is PromiseFulfilledResult<TheoryChapter[]> => r.status === 'fulfilled')

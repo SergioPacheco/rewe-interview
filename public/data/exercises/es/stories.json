@@ -1,0 +1,240 @@
+[
+  {
+    "id": "story-perf-1",
+    "topic": "stories",
+    "subtopic": "story-performance",
+    "type": "ORAL_ANSWER",
+    "difficulty": "hard",
+    "question": "Tell me about a time you significantly improved system performance.",
+    "interviewerIntent": "Assess systematic diagnosis, root cause thinking, and measurable impact.",
+    "answer": "An inscription listing in our education management system was taking 16 minutes for a unit with 26,705 records. Using Glowroot APM, I identified two combined causes: a cartesian product from incorrect joins multiplying rows exponentially, and N+1 queries fetching complementary data one-by-one (~48,000 total queries). I fixed the joins, added server-side pagination (50 records per page), and replaced individual fetches with batch loading. Result: ~10 queries, ~2 seconds.",
+    "keyPoints": [
+      "26,705 inscriptions \u2014 real scale",
+      "Cartesian product from bad joins",
+      "N+1 generating ~48k queries",
+      "Pagination + batch = ~10 queries",
+      "16 min \u2192 2 sec"
+    ],
+    "followUps": [
+      {
+        "question": "How did you prove it was a cartesian product?",
+        "answerHint": "Glowroot showed the actual row count returned was orders of magnitude higher than the record count. The trace entries revealed the explosion."
+      },
+      {
+        "question": "Why did pagination reduce the query count?",
+        "answerHint": "With only 50 records visible per page, complementary data fetches go from 26,705 individual queries to a single batch IN query for 50 IDs."
+      },
+      {
+        "question": "How did you validate correctness?",
+        "answerHint": "Compared total record counts before/after, spot-checked individual records, verified pagination totals matched the unoptimized full count."
+      },
+      {
+        "question": "What monitoring exists now?",
+        "answerHint": "Glowroot tracks query count and duration per transaction. Any listing exceeding 50 queries or 5 seconds triggers investigation."
+      }
+    ],
+    "mistakesToAvoid": [
+      "Don't say 'added an index' as the only fix",
+      "Don't describe a generic optimization \u2014 give real numbers",
+      "Don't claim tools you didn't use"
+    ]
+  },
+  {
+    "id": "story-n1-1",
+    "topic": "stories",
+    "subtopic": "story-n1",
+    "type": "ORAL_ANSWER",
+    "difficulty": "hard",
+    "question": "Describe a time you identified and fixed an N+1 query problem.",
+    "interviewerIntent": "Evaluate understanding of ORM behavior and ability to fix at the right level.",
+    "answer": "Same inscription listing \u2014 26,705 records. After the main query, the JSF page triggered lazy-loaded associations for each row during rendering (EL getters in the template). This generated ~48,000 individual SELECT-by-ID queries. The fix was server-side pagination (reducing N from 26,705 to 50) combined with batch loading via IN clause for the visible page. JOIN FETCH wasn't appropriate at this scale \u2014 it would still produce a large result set with multiple collections.",
+    "keyPoints": [
+      "N+1 triggered by JSF/EL lazy loading during render",
+      "~48,000 queries for 26,705 records",
+      "Pagination reduced N to 50",
+      "Batch IN query for visible page",
+      "JOIN FETCH inappropriate for this scale"
+    ],
+    "followUps": [
+      {
+        "question": "Why not use JOIN FETCH?",
+        "answerHint": "With 26k records and multiple collections, JOIN FETCH produces a cartesian product in the result. Pagination + batch is the correct pattern at scale."
+      },
+      {
+        "question": "How does JSF cause N+1 differently from a REST API?",
+        "answerHint": "JSF evaluates EL expressions during server-side rendering. Getters in the template trigger lazy loading for EVERY row in the iteration \u2014 all within the same HTTP request and open EntityManager."
+      },
+      {
+        "question": "How did you verify the fix?",
+        "answerHint": "Glowroot trace showed query count drop from ~48k to ~10. Page load confirmed at ~2 seconds."
+      }
+    ]
+  },
+  {
+    "id": "story-incident-1",
+    "topic": "stories",
+    "subtopic": "story-incident",
+    "type": "ORAL_ANSWER",
+    "difficulty": "medium",
+    "question": "How do you approach diagnosing a production performance issue?",
+    "interviewerIntent": "Evaluate systematic thinking and tooling fluency.",
+    "answer": "I follow a disciplined decomposition: first confirm the symptom in monitoring (Glowroot for latency, Kibana for errors), then decompose the latency \u2014 is it database, external call, CPU, or GC? Identify the single dominant cost (usually 1-2 queries or 1 external call), fix the root cause (not a band-aid), verify the fix in monitoring, and add alerts to prevent recurrence. I never guess, add indexes blindly, or blame infrastructure before checking the application.",
+    "keyPoints": [
+      "Confirm in monitoring first",
+      "Decompose latency by component",
+      "Fix root cause, not symptom",
+      "Verify fix in production metrics"
+    ],
+    "followUps": [
+      {
+        "question": "What tools do you use?",
+        "answerHint": "Glowroot for per-transaction latency and query breakdown, Kibana for error patterns, EXPLAIN ANALYZE for specific query plans."
+      },
+      {
+        "question": "Give an example of a band-aid vs real fix.",
+        "answerHint": "Band-aid: adding cache over a bad query. Real fix: fixing the query itself (correct joins, pagination, proper indexes)."
+      }
+    ]
+  },
+  {
+    "id": "stories-template-1",
+    "type": "ORAL_ANSWER",
+    "topic": "stories",
+    "subtopic": "story-template",
+    "difficulty": "senior",
+    "question": "Describe a design pattern you applied in a real project and why.",
+    "keyPoints": [
+      "Name the pattern (Template Method)",
+      "Explain the problem it solved (document generation with shared workflow)",
+      "Show you understand the pattern's purpose (varying steps with fixed skeleton)",
+      "Concrete benefit (new document types = 1 new class)"
+    ],
+    "modelAnswer": "I used Template Method for document generation. We had certificates, contracts, and confirmations \u2014 all following the same workflow (validate permissions, load data, validate rules, render PDF) but with different specifics. The abstract class defines the skeleton; each document type implements only what varies. Adding a new document type now requires one class instead of modifying five."
+  },
+  {
+    "id": "stories-disagree-1",
+    "type": "ORAL_ANSWER",
+    "topic": "stories",
+    "subtopic": "story-disagreement",
+    "difficulty": "senior",
+    "question": "Tell me about a time you disagreed with a colleague on a technical decision.",
+    "keyPoints": [
+      "Acknowledge the other person's concern was valid",
+      "Focus on the problem, not the person",
+      "Use evidence (load test, prototype) rather than authority",
+      "Show collaborative resolution"
+    ],
+    "modelAnswer": "A colleague proposed synchronous validation between services for data consistency. I was concerned about coupling and latency. I acknowledged the consistency need was real, then built a quick prototype comparing both approaches under load. The latency difference was clear, and the team chose the event-based alternative with a reconciliation safety net."
+  },
+  {
+    "id": "stories-learning-1",
+    "type": "ORAL_ANSWER",
+    "topic": "stories",
+    "subtopic": "story-learning",
+    "difficulty": "senior",
+    "question": "How do you approach learning a new technology stack?",
+    "keyPoints": [
+      "Bridge from what you know (Jakarta EE \u2192 Spring)",
+      "Concept-first, not syntax-first",
+      "Practical application (building projects)",
+      "Honest about depth (production JMS vs studied Kafka)"
+    ],
+    "modelAnswer": "I bridge from what I know. After 8 years with Jakarta EE, I mapped DI, transactions, and messaging concepts to Spring equivalents. The mental models transfer \u2014 only the API changes. For Kafka, I started from JMS knowledge and studied what Kafka does differently. I'm transparent about my depth: production experience with JMS, studied and practiced with Kafka."
+  },
+  {
+    "id": "story-legacy-1",
+    "topic": "stories",
+    "subtopic": "story-legacy",
+    "type": "ORAL_ANSWER",
+    "difficulty": "hard",
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "question": "Tell me about a time you had to work with or modernize a large legacy codebase.",
+    "interviewerIntent": "Assess ability to deliver in complex inherited codebases without causing regressions. REWE has existing services — every new hire inherits code.",
+    "answer": "I work daily in SGN3 — a 2,000-table monolithic Java EE system with 6+ years of accumulated code from multiple teams. No single person understands every module.\n\nMy approach when entering an unfamiliar module:\n1. READ before writing — trace the full request from entry point to database before making any change.\n2. Build a mental map — entry points, business layer, repository, tables involved, callers from other modules.\n3. Respect existing patterns — even when I'd design differently, consistency with the surrounding code reduces cognitive load for everyone.\n4. Small, focused changes — one concern per commit, easy to review and easy to revert.\n5. Add characterization tests before changing behavior — document what the code DOES before changing it.\n\nConcrete example: I was asked to optimize a listing that was taking 16 minutes. Before touching anything, I traced the full execution path using Glowroot APM. I found two separate problems: a Cartesian product from incorrect joins and an N+1 pattern triggered by JSF rendering. I fixed both incrementally, verified each step, and reduced the time to 2 seconds without changing any surrounding business logic.\n\nThe key discipline: I never 'clean up' code that isn't related to the task. Legacy systems have hidden dependencies — a rename or refactor that seems safe can break behavior that only manifests under specific conditions.",
+    "keyPoints": [
+      "Read and map before writing anything",
+      "Respect existing patterns — consistency > personal preference",
+      "Characterization tests before changing behavior",
+      "Focused changes — one concern, easy to revert",
+      "Never opportunistically refactor unrelated code"
+    ],
+    "followUps": [
+      {
+        "question": "How do you handle legacy code with no tests?",
+        "answerHint": "Write characterization tests first — tests that describe what the code currently does (even if wrong). These protect you from regressions. Then fix the behavior and update the tests to the correct expectation."
+      },
+      {
+        "question": "What if the legacy pattern is clearly wrong (e.g., SQL injection risk)?",
+        "answerHint": "Security issues are non-negotiable — fix them. But fix ONLY the security issue. Don't bundle a security fix with a refactoring. The security fix must be reviewable in isolation."
+      },
+      {
+        "question": "How do you balance modernization with delivery pressure?",
+        "answerHint": "Boy Scout Rule: leave the code slightly better than you found it. Not a rewrite — just the immediate area you touched. Opportunistic improvements within the scope of your task, never beyond it."
+      }
+    ],
+    "mistakesToAvoid": [
+      "Starting a refactoring that's larger than the task",
+      "Assuming you understand the code without tracing it end-to-end first",
+      "Changing behavior you don't understand to 'clean it up'"
+    ]
+  },
+  {
+    "id": "story-ai-1",
+    "topic": "stories",
+    "subtopic": "story-ai",
+    "type": "ORAL_ANSWER",
+    "difficulty": "medium",
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "question": "How do you use AI tools in your development workflow? Give a concrete example.",
+    "interviewerIntent": "Assess pragmatic AI adoption without naivety. Interviewers want to know if you use AI effectively without blindly trusting it — especially for production code.",
+    "answer": "I use AI coding assistants (Kiro/Claude) as a thinking partner and accelerator, not as an autonomous code generator.\n\nConcrete example: building the interview preparation app you're looking at right now. I used AI assistance to generate the exercise content structure, TypeScript interfaces, and Angular components. The workflow:\n\n1. I designed the architecture and data schemas first — AI cannot make good architectural decisions without human context.\n2. I used AI to generate boilerplate (Angular components, TypeScript interfaces) that I reviewed and adjusted before using.\n3. For complex logic (quiz state machine, progress tracking), I wrote the core myself and used AI for suggestions I evaluated critically.\n4. I never accepted generated code without understanding it — if I can't explain every line, it doesn't ship.\n\nWhere AI genuinely helps me:\n- Generating test cases I might miss (edge cases, boundary conditions)\n- Writing documentation and commit messages faster\n- Exploring unfamiliar APIs ('show me examples of Angular resource()') faster than documentation alone\n- Rubber-ducking architectural decisions\n\nWhere I stay hands-on:\n- Security-sensitive code — AI misses context-specific vulnerabilities\n- Database queries — AI doesn't know my data distribution, indexes, or query plans\n- Business logic with subtle rules — AI doesn't know our domain requirements\n\nThe frame I use: AI is a very fast junior developer. It can produce a lot of code quickly. My job is still to be the senior who reviews everything, understands the tradeoffs, and owns the result.",
+    "keyPoints": [
+      "Architect first, AI generates after design is defined",
+      "Review every line before it ships — no blind acceptance",
+      "AI for boilerplate and exploration, human judgment for business logic and security",
+      "'AI as fast junior dev' — useful framing for the review responsibility",
+      "Honest about where AI helps and where it falls short"
+    ],
+    "followUps": [
+      {
+        "question": "Have you ever shipped AI-generated code that caused a production issue?",
+        "answerHint": "Honest answer matters more than a perfect record. If yes: describe what happened, why the review missed it, and what you changed in your process. If no: describe a case where AI generated something subtly wrong that you caught in review."
+      },
+      {
+        "question": "How do you maintain your own skills when AI can generate code for you?",
+        "answerHint": "Understanding the code you review requires the same depth as writing it. You have to be able to evaluate whether the generated solution is correct, efficient, and secure — which requires real skills. AI that you can't review is risk, not help."
+      },
+      {
+        "question": "What would you NOT use AI for in a production codebase?",
+        "answerHint": "Anything I can't verify independently: security code (auth, crypto, input sanitization), financial calculations, data migration scripts with irreversible effects. The AI might be right, but I need to be certain, not trust."
+      }
+    ],
+    "mistakesToAvoid": [
+      "Accepting AI output without understanding it — 'it compiles' is not a review",
+      "Using AI to bypass learning — you lose the ability to evaluate what it generates",
+      "Overclaiming AI experience in areas where you only observed, not built"
+    ]
+  },
+  {
+    "id": "story-logistics-1",
+    "topic": "stories",
+    "subtopic": "story-logistics",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "Tell me about a time you automated a complex transport or billing workflow.",
+    "interviewerIntent": "Assess experience translating complex operational rules into reliable, integrated software.",
+    "answer": "Earlier in my career, as a Mainframe Developer at Dinâmica S/A, I built an MS COBOL system for Transportadora Andorinha that issued freight documents and calculated contract-based shipping charges. The rules varied by customer contract, cargo value, distance, package count and postal-code route. The solution connected branch data to Unisys mainframe billing and automated a large manual verification workflow, making the process faster, more consistent and more reliable.",
+    "keyPoints": [
+      "Transport-logistics domain experience",
+      "Complex contract and tariff rules",
+      "Branch-to-mainframe billing integration",
+      "Operational impact without unsupported financial claims"
+    ],
+    "followUps": [
+      {
+        "question": "What would you design differently with a modern platform?",
+        "answerHint": "Discuss the trade-offs: reliable asynchronous transport, idempotency, observability and auditable rules — without claiming REWE uses a specific architecture."
+      }
+    ]
+  }
+]

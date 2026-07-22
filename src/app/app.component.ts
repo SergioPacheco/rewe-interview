@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { filter } from 'rxjs';
 import { TopicService } from './core/services/topic.service';
 import { ProgressService } from './core/services/progress.service';
+import { I18nService, Locale } from './core/services/i18n.service';
+import { TranslatePipe } from './shared/pipes/translate.pipe';
 import { Subtopic, Topic, TopicGroup } from './models';
 
 interface Breadcrumb {
@@ -24,7 +26,7 @@ interface SidebarSubtopicGroup {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, FormsModule, TranslatePipe],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
@@ -32,6 +34,7 @@ export class AppComponent implements OnInit {
   private topicService = inject(TopicService);
   private router = inject(Router);
   protected progressService = inject(ProgressService);
+  protected i18n = inject(I18nService);
 
   sidebarOpen = signal(false);
   expandedTopic = signal<string | null>(null);
@@ -70,7 +73,7 @@ export class AppComponent implements OnInit {
 
   private updateBreadcrumbs(): void {
     const url = this.router.url;
-    const crumbs: Breadcrumb[] = [{ label: '🏠 Home', url: '/' }];
+    const crumbs: Breadcrumb[] = [{ label: this.i18n.t('breadcrumb.home'), url: '/' }];
 
     if (url === '/' || url === '') {
       this.breadcrumbs.set([]);
@@ -85,9 +88,9 @@ export class AppComponent implements OnInit {
     } else if (parts[0] === 'quiz' && parts[1]) {
       const topic = this.topicService.getTopic(parts[1]);
       crumbs.push({ label: topic?.name ?? parts[1], url: `/topic/${parts[1]}` });
-      crumbs.push({ label: 'Quiz', url: null });
+      crumbs.push({ label: this.i18n.t('breadcrumb.quiz'), url: null });
     } else if (parts[0] === 'resume') {
-      crumbs.push({ label: 'Resume', url: null });
+      crumbs.push({ label: this.i18n.t('nav.resume'), url: null });
     }
 
     this.breadcrumbs.set(crumbs);
@@ -178,6 +181,13 @@ export class AppComponent implements OnInit {
     if (window.innerWidth < 768) {
       this.sidebarOpen.set(false);
     }
+  }
+
+  toggleLocale(): void {
+    const next: Locale = this.i18n.locale() === 'en' ? 'es' : 'en';
+    this.i18n.setLocale(next);
+    // Reload content for new locale
+    this.topicService.loadAll();
   }
 }
 

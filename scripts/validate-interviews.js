@@ -10,8 +10,8 @@ const fs = require('fs');
 const path = require('path');
 
 const dataDir = path.resolve(__dirname, '../public/data');
-const topicsPath = path.join(dataDir, 'topics', 'index.json');
-const interviewsDir = path.join(dataDir, 'interviews');
+const topicsPath = path.join(dataDir, 'topics', 'en', 'index.json');
+const interviewsDir = path.join(dataDir, 'interviews', 'en');
 
 const difficulties = new Set(['BEGINNER', 'INTERMEDIATE', 'SENIOR']);
 const experienceLevels = new Set([

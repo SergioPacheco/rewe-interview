@@ -1,0 +1,294 @@
+[
+  {
+    "id": "interview-dsa-1",
+    "topic": "dsa",
+    "subtopic": "dsa-collections",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cómo funciona un HashMap internamente y cuándo se degrada su rendimiento?",
+    "shortAnswer": "HashMap utiliza un array de cubetas (buckets). El hashCode de una clave determina el índice de la cubeta. Las colisiones se manejan mediante listas enlazadas (Java 7) o árboles (Java 8+, cuando una cubeta supera los 8 elementos). Con un factor de carga de 0.75, duplica su capacidad y recalcula el hash (rehash) de todas las entradas. Se degrada cuando muchas claves colisionan en la misma cubeta, pasando de O(1) a O(n) en Java 7, u O(log n) en Java 8+ debido a la conversión a árbol.",
+    "detailedAnswer": "**Estructura interna:**\n1. Array de Node<K,V> (llamado `table`), capacidad inicial de 16.\n2. `put(key, value)`: calcula `hash(key.hashCode())`, encuentra el índice de la cubeta mediante `hash & (n-1)`.\n3. Si la cubeta está vacía: inserta directamente.\n4. Si la cubeta está ocupada: recorre la cadena, comparando con `equals()`.\n5. Si la longitud de la cadena > 8 Y el tamaño de la tabla > 64: se convierte en un árbol rojo-negro.\n\n**Mecanismo de redimensionamiento:**\n- Umbral (threshold) = capacidad × factor de carga (por defecto 0.75).\n- Cuando el tamaño > umbral: crea un nuevo array (doble de capacidad), recalcula el hash de todas las entradas.\n- Esto es O(n) pero ocurre con poca frecuencia → O(1) amortizado para put.\n\n**Escenarios de degradación:**\n1. Mal hashCode (constante) → todas las claves en una cubeta → O(n) u O(log n).\n2. Ataque de inundación de hash (hash flooding) → colisiones intencionadas → mitigado por la conversión a árbol.\n3. Redimensionamiento frecuente con datos crecientes → picos de latencia durante el rehash (considerar la capacidad inicial).\n\n**Consideraciones de producción:**\n- No es seguro para hilos (thread-safe). Un put concurrente puede corromper la estructura interna (bucles infinitos en Java 7).\n- Usar ConcurrentHashMap para estados compartidos.\n- Usar capacidad inicial cuando el tamaño sea conocido: `new HashMap<>(expectedSize / 0.75 + 1)`.",
+    "keyPoints": [
+      "Array de cubetas + lista enlazada/árbol para colisiones",
+      "Factor de carga 0.75 dispara el redimensionamiento (doble + rehash)",
+      "Java 8+: conversión a árbol cuando la profundidad de la cubeta > 8",
+      "hashCode distribuye las claves; equals resuelve dentro de la cubeta",
+      "No es seguro para hilos — usar ConcurrentHashMap para concurrencia"
+    ],
+    "redFlags": [
+      "No saber que HashMap no es seguro para hilos",
+      "No mencionar la optimización de árboles en Java 8+",
+      "Confundir el factor de carga con la capacidad",
+      "No saber que el redimensionamiento recalcula el hash de todas las entradas"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué es relevante la capacidad inicial en un escenario de carga masiva de datos?",
+        "hint": "Cargar 100k entradas con la capacidad por defecto de 16 dispara aproximadamente 13 redimensionamientos. Establecer la capacidad inicial evita todos los rehashes intermedios."
+      },
+      {
+        "question": "¿Cómo logra ConcurrentHashMap la seguridad de hilos sin un bloqueo global?",
+        "hint": "Bloqueo segmentado (lock striping): cada cubeta (o segmento en versiones antiguas) tiene su propio bloqueo. Varios hilos pueden escribir en diferentes cubetas simultáneamente."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_USADO",
+    "realExperience": {
+      "title": "Implementación de caché en SGN3",
+      "description": "Uso de ConcurrentHashMap con computeIfAbsent para cachés de aplicación seguras para hilos. Comprendí la importancia de la capacidad inicial al cachear datos de configuración para más de 300 unidades organizativas."
+    }
+  },
+  {
+    "id": "interview-dsa-2",
+    "topic": "dsa",
+    "subtopic": "dsa-big-o",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo identificas y solucionas problemas de rendimiento causados por una elección incorrecta de estructuras de datos en una aplicación Spring Boot?",
+    "shortAnswer": "Comienzo con observabilidad (trazas APM, flame graphs) para localizar la ruta crítica (hot path), luego analizo la complejidad algorítmica del código en esa ruta. Culpables comunes: List.contains() en bucles (O(n²) → HashSet), cargar todas las entidades para filtrar en Java (debería ser consulta DB), consultas N+1 y colecciones ilimitadas en memoria. Verifico con perfilado (profiling) antes y después de la solución.",
+    "detailedAnswer": "**Enfoque sistemático:**\n\n1. **Medir primero:** APM (Glowroot, Datadog) identifica qué endpoint/método es lento.\n2. **Descomponer latencia:** ¿Es la DB, una llamada externa o un cálculo intensivo de CPU?\n3. **Para CPU:** Perfilado con JFR/async-profiler para encontrar bucles calientes.\n4. **Analizar complejidad:** Buscar iteraciones anidadas, búsquedas repetidas, ordenamientos innecesarios.\n\n**Patrones comunes que he corregido:**\n\n```java\n// Patrón 1: O(n²) oculto en un stream\norders.stream()\n  .filter(o -> blacklist.contains(o.getCustomerId())) // List.contains = O(n)\n  .toList();\n// Solución: Set<String> blacklistSet = new HashSet<>(blacklist);\n\n// Patrón 2: Cargar y luego filtrar\nList<Delivery> all = repo.findAll(); // carga 100k filas\nall.stream().filter(d -> d.getStatus() == ACTIVE).toList();\n// Solución: repo.findByStatus(ACTIVE) — dejar que el índice de la DB lo maneje\n\n// Patrón 3: Ordenamiento en un bucle\nfor (Route route : routes) {\n  route.getStops().sort(comparing(Stop::getSequence)); // O(k log k) por ruta\n}\n// Solución: ORDER BY en la consulta, o ordenar una vez y cachear\n```\n\n5. **Verificar:** Comparar la latencia p95/p99 antes y después con un volumen de datos representativo.\n6. **Prevenir:** Revisión de código para patrones O(n²), pruebas de carga con volumen similar a producción.",
+    "keyPoints": [
+      "Siempre medir antes de optimizar — no adivinar",
+      "List.contains() en bucles es el O(n²) oculto número uno",
+      "Dejar que la base de datos haga el filtrado/ordenamiento cuando sea posible",
+      "El perfilado identifica la ruta crítica real, no la sospechada",
+      "Verificar la mejora con métricas, no con suposiciones"
+    ],
+    "redFlags": [
+      "Optimizar sin perfilar primero",
+      "No conocer la complejidad de los métodos de la librería estándar",
+      "Sugerir micro-optimizaciones prematuras en lugar de correcciones algorítmicas",
+      "Ignorar la base de datos como estructura de datos (índices = búsqueda O(log n))"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo manejas el caso donde la solución requiere un contrato de API diferente?",
+        "hint": "Paginación, iteración basada en cursores o respuesta por streaming en lugar de cargar todo en memoria."
+      },
+      {
+        "question": "¿Cuál es tu enfoque cuando el código lento está en una librería que no puedes modificar?",
+        "hint": "Reducir el tamaño de la entrada antes de llamarla, cachear resultados, realizar llamadas por lotes o buscar una librería alternativa con mejor complejidad."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "realExperience": {
+      "title": "Optimización del listado de inscripciones en SGN3",
+      "description": "Identifiqué un patrón O(n²) en el procesamiento de inscripciones: consultas N+1 + List.contains() en bucles de validación. Reduje de ~48,000 consultas a ~10 usando carga por lotes (batch loading) y búsquedas basadas en HashSet. La latencia bajó de 16 minutos a 2 segundos para 26,705 registros."
+    }
+  },
+  {
+    "id": "interview-dsa-3",
+    "topic": "dsa",
+    "subtopic": "dsa-hashing",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cuál es el contrato hashCode/equals y por qué es importante para las entidades JPA?",
+    "shortAnswer": "Si dos objetos son iguales (equals devuelve true), deben tener el mismo hashCode. Las entidades JPA son delicadas porque el @Id puede ser nulo antes de persistir; si usas el @Id en hashCode, todas las entidades no persistidas terminan en la misma cubeta. Soluciones: usar una clave de negocio natural o asignar un UUID en el momento de la construcción.",
+    "detailedAnswer": "**El contrato:**\n1. `a.equals(b)` → `a.hashCode() == b.hashCode()` (OBLIGATORIO).\n2. El mismo hashCode NO implica igualdad (las colisiones están permitidas).\n3. hashCode debe ser consistente dentro de la ejecución de una JVM.\n4. Los campos usados en hashCode deben ser efectivamente inmutables.\n\n**Por qué JPA es problemático:**\n```java\n// @GeneratedValue significa id=null hasta persist()\nDriver d1 = new Driver(); // id=null\nDriver d2 = new Driver(); // id=null\n\n// Si equals usa id: d1.equals(d2) = true (ambos nulos)\n// Tras persistir: d1.id=1, d2.id=2 — ahora son diferentes\n// Pero si d1 ya estaba en un HashSet... está en la cubeta INCORRECTA\n```\n\n**Soluciones:**\n1. **Clave natural/de negocio:** Usar un campo que se establezca al crear y nunca cambie (numLicencia, codigoSeguimiento).\n2. **UUID en construcción:** `private final UUID uuid = UUID.randomUUID()` — asignado antes de persistir.\n3. **Recomendación de Hibernate:** Usar `getClass().hashCode()` (constante por tipo) para hashCode con equals basado en id — sacrifica búsqueda O(1) en favor de la corrección.\n\n**Regla de producción:** Nunca uses campos mutables ni IDs generados por la base de datos en hashCode para entidades que participen en Sets o como claves de Map antes de ser persistidas.",
+    "keyPoints": [
+      "equals implica el mismo hashCode (no al revés)",
+      "El @Id de JPA es nulo antes de persistir — peligroso para hashCode",
+      "Una clave de negocio o un UUID asignado en la construcción lo soluciona",
+      "Campos mutables en hashCode rompen el HashMap de forma silenciosa",
+      "Los proxies de Hibernate complican los chequeos con instanceof — usar getClass()"
+    ],
+    "redFlags": [
+      "No saber que el contrato existe",
+      "Usar id @GeneratedValue en hashCode sin considerar el estado previo a la persistencia",
+      "Usar campos mutables en hashCode",
+      "No considerar el comportamiento de los proxies de Hibernate con instanceof"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué pasa si pones una entidad en un HashSet y luego haces merge() en una nueva sesión?",
+        "hint": "merge() devuelve una NUEVA instancia. La original sigue en el Set con el hashCode antiguo. La copia de merge no está en el Set."
+      },
+      {
+        "question": "¿Cómo interactúa @EqualsAndHashCode de Lombok con las entidades JPA?",
+        "hint": "Por defecto usa todos los campos incluyendo @Id, lo cual es problemático. Usar @EqualsAndHashCode(of = \"claveNegocio\") o excluir el id."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "realExperience": {
+      "title": "Igualdad de entidades en colecciones de SGN3",
+      "description": "Las entidades de SGN3 usan la clase base SenaiEntity con equals basado en id. Comprendí las implicaciones cuando las entidades participan en Sets durante el procesamiento por lotes antes de ser enviadas a la base de datos."
+    }
+  },
+  {
+    "id": "interview-dsa-4",
+    "topic": "dsa",
+    "subtopic": "dsa-queues",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo escala el concepto de cola desde la memoria hasta Kafka? ¿Qué cambia y qué se mantiene?",
+    "shortAnswer": "El contrato FIFO se mantiene: producir → consumir en orden. Lo que cambia: persistencia (sobrevive a reinicios), distribución (múltiples consumidores), particionamiento (procesamiento paralelo con orden por partición) y semántica de fallos (entrega al menos una vez, gestión de offsets, colas de mensajes fallidos/DLQ). El modelo mental es el mismo; la complejidad operativa es distinta.",
+    "detailedAnswer": "**Mismo concepto, diferente escala:**\n\n| Aspecto | ArrayDeque | BlockingQueue | Kafka |\n|--------|-----------|---------------|-------|\n| Orden | FIFO | FIFO | FIFO por partición |\n| Persistencia | Ninguna (memoria) | Ninguna (memoria) | Disco (retención configurable) |\n| Consumidores | Un solo hilo | Múltiples hilos, una JVM | Múltiples pods, múltiples DCs |\n| Fallos | Se pierde al caer | Se pierde al caer | Rejugable desde cualquier offset |\n| Backpressure | OutOfMemory | Bloquea si está llena | Lag del consumidor (productor no afectado) |\n\n**Lo que un Senior debe razonar:**\n\n1. **Orden:** Kafka garantiza el orden SOLO dentro de una partición. Si necesitas orden global para una entidad, usa el ID de la entidad como clave para la ruta.\n\n2. **Exactly-once:** La semántica de las colas es 'al menos una vez'. Se requiere idempotencia en el consumidor — igual que al manejar reenvíos en JMS.\n\n3. **Backpressure:** Una cola en memoria bloquea al productor. Kafka desacopla — el productor no sabe si el consumidor va lento. Monitorea el lag del consumidor.\n\n4. **Escalado:** En memoria = añadir hilos. Kafka = añadir particiones + consumidores (hasta el número de particiones).\n\n5. **Dead letters:** En memoria = una excepción pierde el mensaje. Kafka = tópico de mensajes fallidos tras N reintentos.\n\n**Conexión con Spring Boot:**\n```java\n// Mismo patrón, diferente implementación\n// En memoria:\n@Async\npublic void process(Event event) { /* se ejecuta en la cola del pool de hilos */ }\n\n// Kafka:\n@KafkaListener(topics = \"events\")\npublic void process(Event event) { /* se ejecuta desde el consumidor de la partición */ }\n```",
+    "keyPoints": [
+      "El contrato FIFO es universal — la implementación varía",
+      "Kafka = cola persistente, distribuida y particionada",
+      "La garantía de orden es por partición, no global",
+      "El consumidor debe ser idempotente (semántica 'al menos una vez')",
+      "Escalar = más particiones, no más hilos en la misma partición"
+    ],
+    "redFlags": [
+      "Asumir que Kafka garantiza orden global entre particiones",
+      "No mencionar el requisito de idempotencia",
+      "Tratar a Kafka como una cola más rápida sin entender el particionamiento",
+      "No saber cómo los grupos de consumidores permiten el escalado horizontal"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo manejas los 'mensajes venenosos' (poison messages) en Kafka?",
+        "hint": "Tópico de dead letters tras reintentos configurables. El consumidor no debe bloquear la partición por un solo mensaje erróneo."
+      },
+      {
+        "question": "¿Cuándo usarías una cola en memoria en lugar de Kafka en una app Spring Boot?",
+        "hint": "Cuando la pérdida de mensajes al reiniciar el pod sea aceptable, los requisitos de latencia sean sub-milisegundo o el sistema sea de instancia única."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_USADO",
+    "realExperience": {
+      "title": "Colas JMS en SGN3 (Artemis)",
+      "description": "Gestión de más de 80 colas JMS con 128 consumidores MDB. Apliqué los mismos conceptos: orden FIFO, reenvío (reintentos), DLQ para mensajes venenosos e idempotencia mediante INSERT ON CONFLICT. Kafka extiende estos patrones a escala distribuida."
+    }
+  },
+  {
+    "id": "interview-dsa-5",
+    "topic": "dsa",
+    "subtopic": "dsa-trees",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cómo funciona un índice B-Tree y por qué importa el orden de las columnas en un índice compuesto?",
+    "shortAnswer": "Un B-Tree es un árbol balanceado donde cada nodo contiene múltiples claves y punteros, diseñado para acceso a disco. Tiene un factor de ramificación alto (100-500), por lo que su profundidad es pequeña (3-4 para millones de filas). El orden en un índice compuesto importa porque el árbol se ordena de izquierda a derecha: la columna más a la izquierda determina el primer nivel de ramificación. Una consulta solo puede usar el índice eficientemente si proporciona predicados de izquierda a derecha sin huecos.",
+    "detailedAnswer": "**Estructura B-Tree:**\n- Cada nodo = una página de disco (típicamente 8KB en PostgreSQL).\n- Factor de ramificación ~100-500 (depende del tamaño de la clave).\n- Para 10M de filas: profundidad ≈ log₂₀₀(10M) ≈ 3-4 niveles.\n- Buscar una fila = 3-4 lecturas de página de disco (frente a +100k en un escaneo completo).\n\n**El índice compuesto (a, b, c) funciona como una guía telefónica:**\n- Ordenado por: Apellido → Nombre → Ciudad.\n- PUEDES buscar: (Pérez), (Pérez, Juan), (Pérez, Juan, Madrid).\n- NO PUEDES saltar: (?, Juan, ?) — ¡debes conocer el apellido primero!\n\n**Reglas prácticas:**\n```sql\nCREATE INDEX idx ON delivery(status, driver_id, scheduled_at);\n\n-- ✅ Usa el índice (prefijo izquierdo):\nWHERE status = 'ACTIVE'\nWHERE status = 'ACTIVE' AND driver_id = 42\nWHERE status = 'ACTIVE' AND driver_id = 42 ORDER BY scheduled_at\n\n-- ⚠️ Uso parcial:\nWHERE driver_id = 42  -- se salta la columna izquierda, menos eficiente\n\n-- ❌ No puede usarlo eficazmente:\nWHERE scheduled_at > '2024-01-01'  -- solo la columna más a la derecha\n```\n\n**Estrategia de orden de columnas:**\n1. Predicados de igualdad primero (mayor selectividad).\n2. Predicados de rango / ORDER BY al final.\n3. Considerar índice de cobertura (incluir todas las columnas del SELECT) para evitar buscar en la tabla (heap lookup).",
+    "keyPoints": [
+      "B-Tree: balanceado, alto factor de ramificación, 3-4 niveles para millones de filas",
+      "Cada nivel = una lectura de página de disco → O(log n) con constante muy pequeña",
+      "Índice compuesto: la regla del prefijo izquierdo determina la utilidad",
+      "Columnas de igualdad primero, de rango/orden al final",
+      "Una consulta sin la columna izquierda obtiene poco beneficio del índice"
+    ],
+    "redFlags": [
+      "No conocer la regla del prefijo izquierdo",
+      "Pensar que cualquier columna del índice se puede consultar de forma independiente",
+      "Confundir la selectividad del índice con el orden de las columnas",
+      "No mencionar la E/S de disco como razón del alto factor de ramificación de los B-Trees"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuándo elegirías un índice Hash sobre un B-Tree?",
+        "hint": "Solo para búsquedas de igualdad exacta. Hash no soporta rangos, ORDER BY ni coincidencias parciales. B-Tree es el estándar por una buena razón."
+      },
+      {
+        "question": "¿Qué es un índice de cobertura (covering index) y cuándo vale la pena el almacenamiento extra?",
+        "hint": "Índice que incluye todas las columnas que necesita la consulta (vía INCLUDE). Evita acceder al heap. Vale la pena para consultas frecuentes en tablas muy activas."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "realExperience": {
+      "title": "Optimización de índices en SGN3 PostgreSQL",
+      "description": "Diseñé índices compuestos para consultas de inscripciones usando EXPLAIN ANALYZE. Apliqué la regla del prefijo izquierdo para soportar múltiples patrones de consulta con menos índices. Reduje el tiempo de consulta de segundos a milisegundos en tablas con millones de filas."
+    }
+  },
+  {
+    "id": "interview-dsa-6",
+    "topic": "dsa",
+    "subtopic": "dsa-big-o",
+    "difficulty": "SENIOR",
+    "question": "Tienes un endpoint de Spring Boot que funciona bien con 100 registros pero se vuelve inusable con 10,000. ¿Cómo lo diagnosticas y solucionas?",
+    "shortAnswer": "El síntoma sugiere una complejidad O(n²) o peor, oculta a pequeña escala. Perfilaría para encontrar el bucle caliente y buscaría: consultas N+1, List.contains() en iteraciones, ordenamientos dentro de bucles o cargar todos los datos para filtrar en Java. La solución suele ser: consultas por lotes (batch), HashSet para búsquedas, paginación o mover la lógica a la base de datos.",
+    "detailedAnswer": "**Flujo de diagnóstico:**\n\n1. **Reproducir midiendo tiempos:** Probar el endpoint con 100 vs 10,000 registros y medir.\n2. **Revisar recuento de consultas:** Si las consultas crecen linealmente con los datos → problema N+1.\n3. **Perfilar CPU:** Si hay una sola consulta pero el procesamiento es lento → problema algorítmico.\n4. **Revisar memoria:** Si hay picos de GC → se están cargando demasiados datos en el heap.\n\n**Causas comunes (por frecuencia):**\n\n```java\n// Causa 1: Consultas N+1 (la más común)\nfor (Delivery d : deliveries) {\n    Driver driver = driverRepo.findById(d.getDriverId()); // ¡1 consulta por entrega!\n}\n// Solución: JOIN FETCH o consulta con cláusula IN\n\n// Causa 2: Operaciones de colección O(n²)\nfor (Delivery d : deliveries) {\n    if (excludedIds.contains(d.getId())) { ... } // List.contains = O(n)\n}\n// Solución: Set<Long> excludedSet = new HashSet<>(excludedIds);\n\n// Causa 3: Cargar todo, filtrar en Java\nList<Delivery> all = repo.findAll(); // 10k entidades en memoria\nreturn all.stream().filter(predicate).toList();\n// Solución: repo.findByCondition() con WHERE indexado\n\n// Causa 4: Eager fetching\n@OneToMany(fetch = EAGER) // carga TODAS las entidades relacionadas para TODAS las entregas\nprivate List<Stop> stops;\n// Solución: LAZY + fetch explícito cuando sea necesario\n```\n\n5. **Verificar:** Comparar la latencia p95 antes y después con volumen de producción.\n6. **Prevenir:** Añadir pruebas de carga con volumen realista al pipeline de CI.",
+    "keyPoints": [
+      "Degradación lineal a escala = cuadrática oculta o N+1",
+      "Perfilar primero — no adivinar la causa",
+      "Las consultas N+1 son el asesino número 1 del rendimiento en Spring Boot",
+      "List.contains() en bucles es el asesino número 1 algorítmico",
+      "La solución suele ser: lotes, índices, paginación o delegar a la DB"
+    ],
+    "redFlags": [
+      "Sugerir añadir más memoria o hilos en lugar de arreglar la complejidad",
+      "No revisar el recuento de consultas como primer paso",
+      "Optimización prematura de la ruta de código incorrecta",
+      "No verificar la solución con volumen similar a producción"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo evitas que esto vuelva a suceder?",
+        "hint": "Pruebas de carga en CI, alertas de APM sobre umbrales de latencia, checklist de revisión de código para N+1 y complejidad de colecciones."
+      },
+      {
+        "question": "La solución requiere paginación pero el frontend necesita todos los datos para un reporte. ¿Qué haces?",
+        "hint": "Exportación del lado del servidor (streaming a archivo/S3), tarea en segundo plano con notificación o respuesta por streaming basada en cursores."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "realExperience": {
+      "title": "Optimización de reportes en SGN3",
+      "description": "Diagnosticado endpoint de reporte que degradó de 2s a 16min al crecer los datos. Causa raíz: consultas N+1 × List.contains() en validación. Apliqué carga por lotes (cláusula IN), HashSet para búsquedas y filtrado en DB. Resultado: 2 segundos independientemente del volumen."
+    }
+  },
+  {
+    "id": "interview-dsa-7",
+    "topic": "dsa",
+    "subtopic": "dsa-recursion",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cuándo es apropiada la recursividad en código de producción y cuándo debería evitarse?",
+    "shortAnswer": "La recursividad es apropiada para estructuras naturalmente recursivas (árboles, JSON anidado, jerarquías) donde la profundidad es limitada y pequeña. Evítala para procesamiento lineal (usa iteración), profundidad ilimitada (riesgo de StackOverflow) y cuando no haya optimización de llamada de cola (Java no la soporta). En producción, considera siempre: profundidad máxima, tamaño de la pila y si un enfoque iterativo con una pila explícita es más seguro.",
+    "detailedAnswer": "**Buenos usos de la recursividad en producción:**\n\n1. **Recorrido de árboles** (jerarquías de categorías, organigramas): profundidad limitada por reglas de negocio.\n2. **Divide y vencerás** (merge sort, búsqueda binaria): profundidad O(log n).\n3. **Parsing de estructuras anidadas** (JSON, XML, config): profundidad limitada por el esquema.\n4. **Backtracking con poda** (optimización de rutas, resolución de restricciones): con límite de profundidad.\n\n**Cuándo evitarla:**\n\n1. **Procesamiento lineal:** Procesar una lista de 100k elementos recursivamente → StackOverflow.\n2. **Profundidad ilimitada:** Árbol generado por usuario sin límite de niveles.\n3. **Ruta crítica de alto rendimiento:** La recursividad tiene sobrecarga por llamadas (asignación de frames).\n4. **Cuando la iteración es igual de legible:** No uses recursividad solo por 'ser ingenioso'.\n\n**Checklist de recursividad segura:**\n```java\n// ✅ Profundidad limitada + fail-safe\npublic List<Category> getDescendants(Category root, int maxDepth) {\n    if (maxDepth <= 0) return List.of(root); // límite de seguridad\n    List<Category> result = new ArrayList<>();\n    result.add(root);\n    for (Category child : root.getChildren()) {\n        result.addAll(getDescendants(child, maxDepth - 1));\n    }\n    return result;\n}\n\n// ✅ Convertir a iterativo cuando la profundidad es riesgosa\npublic List<Category> getDescendantsIterative(Category root) {\n    Deque<Category> stack = new ArrayDeque<>();\n    List<Category> result = new ArrayList<>();\n    stack.push(root);\n    while (!stack.isEmpty()) {\n        Category current = stack.pop();\n        result.add(current);\n        current.getChildren().forEach(stack::push);\n    }\n    return result;\n}\n```",
+    "keyPoints": [
+      "Usar para estructuras naturalmente recursivas con profundidad limitada",
+      "Java no tiene optimización de llamada de cola — la recursividad profunda arriesga StackOverflow",
+      "Tener siempre un límite de profundidad o convertir a iterativo con pila explícita",
+      "La memoización transforma recursividad exponencial en lineal",
+      "La iteración suele preferirse en Java para procesamiento lineal"
+    ],
+    "redFlags": [
+      "Usar recursividad para iteración simple (procesar una lista plana)",
+      "Sin límite de profundidad en estructuras potencialmente ilimitadas",
+      "No considerar el riesgo de StackOverflow",
+      "Afirmar que Java soporta optimización de llamada de cola (tail-call optimization)"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo manejarías el recorrido de un árbol donde la profundidad puede ser de 10,000?",
+        "hint": "Convertir a iterativo usando un Deque explícito como pila. O usar el patrón 'trampoline' (recursividad perezosa). Nunca recursividad real a esa profundidad en Java."
+      },
+      {
+        "question": "¿Cómo se relaciona la memoización con @Cacheable de Spring?",
+        "hint": "Mismo principio: almacenar resultados calculados indexados por la entrada. @Cacheable es memoización de producción con TTL, expiración y distribución."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_USADO"
+  },
+  {
+    "id": "interview-dsa-8",
+    "topic": "dsa",
+    "subtopic": "dsa-collections",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo eliges entre diferentes implementaciones de Map para un caso de uso específico en un servicio Spring Boot?",
+    "shortAnswer": "La elección depende de: requisitos de seguridad de hilos (monohilo → HashMap, concurrente → ConcurrentHashMap), necesidades de orden (orden de inserción → LinkedHashMap, ordenado → TreeMap), manejo de nulos (HashMap permite clave nula, ConcurrentHashMap no) y perfil de rendimiento (HashMap O(1), TreeMap O(log n)). Para beans de Spring (@Service, @Component), cualquier mapa mutable compartido debe ser concurrente ya que las peticiones son paralelas.",
+    "detailedAnswer": "**Matriz de decisión para Spring Boot en producción:**\n\n| Caso de uso | Implementación | Por qué |\n|----------|---------------|-----|\n| Variable local en método | HashMap | Un solo hilo, el más rápido |\n| Caché compartida en @Service | ConcurrentHashMap | Las peticiones son paralelas |\n| Caché LRU con límite de tamaño | LinkedHashMap + removeEldestEntry | Orden de inserción + acotado |\n| Consultas de rango ordenadas | TreeMap (o ConcurrentSkipListMap) | Operaciones de rango O(log n) |\n| Configuración cargada al inicio | Map.of() / Collections.unmodifiableMap | Inmutable, no necesita sincronización |\n| Entradas que expiran | Caffeine Cache | TTL, tamaño máximo, refresco asíncrono |\n\n**Errores comunes que he visto:**\n\n```java\n// ❌ HashMap en un campo de @Service (modificación concurrente)\n@Service\npublic class RateService {\n    private Map<String, BigDecimal> rates = new HashMap<>(); // ¡PELIGROSO!\n}\n\n// ❌ synchronizedMap (bloqueo global único = cuello de botella)\nprivate Map<String, Data> cache = Collections.synchronizedMap(new HashMap<>());\n\n// ❌ ConcurrentHashMap con operaciones compuestas\nif (!map.containsKey(key)) {  // verificar\n    map.put(key, compute());   // insertar — ¡carrera entre verificar e insertar!\n}\n// ✅ Operación compuesta atómica\nmap.computeIfAbsent(key, k -> compute());\n```\n\n**Consideración específica de Spring:**\nSi el mapa se puebla una vez al arrancar y nunca se modifica, `Map.of()` o la inicialización en `@PostConstruct` con un wrapper inmutable es ideal — sin sobrecarga de sincronización en las lecturas.",
+    "keyPoints": [
+      "HashMap para local/monohilo, ConcurrentHashMap para estado compartido",
+      "Los servicios de Spring son singletons atendiendo peticiones concurrentes — siempre considerar thread safety",
+      "Usar operaciones atómicas (computeIfAbsent, merge), no 'verificar y actuar'",
+      "Los mapas inmutables no necesitan sincronización",
+      "TreeMap/ConcurrentSkipListMap cuando se necesite acceso ordenado o consultas de rango"
+    ],
+    "redFlags": [
+      "Usar HashMap en un campo de un servicio Spring sin reconocer la seguridad de hilos",
+      "Usar synchronizedMap en lugar de ConcurrentHashMap",
+      "Operaciones 'verificar y actuar' no atómicas en mapas concurrentes",
+      "No considerar que los beans de Spring son singletons por defecto"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuándo usarías Caffeine en lugar de ConcurrentHashMap?",
+        "hint": "Cuando necesites: TTL (expiración), tamaño máximo con política de desalojo, estadísticas (hit rate), refresco asíncrono. ConcurrentHashMap es ilimitado y nunca expira."
+      },
+      {
+        "question": "¿Cómo implementas un contador seguro para hilos por clave en Spring Boot?",
+        "hint": "ConcurrentHashMap<String, LongAdder> con computeIfAbsent. LongAdder es mejor que AtomicLong bajo alta contención."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "realExperience": {
+      "title": "Caché segura para hilos en SGN3",
+      "description": "Implementé cachés basadas en ConcurrentHashMap con TTL para datos de configuración y unidades organizativas. Usé computeIfAbsent para la inicialización perezosa. Comprendí los compromisos de contención en un despliegue multi-pod."
+    }
+  }
+]

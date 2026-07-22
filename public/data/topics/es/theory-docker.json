@@ -1,0 +1,58 @@
+[
+  {
+    "id": "theory-docker-basics",
+    "topic": "docker",
+    "subtopic": "docker-basics",
+    "title": "Docker — Contenedores e Imágenes",
+    "sections": [
+      {
+        "heading": "¿Por qué contenedores?",
+        "content": "<strong>Problema:</strong> \"Funciona en mi máquina\" — diferentes entornos tienen distintas dependencias, versiones de SO, configuraciones.\n\n<strong>Solución:</strong> Empaquetar tu aplicación con sus dependencias en un contenedor que se ejecute igual en cualquier lugar.\n\n<pre><code>Tradicional:  App → depende de SO, versión de JDK, librerías → \"funciona en dev, falla en prod\"\nContenedores: App + runtime + dependencias → una sola imagen → funciona igual en todos lados</code></pre>\n\n<strong>Diferencia clave:</strong>\n• <strong>Imagen</strong> = artefacto inmutable con la app + runtime + dependencias\n• <strong>Entorno de ejecución</strong> = configuración específica (inyectada en despliegue)\n\n<strong>Conceptos Docker:</strong>\n• <strong>Imagen:</strong> plantilla de solo lectura (como una clase)\n• <strong>Contenedor:</strong> instancia en ejecución (como un objeto)\n• <strong>Registry:</strong> almacena imágenes\n• <strong>Dockerfile:</strong> receta de construcción"
+      },
+      {
+        "heading": "Dockerfile para Spring Boot",
+        "content": "<pre><code># Multi-stage build\nFROM eclipse-temurin:21-jdk AS builder\nWORKDIR /app\n\nCOPY .mvn/ .mvn/\nCOPY mvnw pom.xml ./\nRUN ./mvnw dependency:go-offline\n\nCOPY src/ src/\nRUN ./mvnw package -DskipTests\n\nFROM eclipse-temurin:21-jre\nWORKDIR /app\n\nRUN useradd --system --uid 10001 appuser\nCOPY --from=builder /app/target/delivery-service-*.jar app.jar\n\nUSER appuser\nEXPOSE 8080\nENTRYPOINT [\"java\", \"-jar\", \"app.jar\"]</code></pre>\n\n<strong>Buenas prácticas:</strong>\n• Multi-stage para reducir tamaño\n• Cacheo por capas\n• Usuario no root\n• Usar .dockerignore\n\n<strong>Nota:</strong> HEALTHCHECK no es necesario en Kubernetes"
+      },
+      {
+        "heading": "Docker Compose para desarrollo local",
+        "content": "<pre><code>services:\n  delivery-service:\n    build: .\n    ports: [\"8080:8080\"]\n    environment:\n      SPRING_PROFILES_ACTIVE: dev\n      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/delivery\n    depends_on: [db, kafka]\n\n  db:\n    image: postgres:15\n\n  kafka:\n    image: confluentinc/cp-kafka:7.5.0</code></pre>\n\n<code>docker compose up</code> → entorno completo en segundos."
+      },
+      {
+        "heading": "Capas y cache",
+        "content": "Las imágenes Docker se componen de capas.\n\n<strong>Reglas:</strong>\n• Capas sin cambios usan cache\n• Cambios invalidan capas siguientes\n• Ordenar de menos cambiante a más cambiante"
+      }
+    ]
+  },
+  {
+    "id": "theory-docker-compose",
+    "topic": "docker",
+    "subtopic": "docker-compose",
+    "title": "Docker Compose y Networking",
+    "sections": [
+      {
+        "heading": "Red entre servicios",
+        "content": "Compose crea una red donde los servicios se comunican por nombre.\n\n<strong>Puntos clave:</strong>\n• DNS interno por nombre de servicio\n• Aislamiento de red\n• ports expone al host"
+      },
+      {
+        "heading": "Volúmenes y persistencia",
+        "content": "<pre><code>volumes:\n  pgdata:</code></pre>\n\nTipos:\n• Named volumes\n• Bind mounts"
+      },
+      {
+        "heading": "Producción",
+        "content": "Compose es para desarrollo y CI.\n\nProducción → Kubernetes."
+      },
+      {
+        "heading": "Perspectiva senior",
+        "content": "• Optimizar capas\n• Usar multi-stage\n• No ejecutar como root\n• Ajustar memoria JVM al contenedor"
+      },
+      {
+        "heading": "Perspectiva REWE",
+        "content": "• Imágenes inmutables\n• Configuración externa\n• Escaneo de seguridad en CI"
+      },
+      {
+        "heading": "Cuándo NO usar",
+        "content": "• Apps simples\n• Serverless\n• Falta de experiencia en contenedores"
+      }
+    ]
+  }
+]

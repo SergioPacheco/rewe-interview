@@ -1,0 +1,157 @@
+[
+  {
+    "id": "interview-rest-1",
+    "topic": "rest",
+    "subtopic": "rest-verbs",
+    "difficulty": "BEGINNER",
+    "question": "¿En qué se diferencian POST, PUT y PATCH, especialmente cuando un cliente reintenta una solicitud?",
+    "shortAnswer": "POST solicita al recurso destino que procese una representación según su propia semántica; la creación en colecciones es común, pero no su único uso. PUT crea o reemplaza el estado del URI destino conocido y es idempotente. PATCH aplica un documento de parche y no es inherentemente idempotente, aunque un parche puede diseñarse para serlo. Los reintentos también necesitan controles de concurrencia y, para operaciones no idempotentes, una estrategia de idempotencia.",
+    "detailedAnswer": "La semántica de los métodos debe coincidir con el modelo de recursos:\n\n- `POST /orders` comúnmente pide a una colección de pedidos que cree un recurso subordinado y elija su URI. POST también puede representar procesamientos o comandos; no se define solo como 'crear'.\n- `PUT /orders/123` pide al servidor que cree o reemplace la representación en ese URI conocido por el cliente. Repetir la misma solicitud tiene el mismo efecto pretendido, por lo que PUT es idempotente. Si crea el recurso, lo apropiado es `201 Created`; el reemplazo comúnmente devuelve `200` con contenido o `204` sin él.\n- `PATCH /orders/123` envía instrucciones descritas por un tipo de medio (media type) de parche. PATCH no es idempotente por definición: 'establecer estado' puede ser idempotente, mientras que 'incrementar cantidad' no lo es.\n\nIdempotente no significa 'la respuesta es idéntica' o 'no se registra nada más'; significa que repetir la solicitud pretendida tiene el mismo efecto en el estado del servidor. Para ediciones concurrentes, se deben usar validadores como un ETag con `If-Match`, de modo que una actualización basada en un estado desactualizado falle en lugar de sobrescribir datos más recientes. Para comandos POST reintentados, una clave de idempotencia generada por el cliente puede mapear los reintentos a una única operación y a su resultado almacenado.",
+    "keyPoints": [
+      "POST implica procesamiento definido por el destino, a menudo creación de colecciones",
+      "PUT crea o reemplaza un destino conocido y es idempotente",
+      "La semántica de PATCH proviene de su documento de parche y no es inherentemente idempotente",
+      "La idempotencia describe el efecto en el estado del servidor, no respuestas idénticas",
+      "Las solicitudes condicionales protegen contra la pérdida de actualizaciones"
+    ],
+    "redFlags": [
+      "Definir POST únicamente como creación",
+      "Llamar a todo PATCH idempotente solo porque cambia un campo",
+      "Equiparar idempotencia con seguridad o comportamiento de solo lectura",
+      "Ignorar las actualizaciones concurrentes al discutir la seguridad de los reintentos"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo harías segura una creación de pago mediante POST ante reintentos?",
+        "hint": "Acepta una clave de idempotencia estable, asóciala atómicamente con la operación y devuelve el resultado almacenado para los reintentos coincidentes."
+      },
+      {
+        "question": "¿Cuándo debería una respuesta PUT ser 201 en lugar de 200 o 204?",
+        "hint": "Cuando el PUT crea con éxito un recurso que no existía previamente en el URI destino."
+      },
+      {
+        "question": "¿Cómo ayuda `If-Match` a una solicitud PATCH?",
+        "hint": "El servidor aplica el parche solo si la representación actual todavía tiene el ETag esperado, evitando una escritura desactualizada."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Diseño de endpoints HTTP en senai-services",
+      "description": "Diseño de endpoints de creación y actualización con semántica de verbos explícita, incluyendo operaciones de transición de estados cuyo comportamiento ante reintentos y concurrencia tuvo que considerarse por separado del simple CRUD."
+    }
+  },
+  {
+    "id": "interview-rest-2",
+    "topic": "rest",
+    "subtopic": "rest-design",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo eliges entre paginación por offset y por cursor, y qué hace que un diseño sea correcto?",
+    "clarifyingQuestions": [
+      "¿Los clientes necesitan acceso aleatorio por número de página o principalmente navegación a la página siguiente?",
+      "¿Qué tan grande y mutable es el conjunto de resultados?",
+      "¿Qué ordenamiento es significativo e inmutable para servir como cursor?"
+    ],
+    "shortAnswer": "La paginación por offset es simple y soporta saltos de página, pero los offsets grandes requieren saltarse trabajo en la DB y las inserciones o eliminaciones concurrentes pueden causar huecos o duplicados. La paginación por cursor/keyset compara la tupla de la clave ordenada, dando un costo de continuación más predecible, pero requiere un orden determinista y no permite saltar naturalmente a la página N. Siempre añado un criterio de desempate único, limito el tamaño de página y defino la semántica del conteo.",
+    "detailedAnswer": "**Offset/limit**:\n- Fácil de exponer como página/tamaño u offset/límite.\n- Soporta acceso aleatorio a páginas y conteos familiares en la UI.\n- La base de datos aún debe encontrar y omitir las filas precedentes; offsets altos pueden volverse costosos.\n- Las filas insertadas o eliminadas antes del offset actual pueden desplazar las páginas posteriores.\n\n**Cursor/keyset**:\n- Codifica la última tupla de clave ordenada, por ejemplo `(created_at, id)`.\n- Continúa con un predicado como `WHERE (created_at, id) < (:createdAt, :id)` usando el mismo orden.\n- Evita el trabajo proporcional a un offset grande cuando existe un índice apropiado.\n- No proporciona saltos arbitrarios a páginas y debe manejar la dirección (adelante/atrás) deliberadamente.\n\nReglas de corrección:\n- Usar un ordenamiento determinista con un desempate (tiebreaker) único.\n- Mantener el cursor opaco, versionado y resistente a manipulaciones si transporta estado sensible.\n- Aplicar los mismos filtros y autorización en cada página; nunca confiar en un cursor para otorgar acceso.\n- La paginación por cursor reduce algunas anomalías de mutación pero no es un snapshot: los cambios en las claves de ordenamiento o reglas de aislamiento aún pueden alterar lo que el cliente observa.\n- Forzar un tamaño máximo de página. Un conteo total puede ser barato o costoso según los filtros e índices; haz su contrato explícito en lugar de incluirlo o prohibirlo siempre.",
+    "keyPoints": [
+      "El offset permite saltos de página pero se degrada y se desplaza con offsets grandes y mutables",
+      "La continuación por keyset utiliza la tupla ordenada completa",
+      "Un desempate único hace que el ordenamiento sea determinista",
+      "Un cursor no es automáticamente un snapshot de la base de datos ni un token de autorización",
+      "La semántica del conteo y el tamaño máximo de página pertenecen al contrato de la API"
+    ],
+    "redFlags": [
+      "Paginar sin un ORDER BY determinista",
+      "Codificar solo un timestamp no único en el cursor",
+      "Prometer que la paginación por cursor elimina toda anomalía de mutación",
+      "Permitir que los clientes soliciten un tamaño de página ilimitado"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué un cursor debe incluir tanto `created_at` como `id` cuando los timestamps pueden repetirse?",
+        "hint": "El par proporciona un orden total; usar solo el timestamp puede saltar o repetir filas empatadas en el límite."
+      },
+      {
+        "question": "¿Puede un cursor reemplazar los chequeos de autorización en páginas subsiguientes?",
+        "hint": "No. Vuelve a aplicar los filtros y la política del llamador; un cursor opaco es estado de continuación, no prueba de acceso."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Paginación en senai-services",
+      "description": "Implementación de paginación offset/limit acotada con ordenamiento determinista y desempate por clave primaria para endpoints de producción."
+    }
+  },
+  {
+    "id": "interview-rest-3",
+    "topic": "rest",
+    "subtopic": "rest-versioning",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo evolucionas una API HTTP y cómo decides si un cambio necesita una nueva versión?",
+    "shortAnswer": "Primero intento evolucionar el contrato existente de forma compatible. Una nueva versión es para un cambio cuya semántica o representación no puede introducirse sin romper a los clientes soportados, no para cada lanzamiento. El versionado por ruta, tipo de medio o cabecera puede funcionar; elijo según el enrutamiento, el almacenamiento en caché y las herramientas del cliente. Documento las suposiciones de compatibilidad, pruebo los contratos con los consumidores, anuncio la obsolescencia y observo el uso.",
+    "detailedAnswer": "Parto del contrato publicado y del comportamiento real del consumidor. Los cambios disruptivos comunes incluyen eliminar/renombrar campos, cambiar tipos o significados, restringir entradas previamente aceptadas, cambiar la semántica de errores o alterar garantías de paginación/orden. Añadir un campo de respuesta opcional suele ser compatible para lectores tolerantes, pero deserializadores estrictos o esquemas firmados aún pueden romperse; por tanto, valida clientes reales en lugar de tratar lo 'aditivo' como universalmente seguro.\n\nOpciones de versionado:\n- **Ruta** (`/v2/orders`): explícito y fácil de enrutar/documentar, pero la identidad de la versión se vuelve parte de las rutas de los recursos.\n- **Tipo de medio (media type) u otra negociación de cabeceras**: mantiene las rutas de recursos estables pero puede ser menos visible para herramientas, gateways y cachés a menos que `Vary` y el enrutamiento se manejen correctamente.\n- **Evolución coordinada sin versiones**: viable para consumidores internos muy controlados, pero solo con coordinación de despliegue y pruebas de contrato.\n\nMantén la lógica de dominio compartida donde la semántica sea la misma, pero no fuerces dos contratos genuinamente diferentes a través de un modelo ambiguo. Publica ejemplos y fechas de migración. La cabecera estandarizada `Deprecation` puede señalar que un recurso está obsoleto, un enlace `deprecation` puede dirigir a una guía, y `Sunset` puede anunciar cuándo se espera que deje de responder.",
+    "keyPoints": [
+      "Versionar contratos para cambios incompatibles, no para cada lanzamiento de implementación",
+      "La compatibilidad depende del comportamiento documentado y observado del consumidor",
+      "Las versiones por ruta o negociadas tienen compromisos en enrutamiento y herramientas",
+      "Las pruebas de contrato y la telemetría de uso apoyan una migración segura",
+      "La guía de obsolescencia, las fechas y una ventana de migración preceden a la eliminación"
+    ],
+    "redFlags": [
+      "Llamar a todo cambio aditivo en la respuesta universalmente seguro",
+      "Crear una versión para cada despliegue sin un motivo de contrato",
+      "Duplicar lógica de negocio inalterada a través de las versiones",
+      "Eliminar una versión antigua sin evidencia de uso de los consumidores"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuándo puede el hecho de añadir un campo en la respuesta romper a un cliente?",
+        "hint": "Un cliente puede rechazar propiedades desconocidas, validar un esquema cerrado o incluir el payload exacto en una firma o hash."
+      },
+      {
+        "question": "¿Cuál es la distinción entre deprecation (obsolescencia) y sunset (puesta de sol)?",
+        "hint": "Deprecation indica que se desaconseja el uso y apunta a la migración; sunset comunica cuándo se espera que el recurso deje de estar disponible."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Versiones de API en senai-services",
+      "description": "Mantenimiento de endpoints versionados por ruta que compartían un comportamiento de negocio estable mientras se aislaban contratos de transporte incompatibles, manteniendo operativos a los consumidores antiguos durante la migración."
+    }
+  },
+  {
+    "id": "interview-rest-errors-1",
+    "topic": "rest",
+    "subtopic": "rest-design",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo diseñarías respuestas de error de API que sean útiles para los clientes sin filtrar detalles de implementación?",
+    "clarifyingQuestions": [
+      "¿Es esta una API pública, interna o ambas?",
+      "¿Qué errores puede corregir, reintentar o mostrar de forma segura un cliente a un usuario final?"
+    ],
+    "shortAnswer": "Uso códigos de estado HTTP para el resultado general y un formato de problema (problem detail) estable y documentado para los detalles legibles por máquina. Los errores de validación identifican campos inválidos; los conflictos de dominio describen la regla de negocio violada; los fallos inesperados exponen un identificador de correlación, nunca trazas de pila (stack traces) ni topología interna. Hago explícita la capacidad de reintento y mantengo el contrato de error versionado y probado.",
+    "detailedAnswer": "Una respuesta de error es parte del contrato de la API, no un extracto del log. Un formato como el RFC 9457 (Problem Details) puede transportar un URI/código de tipo estable, título, estado, detalle, ID de instancia/correlación y extensiones cuidadosamente elegidas. Por ejemplo, una solicitud inválida puede devolver 400 con violaciones de campos; un llamador autenticado sin permiso recibe 403; un conflicto de estado puede devolver 409; y un fallo de precondición de concurrencia optimista es comúnmente 412. El mapeo exacto debe documentarse consistentemente.\n\nSeparo la información según la audiencia. Los clientes necesitan un código estable, un mensaje seguro, metadatos de campos inválidos cuando corresponda y saber si reintentar puede ayudar. Los operadores necesitan logs estructurados, trazas y la excepción subyacente conectada a través del ID de correlación. La respuesta no debe revelar SQL, nombres de clases, credenciales, detalles de la política de autorización o si un recurso protegido existe cuando eso facilitaría un ataque de enumeración. Una respuesta 500 genérica es apropiada para fallos inesperados, mientras que la observabilidad conserva el detalle del diagnóstico.\n\nFinalmente, pruebo los errores como contratos: estado, tipo de contenido, código estable, forma de la validación, política de localización y ausencia de datos sensibles. No fuerces a los clientes a parsear texto libre y no afirmes que todo 5xx es seguro de reintentar; la seguridad del reintento depende de la operación y del diseño de idempotencia.",
+    "keyPoints": [
+      "Usar un contrato de error estable y legible por máquinas junto con códigos de estado HTTP",
+      "Separar la guía segura para el cliente del detalle diagnóstico operativo",
+      "Representar de forma diferente los fallos de validación, autorización, conflicto e inesperados",
+      "Probar las respuestas de error como un contrato de API sensible a la compatibilidad"
+    ],
+    "redFlags": [
+      "Devolver stack traces, mensajes SQL o nombres de excepciones del framework a los clientes",
+      "Hacer que los clientes parseen una frase humana para decidir qué hacer",
+      "Tratar todo error del servidor como automáticamente reintentable"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuándo devolverías 409 frente a 412 para una actualización fallida?",
+        "hint": "Discute un conflicto de estado de dominio frente al fallo de una precondición explícita de la solicitud como If-Match."
+      },
+      {
+        "question": "¿Cómo puede una API devolver un ID de correlación sin hacerlo predecible o sensible?",
+        "hint": "Genera un identificador opaco con alcance de solicitud y mantén el contexto diagnóstico completo solo en la telemetría protegida."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  }
+]

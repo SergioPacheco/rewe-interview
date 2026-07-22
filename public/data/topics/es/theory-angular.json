@@ -1,0 +1,158 @@
+[
+  {
+    "id": "theory-angular-basics",
+    "title": "Angular — Conceptos fundamentales para desarrolladores backend",
+    "sections": [
+      {
+        "heading": "¿Qué es Angular? (y por qué TRAB lo usa)",
+        "content": "Angular es un framework de TypeScript para construir SPAs (Single Page Applications). TRAB usa <strong>Angular 19</strong> para interfaces de logística: paneles, herramientas de planificación, gestión de conductores.\n\n<strong>Para un desarrollador Java, Angular se mapea de forma natural:</strong>\n<table>\n<tr><th>Concepto Java/Spring</th><th>Equivalente en Angular</th></tr>\n<tr><td>@Service (bean singleton)</td><td>servicio @Injectable()</td></tr>\n<tr><td>@Controller (endpoint REST)</td><td>@Component (componente de UI)</td></tr>\n<tr><td>Inyección por constructor</td><td>función inject() o DI por constructor</td></tr>\n<tr><td>Filtro de Spring Security</td><td>Route Guard + HTTP Interceptor</td></tr>\n<tr><td>@RequestMapping(\"/path\")</td><td>rutas de RouterModule</td></tr>\n<tr><td>DTO (transferencia de datos)</td><td>interface/type de TypeScript</td></tr>\n<tr><td>Optional&lt;T&gt;</td><td>T | null (tipos unión)</td></tr>\n<tr><td>Eventos de Spring</td><td>Signals / RxJS Observables</td></tr>\n</table>\n\n<strong>Tu posición honesta:</strong>\n\"Construí el frontend de SinapiPRO con Angular 19, usando Signals, componentes standalone y PrimeNG. Entiendo el modelo mental: componentes, servicios, enrutamiento, interceptores. No soy un experto en Angular, pero puedo construir interfaces funcionales y contribuir a tareas de frontend.\""
+      },
+      {
+        "heading": "Componentes — los bloques de construcción",
+        "content": "Un componente = una pieza de UI reutilizable con plantilla (HTML) + lógica (TypeScript) + estilos (CSS).\n\n<pre><code>// delivery-list.component.ts (Standalone — ¡sin NgModule!)\n@Component({\n  selector: 'app-delivery-list',\n  standalone: true,\n  imports: [CommonModule, TableModule, ButtonModule],\n  template: `\n    &lt;p-table [value]=\"deliveries()\" [paginator]=\"true\" [rows]=\"20\"&gt;\n      &lt;ng-template pTemplate=\"header\"&gt;\n        &lt;tr&gt;\n          &lt;th&gt;ID&lt;/th&gt;\n          &lt;th&gt;Estado&lt;/th&gt;\n          &lt;th&gt;Conductor&lt;/th&gt;\n          &lt;th&gt;Programado&lt;/th&gt;\n        &lt;/tr&gt;\n      &lt;/ng-template&gt;\n      &lt;ng-template pTemplate=\"body\" let-delivery&gt;\n        &lt;tr&gt;\n          &lt;td&gt;{{ delivery.id }}&lt;/td&gt;\n          &lt;td&gt;&lt;p-tag [severity]=\"statusSeverity(delivery.status)\"&gt;{{ delivery.status }}&lt;/p-tag&gt;&lt;/td&gt;\n          &lt;td&gt;{{ delivery.driverName }}&lt;/td&gt;\n          &lt;td&gt;{{ delivery.scheduledAt | date:'short' }}&lt;/td&gt;\n        &lt;/tr&gt;\n      &lt;/ng-template&gt;\n    &lt;/p-table&gt;\n  `\n})\nexport class DeliveryListComponent {\n  private deliveryService = inject(DeliveryService);\n  deliveries = signal&lt;Delivery[]&gt;([]);\n\n  ngOnInit() {\n    this.deliveryService.findAll().subscribe(data =&gt; this.deliveries.set(data));\n  }\n}</code></pre>\n\n<strong>Conceptos clave:</strong>\n• <code>standalone: true</code> — Angular moderno (no se necesitan NgModules)\n• <code>signal&lt;T&gt;</code> — estado reactivo (Angular 16+, reemplaza a BehaviorSubject)\n• <code>inject()</code> — inyección de dependencias (como @Autowired en Spring)\n• La plantilla usa componentes de PrimeNG (como PrimeFaces para Angular)"
+      },
+      {
+        "heading": "Contexto de versión",
+        "content": "<strong>Este contenido hace referencia a Angular 19.</strong>\n\nAngular evoluciona rápidamente. Los conceptos clave (componentes, signals, standalone, DI) se mantienen estables entre versiones. Para las entrevistas, entender los patrones arquitectónicos importa más que los números de versión específicos.\n\n<strong>Evolución posterior a Angular 19:</strong>\n• Angular 20+: mayor integración de signals, SSR mejorado\n• El enfoque standalone-first y la reactividad basada en signals continúan como la dirección principal"
+      }
+    ],
+    "topic": "angular",
+    "subtopic": "ng-basics"
+  },
+  {
+    "id": "theory-angular-services",
+    "title": "Servicios de Angular, HTTP y estado",
+    "sections": [
+      {
+        "heading": "Servicios — como @Service de Spring",
+        "content": "<pre><code>// delivery.service.ts\n@Injectable({ providedIn: 'root' })  // singleton — como @Service\nexport class DeliveryService {\n  private http = inject(HttpClient);\n  private baseUrl = '/api/v1/deliveries';\n\n  findAll(): Observable&lt;Delivery[]&gt; {\n    return this.http.get&lt;Delivery[]&gt;(this.baseUrl);\n  }\n\n  findById(id: number): Observable&lt;Delivery&gt; {\n    return this.http.get&lt;Delivery&gt;(`${this.baseUrl}/${id}`);\n  }\n\n  create(request: CreateDeliveryRequest): Observable&lt;Delivery&gt; {\n    return this.http.post&lt;Delivery&gt;(this.baseUrl, request);\n  }\n\n  dispatch(id: number): Observable&lt;Delivery&gt; {\n    return this.http.post&lt;Delivery&gt;(`${this.baseUrl}/${id}/dispatch`, {});\n  }\n}\n\n// Interfaces de TypeScript (como los DTOs de Java)\ninterface Delivery {\n  id: number;\n  status: DeliveryStatus;\n  driverName: string;\n  scheduledAt: string;\n  stops: Stop[];\n}\n\ntype DeliveryStatus = 'PLANNED' | 'DISPATCHED' | 'IN_TRANSIT' | 'DELIVERED';</code></pre>\n\n<strong>Observable vs Promise:</strong>\n• Observable (RxJS): perezoso (lazy), cancelable, puede emitir múltiples valores (streams)\n• Se usa para llamadas HTTP, WebSocket, datos en tiempo real\n• <code>.subscribe()</code> dispara la llamada HTTP (perezoso: nada ocurre hasta que se suscribe)"
+      },
+      {
+        "heading": "Signals — estado reactivo moderno (Angular 16+)",
+        "content": "<pre><code>// Los signals reemplazan a BehaviorSubject para el estado de componente\nexport class DeliveryDashboardComponent {\n  // Signal escribible (estado)\n  deliveries = signal&lt;Delivery[]&gt;([]);\n  selectedDelivery = signal&lt;Delivery | null&gt;(null);\n\n  // Signal computado (derivado — como una propiedad calculada)\n  activeCount = computed(() =&gt;\n    this.deliveries().filter(d =&gt; d.status === 'ACTIVE').length\n  );\n\n  delayedCount = computed(() =&gt;\n    this.deliveries().filter(d =&gt; d.status === 'DELAYED').length\n  );\n\n  // Actualizar el signal\n  loadDeliveries() {\n    this.deliveryService.findAll().subscribe(data =&gt; {\n      this.deliveries.set(data);  // dispara el re-render de todo lo que use deliveries()\n    });\n  }\n\n  selectDelivery(d: Delivery) {\n    this.selectedDelivery.set(d);\n  }\n}\n\n// En la plantilla:\n// {{ activeCount() }} entregas activas\n// {{ delayedCount() }} retrasadas</code></pre>\n\n<strong>Signals vs RxJS:</strong>\n• Signals: estado síncrono simple, rastrea dependencias automáticamente, sin fugas de memoria\n• RxJS: streams asíncronos, transformaciones complejas, llamadas HTTP\n• Angular moderno: Signals para el estado de componente, RxJS para operaciones asíncronas"
+      },
+      {
+        "heading": "Interceptores HTTP — como los Servlet Filters",
+        "content": "<pre><code>// auth.interceptor.ts — inyecta el token JWT en cada solicitud\nexport var authInterceptor: HttpInterceptorFn = (req, next) =&gt; {\n  var token = inject(AuthService).getToken();\n\n  if (token) {\n    req = req.clone({\n      setHeaders: { Authorization: `Bearer ${token}` }\n    });\n  }\n\n  return next(req);\n};\n\n// error.interceptor.ts — maneja 401/403 de forma global\nexport var errorInterceptor: HttpInterceptorFn = (req, next) =&gt; {\n  return next(req).pipe(\n    catchError(error =&gt; {\n      if (error.status === 401) {\n        inject(Router).navigate(['/login']);\n      }\n      return throwError(() =&gt; error);\n    })\n  );\n};\n\n// Registrar en la configuración de la app:\nprovideHttpClient(withInterceptors([authInterceptor, errorInterceptor]))</code></pre>\n\nMismo patrón que los filtros de Spring Security: interceptar la solicitud, añadir la cabecera de autenticación, manejar los errores de forma global."
+      }
+    ],
+    "topic": "angular",
+    "subtopic": "ng-services"
+  },
+  {
+    "id": "theory-angular-routing",
+    "title": "Enrutamiento, Guards y PrimeNG en Angular",
+    "sections": [
+      {
+        "heading": "Enrutamiento — como @RequestMapping de Spring",
+        "content": "<pre><code>// app.routes.ts\nexport var routes: Routes = [\n  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },\n  { path: 'login', component: LoginComponent },\n  {\n    path: 'dashboard',\n    component: DashboardComponent,\n    canActivate: [authGuard]  // como Spring Security — debe estar autenticado\n  },\n  {\n    path: 'deliveries',\n    canActivate: [authGuard],\n    children: [\n      { path: '', component: DeliveryListComponent },\n      { path: ':id', component: DeliveryDetailComponent },\n      { path: ':id/edit', component: DeliveryEditComponent }\n    ]\n  },\n  { path: '**', component: NotFoundComponent }  // 404\n];\n\n// Route guard (como @PreAuthorize)\nexport var authGuard: CanActivateFn = () =&gt; {\n  var auth = inject(AuthService);\n  var router = inject(Router);\n  return auth.isAuthenticated() ? true : router.navigate(['/login']);\n};</code></pre>"
+      },
+      {
+        "heading": "PrimeNG — como PrimeFaces para Angular",
+        "content": "<strong>Si conoces PrimeFaces (JSF), ya conoces PrimeNG:</strong>\n\n<table>\n<tr><th>PrimeFaces (Java EE)</th><th>PrimeNG (Angular)</th></tr>\n<tr><td>&lt;p:dataTable&gt;</td><td>&lt;p-table&gt;</td></tr>\n<tr><td>&lt;p:dialog&gt;</td><td>&lt;p-dialog&gt;</td></tr>\n<tr><td>&lt;p:autoComplete&gt;</td><td>&lt;p-autoComplete&gt;</td></tr>\n<tr><td>&lt;p:chart&gt;</td><td>&lt;p-chart&gt; (o ECharts)</td></tr>\n<tr><td>&lt;p:calendar&gt;</td><td>&lt;p-datePicker&gt;</td></tr>\n<tr><td>&lt;p:commandButton&gt;</td><td>&lt;p-button&gt;</td></tr>\n<tr><td>LazyDataModel</td><td>[lazy]=\"true\" + (onLazyLoad)</td></tr>\n<tr><td>rendered=\"#{}\"</td><td>*ngIf / @if</td></tr>\n<tr><td>value=\"#{bean.list}\"</td><td>[value]=\"deliveries()\"</td></tr>\n</table>\n\n<strong>Respuesta de entrevista:</strong> \"He usado PrimeFaces extensamente; PrimeNG es la misma biblioteca de componentes para Angular. Los conceptos se transfieren: tablas de datos con carga perezosa, diálogos, formularios con validación, gráficos. La API es distinta pero el modelo mental es idéntico.\""
+      },
+      {
+        "heading": "Perspectiva senior",
+        "content": "Los ingenieros senior entienden Angular como una plataforma con criterio propio para aplicaciones empresariales, no solo como un framework de componentes.\n\nDistinciones clave:\n• Los signals reemplazan la mayoría de los usos de RxJS para el estado de componente: un modelo mental más simple, mejor rendimiento\n• La estrategia de detección de cambios (OnPush) no es opcional por rendimiento; debería ser el valor por defecto\n• La carga perezosa a nivel de ruta es el mínimo; @defer aporta división de código a nivel de componente\n• Los componentes standalone eliminan los NgModules; el modelo mental es más simple pero requiere imports explícitos\n• Probar Angular consiste en probar el comportamiento a través de la API pública del componente, no los detalles de implementación"
+      },
+      {
+        "heading": "Perspectiva REWE",
+        "content": "En un panel de conductores de TRAB (frontend Angular):\n\n• Actualizaciones de entrega en tiempo real vía Server-Sent Events, renderizadas mediante signals\n• Visualización de rutas con un componente de mapa de carga perezosa (@defer hasta que sea visible)\n• Capacidad sin conexión para conductores en zonas sin conectividad (service worker + IndexedDB)\n• Tablas de datos de PrimeNG para los gestores de almacén con paginación del lado del servidor\n• Política de Seguridad de Contenido estricta: sin scripts en línea, entrada de usuario saneada"
+      },
+      {
+        "heading": "Cuándo NO usarlo",
+        "content": "Cuándo Angular puede no ser la mejor opción:\n\n• Páginas de marketing sencillas o blogs (un generador de sitios estáticos es más liviano)\n• Herramientas internas pequeñas donde la menor ceremonia de React/Vue acelera el desarrollo\n• Cuando el equipo es principalmente backend con experiencia limitada en frontend (considerar HTMX o renderizado del lado del servidor)\n• Aplicaciones colaborativas en tiempo real donde frameworks con reactividad de grano fino (SolidJS) rinden mejor\n• Aplicaciones mobile-first donde React Native o Flutter ofrecen una mejor experiencia nativa"
+      }
+    ],
+    "topic": "angular",
+    "subtopic": "ng-routing"
+  },
+  {
+    "id": "theory-angular-rxjs",
+    "title": "RxJS y Observables",
+    "sections": [
+      {
+        "heading": "RxJS — Reactive Extensions para JavaScript",
+        "content": "RxJS es la <strong>columna vertebral asíncrona</strong> de Angular. Proporciona Observables: streams de datos perezosos y cancelables.\n\n<strong>Paralelo con Java:</strong>\n<table>\n<tr><th>Java</th><th>RxJS</th></tr>\n<tr><td>CompletableFuture&lt;T&gt;</td><td>Observable&lt;T&gt; (una sola emisión)</td></tr>\n<tr><td>Stream&lt;T&gt;</td><td>Observable&lt;T&gt; (múltiples emisiones)</td></tr>\n<tr><td>.thenApply()</td><td>pipe(map())</td></tr>\n<tr><td>.thenCompose()</td><td>pipe(switchMap())</td></tr>\n<tr><td>.exceptionally()</td><td>pipe(catchError())</td></tr>\n<tr><td>ExecutorService</td><td>Scheduler</td></tr>\n</table>\n\n<strong>Diferencia clave:</strong> los Observables son <strong>perezosos (lazy)</strong>: nada se ejecuta hasta que llamas a <code>.subscribe()</code>. Como un Stream de Java que no se ejecuta hasta una operación terminal."
+      },
+      {
+        "heading": "Operadores esenciales (el 20% que resuelve el 80%)",
+        "content": "<pre><code>// map — transforma cada emisión (como Stream.map)\nthis.http.get&lt;UserDTO[]&gt;('/api/users').pipe(\n  map(users =&gt; users.filter(u =&gt; u.active))\n);\n\n// switchMap — aplana + cancela el anterior (autocompletado de búsqueda)\nthis.searchInput.valueChanges.pipe(\n  debounceTime(300),\n  distinctUntilChanged(),\n  switchMap(term =&gt; this.http.get(`/api/search?q=${term}`))\n);\n\n// catchError — maneja errores en el stream\nthis.http.get('/api/deliveries').pipe(\n  catchError(err =&gt; {\n    this.error.set('Failed to load deliveries');\n    return of([]);  // arreglo vacío de respaldo\n  })\n);\n\n// takeUntilDestroyed — auto-desuscripción (Angular 16+)\nprivate destroyRef = inject(DestroyRef);\n\nngOnInit() {\n  this.ws.messages$.pipe(\n    takeUntilDestroyed(this.destroyRef)\n  ).subscribe(msg =&gt; this.messages.update(m =&gt; [...m, msg]));\n}\n\n// combineLatest — espera a varias fuentes\ncombineLatest([this.drivers$, this.routes$]).pipe(\n  map(([drivers, routes]) =&gt; this.assignDriversToRoutes(drivers, routes))\n);</code></pre>\n\n<strong>Guía para elegir el operador:</strong>\n• Transformar cada valor → <code>map()</code>\n• Un Observable por emisión (aplanar) → <code>switchMap()</code> (cancela el anterior) o <code>mergeMap()</code> (en paralelo)\n• Efectos secundarios → <code>tap()</code>\n• Manejo de errores → <code>catchError()</code>\n• Temporización → <code>debounceTime()</code>, <code>throttleTime()</code>\n• Combinar streams → <code>combineLatest()</code>, <code>forkJoin()</code>"
+      },
+      {
+        "heading": "Subjects — cuando necesitas empujar valores",
+        "content": "<pre><code>// BehaviorSubject — mantiene el valor actual (como un signal mutable)\n@Injectable({ providedIn: 'root' })\nexport class NotificationService {\n  private notifications$ = new BehaviorSubject&lt;Notification[]&gt;([]);\n\n  // Exponer como Observable (solo lectura para los consumidores)\n  readonly notifications = this.notifications$.asObservable();\n\n  push(n: Notification) {\n    this.notifications$.next([...this.notifications$.value, n]);\n  }\n\n  clear() {\n    this.notifications$.next([]);\n  }\n}\n\n// Tipos de Subject:\n// Subject        — sin valor inicial, hot (pierde las emisiones previas a la suscripción)\n// BehaviorSubject — tiene valor inicial, repite el último valor a los nuevos suscriptores\n// ReplaySubject  — repite N valores pasados a los nuevos suscriptores\n// AsyncSubject   — emite solo el ÚLTIMO valor, al completarse</code></pre>\n\n<strong>Preferencia en Angular moderno:</strong> usar <code>signal()</code> para estado síncrono, <code>BehaviorSubject</code> solo cuando necesites integración con Observable (pipes, operadores asíncronos)."
+      },
+      {
+        "heading": "Fugas de memoria — el error #1 en Angular",
+        "content": "Cada <code>.subscribe()</code> sin limpieza es una posible fuga de memoria.\n\n<pre><code>// ❌ FUGA — la suscripción vive para siempre\nngOnInit() {\n  this.ws.messages$.subscribe(msg =&gt; this.handle(msg));\n}\n\n// ✅ Angular 16+ moderno — takeUntilDestroyed\nngOnInit() {\n  this.ws.messages$.pipe(\n    takeUntilDestroyed(this.destroyRef)\n  ).subscribe(msg =&gt; this.handle(msg));\n}\n\n// ✅ Async pipe (se suscribe Y se desuscribe automáticamente)\n// Plantilla: {{ deliveries$ | async }}\n\n// ✅ toSignal() — convierte un Observable en Signal (limpieza automática)\ndeliveries = toSignal(this.deliveryService.findAll(), { initialValue: [] });</code></pre>\n\n<strong>Reglas:</strong>\n• Llamadas HTTP: <strong>no se necesita limpieza</strong> (se completan tras una sola emisión)\n• WebSocket/interval/fromEvent: <strong>siempre limpiar</strong>\n• Preferir <code>toSignal()</code> o el pipe <code>| async</code> antes que suscribirse manualmente\n• <code>takeUntilDestroyed()</code> es la vía de escape moderna"
+      }
+    ],
+    "topic": "angular",
+    "subtopic": "ng-rxjs"
+  },
+  {
+    "id": "theory-angular-signals",
+    "title": "Signals y gestión de estado",
+    "sections": [
+      {
+        "heading": "Signals — la primitiva reactiva de Angular (Angular 16+)",
+        "content": "Los signals son la respuesta de Angular a los hooks de React / refs de Vue. Ofrecen <strong>reactividad de grano fino</strong> sin la complejidad de RxJS.\n\n<pre><code>// Signal básico\nconst count = signal(0);       // WritableSignal&lt;number&gt;\nconsole.log(count());          // Leer: 0\ncount.set(5);                  // Escribir: reemplazar el valor\ncount.update(v =&gt; v + 1);     // Escribir: en función del valor actual\n\n// Signal computado (estado derivado — como una vista de base de datos)\nconst doubled = computed(() =&gt; count() * 2);  // rastrea dependencias automáticamente\n// doubled() se re-evalúa SOLO cuando cambia count()\n\n// Effect (efecto secundario cuando cambia un signal)\neffect(() =&gt; {\n  console.log(`Count changed to ${count()}`);\n  // Se ejecuta tras cada cambio, rastrea dependencias automáticamente\n});</code></pre>\n\n<strong>Paralelo con Java:</strong>\n• <code>signal()</code> → un AtomicReference con notificación de cambio\n• <code>computed()</code> → un getter en caché que se invalida cuando cambian las dependencias\n• <code>effect()</code> → un listener de eventos que se dispara ante un cambio de estado"
+      },
+      {
+        "heading": "Patrón de componente basado en signals",
+        "content": "<pre><code>@Component({\n  selector: 'app-delivery-dashboard',\n  standalone: true,\n  changeDetection: ChangeDetectionStrategy.OnPush,\n  template: `\n    &lt;h2&gt;Dashboard ({{ totalActive() }} activas)&lt;/h2&gt;\n\n    @if (loading()) {\n      &lt;p-progressSpinner /&gt;\n    } @else {\n      @for (d of filteredDeliveries(); track d.id) {\n        &lt;app-delivery-card [delivery]=\"d\" (dispatched)=\"onDispatch($event)\" /&gt;\n      }\n    }\n\n    @if (filteredDeliveries().length === 0) {\n      &lt;p&gt;Ninguna entrega coincide con el filtro.&lt;/p&gt;\n    }\n  `\n})\nexport class DeliveryDashboardComponent {\n  private service = inject(DeliveryService);\n\n  // Estado\n  deliveries = signal&lt;Delivery[]&gt;([]);\n  loading = signal(true);\n  filter = signal&lt;DeliveryStatus | 'ALL'&gt;('ALL');\n\n  // Derivado\n  filteredDeliveries = computed(() =&gt; {\n    const f = this.filter();\n    return f === 'ALL'\n      ? this.deliveries()\n      : this.deliveries().filter(d =&gt; d.status === f);\n  });\n\n  totalActive = computed(() =&gt;\n    this.deliveries().filter(d =&gt; d.status !== 'DELIVERED').length\n  );\n\n  constructor() {\n    this.loadData();\n  }\n\n  private loadData() {\n    this.service.findAll().subscribe({\n      next: data =&gt; { this.deliveries.set(data); this.loading.set(false); },\n      error: () =&gt; this.loading.set(false)\n    });\n  }\n\n  onDispatch(id: number) {\n    this.deliveries.update(list =&gt;\n      list.map(d =&gt; d.id === id ? { ...d, status: 'DISPATCHED' } : d)\n    );\n  }\n}</code></pre>"
+      },
+      {
+        "heading": "input() y output() — entrada/salida de componente basada en signals (Angular 17.1+)",
+        "content": "<pre><code>// Inputs/outputs modernos basados en signals\n@Component({\n  selector: 'app-delivery-card',\n  standalone: true,\n  template: `\n    &lt;div class=\"card\"&gt;\n      &lt;h3&gt;{{ delivery().driverName }}&lt;/h3&gt;\n      &lt;p-tag [severity]=\"statusColor()\"&gt;{{ delivery().status }}&lt;/p-tag&gt;\n      &lt;button (click)=\"dispatched.emit(delivery().id)\"&gt;Despachar&lt;/button&gt;\n    &lt;/div&gt;\n  `\n})\nexport class DeliveryCardComponent {\n  // Input basado en signal (reemplaza a @Input())\n  delivery = input.required&lt;Delivery&gt;();\n\n  // Output basado en signal (reemplaza a @Output() + EventEmitter)\n  dispatched = output&lt;number&gt;();\n\n  // Computado a partir del signal de entrada\n  statusColor = computed(() =&gt; {\n    switch (this.delivery().status) {\n      case 'DELIVERED': return 'success';\n      case 'DELAYED': return 'danger';\n      default: return 'info';\n    }\n  });\n}</code></pre>\n\n<strong>Ventajas frente a los decoradores:</strong>\n• Tipado seguro, sin estado inicial undefined gracias a <code>input.required()</code>\n• Se puede usar <code>computed()</code> directamente a partir de los inputs\n• Mejor tree-shaking y optimización AOT"
+      },
+      {
+        "heading": "Signals vs RxJS — cuándo usar cada uno",
+        "content": "<table>\n<tr><th>Usa Signals cuando</th><th>Usa RxJS cuando</th></tr>\n<tr><td>Estado síncrono (contadores, banderas, listas)</td><td>Llamadas HTTP (devuelven Observable)</td></tr>\n<tr><td>Valores derivados/computados</td><td>Streams de WebSocket</td></tr>\n<tr><td>Estado local del componente</td><td>Transformaciones asíncronas complejas (debounce, retry, combine)</td></tr>\n<tr><td>Flujo de datos simple de padre a hijo</td><td>Streams de eventos (fromEvent, interval)</td></tr>\n<tr><td>Reemplazar BehaviorSubject para el estado</td><td>Cuando necesitas operadores (switchMap, mergeMap)</td></tr>\n</table>\n\n<strong>Patrón híbrido (recomendado):</strong>\n<pre><code>// Servicio: RxJS para lo asíncrono, exponer como signal\n@Injectable({ providedIn: 'root' })\nexport class DeliveryStore {\n  private http = inject(HttpClient);\n\n  // RxJS interno (HTTP es inherentemente asíncrono)\n  private deliveries$ = this.http.get&lt;Delivery[]&gt;('/api/deliveries');\n\n  // Exponer como signal (los componentes consumen de forma síncrona)\n  deliveries = toSignal(this.deliveries$, { initialValue: [] });\n\n  // Computado\n  activeCount = computed(() =&gt; this.deliveries().filter(d =&gt; d.active).length);\n}</code></pre>"
+      }
+    ],
+    "topic": "angular",
+    "subtopic": "ng-signals"
+  },
+  {
+    "id": "theory-angular-forms",
+    "title": "Formularios y validación",
+    "sections": [
+      {
+        "heading": "Dos enfoques de formularios en Angular",
+        "content": "Angular ofrece dos sistemas de formularios:\n\n<table>\n<tr><th>Basado en plantilla</th><th>Formularios reactivos</th></tr>\n<tr><td>Lógica en la plantilla (ngModel)</td><td>Lógica en TypeScript (FormControl)</td></tr>\n<tr><td>Formularios simples, prototipado rápido</td><td>Formularios complejos, campos dinámicos</td></tr>\n<tr><td>Menos testeable</td><td>Altamente testeable (TS puro)</td></tr>\n<tr><td>Como el binding de managed beans de JSF</td><td>Como @Valid de Spring con ConstraintValidator</td></tr>\n</table>\n\n<strong>Preferencia de TRAB:</strong> Reactive Forms para cualquier cosa que supere un simple cuadro de búsqueda."
+      },
+      {
+        "heading": "Formularios reactivos — control total",
+        "content": "<pre><code>@Component({\n  standalone: true,\n  imports: [ReactiveFormsModule, InputTextModule, ButtonModule],\n  template: `\n    &lt;form [formGroup]=\"deliveryForm\" (ngSubmit)=\"onSubmit()\"&gt;\n      &lt;div&gt;\n        &lt;label for=\"driver\"&gt;Conductor&lt;/label&gt;\n        &lt;input pInputText id=\"driver\" formControlName=\"driverName\" /&gt;\n        @if (f['driverName'].errors?.['required'] &amp;&amp; f['driverName'].touched) {\n          &lt;small class=\"p-error\"&gt;El conductor es obligatorio&lt;/small&gt;\n        }\n      &lt;/div&gt;\n\n      &lt;div&gt;\n        &lt;label for=\"stops\"&gt;Número de paradas&lt;/label&gt;\n        &lt;input pInputText id=\"stops\" type=\"number\" formControlName=\"stops\" /&gt;\n        @if (f['stops'].errors?.['min']) {\n          &lt;small class=\"p-error\"&gt;Se requiere al menos 1 parada&lt;/small&gt;\n        }\n      &lt;/div&gt;\n\n      &lt;button pButton type=\"submit\" [disabled]=\"deliveryForm.invalid\"&gt;Crear&lt;/button&gt;\n    &lt;/form&gt;\n  `\n})\nexport class CreateDeliveryComponent {\n  private fb = inject(FormBuilder);\n\n  deliveryForm = this.fb.group({\n    driverName: ['', [Validators.required, Validators.minLength(2)]],\n    stops: [1, [Validators.required, Validators.min(1), Validators.max(50)]],\n    scheduledAt: ['', Validators.required],\n    priority: ['NORMAL']\n  });\n\n  get f() { return this.deliveryForm.controls; }\n\n  onSubmit() {\n    if (this.deliveryForm.valid) {\n      const dto = this.deliveryForm.getRawValue();\n      // Enviar a la API\n    }\n  }\n}</code></pre>"
+      },
+      {
+        "heading": "Validadores personalizados — como Bean Validation",
+        "content": "<pre><code>// Validador personalizado (como @ConstraintValidator en Java)\nexport function futureDate(): ValidatorFn {\n  return (control: AbstractControl): ValidationErrors | null =&gt; {\n    const date = new Date(control.value);\n    return date &gt; new Date() ? null : { futureDate: true };\n  };\n}\n\n// Validador asíncrono (como verificar unicidad contra una API)\nexport function uniqueDriver(service: DriverService): AsyncValidatorFn {\n  return (control: AbstractControl): Observable&lt;ValidationErrors | null&gt; =&gt; {\n    return service.exists(control.value).pipe(\n      map(exists =&gt; exists ? { driverTaken: true } : null),\n      catchError(() =&gt; of(null))\n    );\n  };\n}\n\n// Uso:\ndriverName: ['', [Validators.required], [uniqueDriver(this.driverService)]]</code></pre>\n\n<strong>Paralelo con Java:</strong>\n• <code>Validators.required</code> → <code>@NotNull</code>\n• <code>Validators.min(1)</code> → <code>@Min(1)</code>\n• <code>Validators.pattern()</code> → <code>@Pattern</code>\n• ValidatorFn personalizado → <code>ConstraintValidator&lt;A, T&gt;</code>"
+      }
+    ],
+    "topic": "angular",
+    "subtopic": "ng-forms"
+  },
+  {
+    "id": "theory-angular-testing",
+    "title": "Pruebas en Angular",
+    "sections": [
+      {
+        "heading": "Stack de pruebas",
+        "content": "Angular usa:\n• <strong>Jasmine</strong> — framework de pruebas (describe/it/expect) — como JUnit\n• <strong>Karma</strong> — ejecutor de pruebas — como Maven Surefire\n• <strong>TestBed</strong> — contenedor de DI para pruebas — como Spring TestContext\n\n<pre><code>describe('DeliveryService', () =&gt; {\n  let service: DeliveryService;\n  let httpMock: HttpTestingController;\n\n  beforeEach(() =&gt; {\n    TestBed.configureTestingModule({\n      providers: [\n        provideHttpClient(),\n        provideHttpClientTesting()\n      ]\n    });\n    service = TestBed.inject(DeliveryService);\n    httpMock = TestBed.inject(HttpTestingController);\n  });\n\n  afterEach(() =&gt; httpMock.verify());\n\n  it('should fetch deliveries', () =&gt; {\n    const mockData: Delivery[] = [\n      { id: 1, status: 'PLANNED', driverName: 'Hans', scheduledAt: '2024-01-15' }\n    ];\n\n    service.findAll().subscribe(data =&gt; {\n      expect(data.length).toBe(1);\n      expect(data[0].driverName).toBe('Hans');\n    });\n\n    const req = httpMock.expectOne('/api/v1/deliveries');\n    expect(req.request.method).toBe('GET');\n    req.flush(mockData);\n  });\n});</code></pre>"
+      },
+      {
+        "heading": "Pruebas de componentes",
+        "content": "<pre><code>describe('DeliveryCardComponent', () =&gt; {\n  it('should display driver name', () =&gt; {\n    const fixture = TestBed.createComponent(DeliveryCardComponent);\n    const component = fixture.componentInstance;\n\n    // Establecer el input basado en signal\n    fixture.componentRef.setInput('delivery', {\n      id: 1, status: 'PLANNED', driverName: 'Hans', scheduledAt: '2024-01-15'\n    });\n\n    fixture.detectChanges();\n\n    const el = fixture.nativeElement;\n    expect(el.querySelector('h3').textContent).toContain('Hans');\n  });\n\n  it('should emit dispatched event on button click', () =&gt; {\n    const fixture = TestBed.createComponent(DeliveryCardComponent);\n    fixture.componentRef.setInput('delivery', {\n      id: 42, status: 'PLANNED', driverName: 'Hans', scheduledAt: '2024-01-15'\n    });\n    fixture.detectChanges();\n\n    let emittedId: number | undefined;\n    fixture.componentInstance.dispatched.subscribe(id =&gt; emittedId = id);\n\n    fixture.nativeElement.querySelector('button').click();\n    expect(emittedId).toBe(42);\n  });\n});</code></pre>\n\n<strong>Probar signals:</strong> llama a la función del signal directamente — <code>expect(component.totalActive()).toBe(3)</code>."
+      },
+      {
+        "heading": "Patrones de pruebas (pirámide)",
+        "content": "<table>\n<tr><th>Nivel</th><th>Qué</th><th>Herramienta</th><th>%</th></tr>\n<tr><td>Unitaria</td><td>Servicios, pipes, lógica pura</td><td>Jasmine + TestBed</td><td>60%</td></tr>\n<tr><td>Integración</td><td>Componentes + plantilla + DI</td><td>TestBed + fixture</td><td>30%</td></tr>\n<tr><td>E2E</td><td>Flujos completos de la app</td><td>Playwright/Cypress</td><td>10%</td></tr>\n</table>\n\n<strong>Qué probar en Angular:</strong>\n• Servicios: lógica de negocio, llamadas HTTP (simular con HttpTestingController)\n• Componentes: inputs/outputs, renderizado de la plantilla, interacciones del usuario\n• Pipes: lógica de transformación pura (lo más fácil de probar)\n• Guards: lógica de navegación\n\n<strong>Qué NO probar:</strong>\n• Los internos del framework Angular (que el enrutamiento funcione, que la DI funcione)\n• Bibliotecas de terceros (que PrimeNG renderice correctamente)\n• Getters/setters triviales sin lógica"
+      }
+    ],
+    "topic": "angular",
+    "subtopic": "ng-testing"
+  }
+]

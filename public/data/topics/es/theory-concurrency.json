@@ -1,0 +1,90 @@
+[
+  {
+    "id": "theory-concurrency-threads",
+    "title": "Threads y Thread Pools",
+    "sections": [
+      {
+        "heading": "Por qué la concurrencia importa",
+        "content": "En logística: un servicio de entregas que maneja 1000 req/s necesita ejecutar muchas operaciones simultáneamente. Sin concurrencia, cada solicitud espera a que termine la anterior.\n\n<strong>Modelo de concurrencia de Java:</strong>\n• Cada solicitud en un servidor web (Tomcat, WildFly) obtiene su propio hilo\n• Los hilos comparten la misma memoria heap (objetos accesibles entre hilos)\n• La JVM + el SO planifican los hilos en los núcleos de CPU\n\n<strong>El peligro:</strong> Estado mutable compartido + acceso concurrente = corrupción de datos, condiciones de carrera, deadlocks."
+      },
+      {
+        "heading": "Thread pools — nunca crear hilos manualmente",
+        "content": "<pre><code>// ❌ Nunca en producción — creación descontrolada de hilos\nnew Thread(() -> processDelivery(id)).start();\n\n// ✅ ExecutorService — pool limitado y reutilizable\nExecutorService executor = Executors.newFixedThreadPool(10);\nexecutor.submit(() -> processDelivery(id));\n\n// ✅ Spring Boot\n@Async\npublic CompletableFuture&lt;Route&gt; calculateRouteAsync(Delivery d) {\n    return CompletableFuture.completedFuture(routeService.calculate(d));\n}\n\n// ✅ Java EE\n@Resource\nManagedExecutorService executor;\nexecutor.submit(() -> processDelivery(id));</code></pre>\n\n<strong>Regla general:</strong>\n• CPU-bound: hilos = núcleos\n• I/O-bound: hilos = núcleos × (1 + espera/cómputo)"
+      }
+    ],
+    "topic": "concurrency",
+    "subtopic": "conc-threads"
+  },
+  {
+    "id": "theory-concurrency-completable",
+    "title": "CompletableFuture — Composición asíncrona",
+    "sections": [
+      {
+        "heading": "Conceptos básicos",
+        "content": "CompletableFuture = promesa de un resultado futuro encadenable.\n\n<pre><code>CompletableFuture&lt;Route&gt; routeFuture = CompletableFuture\n    .supplyAsync(() -> routeService.optimize(delivery), executor);\n\nCompletableFuture&lt;ETA&gt; etaFuture = routeFuture\n    .thenApply(route -> etaCalculator.calculate(route));\n\nCompletableFuture&lt;ETA&gt; safeFuture = etaFuture\n    .exceptionally(ex -> ETA.unknown());</code></pre>"
+      },
+      {
+        "heading": "Llamadas en paralelo",
+        "content": "<pre><code>CompletableFuture.allOf(f1, f2, f3)\n    .orTimeout(5, TimeUnit.SECONDS)\n    .join();</code></pre>\n\n<strong>Reglas:</strong>\n• Siempre usar executor\n• Siempre definir timeout\n• Manejar excepciones\n• Evitar bloqueos innecesarios"
+      }
+    ],
+    "topic": "concurrency",
+    "subtopic": "conc-completable"
+  },
+  {
+    "id": "theory-concurrency-safety",
+    "title": "Thread Safety — Protección del estado compartido",
+    "sections": [
+      {
+        "heading": "Condiciones de carrera",
+        "content": "<pre><code>// ❌ No atómico\ncount++;\n\n// ✅ AtomicInteger\ncount.incrementAndGet();\n\n// ✅ synchronized\npublic synchronized void increment() { count++; }</code></pre>"
+      },
+      {
+        "heading": "Buenas prácticas",
+        "content": "1. Evitar compartir estado\n2. Usar inmutabilidad\n3. Usar clases atómicas\n4. Usar locks como último recurso"
+      }
+    ],
+    "topic": "concurrency",
+    "subtopic": "conc-safety"
+  },
+  {
+    "id": "theory-concurrency-sync",
+    "title": "Sincronización y Locks",
+    "sections": [
+      {
+        "heading": "synchronized",
+        "content": "<pre><code>public synchronized void increment() {\n    value++;\n}</code></pre>"
+      },
+      {
+        "heading": "ReentrantLock",
+        "content": "<pre><code>lock.lock();\ntry {\n    // sección crítica\n} finally {\n    lock.unlock();\n}</code></pre>"
+      },
+      {
+        "heading": "Deadlock",
+        "content": "Ocurre cuando dos hilos esperan recursos entre sí.\n\n<strong>Prevención:</strong>\n• Orden consistente de locks\n• tryLock con timeout\n• Evitar locks anidados"
+      }
+    ],
+    "topic": "concurrency",
+    "subtopic": "conc-sync"
+  },
+  {
+    "id": "theory-concurrency-jmm",
+    "title": "Modelo de Memoria de Java",
+    "sections": [
+      {
+        "heading": "Happens-before",
+        "content": "Define cuándo los cambios son visibles entre hilos."
+      },
+      {
+        "heading": "volatile",
+        "content": "<pre><code>private volatile boolean running = true;</code></pre>\n\nGarantiza visibilidad, no atomicidad."
+      },
+      {
+        "heading": "Publicación segura",
+        "content": "• final\n• volatile\n• AtomicReference\n• synchronized"
+      }
+    ],
+    "topic": "concurrency",
+    "subtopic": "conc-jmm"
+  }
+]

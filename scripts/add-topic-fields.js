@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const topicsDir = path.resolve(__dirname, '../public/data/topics');
+const topicsDir = path.resolve(__dirname, '../public/data/topics/en');
 
 // Map filename to topicId
 const fileTopicMap = {

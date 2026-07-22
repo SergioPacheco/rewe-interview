@@ -1,5 +1,6 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { InterviewQuestion } from '../../models';
+import { I18nService } from './i18n.service';
 
 /**
  * Service for loading interview preparation questions per topic.
@@ -9,12 +10,14 @@ import { InterviewQuestion } from '../../models';
 @Injectable({ providedIn: 'root' })
 export class InterviewService {
 
+  private readonly i18n = inject(I18nService);
+
   // State
   private readonly _questions = signal<InterviewQuestion[]>([]);
   private readonly _loading = signal(false);
   private readonly _currentTopic = signal('');
   private readonly _selectedIndex = signal(0);
-  private readonly _loadedTopics = new Set<string>(); // Track already-attempted topics
+  private _lastLoadedLocale = '';
 
   // Public signals
   readonly questions = this._questions.asReadonly();
@@ -40,21 +43,23 @@ export class InterviewService {
 
   /**
    * Load interview questions for a topic.
-   * Caches result per topic (success or failure) to prevent refetch loops.
+   * Skips fetch only when same topic+locale was loaded last time.
    */
   async loadForTopic(topicId: string): Promise<void> {
-    // Already loaded for this exact topic — skip
-    if (this._currentTopic() === topicId && this._loadedTopics.has(topicId)) {
+    const lang = this.i18n.locale();
+
+    // Already showing this exact topic+locale — skip
+    if (this._currentTopic() === topicId && this._lastLoadedLocale === lang) {
       return;
     }
 
     this._loading.set(true);
     this._currentTopic.set(topicId);
+    this._lastLoadedLocale = lang;
     this._selectedIndex.set(0);
-    this._loadedTopics.add(topicId);
 
     try {
-      const url = new URL(`data/interviews/${topicId}.json`, document.baseURI).href;
+      const url = new URL(`data/interviews/${lang}/${topicId}.json`, document.baseURI).href;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -100,6 +105,6 @@ export class InterviewService {
     this._questions.set([]);
     this._currentTopic.set('');
     this._selectedIndex.set(0);
-    this._loadedTopics.clear();
+    this._lastLoadedLocale = '';
   }
 }

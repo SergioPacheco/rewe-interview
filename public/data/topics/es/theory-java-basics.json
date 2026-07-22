@@ -1,0 +1,178 @@
+[
+  {
+    "id": "theory-java-basics-structure",
+    "title": "Conceptos básicos de Java — Estructura, método main, paquetes",
+    "sections": [
+      {
+        "heading": "Estructura de una clase Java",
+        "content": "Cada archivo Java sigue esta estructura:\n\n<pre><code>package com.rewe.logistics.delivery;  // 1. Declaración de paquete (opcional pero recomendada)\n\nimport java.util.List;                  // 2. Sentencias import\nimport java.time.LocalDateTime;\n\npublic class DeliveryService {          // 3. Declaración de clase\n\n    private final DeliveryRepository repo;  // 4. Campos\n\n    public DeliveryService(DeliveryRepository repo) {  // 5. Constructores\n        this.repo = repo;\n    }\n\n    public Delivery findById(Long id) {  // 6. Métodos\n        return repo.findById(id).orElseThrow();\n    }\n}</code></pre>\n\n<strong>Reglas:</strong>\n• Una clase pública por archivo, el nombre debe coincidir con la clase (<code>DeliveryService.java</code>)\n• La declaración de paquete debe ir en la primera línea (si existe)\n• Los imports van después del paquete, antes de la clase\n• Un archivo puede tener múltiples clases no públicas (pero evítalo)"
+      },
+      {
+        "heading": "El método main — punto de entrada",
+        "content": "<pre><code>public class Application {\n    public static void main(String[] args) {\n        System.out.println(\"Sistema de entregas iniciado\");\n        // args contiene los argumentos de línea de comandos\n    }\n}</code></pre>\n\n<strong>La firma debe ser exactamente:</strong> <code>public static void main(String[] args)</code>\n• <code>public</code> — la JVM debe acceder desde fuera\n• <code>static</code> — se llama sin crear instancia\n• <code>void</code> — no retorna nada\n• <code>String[] args</code> — argumentos de línea de comandos (también puede ser <code>String... args</code>)\n\n<strong>Ejecutar desde línea de comandos:</strong>\n<pre><code>javac DeliveryApp.java          # Compilar\njava DeliveryApp                 # Ejecutar (sin extensión .class)\njava DeliveryApp --port 8080     # args[0]=\"--port\", args[1]=\"8080\"</code></pre>\n\n<strong>Salida por consola:</strong>\n<pre><code>System.out.println(\"línea\");   // imprime + salto de línea\nSystem.out.print(\"sin salto\");  // imprime, cursor se queda\nSystem.err.println(\"error\");  // stream de error (rojo en IDEs)\nSystem.out.printf(\"Entrega %d: %s%n\", id, estado);  // formateado</code></pre>"
+      },
+      {
+        "heading": "Independencia de plataforma",
+        "content": "<strong>\"Escribe una vez, ejecuta donde sea\"</strong>\n\nJava logra la independencia de plataforma mediante:\n1. <strong>Compilación a bytecode</strong> — <code>javac</code> compila <code>.java</code> a <code>.class</code> (bytecode), no a código nativo\n2. <strong>La JVM ejecuta bytecode</strong> — cada SO tiene su propia implementación de JVM que traduce bytecode a instrucciones nativas\n3. <strong>Biblioteca estándar</strong> — java.io, java.net, etc. abstraen diferencias del SO\n\n<pre><code>Fuente (.java) → Compilador (javac) → Bytecode (.class) → JVM → Ejecución nativa\n                                                          ↑\n                                                   JVM específica del SO</code></pre>\n\n<strong>Características clave de Java (comparación en entrevistas):</strong>\n• <strong>Orientado a objetos</strong> — todo está dentro de una clase (excepto primitivos)\n• <strong>Tipado fuerte</strong> — los tipos se verifican en tiempo de compilación\n• <strong>Recolección de basura</strong> — sin gestión manual de memoria\n• <strong>Independiente de plataforma</strong> — el bytecode se ejecuta en cualquier JVM\n• <strong>Multihilo</strong> — soporte de concurrencia integrado\n• <strong>Seguro</strong> — sin aritmética de punteros, verificación de bytecode"
+      },
+      {
+        "heading": "Paquetes e imports",
+        "content": "Los paquetes organizan clases en namespaces y controlan el acceso.\n\n<pre><code>package com.rewe.logistics.delivery;  // Esta clase vive aquí\n\nimport java.util.List;                // Importar clase específica\nimport java.util.*;                   // Importar todas las clases del paquete (no subpaquetes)\nimport static java.util.Collections.emptyList;  // Importar método estático</code></pre>\n\n<strong>Reglas:</strong>\n• <code>java.lang.*</code> se importa automáticamente (String, Integer, System, Math, Object)\n• Import NO importa subpaquetes (<code>import java.util.*</code> NO incluye <code>java.util.stream.*</code>)\n• Dos clases con el mismo nombre de distintos paquetes → usar nombre completamente calificado para una\n\n<pre><code>// Conflicto: java.util.Date y java.sql.Date\nimport java.util.Date;\n// Hay que usar el nombre completo para la otra:\njava.sql.Date sqlDate = new java.sql.Date(millis);</code></pre>\n\n<strong>Convención de nomenclatura de paquetes:</strong> dominio invertido — <code>com.rewe.logistics.delivery</code>"
+      },
+      {
+        "heading": "Alcance de variables",
+        "content": "Alcance = dónde es accesible una variable.\n\n<pre><code>public class DeliveryService {\n    private int totalCount;             // Alcance de INSTANCIA: vive mientras el objeto\n\n    private static int globalCount;     // Alcance de CLASE: vive mientras la clase cargada\n\n    public void process(int batchSize) { // Alcance de PARÁMETRO: dentro del método\n        int processed = 0;              // Alcance LOCAL: desde la declaración hasta el final del bloque\n\n        for (int i = 0; i < batchSize; i++) {  // Alcance de BUCLE: solo dentro del for\n            if (i > 10) {\n                int overflow = i - 10;  // Alcance de BLOQUE: solo dentro de este if\n            }\n            // ¡overflow NO es accesible aquí!\n        }\n        // ¡i NO es accesible aquí!\n    }\n    // ¡processed NO es accesible aquí!\n}</code></pre>\n\n<strong>Reglas clave:</strong>\n• Las variables locales DEBEN inicializarse antes de usarse (no tienen valor por defecto)\n• Los campos de instancia tienen valores por defecto: 0, 0.0, false, null\n• Alcance más estrecho = mejor (declarar variables lo más cerca posible de su uso)\n• No se puede redeclarar una variable en el mismo alcance"
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-basics"
+  },
+  {
+    "id": "theory-java-basics-types",
+    "title": "Tipos de datos — Primitivos, referencias, wrappers",
+    "sections": [
+      {
+        "heading": "Tipos primitivos",
+        "content": "Java tiene 8 tipos primitivos (se almacenan directamente en el stack):\n\n<table>\n<tr><th>Tipo</th><th>Tamaño</th><th>Rango</th><th>Por defecto</th><th>Ejemplo</th></tr>\n<tr><td><code>byte</code></td><td>8 bits</td><td>-128 a 127</td><td>0</td><td><code>byte b = 100;</code></td></tr>\n<tr><td><code>short</code></td><td>16 bits</td><td>-32.768 a 32.767</td><td>0</td><td><code>short s = 30000;</code></td></tr>\n<tr><td><code>int</code></td><td>32 bits</td><td>-2.1B a 2.1B</td><td>0</td><td><code>int i = 42;</code></td></tr>\n<tr><td><code>long</code></td><td>64 bits</td><td>enorme</td><td>0L</td><td><code>long l = 100L;</code></td></tr>\n<tr><td><code>float</code></td><td>32 bits</td><td>~7 dígitos decimales</td><td>0.0f</td><td><code>float f = 3.14f;</code></td></tr>\n<tr><td><code>double</code></td><td>64 bits</td><td>~15 dígitos decimales</td><td>0.0</td><td><code>double d = 3.14;</code></td></tr>\n<tr><td><code>char</code></td><td>16 bits</td><td>carácter Unicode</td><td>'\\u0000'</td><td><code>char c = 'A';</code></td></tr>\n<tr><td><code>boolean</code></td><td>1 bit*</td><td>true/false</td><td>false</td><td><code>boolean b = true;</code></td></tr>\n</table>\n\n<strong>Ampliación (automática, segura):</strong> byte → short → int → long → float → double\n<pre><code>int x = 5;\nlong y = x;    // OK: ampliación (int → long), sin pérdida de datos\ndouble z = x;  // OK: ampliación (int → double)</code></pre>\n\n<strong>Reducción (requiere cast explícito, puede perder datos):</strong>\n<pre><code>long big = 100L;\nint small = (int) big;   // cast explícito requerido\n// Riesgo: si big > Integer.MAX_VALUE, ¡los datos se truncan!</code></pre>"
+      },
+      {
+        "heading": "Tipos de referencia vs primitivos",
+        "content": "<strong>Primitivos:</strong> mantienen el VALOR directamente. Se copian por valor.\n<pre><code>int a = 10;\nint b = a;   // b recibe una COPIA de 10\nb = 20;      // a sigue siendo 10 — independientes</code></pre>\n\n<strong>Referencias:</strong> mantienen un PUNTERO a un objeto en el heap. Se copian por valor de referencia.\n<pre><code>Delivery d1 = new Delivery(\"Route-A\");\nDelivery d2 = d1;        // d2 apunta al MISMO objeto\nd2.setRoute(\"Route-B\");  // ¡d1.getRoute() también es \"Route-B\"!\n\nd2 = new Delivery(\"Route-C\");  // d2 ahora apunta a un NUEVO objeto\n// d1 sigue apuntando al original (ahora con \"Route-B\")</code></pre>\n\n<strong>Diferencia clave:</strong>\n• Primitivo: copias independientes, no puede ser null\n• Referencia: objeto compartido, PUEDE ser null\n• <code>==</code> en primitivos: compara valores\n• <code>==</code> en referencias: compara si es el mismo objeto (¡no el contenido!)"
+      },
+      {
+        "heading": "Ciclo de vida del objeto y Garbage Collection",
+        "content": "<strong>1. Creación:</strong> <code>new</code> asigna memoria en el heap\n<pre><code>Delivery d = new Delivery();  // objeto creado en heap, d mantiene la referencia</code></pre>\n\n<strong>2. Uso:</strong> objeto accesible a través de referencias\n<pre><code>d.dispatch();  // accedido mediante la referencia d</code></pre>\n\n<strong>3. Elegible para GC:</strong> cuando NINGUNA referencia apunta a él\n<pre><code>d = null;                    // referencia nula → objeto elegible para GC\nd = new Delivery();          // reasignado → objeto anterior elegible para GC\n// El método termina → referencias locales fuera de alcance → objetos elegibles</code></pre>\n\n<strong>4. Garbage Collection:</strong> la JVM reclaima memoria (no puedes forzarlo)\n<pre><code>System.gc();  // SUGIERE GC, NO lo garantiza. Nunca confíes en esto.</code></pre>\n\n<strong>Puntos clave:</strong>\n• No puedes liberar memoria manualmente en Java (a diferencia de C/C++)\n• GC se ejecuta automáticamente cuando la JVM decide\n• <code>finalize()</code> está deprecado — NO lo uses\n• Las referencias circulares SÍ se recogen (GC usa alcanzabilidad desde raíces, no conteo de referencias)"
+      },
+      {
+        "heading": "Clases wrapper",
+        "content": "Cada primitivo tiene un wrapper en objeto (necesario para colecciones, valores null):\n\n<table>\n<tr><th>Primitivo</th><th>Wrapper</th><th>Método parse</th><th>Métodos útiles</th></tr>\n<tr><td>int</td><td>Integer</td><td>Integer.parseInt(\"42\")</td><td>Integer.valueOf(), Integer.MAX_VALUE</td></tr>\n<tr><td>double</td><td>Double</td><td>Double.parseDouble(\"3.14\")</td><td>Double.isNaN(), Double.compare()</td></tr>\n<tr><td>boolean</td><td>Boolean</td><td>Boolean.parseBoolean(\"true\")</td><td>Boolean.TRUE, Boolean.FALSE</td></tr>\n<tr><td>long</td><td>Long</td><td>Long.parseLong(\"100\")</td><td>Long.valueOf()</td></tr>\n<tr><td>char</td><td>Character</td><td>—</td><td>Character.isDigit(), Character.toUpperCase()</td></tr>\n</table>\n\n<strong>Autoboxing/Unboxing (conversión automática):</strong>\n<pre><code>Integer wrapped = 42;         // autoboxing: int → Integer\nint unwrapped = wrapped;      // unboxing: Integer → int\n\nList&lt;Integer&gt; numbers = new ArrayList&lt;&gt;();\nnumbers.add(5);               // autoboxing: int 5 → Integer\nint first = numbers.get(0);   // unboxing: Integer → int</code></pre>\n\n<strong>⚠️ Trampa: Unboxing de null → NullPointerException</strong>\n<pre><code>Integer maybeNull = null;\nint value = maybeNull;  // ¡NPE! No se puede hacer unboxing de null.</code></pre>"
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-types"
+  },
+  {
+    "id": "theory-java-basics-operators",
+    "title": "Operadores y constructos de decisión",
+    "sections": [
+      {
+        "heading": "Igualdad: == vs equals()",
+        "content": "<strong><code>==</code> compara:</strong>\n• Primitivos: VALORES (¿es 5 igual a 5?)\n• Referencias: ¿son el MISMO objeto en memoria?\n\n<strong><code>.equals()</code> compara:</strong>\n• CONTENIDO del objeto (¿tienen los mismos datos?)\n\n<pre><code>// Primitivos: == compara valores (correcto)\nint a = 5, b = 5;\na == b;  // true ✓\n\n// Strings con ==: PELIGROSO\nString s1 = new String(\"REWE\");\nString s2 = new String(\"REWE\");\ns1 == s2;      // FALSE! Objetos distintos\ns1.equals(s2); // TRUE — mismo contenido\n\n// String pool: los literales están internados\nString s3 = \"REWE\";\nString s4 = \"REWE\";\ns3 == s4;      // TRUE — mismo objeto del pool (¡pero no confíes en esto!)\ns3.equals(s4); // TRUE — usa siempre esto para strings</code></pre>\n\n<strong>Regla:</strong> Usa siempre <code>.equals()</code> para comparar String y objetos. Usa <code>==</code> solo para primitivos, comprobaciones de null y comparación de enums."
+      },
+      {
+        "heading": "if / else / ternario",
+        "content": "<pre><code>// if/else estándar\nif (delivery.isLate()) {\n    notifyManager(delivery);\n} else if (delivery.isAtRisk()) {\n    sendWarning(delivery);\n} else {\n    // a tiempo — sin acción\n}\n\n// Operador ternario (para selección simple de valores)\nString label = distance > 100 ? \"Larga distancia\" : \"Local\";\n\n// El ternario es una EXPRESIÓN (retorna un valor)\n// if/else es una SENTENCIA (ejecuta código)\n// No anides ternarios — se vuelve ilegible</code></pre>\n\n<strong>Trampa común:</strong>\n<pre><code>// Esto NO compila — if requiere boolean\nint x = 5;\nif (x) { ... }  // ✗ ¡Java no es JavaScript!\nif (x != 0) { ... }  // ✓ expresión booleana explícita requerida</code></pre>"
+      },
+      {
+        "heading": "Sentencia switch",
+        "content": "<pre><code>switch (delivery.getStatus()) {\n    case PLANNED:\n        System.out.println(\"Esperando\");\n        break;  // ¡SIN break → cae al siguiente case!\n    case DISPATCHED:\n        System.out.println(\"En camino\");\n        break;\n    case DELIVERED:\n        System.out.println(\"Hecho\");\n        break;\n    default:\n        System.out.println(\"Desconocido\");\n}\n\n// switch expression de Java 14+ (retorna un valor):\nString message = switch (status) {\n    case PLANNED -> \"Esperando\";\n    case DISPATCHED -> \"En camino\";\n    case DELIVERED -> \"Hecho\";\n    default -> \"Desconocido\";\n};  // nota el punto y coma — es una expresión</code></pre>\n\n<strong>Switch soporta:</strong> int, byte, short, char, String (Java 7+), enum\n<strong>NO soporta:</strong> long, float, double, boolean\n\n<strong>Trampa de fall-through:</strong> Sin <code>break</code>, la ejecución continúa al siguiente case sin importar la coincidencia. La sintaxis de flecha (<code>-></code>) en Java 14+ NO hace fall-through."
+      },
+      {
+        "heading": "Precedencia de operadores",
+        "content": "Los operadores se evalúan en este orden (de mayor a menor prioridad):\n\n<table>\n<tr><th>Prioridad</th><th>Operadores</th><th>Ejemplo</th></tr>\n<tr><td>1 (mayor)</td><td>Postfijo: <code>x++</code> <code>x--</code></td><td><code>i++</code></td></tr>\n<tr><td>2</td><td>Unarios: <code>++x</code> <code>--x</code> <code>-x</code> <code>!</code></td><td><code>!valid</code></td></tr>\n<tr><td>3</td><td>Multiplicativos: <code>*</code> <code>/</code> <code>%</code></td><td><code>a * b</code></td></tr>\n<tr><td>4</td><td>Aditivos: <code>+</code> <code>-</code></td><td><code>a + b</code></td></tr>\n<tr><td>5</td><td>Relacionales: <code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code> <code>instanceof</code></td><td><code>x > 5</code></td></tr>\n<tr><td>6</td><td>Igualdad: <code>==</code> <code>!=</code></td><td><code>a == b</code></td></tr>\n<tr><td>7</td><td>AND lógico: <code>&&</code></td><td><code>a && b</code></td></tr>\n<tr><td>8</td><td>OR lógico: <code>||</code></td><td><code>a || b</code></td></tr>\n<tr><td>9</td><td>Ternario: <code>? :</code></td><td><code>x > 0 ? x : -x</code></td></tr>\n<tr><td>10 (menor)</td><td>Asignación: <code>=</code> <code>+=</code> <code>-=</code></td><td><code>x += 5</code></td></tr>\n</table>\n\n<strong>Regla:</strong> Ante la duda, usa paréntesis para clarificar la intención:\n<pre><code>// Poco claro:\nint result = a + b * c;    // ¿es (a+b)*c o a+(b*c)?\n// Claro:\nint result = a + (b * c);  // multiplicación primero, luego suma</code></pre>"
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-operators"
+  },
+  {
+    "id": "theory-java-basics-arrays",
+    "title": "Arrays — Unidimensionales y multidimensionales",
+    "sections": [
+      {
+        "heading": "Arrays unidimensionales",
+        "content": "Los arrays son contenedores de tamaño fijo e indexados para elementos del mismo tipo.\n\n<pre><code>// Declaración + inicialización\nint[] distances = new int[5];           // 5 elementos, todos 0\nint[] distances = {12, 8, 25, 30, 15};  // inicialización inline\nint[] distances = new int[]{12, 8, 25}; // new explícito + valores\n\n// Acceso (indexado desde 0)\ndistances[0];        // primer elemento: 12\ndistances[4];        // último elemento: 15\ndistances.length;    // 5 (¡propiedad, no método!)\ndistances[5];        // ¡ArrayIndexOutOfBoundsException!\n\n// Iteración\nfor (int i = 0; i < distances.length; i++) {\n    System.out.println(distances[i]);  // por índice\n}\nfor (int d : distances) {\n    System.out.println(d);  // for mejorado (sin acceso por índice)\n}</code></pre>\n\n<strong>Datos clave:</strong>\n• Tamaño fijo — no puede crecer tras la creación\n• <code>.length</code> es un campo (sin paréntesis), no un método\n• Los elementos tienen valores por defecto: 0, 0.0, false, null\n• Los arrays son objetos (viven en el heap, se pasan por referencia)"
+      },
+      {
+        "heading": "Arrays multidimensionales",
+        "content": "<pre><code>// Array 2D (array de arrays)\nint[][] grid = new int[3][4];  // 3 filas, 4 columnas\ngrid[0][0] = 1;                // primera fila, primera columna\ngrid[2][3] = 9;                // última fila, última columna\n\n// Inicialización inline\nint[][] matrix = {\n    {1, 2, 3},\n    {4, 5, 6},\n    {7, 8, 9}\n};\n\n// Array irregular (filas de distinta longitud)\nint[][] jagged = new int[3][];\njagged[0] = new int[]{1, 2};\njagged[1] = new int[]{3, 4, 5, 6};\njagged[2] = new int[]{7};\n\n// Iteración\nfor (int row = 0; row < matrix.length; row++) {\n    for (int col = 0; col < matrix[row].length; col++) {\n        System.out.print(matrix[row][col] + \" \");\n    }\n}</code></pre>\n\n<strong>Trampa de entrevista:</strong> Java NO tiene arrays 2D verdaderos. <code>int[][]</code> es un array de arrays — cada \"fila\" es un array independiente que puede tener distinta longitud."
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-arrays"
+  },
+  {
+    "id": "theory-java-basics-loops",
+    "title": "Constructos de bucle — for, while, do-while",
+    "sections": [
+      {
+        "heading": "Comparación de tipos de bucle",
+        "content": "<table>\n<tr><th>Bucle</th><th>Cuándo usar</th><th>Cuándo comprueba la condición</th></tr>\n<tr><td><code>for</code></td><td>Número conocido de iteraciones</td><td>Antes de cada iteración</td></tr>\n<tr><td><code>for-each</code></td><td>Iterar todos los elementos, sin índice</td><td>Implícito</td></tr>\n<tr><td><code>while</code></td><td>Iteraciones desconocidas, puede no ejecutarse</td><td>Antes de cada iteración</td></tr>\n<tr><td><code>do-while</code></td><td>Debe ejecutarse al menos una vez</td><td>Después de cada iteración</td></tr>\n</table>\n\n<pre><code>// for tradicional — cuando necesitas el índice\nfor (int i = 0; i < deliveries.size(); i++) {\n    Delivery d = deliveries.get(i);\n}\n\n// for mejorado — iterar todos, sin índice\nfor (Delivery d : deliveries) {\n    process(d);\n}\n\n// while — iteraciones desconocidas\nwhile (!queue.isEmpty()) {\n    Delivery d = queue.poll();\n    process(d);\n}\n\n// do-while — siempre se ejecuta al menos una vez\ndo {\n    response = callExternalService();\n} while (response.isRetry());</code></pre>"
+      },
+      {
+        "heading": "break y continue",
+        "content": "<pre><code>// break — SALIR del bucle inmediatamente\nfor (Delivery d : deliveries) {\n    if (d.isUrgent()) {\n        processUrgent(d);\n        break;  // parar búsqueda, salir del bucle\n    }\n}\n\n// continue — SALTAR esta iteración, ir a la siguiente\nfor (Delivery d : deliveries) {\n    if (d.isCancelled()) {\n        continue;  // saltar canceladas, procesar siguiente\n    }\n    process(d);  // solo se alcanza para no canceladas\n}\n\n// break etiquetado — salir del bucle externo desde el interno\nexterno:\nfor (Route r : routes) {\n    for (Stop s : r.getStops()) {\n        if (s.isBlocked()) {\n            break externo;  // sale de AMBOS bucles\n        }\n    }\n}</code></pre>\n\n<strong>Consejo de entrevista:</strong> Patrón de \"bucle infinito\" para reintentos:\n<pre><code>while (true) {\n    try { return callService(); }\n    catch (TimeoutException e) {\n        if (++retries >= MAX) throw e;\n    }\n}</code></pre>"
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-loops"
+  },
+  {
+    "id": "theory-java-basics-methods",
+    "title": "Métodos, constructores, modificadores de acceso",
+    "sections": [
+      {
+        "heading": "Métodos — firma, sobrecarga, retorno",
+        "content": "<pre><code>// Firma del método: modificadorAcceso tipoRetorno nombre(parámetros)\npublic Delivery findById(Long id) {\n    return repository.findById(id).orElseThrow();\n}\n\n// void = no retorna nada\npublic void dispatch(Delivery delivery) {\n    delivery.dispatch();\n    eventPublisher.publish(delivery);\n}\n\n// Sobrecarga = mismo nombre, distintos parámetros\npublic List&lt;Delivery&gt; find(DeliveryStatus status) { ... }\npublic List&lt;Delivery&gt; find(DeliveryStatus status, int limit) { ... }\npublic List&lt;Delivery&gt; find(String driverName) { ... }\n// El compilador selecciona según los tipos de argumento en el punto de llamada</code></pre>\n\n<strong>Reglas de sobrecarga:</strong>\n• Mismo nombre de método, lista de parámetros DIFERENTE (tipo, cantidad u orden)\n• Solo el tipo de retorno NO diferencia sobrecargas\n• La resolución es en TIEMPO DE COMPILACIÓN según los tipos de argumento declarados"
+      },
+      {
+        "heading": "Paso por valor — la verdad de Java",
+        "content": "Java es SIEMPRE paso por valor. Pero \"valor\" para referencias significa que se copia la propia referencia.\n\n<pre><code>// Primitivos: copia del valor\nvoid doubleIt(int x) { x = x * 2; }\nint n = 5;\ndoubleIt(n);  // n sigue siendo 5 — el método recibió una copia\n\n// Referencias: copia de la referencia (apunta al mismo objeto)\nvoid rename(Driver d) { d.setName(\"Carlos\"); }\nDriver driver = new Driver(\"Maria\");\nrename(driver);  // ¡driver.getName() ahora es \"Carlos\"!\n// ¿POR QUÉ? Porque d apunta al MISMO objeto\n\n// PERO: reasignar la referencia no tiene efecto fuera\nvoid replace(Driver d) { d = new Driver(\"Pedro\"); }\nDriver driver = new Driver(\"Maria\");\nreplace(driver);  // driver.getName() sigue siendo \"Maria\"\n// ¿POR QUÉ? Solo se reasignó la copia local de la referencia</code></pre>\n\n<strong>Resumen:</strong>\n• Primitivo pasado → original sin cambios (copia independiente)\n• Objeto pasado → modificar A TRAVÉS de la referencia cambia el original\n• Objeto pasado → REASIGNAR la referencia NO cambia el original"
+      },
+      {
+        "heading": "Constructores",
+        "content": "<pre><code>class Delivery {\n    private final String id;\n    private final String route;\n    private DeliveryStatus status;\n\n    // Constructor sin argumentos\n    public Delivery() {\n        this(\"UNKNOWN\", \"DEFAULT\");  // llama a otro constructor\n    }\n\n    // Constructor parametrizado\n    public Delivery(String id, String route) {\n        this.id = id;\n        this.route = route;\n        this.status = DeliveryStatus.PLANNED;\n    }\n\n    // Constructor de copia\n    public Delivery(Delivery other) {\n        this(other.id, other.route);\n    }\n}</code></pre>\n\n<strong>Reglas:</strong>\n• Sin tipo de retorno (ni siquiera void)\n• Mismo nombre que la clase\n• <code>this()</code> llama a otro constructor — debe ser la PRIMERA sentencia\n• <code>super()</code> llama al constructor del padre — debe ser la PRIMERA sentencia\n• Si NO escribes constructor → Java proporciona uno por defecto sin argumentos\n• Si escribes CUALQUIER constructor → desaparece el por defecto"
+      },
+      {
+        "heading": "Modificadores de acceso",
+        "content": "<table>\n<tr><th>Modificador</th><th>Clase</th><th>Paquete</th><th>Subclase (otro pkg)</th><th>Mundo</th></tr>\n<tr><td><code>private</code></td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>\n<tr><td>(default)</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td></tr>\n<tr><td><code>protected</code></td><td>✓</td><td>✓</td><td>✓</td><td>✗</td></tr>\n<tr><td><code>public</code></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>\n</table>\n\n<strong>Mejor práctica (lo más restrictivo posible):</strong>\n• Campos: <code>private</code> (siempre)\n• Métodos: <code>public</code> para API, <code>private</code> para interno, <code>protected</code> raramente\n• Clases: <code>public</code> si se usa fuera del paquete\n• Constructores: <code>private</code> para singletons/fábricas\n\n<strong>Palabra clave static:</strong>\n<pre><code>class DeliveryUtils {\n    private static int count = 0;       // compartido entre TODAS las instancias\n    public static final int MAX = 100;  // constante\n\n    public static Delivery create() {   // llamado sin instancia\n        count++;\n        return new Delivery();\n    }\n}\n// Uso: DeliveryUtils.create(); — no se necesita instancia</code></pre>"
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-methods"
+  },
+  {
+    "id": "theory-java-basics-exceptions",
+    "title": "Manejo de excepciones — try, catch, throw, personalizadas",
+    "sections": [
+      {
+        "heading": "Jerarquía de excepciones",
+        "content": "<pre><code>Throwable\n├── Error (NO capturar — problemas de JVM)\n│   ├── OutOfMemoryError\n│   ├── StackOverflowError\n│   └── VirtualMachineError\n└── Exception\n    ├── RuntimeException (NO CHECKED — no requieren manejo)\n    │   ├── NullPointerException\n    │   ├── ArrayIndexOutOfBoundsException\n    │   ├── ClassCastException\n    │   ├── IllegalArgumentException\n    │   ├── IllegalStateException\n    │   └── ArithmeticException\n    └── Checked Exceptions (DEBEN manejarse con try/catch o throws)\n        ├── IOException\n        ├── SQLException\n        ├── FileNotFoundException\n        └── ClassNotFoundException</code></pre>\n\n<strong>Checked:</strong> el compilador obliga a manejar (try/catch o declarar throws). Representan situaciones recuperables.\n<strong>Unchecked:</strong> subclases de RuntimeException. Representan errores de programación. No hay manejo obligatorio.\n<strong>Errors:</strong> problemas graves de JVM. Nunca los captures en código normal."
+      },
+      {
+        "heading": "try / catch / finally",
+        "content": "<pre><code>try {\n    Delivery d = repository.findById(id);\n    d.dispatch();\n} catch (NotFoundException e) {\n    // Manejar excepción específica primero (más específica)\n    logger.warn(\"Entrega no encontrada: \" + id);\n    throw new BusinessException(\"No se puede despachar: no encontrada\", e);\n} catch (IllegalStateException e) {\n    // Manejar otro tipo específico\n    logger.warn(\"Transición de estado inválida\", e);\n} catch (Exception e) {\n    // Captura todo (más general AL FINAL)\n    logger.error(\"Error inesperado\", e);\n    throw e;  // relanzar si no puedes manejar\n} finally {\n    // SIEMPRE se ejecuta (limpieza)\n    // Incluso si catch relanza, finally se ejecuta\n    metrics.recordAttempt();\n}</code></pre>\n\n<strong>Reglas:</strong>\n• Bloques catch: más específico PRIMERO, más general AL FINAL\n• <code>finally</code>: siempre se ejecuta (excepto System.exit())\n• Multi-catch (Java 7+): <code>catch (IOException | SQLException e)</code>\n• Try-with-resources (Java 7+): cierra automáticamente recursos AutoCloseable"
+      },
+      {
+        "heading": "Lanzar y declarar excepciones",
+        "content": "<pre><code>// Lanzar una excepción\npublic Delivery findById(Long id) {\n    return repository.findById(id)\n        .orElseThrow(() -> new DeliveryNotFoundException(\"ID: \" + id));\n}\n\n// Declarar excepciones checked (el llamante debe manejar)\npublic void loadFromFile(String path) throws IOException {\n    Files.readAllLines(Path.of(path));  // puede lanzar IOException\n}\n\n// Excepción personalizada (unchecked — preferida para lógica de negocio)\npublic class DeliveryNotFoundException extends RuntimeException {\n    private final Long deliveryId;\n\n    public DeliveryNotFoundException(Long id) {\n        super(\"Entrega no encontrada: \" + id);\n        this.deliveryId = id;\n    }\n\n    public Long getDeliveryId() { return deliveryId; }\n}</code></pre>\n\n<strong>Consejo de entrevista:</strong> \"¿Cuándo usas checked vs unchecked?\"\n• Checked: el llamante PUEDE y DEBE recuperarse (reintentar, ruta alternativa). Ejemplo: IOException.\n• Unchecked: error de programación o estado de negocio irrecuperable. Ejemplo: NotFoundException, InvalidStateException.\n• Tendencia moderna de Java: preferir unchecked para excepciones de negocio."
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-exceptions"
+  },
+  {
+    "id": "theory-java-basics-strings",
+    "title": "String, StringBuilder, Date/Time, Lambda",
+    "sections": [
+      {
+        "heading": "Strings — Inmutables",
+        "content": "Los Strings en Java son <strong>inmutables</strong> — cada \"modificación\" crea un nuevo objeto String.\n\n<pre><code>String route = \"Almacén\";\nroute.concat(\" → Tienda\");   // ¡retorna NUEVO string, el original no cambia!\nroute = route.concat(\" → Tienda\");  // hay que reasignar\n\n// String Pool: los literales están internados (compartidos)\nString a = \"REWE\";   // pool\nString b = \"REWE\";   // mismo objeto del pool\na == b;  // true (misma referencia — ¡pero no confíes en esto!)\n\n// new String() ignora el pool\nString c = new String(\"REWE\");\na == c;   // false (¡objetos distintos!)\na.equals(c);  // true (mismo contenido — ¡usa siempre esto!)\n\n// Métodos comunes:\n\"Hola\".length();            // 5\n\"Hola\".charAt(0);           // 'H'\n\"Hola\".substring(1, 3);     // \"ol\" (inclusivo, exclusivo)\n\"Hola\".toLowerCase();       // \"hola\"\n\"Hola Mundo\".split(\" \");    // [\"Hola\", \"Mundo\"]\n\"  espacios  \".trim();       // \"espacios\"\n\"Hola\".contains(\"ol\");      // true\n\"Hola\".startsWith(\"Ho\");    // true\n\"Hola\".replace(\"l\", \"L\");   // \"HoLa\"</code></pre>"
+      },
+      {
+        "heading": "StringBuilder — construcción mutable de strings",
+        "content": "Usa StringBuilder cuando concatenes en un bucle (evita crear N objetos String):\n\n<pre><code>StringBuilder sb = new StringBuilder();\nfor (Stop stop : route.getStops()) {\n    sb.append(stop.getName()).append(\" → \");\n}\nString result = sb.toString();\n\n// Métodos:\nsb.append(\"texto\");      // añadir al final\nsb.insert(0, \"inicio\");  // insertar en posición\nsb.delete(0, 5);         // eliminar rango\nsb.reverse();            // invertir contenido\nsb.length();             // longitud actual\nsb.toString();           // convertir a String</code></pre>\n\n<strong>Cuándo usar:</strong>\n• Concatenación de strings en bucles → StringBuilder (O(n) vs O(n²))\n• Concatenación simple en una línea → <code>\"a\" + \"b\"</code> está bien (el compilador optimiza)\n• Se necesita seguridad de hilos → StringBuffer (sincronizado, más lento — raramente necesario)"
+      },
+      {
+        "heading": "API de fecha y hora (java.time)",
+        "content": "API de fecha/hora de Java 8+ — inmutable, clara, sin más líos de Calendar.\n\n<pre><code>// Fecha/hora actual\nLocalDate today = LocalDate.now();           // 2026-07-19\nLocalTime now = LocalTime.now();             // 10:30:00\nLocalDateTime dateTime = LocalDateTime.now(); // 2026-07-19T10:30:00\n\n// Crear fechas específicas\nLocalDate delivery = LocalDate.of(2026, 7, 25);\nLocalTime departure = LocalTime.of(8, 30);\n\n// Operaciones (INMUTABLES — ¡retornan nuevo objeto!)\nLocalDate nextWeek = today.plusDays(7);\nLocalDate lastMonth = today.minusMonths(1);\n// today NO cambia — hay que asignar el resultado\n\n// Formateo\nDateTimeFormatter fmt = DateTimeFormatter.ofPattern(\"dd/MM/yyyy HH:mm\");\nString formatted = dateTime.format(fmt);  // \"19/07/2026 10:30\"\nLocalDateTime parsed = LocalDateTime.parse(\"19/07/2026 10:30\", fmt);\n\n// Periodo (entre fechas)\nPeriod period = Period.between(startDate, endDate);\nperiod.getDays();   // componente días\nperiod.getMonths(); // componente meses\n\n// Comparación\ntoday.isBefore(delivery);  // true\ntoday.isAfter(delivery);   // false</code></pre>\n\n<strong>Punto clave:</strong> Todas las clases de java.time son INMUTABLES. <code>plusDays()</code> retorna un NUEVO objeto. Misma trampa que String — hay que asignar el resultado."
+      },
+      {
+        "heading": "Expresiones lambda y Predicate",
+        "content": "Una lambda es una función anónima — una forma concisa de representar comportamiento.\n\n<pre><code>// Sintaxis lambda:\n(parámetros) -> expresión          // expresión única\n(parámetros) -> { sentencias; }    // bloque con return\n\n// Ejemplos:\nPredicate&lt;Delivery&gt; isLate = d -> d.isLate();\nFunction&lt;Delivery, String&gt; getName = d -> d.getDriverName();\nConsumer&lt;Delivery&gt; print = d -> System.out.println(d);\nSupplier&lt;Delivery&gt; create = () -> new Delivery();\nComparator&lt;Delivery&gt; byDist = (a, b) -> a.getDistance() - b.getDistance();\n\n// Uso con colecciones:\ndeliveries.removeIf(d -> d.isCancelled());        // Predicate\ndeliveries.forEach(d -> process(d));               // Consumer\ndeliveries.sort((a, b) -> a.compareTo(b));         // Comparator\n\n// Referencias a métodos (abreviatura):\ndeliveries.forEach(System.out::println);           // equivalente a d -> System.out.println(d)\ndeliveries.sort(Comparator.comparing(Delivery::getDistance));  // comparar por campo</code></pre>\n\n<strong>Predicate:</strong> Una función que recibe un argumento y retorna boolean.\n<pre><code>Predicate&lt;Delivery&gt; isUrgent = d -> d.getPriority() > 8;\nPredicate&lt;Delivery&gt; isLocal = d -> d.getDistance() < 50;\n\n// Combinar predicates:\nPredicate&lt;Delivery&gt; urgentLocal = isUrgent.and(isLocal);\nPredicate&lt;Delivery&gt; notUrgent = isUrgent.negate();\n\n// Uso con streams:\nList&lt;Delivery&gt; filtered = deliveries.stream()\n    .filter(isUrgent.and(isLocal))\n    .collect(Collectors.toList());</code></pre>"
+      }
+    ],
+    "topic": "collections",
+    "subtopic": "java-api"
+  }
+]

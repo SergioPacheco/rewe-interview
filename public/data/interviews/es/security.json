@@ -1,0 +1,192 @@
+[
+  {
+    "id": "interview-security-1",
+    "topic": "security",
+    "subtopic": "security-web",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo ocurre la inyección SQL en una aplicación basada en ORM y cómo se previene?",
+    "shortAnswer": "La inyección ocurre cuando datos no confiables pasan a formar parte de la sintaxis de una consulta. Un ORM no elimina el riesgo: concatenar entradas en JPQL/HQL es vulnerable igual que concatenarlas en SQL nativo. Vinculo los valores mediante parámetros con nombre o posicionales, uso listas de permitidos para cualquier identificador o dirección de ordenamiento que no pueda parametrizarse, mantengo mínimos los privilegios de base de datos y utilizo la validación solo como defensa adicional.",
+    "detailedAnswer": "El límite está entre sintaxis y datos. Esto no es seguro aunque sea JPQL:\n\n```java\nvar jpql = \"select u from User u where u.name = '\" + input + \"'\";\n```\n\nEsto mantiene el valor separado de la sintaxis de la consulta:\n\n```java\nem.createQuery(\"select u from User u where u.name = :name\", User.class)\n  .setParameter(\"name\", input);\n```\n\nLa misma regla se aplica a los prepared statements de JDBC y a las consultas nativas. Los parámetros representan valores, no identificadores como el nombre de una columna o `ASC`/`DESC`; para esas partes dinámicas, se debe mapear una pequeña lista de permitidos de valores de la API a fragmentos de consulta conocidos. Las API de Criteria y los métodos de repositorio generados son más seguros cuando se usan normalmente, pero un ORM no puede proteger una consulta concatenada manualmente.\n\nLa validación, las cuentas de base de datos con privilegio mínimo, el monitoreo y las respuestas de error seguras reducen el impacto, pero no reemplazan el uso de parámetros vinculados.",
+    "keyPoints": [
+      "Mantener los valores no confiables separados de la sintaxis de la consulta",
+      "El JPQL/HQL concatenado también puede ser inyectable",
+      "Usar parámetros vinculados tanto en JPQL como en SQL nativo",
+      "Usar listas de permitidos para identificadores y cláusulas de ordenamiento que no puedan vincularse como valores",
+      "La validación y el privilegio mínimo son controles adicionales"
+    ],
+    "redFlags": [
+      "Afirmar que el ORM hace segura cualquier consulta",
+      "Usar la validación de entradas como defensa principal contra inyección",
+      "Concatenar valores en JPQL, HQL o SQL nativo",
+      "Devolver detalles de errores de base de datos a los clientes"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo se implementa de forma segura una columna de ordenamiento seleccionable por el usuario?",
+        "hint": "Mapear los nombres aceptados por la API a un conjunto fijo de atributos de entidad conocidos o fragmentos SQL; no anexar la entrada cruda."
+      },
+      {
+        "question": "¿Los procedimientos almacenados son automáticamente seguros frente a la inyección?",
+        "hint": "Solo si sus entradas están vinculadas y no construyen SQL dinámico concatenando internamente valores no confiables."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Parametrización de consultas en SGN3",
+      "description": "Las consultas del repositorio usan parámetros con nombre para los valores, incluida la construcción dinámica de cláusulas WHERE que añade marcadores de posición en lugar de valores crudos. La construcción de consultas se revisa en el límite de persistencia."
+    }
+  },
+  {
+    "id": "interview-security-2",
+    "topic": "security",
+    "subtopic": "security-auth",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cuál es la diferencia entre autenticación y autorización, y dónde debe aplicarse cada una?",
+    "shortAnswer": "La autenticación establece una identidad; la autorización decide si esa identidad puede realizar una acción específica sobre un recurso específico. Un inicio de sesión, una sesión o un token válido no equivalen por sí solos a un permiso. Autentico en el límite del sistema y luego aplico la autorización en el servidor, en los límites de la solicitud y del recurso de negocio, incluyendo comprobaciones de propiedad o de inquilino (tenant), no solo roles y nunca solo visibilidad en la interfaz.",
+    "detailedAnswer": "**Autenticación (AuthN)** verifica u obtiene una identidad mediante mecanismos como el inicio de sesión con sesión, un flujo OIDC, un certificado de cliente o un token de acceso portador (bearer). El resultado es un principal de seguridad con atributos confiables.\n\n**Autorización (AuthZ)** evalúa una acción y un recurso según una política: comprobaciones de rol/autoridad, propiedad del objeto, pertenencia a un inquilino, atributos o permisos explícitos. RBAC y las comprobaciones por permisos/atributos pueden combinarse; ninguno es universalmente mejor.\n\nLa aplicación debe hacerse en el servidor y cerca del recurso protegido. Las reglas a nivel de solicitud rechazan categorías amplias tempranamente, mientras que las comprobaciones a nivel de servicio/método o de dominio protegen operaciones alcanzables por varios puntos de entrada. El cliente puede ocultar acciones no disponibles por usabilidad, pero eso no es un control de seguridad.\n\nUna buena respuesta también distingue `401 Unauthorized` (la autenticación está ausente o es inválida) de `403 Forbidden` (el llamante autenticado no tiene permiso), reconociendo que una API puede evitar intencionalmente revelar la existencia de un recurso.",
+    "keyPoints": [
+      "La autenticación establece la identidad; la autorización evalúa el permiso",
+      "Un token válido no implica acceso a todos los objetos",
+      "Aplicar la autorización en el servidor e incluir el alcance de objeto/inquilino",
+      "Las comprobaciones a nivel de solicitud y de método/dominio sirven a límites diferentes",
+      "La visibilidad en el cliente es usabilidad, no protección"
+    ],
+    "redFlags": [
+      "Tratar la autenticación como autorización suficiente",
+      "Comprobar solo si el usuario tiene un rol genérico ignorando la propiedad del recurso",
+      "Confiar en botones o rutas ocultas como protección",
+      "Confiar en identificadores de inquilino o usuario proporcionados por el cliente sin comprobaciones de política"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué es la autorización rota a nivel de objeto?",
+        "hint": "La API verifica que el llamante haya iniciado sesión pero no que pueda acceder al ID de objeto específico solicitado."
+      },
+      {
+        "question": "¿Cuándo podría una API devolver 404 en lugar de 403?",
+        "hint": "Para evitar revelar que existe un recurso sensible, siempre que el comportamiento sea consistente y esté documentado."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Autorización con LDAP y Apache Shiro en SGN3",
+      "description": "LDAP establece la identidad del usuario y Apache Shiro aplica reglas granulares en la capa de negocio. La visibilidad de la interfaz refleja los permisos por usabilidad, mientras que las comprobaciones del servidor siguen siendo el límite de seguridad."
+    }
+  },
+  {
+    "id": "interview-security-3",
+    "topic": "security",
+    "subtopic": "security-data",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo proteges los secretos y los datos personales a lo largo de su ciclo de vida?",
+    "shortAnswer": "Trato los secretos y los datos personales como activos distintos con un ciclo de vida común: minimizar, clasificar, restringir, cifrar cuando corresponda, observar el acceso, rotar o eliminar, y probar la recuperación. Los secretos deben residir en un almacén de secretos gestionado con identidades acotadas y rotación, no en el control de versiones ni en las capas de imagen. Para los datos personales, la finalidad, la retención, el acceso a nivel de campo y el registro seguro importan tanto como el cifrado.",
+    "detailedAnswer": "Para los **secretos**:\n- Mantenerlos fuera del código fuente, los argumentos de build, las imágenes y los registros ordinarios.\n- Preferir un gestor de secretos o una integración de plataforma con identidad de carga de trabajo, política de acceso, auditoría y rotación.\n- Los valores de un Secret de Kubernetes están codificados en base64, no cifrados por ello; hay que configurar el cifrado en reposo del clúster y RBAC.\n- Planificar cómo recargan las aplicaciones los valores rotados. Las variables de entorno normalmente requieren reiniciar el proceso; los archivos montados y los agentes de secretos tienen comportamientos de actualización distintos.\n- Si se ha subido un secreto por error, rotarlo o revocarlo de inmediato y auditar su uso. Limpiar el historial reduce la exposición futura, pero no vuelve seguro el valor antiguo.\n\nPara los **datos personales o regulados**:\n- Recopilar solo lo que tenga una finalidad y un período de retención definidos.\n- Proteger los datos en tránsito y en reposo según el modelo de amenazas y la normativa.\n- Aplicar privilegio mínimo, autorización a nivel de objeto/campo y acceso administrativo auditado.\n- Tokenizar o enmascarar cuando no se necesiten los valores completos; mantener los valores sensibles fuera de registros, métricas y trazas.\n- Implementar procedimientos de eliminación, corrección y retención de copias de seguridad, en lugar de prometer un borrado inmediato en todas partes.\n\nEl cifrado es importante, pero la gestión de claves, la política de acceso y los controles de ciclo de vida determinan su eficacia real.",
+    "keyPoints": [
+      "La codificación en base64 no es cifrado",
+      "La rotación incluye la recarga en la aplicación y el comportamiento de revocación",
+      "La minimización y la retención reducen la cantidad de datos en riesgo",
+      "Los registros, trazas, copias de seguridad y análisis forman parte del ciclo de vida de los datos",
+      "El cifrado necesita una gestión sólida de identidad, acceso y claves"
+    ],
+    "redFlags": [
+      "Tratar las variables de entorno como una estrategia completa de gestión de secretos",
+      "Suponer que los Secrets de Kubernetes están cifrados por defecto",
+      "Registrar tokens o identificadores personales por conveniencia",
+      "Eliminar un secreto filtrado de Git sin rotarlo"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuál es la primera acción tras descubrir una credencial subida por error?",
+        "hint": "Revocarla o rotarla y asumir que quedó expuesta; la limpieza del historial del repositorio viene después de la contención."
+      },
+      {
+        "question": "¿Cómo verificarías que una política de retención realmente funciona?",
+        "hint": "Probar la eliminación en los datos primarios, los almacenes derivados, los índices de búsqueda, las exportaciones y la expiración documentada de las copias de seguridad."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Controles de secretos y datos personales en SGN3",
+      "description": "Las credenciales de despliegue se externalizan en OKD, el acceso a los datos de estudiantes se restringe mediante reglas de autorización en el servidor, y el registro de la aplicación evita los identificadores personales completos."
+    }
+  },
+  {
+    "id": "interview-security-4",
+    "topic": "security",
+    "subtopic": "security-spring",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo estructurarías la autenticación y la autorización en una aplicación con Spring Security?",
+    "shortAnswer": "Configuro uno o varios beans `SecurityFilterChain` para la autenticación de solicitudes, las protecciones frente a exploits y las reglas de URL de grano grueso, con una regla explícita de denegación por defecto. Luego uso autorización a nivel de método o de dominio para las reglas ligadas al recurso real. Mantengo los filtros personalizados poco frecuentes y con un orden deliberado, y pruebo los casos no autenticado, prohibido y permitido en lugar de suponer que la configuración está activa.",
+    "detailedAnswer": "El soporte de servlets de Spring Security funciona a través de `FilterChainProxy`, que selecciona un `SecurityFilterChain`. Los filtros establecen el contexto de seguridad, aplican protecciones, autentican y autorizan en un orden definido.\n\nUn diseño práctico:\n1. Definir qué solicitudes protege cada cadena y usar `authorizeHttpRequests` con reglas específicas antes de `anyRequest`.\n2. Elegir el mecanismo de autenticación adecuado: inicio de sesión con sesión/OIDC para una aplicación de navegador, o soporte de servidor de recursos OAuth 2.0 para tokens de acceso portadores.\n3. Usar `@EnableMethodSecurity` y `@PreAuthorize`, o un servicio de autorización de dominio, cuando la política depende de los argumentos del método, la propiedad u datos de inquilino.\n4. Manejar las respuestas de autenticación y de acceso denegado de forma consistente, evitando filtrar detalles sensibles.\n5. Mantener CSRF habilitado para solicitudes de navegador autenticadas mediante credenciales ambientales como las cookies. Una API de tokens portadores sin estado tiene un modelo de amenazas distinto; deshabilitar CSRF debe ser una decisión razonada, no un fragmento copiado.\n6. Probar la cadena de filtros efectiva y la política tanto con usuarios anónimos como con principales con distintas autoridades.\n\nLas reglas de URL por sí solas pueden pasar por alto rutas de llamada alternativas; las reglas de método por sí solas pueden realizar trabajo innecesario antes de rechazar una solicitud. Las capas se complementan.",
+    "keyPoints": [
+      "SecurityFilterChain controla la seguridad a nivel de solicitud",
+      "Usar denegación por defecto y un orden deliberado de los matchers",
+      "La autorización a nivel de método/dominio maneja reglas que dependen del recurso",
+      "Las decisiones sobre CSRF dependen de cómo se envían las credenciales",
+      "La configuración de seguridad necesita pruebas negativas además de positivas"
+    ],
+    "redFlags": [
+      "Deshabilitar CSRF solo porque la aplicación expone JSON",
+      "Terminar las reglas con un matcher permitAll demasiado amplio",
+      "Añadir un filtro personalizado sin entender su posición en la cadena",
+      "Probar solo solicitudes autenticadas exitosas"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué el orden de los matchers puede cambiar el comportamiento de autorización?",
+        "hint": "La autorización de solicitudes aplica la primera regla que coincide, por lo que una regla amplia colocada antes puede eclipsar una regla específica."
+      },
+      {
+        "question": "¿Cuándo es útil la seguridad a nivel de método además de las reglas de URL?",
+        "hint": "Cuando la decisión depende de los argumentos del método, la propiedad del objeto o un servicio al que se accede por más de un transporte."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferencia desde Apache Shiro y Jakarta EE",
+      "description": "La experiencia en producción con autenticación basada en filtros y comprobaciones de permisos en la capa de negocio se traslada al modelo de autorización de solicitud y método de Spring Security; el DSL específico de Spring y el comportamiento de la cadena de filtros requieren validación explícita."
+    }
+  },
+  {
+    "id": "interview-security-5",
+    "topic": "security",
+    "subtopic": "security-api",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo asegurarías una API REST llamada tanto por usuarios como por otros servicios?",
+    "clarifyingQuestions": [
+      "¿Están en alcance las cookies de navegador, los tokens portadores, mTLS o más de un tipo de credencial?",
+      "¿Qué objetos están delimitados por inquilino o por propietario?",
+      "¿Qué requisitos de disponibilidad, auditoría y revocación de tokens aplican?"
+    ],
+    "shortAnswer": "Empiezo por el llamante y el límite de confianza. Uso TLS, tokens de acceso OAuth de corta duración o identidades de carga de trabajo, y los valido según su formato y el contrato del servidor de autorización. Luego aplico autorización en el servidor para cada operación y objeto. Los límites de entrada, los controles de abuso, la higiene de la telemetría, la rotación, la revocación, la auditoría y el comportamiento ante fallos importan tanto como la firma de un JWT o una llamada de introspección de token.",
+    "detailedAnswer": "Un diseño de API de extremo a extremo cubre varios controles independientes:\n\n- **Transporte e identidad**: TLS en todas partes. Las llamadas de usuario suelen usar tokens de acceso OAuth 2.0 tras un inicio de sesión OIDC; las llamadas de servicio pueden usar credenciales de cliente, identidad de carga de trabajo o mTLS según la plataforma. OIDC no implica que todo token de acceso sea un JWT.\n- **Validación de tokens**: para un JWT, restringir los algoritmos confiables y verificar su firma, expiración, emisor y audiencia, además de `nbf` cuando esté presente o lo exija la política. Para un token opaco, usar la introspección del servidor de autorización u otro mecanismo de validación documentado, y verificar que esté activo y destinado a este recurso. Un token decodificado no es una identidad autenticada. Planificar la rotación de claves, el almacenamiento en caché y el comportamiento ante fallos del servidor de autorización.\n- **Autorización**: mapear los scopes/autoridades a las operaciones y aun así verificar la propiedad, el inquilino y los campos sensibles del objeto solicitado. No confiar en un ID de usuario o inquilino solo porque aparezca en la URL o en el token.\n- **Seguridad de la solicitud**: límites de esquema y tamaño, parsers seguros, persistencia parametrizada, tiempos de espera y uso acotado de recursos. Los límites de tasa y las cuotas deben reflejar los riesgos de abuso y disponibilidad, no un número universal.\n- **Operaciones**: eventos de seguridad estructurados sin filtrar tokens/datos personales, IDs de correlación, monitoreo de anomalías y una ruta documentada de revocación/incidentes.\n\nLos fallos de autenticación suelen devolver 401 con el desafío apropiado; una solicitud autenticada pero no permitida suele devolver 403. Un comportamiento consistente puede ocultar intencionalmente si existe un objeto sensible.",
+    "keyPoints": [
+      "Validar los JWT y los tokens opacos con el mecanismo que define su emisor",
+      "Autorizar la acción y el objeto específicos, no solo la ruta",
+      "Usar identidades separadas y privilegio mínimo para los llamantes de servicio",
+      "Los límites de tasa, los límites de entrada y los tiempos de espera protegen la disponibilidad",
+      "La rotación, la revocación, la auditoría y la higiene de la telemetría forman parte del diseño"
+    ],
+    "redFlags": [
+      "Confiar en un JWT decodificado o en un token opaco que no fue validado",
+      "Comprobar los scopes pero no la propiedad del objeto o los límites de inquilino",
+      "Usar credenciales de servicio compartidas de larga duración entre entornos",
+      "Registrar tokens portadores para depurar la autenticación"
+    ],
+    "followUps": [
+      {
+        "question": "¿En qué difiere la validación entre un JWT y un token de acceso opaco?",
+        "hint": "Un JWT normalmente se verifica localmente contra claves y claims confiables; un token opaco suele comprobarse mediante introspección del servidor de autorización u otro mecanismo definido por el emisor."
+      },
+      {
+        "question": "¿Cómo probarías la autorización rota a nivel de objeto?",
+        "hint": "Autenticarse como un principal e intentar leer o modificar los IDs de objeto de otro principal o inquilino en todas las operaciones relevantes."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferencia desde la autorización de servicios en SGN3",
+      "description": "La experiencia en producción aplicando permisos granulares en la capa de negocio e integrando la autenticación con directorio proporciona la base de autorización; los detalles del servidor de recursos OAuth 2.0 y de la identidad de carga de trabajo son extensiones específicas de la tecnología."
+    }
+  }
+]

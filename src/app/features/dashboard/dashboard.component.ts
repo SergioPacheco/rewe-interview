@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { RouterLink } from '@angular/router';
 import { ProgressService } from '../../core/services/progress.service';
 import { TopicService } from '../../core/services/topic.service';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { Topic } from '../../models';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, TranslatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'

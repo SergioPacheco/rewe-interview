@@ -1,0 +1,98 @@
+[
+  {
+    "id": "theory-sd-events",
+    "topic": "system-design",
+    "subtopic": "sd-events",
+    "title": "Event-Driven Architecture",
+    "sections": [
+      {
+        "heading": "When events help",
+        "content": "Events decouple producers from consumers and allow independent processing. A delivery-status change can feed notifications, analytics, ETA calculation and billing without the delivery service calling every consumer directly."
+      },
+      {
+        "heading": "Event design",
+        "content": "Publish facts in past tense, such as DeliveryDispatched or StopCompleted. Include event id, aggregate id, event type, version, occurredAt and correlation id."
+      },
+      {
+        "heading": "Reliability",
+        "content": "Use the transactional outbox pattern to persist the business change and event atomically. Consumers must be idempotent because at-least-once delivery can produce duplicates."
+      },
+      {
+        "heading": "Trade-offs",
+        "content": "Event-driven systems improve scalability and decoupling but add eventual consistency, operational complexity and harder debugging. Use synchronous calls where an immediate response is truly required."
+      }
+    ]
+  },
+  {
+    "id": "theory-sd-data",
+    "topic": "system-design",
+    "subtopic": "sd-data",
+    "title": "Data & Consistency",
+    "sections": [
+      {
+        "heading": "Source of truth",
+        "content": "Each business capability should own its authoritative data. Other services consume APIs or events instead of reading another service's tables directly."
+      },
+      {
+        "heading": "Consistency choices",
+        "content": "Strong consistency is appropriate inside a local transaction. Across services, prefer eventual consistency with compensation, reconciliation and observable processing state."
+      },
+      {
+        "heading": "Concurrency",
+        "content": "Use optimistic locking for competing updates to routes or deliveries. Add idempotency keys for retried commands and unique constraints as the final protection against duplicates."
+      },
+      {
+        "heading": "Read models",
+        "content": "For dashboards and search, build read-optimized projections. A materialized view or event-fed read model avoids complex cross-domain joins on the transactional database."
+      }
+    ]
+  },
+  {
+    "id": "theory-sd-scaling",
+    "topic": "system-design",
+    "subtopic": "sd-scaling",
+    "title": "Scaling & Performance",
+    "sections": [
+      {
+        "heading": "Start with measurements",
+        "content": "Define expected traffic, data volume, latency targets and peak patterns. Logistics workloads often have strong morning and dispatch-time peaks."
+      },
+      {
+        "heading": "Horizontal scaling",
+        "content": "Keep application instances stateless so they can scale horizontally. Store shared state in databases, caches or brokers and use a load balancer or Kubernetes Service."
+      },
+      {
+        "heading": "Database scaling",
+        "content": "Use proper indexes, bounded pagination, connection-pool sizing, batching and read replicas where appropriate. Partition very large event or tracking tables by time or business key."
+      },
+      {
+        "heading": "Caching",
+        "content": "Cache data that is expensive to calculate and safe to be slightly stale. Define TTL, invalidation and fallback behavior. Never use caching to hide an unbounded query."
+      }
+    ]
+  },
+  {
+    "id": "theory-sd-ops",
+    "topic": "system-design",
+    "subtopic": "sd-ops",
+    "title": "Deployment & Observability",
+    "sections": [
+      {
+        "heading": "Deployment",
+        "content": "Use immutable images, automated pipelines, rolling or canary deployment, health probes and a tested rollback strategy."
+      },
+      {
+        "heading": "Observability",
+        "content": "Collect structured logs, metrics and distributed traces. Propagate correlation ids across HTTP and Kafka so one delivery flow can be followed end to end."
+      },
+      {
+        "heading": "Critical metrics",
+        "content": "Monitor latency percentiles, error rate, throughput, queue lag, consumer failures, database pool usage, JVM memory, GC pauses and pod restarts."
+      },
+      {
+        "heading": "Operational readiness",
+        "content": "Define SLOs, alerts, runbooks and ownership. A system is not production-ready merely because it passes functional tests."
+      }
+    ]
+  }
+]

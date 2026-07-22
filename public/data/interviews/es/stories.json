@@ -1,0 +1,332 @@
+[
+  {
+    "id": "interview-stories-1",
+    "topic": "stories",
+    "subtopic": "story-performance",
+    "difficulty": "INTERMEDIATE",
+    "question": "Háblame de una mejora de rendimiento con un resultado operativo medible.",
+    "shortAnswer": "Una consulta de matriculaciones en producción sobre 26.705 registros tardaba unos 16 minutos. Glowroot mostraba unas 48.000 consultas SQL. Rediseñé el recuento y la obtención de resultados, añadí paginación determinista, proyecciones DTO y consultas específicas para relaciones. La petición pasó a unas diez consultas y alrededor de dos segundos sin perder información.",
+    "detailedAnswer": "Situation: a high-volume enrollment listing had become too slow for practical use. The period contained 26,705 enrollment records; this is a data-volume figure, not evidence of 26,705 concurrent users.\n\nTask: reduce response time while preserving the listing's business behavior.\n\nAction: I used Glowroot to trace the request and correlate latency with database calls. The trace showed approximately 48,000 queries, including repeated relationship access and unnecessary work in the count path. I separated the count query, paginated with a deterministic order, projected only the fields the screen required and changed the remaining relationship access to bounded queries. I compared returned results and measured the same path on representative data.\n\nResult: response time changed from about 16 minutes to around two seconds and query count from roughly 48,000 to about ten. The result is valuable because it restored an operational workflow and because each number has a measurement path.\n\nUse exact figures in the interview only if the underlying trace or test evidence can be explained.",
+    "keyPoints": [
+      "26,705 is record volume for the period, not concurrency",
+      "About 16 minutes and 48,000 queries are the measured baseline",
+      "Diagnosis preceded optimization",
+      "The fix reduced data access rather than hiding it with capacity",
+      "Business behavior and representative results were checked"
+    ],
+    "redFlags": [
+      "Calls the records simultaneous requests",
+      "Uses 48 seconds as a conflicting baseline",
+      "Cannot explain where either measurement came from",
+      "Focuses on SQL techniques but not the user impact"
+    ],
+    "followUps": [
+      {
+        "question": "How did you confirm that the optimized result was functionally equivalent?"
+      },
+      {
+        "question": "Which change contributed most to the improvement?"
+      },
+      {
+        "question": "What would make this query regress again?"
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Enrollment listing optimization",
+      "description": "Reduced a measured production request from about 16 minutes and 48,000 queries to around two seconds and roughly ten queries."
+    }
+  },
+  {
+    "id": "interview-stories-2",
+    "topic": "stories",
+    "subtopic": "story-n1",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo demostraste que el acceso repetido del ORM, y no una única SQL lenta, era el principal cuello de botella?",
+    "shortAnswer": "Correlacioné la traza completa con el número de consultas, los patrones SQL repetidos y el acceso a relaciones. No era un índice ausente, sino miles de consultas similares. Cambié el patrón de acceso y comparé el número de consultas, el tiempo total de base de datos y los resultados.",
+    "detailedAnswer": "An N+1 diagnosis needs evidence at both application and database levels. In the trace, I look for the same SQL shape repeated with different identifiers, call sites that trigger lazy relationship access and time accumulated across many individually fast queries. I compare that with the repository method and the object graph consumed by the screen.\n\nA large join is not automatically the answer. Fetching multiple collections together can create a cartesian expansion, move too much data and make pagination incorrect. For a listing, a projection plus bounded secondary queries or batch fetching can be safer. The count query should usually answer only the count question rather than reproduce every join from the data query.\n\nValidation includes query count, total database time, row volume, stable ordering and result equivalence. I also watch memory and serialization because solving N+1 by loading a huge graph can simply move the bottleneck.\n\nThis explanation is the technical deep dive behind the same performance case; it should not be presented as a second unrelated achievement.",
+    "keyPoints": [
+      "Identify repeated query shapes and their call sites",
+      "Distinguish cumulative database work from one slow statement",
+      "Avoid replacing N+1 with a cartesian product",
+      "Keep count and data-query responsibilities separate",
+      "Validate latency, query count, row volume and correctness"
+    ],
+    "redFlags": [
+      "Defines every slow ORM request as N+1",
+      "Uses JOIN FETCH on multiple collections without discussing row multiplication",
+      "Measures only one SQL statement and not the whole request",
+      "Does not verify stable pagination or returned data"
+    ],
+    "followUps": [
+      {
+        "question": "When would batch fetching be preferable to a projection?"
+      },
+      {
+        "question": "How can a fetch join break pagination?"
+      },
+      {
+        "question": "Which automated check could help catch a query-count regression?"
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-stories-3",
+    "topic": "stories",
+    "subtopic": "story-legacy",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo mejoras un sistema legado sin detener la entrega de funcionalidades?",
+    "shortAnswer": "Modernizo de forma incremental: analizo el comportamiento actual, lo protejo con pruebas, realizo pequeños cambios estructurales, mantengo los contratos y monitorizo las versiones.",
+    "detailedAnswer": "Situation: SGN3 contains long-lived Java enterprise modules and complex business rules, while users still need fixes and new capabilities. A rewrite would introduce a large period with no business value and high behavior risk.\n\nTask: improve maintainability and platform compatibility without destabilizing active workflows.\n\nAction: I start by mapping callers, transaction boundaries, data access and external integrations around the target change. Where coverage is weak, I add characterization or focused business tests before refactoring. I keep compatibility boundaries explicit, isolate framework-specific changes, and make migrations in reviewable increments. Production traces and SQL evidence guide which hotspots deserve priority; age or style alone does not.\n\nResult: the team can evolve Java, Jakarta EE, Hibernate and WildFly-related code progressively while continuing feature delivery and production support. I would use only migration versions and outcome metrics that can be confirmed from project records.\n\nLesson: modernization is a portfolio of risk-reducing changes, not a synonym for rewriting or extracting services.",
+    "keyPoints": [
+      "Modernizes a running system incrementally",
+      "Protects current behavior before structural change",
+      "Prioritizes by delivery and operational pain",
+      "Preserves contracts and transaction behavior",
+      "Avoids unsupported version or outcome claims"
+    ],
+    "redFlags": [
+      "Treats old code as justification for a rewrite",
+      "Refactors broadly without mapping callers or behavior",
+      "Claims every modernization step was personally owned",
+      "Cannot explain how releases remained safe"
+    ],
+    "followUps": [
+      {
+        "question": "How do you choose the next modernization target?"
+      },
+      {
+        "question": "When would you isolate a module instead of refactoring it in place?"
+      },
+      {
+        "question": "How do you test behavior that is poorly documented?"
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Incremental SGN3 modernization",
+      "description": "Contributes to the progressive evolution of long-lived Java enterprise modules while delivering features, integrations, performance work and production support."
+    }
+  },
+  {
+    "id": "interview-stories-4",
+    "topic": "stories",
+    "subtopic": "story-incident",
+    "difficulty": "SENIOR",
+    "question": "Se produce un incidente en producción con información incompleta. ¿Cómo organizas el diagnóstico, la contención y la comunicación?",
+    "shortAnswer": "Primero establezco el impacto, la gravedad, los responsables y la cadencia de comunicación. Separo la contención del análisis de la causa raíz y valido la recuperación con evidencias y monitorización.",
+    "detailedAnswer": "I begin by naming an incident lead, technical investigators and a communication owner so diagnosis is not interrupted by duplicate requests. We define the affected workflow, start time, scope, safety or data risk, and the next update time. If a reversible action can reduce impact—disabling a feature, shedding load, pausing a consumer, or routing around a dependency—we evaluate it independently of the permanent fix.\n\nFor diagnosis, I maintain a timeline of observations, hypotheses, actions and outcomes. Logs, correlation identifiers, APM traces, query plans, dependency metrics and recent changes help narrow the fault domain. Each experiment should have an expected signal and a rollback path. I communicate facts, decisions and uncertainty separately.\n\nRecovery is complete only after the user path, backlogs, data consistency and resource saturation are verified over an observation window. The review then separates triggering event, root cause and contributing conditions; credits the actual participants; and assigns concrete prevention work. My verified production evidence includes APM- and SQL-led troubleshooting, but I should not invent incident severity, duration or sole ownership when describing a specific case.",
+    "keyPoints": [
+      "Define impact, roles and a communication cadence",
+      "State impact and individual role precisely",
+      "Show the evidence sequence and rejected hypotheses",
+      "Separate containment, recovery and prevention",
+      "Credit cross-functional contributions"
+    ],
+    "redFlags": [
+      "Invents severity, timeline or perfect outcomes",
+      "Jumps from symptom directly to root cause",
+      "Claims sole ownership of a team incident",
+      "Ends at the code fix with no prevention or learning"
+    ],
+    "followUps": [
+      {
+        "question": "Which hypothesis looked plausible but was wrong?"
+      },
+      {
+        "question": "What was the containment action before the permanent fix?"
+      },
+      {
+        "question": "Which signal would detect the same failure earlier now?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Production diagnosis with APM and database evidence",
+      "description": "Uses Glowroot traces, application logs and SQL analysis in production troubleshooting. Formal incident severity, timing and team ownership should be stated only for a documented event."
+    }
+  },
+  {
+    "id": "interview-stories-5",
+    "topic": "stories",
+    "subtopic": "story-template",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo gestionarías pasos comunes y variaciones en flujos de generación de documentos?",
+    "shortAnswer": "Identifico el flujo estable y aíslo las variaciones reales mediante estrategias, renderizadores o configuración solo cuando existen varias variantes justificadas.",
+    "detailedAnswer": "I start with two or three concrete document types and compare their steps, inputs, failure behavior and transaction needs. Shared sequencing can remain in an application service or, when subclasses truly share an invariant algorithm, a template. Variable calculation, eligibility or rendering behavior can use composition behind a small interface. Configuration fits data differences, but becomes dangerous when it hides complex control flow.\n\nThe boundary must include error and side-effect semantics: whether rendering can be retried, where generated binaries are stored, how audit records are committed, and how partial output is cleaned up. A new variant should be addable through one intentional extension point and tested with contract cases plus variant-specific examples. If every new type changes the orchestrator, the abstraction is not containing variation.\n\nVerified experience with document, certification and reporting workflows transfers to this analysis, but the interview answer should name the mechanism present in the selected code. I would not claim Template Method, Strategy or a plugin architecture merely because one of those patterns could fit.",
+    "keyPoints": [
+      "Start from concrete workflows and genuine variation points",
+      "Identify stable steps and genuine variation points",
+      "Name the mechanism that was really implemented",
+      "Explain testing for a new document type",
+      "Avoid outcome metrics not present in project evidence"
+    ],
+    "redFlags": [
+      "Presents a hypothetical pattern as implemented production architecture",
+      "Starts with a pattern name instead of the problem",
+      "Cannot explain how variants are tested",
+      "Claims extensibility while core conditionals still change for every variant"
+    ],
+    "followUps": [
+      {
+        "question": "Which step was common and which behavior varied?"
+      },
+      {
+        "question": "What would force you to revise the abstraction?"
+      },
+      {
+        "question": "How would you prevent one document variant from breaking others?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Document and certification workflow experience",
+      "description": "Production work includes document, certification and reporting workflows. The exact variation mechanism must be taken from the selected implementation rather than inferred from a pattern name."
+    }
+  },
+  {
+    "id": "interview-stories-6",
+    "topic": "stories",
+    "subtopic": "story-disagreement",
+    "difficulty": "INTERMEDIATE",
+    "question": "Un compañero cuestiona tu recomendación técnica cuando la implementación ya ha comenzado. ¿Cómo respondes?",
+    "shortAnswer": "Escucho el riesgo planteado, comparo las alternativas con evidencias, involucro al responsable de la decisión y documento el resultado.",
+    "detailedAnswer": "First I protect the working relationship and the product by treating the challenge as new information, not obstruction. I ask what changed and which failure the teammate is concerned about. If the issue could affect data, security or a difficult-to-reverse contract, I may pause rollout while we assess it; a lower-risk concern can be time-boxed without stopping all work.\n\nWe make the options explicit: continue as designed, revise the boundary, add a mitigation, or revert the incomplete work. A prototype, compatibility test, representative plan, incident record or cost estimate may distinguish them. The decision owner and deadline should be clear, especially because sunk-cost bias grows after implementation starts.\n\nAfter the decision I update the design record and implementation plan, credit the person who raised the risk, and commit to the chosen direction. If the concern is deferred, it gets an owner and review trigger. The goal is a better outcome and a trustworthy team process, not proving who was right.",
+    "keyPoints": [
+      "Treat the challenge as new risk information, not obstruction",
+      "Represent the challenge fairly",
+      "Show how evidence or constraints affected the proposal",
+      "Name decision ownership",
+      "Reflect on the relationship and outcome"
+    ],
+    "redFlags": [
+      "Uses sunk implementation effort as proof that the design must continue",
+      "Describes colleagues as resistant to change",
+      "Cannot identify anything valuable in the challenge",
+      "Treats compromise as lack of technical standards"
+    ],
+    "followUps": [
+      {
+        "question": "What part of the challenge was valid?"
+      },
+      {
+        "question": "What evidence would make you change the original recommendation?"
+      },
+      {
+        "question": "How would you preserve the decision and its review trigger?"
+      }
+    ],
+    "experienceLevel": "INFERENCE"
+  },
+  {
+    "id": "interview-stories-7",
+    "topic": "stories",
+    "subtopic": "story-ai",
+    "difficulty": "INTERMEDIATE",
+    "question": "Háblame de un flujo de ingeniería asistido por IA que hayas diseñado y de sus salvaguardas.",
+    "shortAnswer": "Diseñé herramientas MCP que proporcionan a los agentes de IA acceso estructurado al contexto de ingeniería, con permisos limitados, revisión humana y controles automáticos.",
+    "detailedAnswer": "Problem: a general coding model can produce plausible changes while missing enterprise constraints, database shape, current quality findings or production evidence. Copying all that context manually is slow and inconsistent.\n\nApproach: I designed TypeScript/Node.js MCP tools that expose specific, structured capabilities rather than unrestricted system access. An agent can request schema metadata, quality findings, traces or work-item context when relevant. Project rules and automated checks then evaluate areas where superficially correct code is risky, including JPA mappings, SQL access, JSF behavior and architectural boundaries.\n\nSafeguards: least-privilege and read-only access where possible, explicit scoping of the requested task, no hidden production mutations, human review of changes, ordinary tests and quality gates, and traceability of the evidence used. Sensitive data and prompt-injection risks must be handled as security concerns, not only prompt-design concerns.\n\nResult: the verified output is the tooling and workflow design. I would not claim a productivity percentage or defect reduction without a measured study.",
+    "keyPoints": [
+      "Solves a concrete context and evidence problem",
+      "Uses narrow structured tools instead of unrestricted access",
+      "Keeps human review and normal engineering gates",
+      "Treats data access and prompt injection as security risks",
+      "Avoids unmeasured productivity claims"
+    ],
+    "redFlags": [
+      "Frames AI output as trustworthy because it compiles",
+      "Grants broad production or database mutation access",
+      "Replaces code review and testing with another model",
+      "Claims large productivity gains without measurement"
+    ],
+    "followUps": [
+      {
+        "question": "How do you prevent sensitive data from entering model context?"
+      },
+      {
+        "question": "Which quality check has the highest value for this workflow?"
+      },
+      {
+        "question": "How would you evaluate whether the workflow actually improves outcomes?"
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "MCP-based engineering context and quality gates",
+      "description": "Designed independent TypeScript/Node.js tooling to connect coding agents with database, quality, APM and work-item context under review and quality controls."
+    }
+  },
+  {
+    "id": "interview-stories-8",
+    "topic": "stories",
+    "subtopic": "story-learning",
+    "difficulty": "BEGINNER",
+    "question": "¿Cómo te estás preparando para pasar de Jakarta EE y JMS a Spring Boot y Kafka?",
+    "shortAnswer": "Separo la experiencia transferible del aprendizaje nuevo. Practico Spring Boot en proyectos reales y estudio Kafka, Kotlin y Kubernetes sin presentarlos como experiencia en producción.",
+    "detailedAnswer": "For Spring Boot, my learning is applied through SinapiPRO: REST APIs, PostgreSQL persistence and an Angular client provide a real project context. My Jakarta EE background helps with dependency injection, transaction boundaries and integration design, but I still verify Spring-specific proxy behavior, configuration, testing and observability rather than assuming identical semantics.\n\nFor Kafka, I start from transferable messaging concerns—idempotency, retry, poison messages and observability—then focus on what is different from JMS: an append-only log, offsets, replay, partitions, consumer groups, retention and ordering within a partition. For Kotlin, I focus on nullability, idioms and Java interop; for Kubernetes, on workload lifecycle, probes, resources, rollout behavior and operations.\n\nThe evidence level remains explicit: Spring Boot and Angular have hands-on project evidence; Kafka, Kotlin and Kubernetes are being expanded and are not claimed as production ownership. The first months in a role should include pairing, runbook study, lower-risk changes and exposure to real operational feedback.",
+    "keyPoints": [
+      "Separates transferable concepts from framework-specific behavior",
+      "Uses SinapiPRO for applied Spring Boot learning",
+      "Identifies Kafka's log, replay and partition model as new learning",
+      "Does not label study as production experience",
+      "Includes an operational ramp-up plan"
+    ],
+    "redFlags": [
+      "Says Kafka is simply modern JMS",
+      "Equates a personal project with production operation",
+      "Studies only API syntax and not failure behavior",
+      "Cannot describe how learning would continue inside the team"
+    ],
+    "followUps": [
+      {
+        "question": "Which Kafka behavior differs most from the queue model you know?"
+      },
+      {
+        "question": "Which Spring behavior did you have to verify rather than infer from Jakarta EE?"
+      },
+      {
+        "question": "What would you aim to learn in your first month on the team?"
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-stories-9",
+    "topic": "stories",
+    "subtopic": "story-logistics",
+    "difficulty": "INTERMEDIATE",
+    "question": "Háblame de una ocasión en la que automatizaste un proceso operativo complejo con impacto directo en el negocio.",
+    "shortAnswer": "Desarrollé un sistema MS COBOL para automatizar el cálculo de fletes y la emisión de documentos según contratos, mejorando la rapidez y la fiabilidad del proceso.",
+    "detailedAnswer": "Situation: while working as a Mainframe Developer at Dinâmica S/A Serviços de Computação (Dec 1990 – Feb 1993), I worked on a system for Transportadora Andorinha. The company had a substantial manual operation for checking freight documents and whether each shipping charge followed the customer's contract. The rules had many combinations, so consistency depended on people repeatedly interpreting contracts.\n\nTask: translate those commercial rules into a repeatable system and connect branch operations to central billing.\n\nAction: I developed the system in MS COBOL. Branches captured data on local PC-XT machines and sent it to headquarters using the company's internal mail service; the Unisys mainframe then processed the information into billing. The core design work was modeling the tariff rules so that inputs such as cargo value, distance, package count and postal-code route could be applied consistently per contract.\n\nResult: the calculation and checking workflow became automated, faster and more reliable. I describe the impact as reducing repetitive manual reconciliation, not as eliminating jobs. This was an earlier technical environment, but the lesson transfers directly: logistics software must make complex business rules deterministic, traceable and usable by operations.",
+    "keyPoints": [
+      "Direct experience in a transport-logistics domain",
+      "Complex contract and tariff rules became deterministic software",
+      "Branch-to-headquarters integration fed the billing process",
+      "Describe operational efficiency without claiming unsupported financial metrics",
+      "Frame automation as reducing repetitive verification work, not replacing people"
+    ],
+    "redFlags": [
+      "Claims knowledge of modern REWE systems because of this earlier project",
+      "Frames the result as eliminating employees",
+      "Invents savings, volumes or accuracy percentages",
+      "Focuses only on COBOL and misses the business-rule and integration challenge"
+    ],
+    "followUps": [
+      {
+        "question": "How did you make customer-specific tariff rules maintainable as contracts changed?"
+      },
+      {
+        "question": "What would you design differently with a modern event-driven platform?"
+      },
+      {
+        "question": "How would you handle a branch transmission that failed or arrived twice?"
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Freight billing automation",
+      "description": "As a Mainframe Developer at Dinâmica S/A (1990–1993), developed an MS COBOL system that automated contract-based freight calculation, document issuance and branch-to-mainframe billing integration for Transportadora Andorinha."
+    }
+  }
+]

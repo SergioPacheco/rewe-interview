@@ -1,0 +1,204 @@
+[
+  {
+    "id": "interview-sd-scaling-1",
+    "topic": "system-design",
+    "subtopic": "sd-scaling",
+    "difficulty": "SENIOR",
+    "question": "Un listado en producción se volvió inutilizable a medida que crecía el volumen de datos. ¿Cómo lo diagnosticarías y decidirías entre optimizar la consulta, usar caché o escalar el sistema?",
+    "context": "Use the SGN3 enrollment listing as an evidence-based case. Distinguish dataset size from concurrent traffic.",
+    "clarifyingQuestions": [
+      "Is the problem one slow request, high concurrent load, or both?",
+      "What are the latency SLO and current latency distribution?",
+      "How many rows and SQL statements does one request process?",
+      "Is the endpoint read-heavy, and how fresh must the data be?",
+      "Which measurements identify the dominant cost: application, database, network, or lock contention?"
+    ],
+    "shortAnswer": "Primero separaría la ineficiencia de la consulta de los problemas de capacidad. En el caso de SGN3 el problema era un listado de 26.705 registros, no 26.705 usuarios concurrentes. Tras rediseñar las consultas, la paginación y las proyecciones, la petición pasó de unas 48.000 consultas SQL a unas diez y alrededor de dos segundos.",
+    "detailedAnswer": "I start with a workload model and evidence, not an infrastructure prescription. Dataset size, request concurrency, arrival rate, and latency are different dimensions and lead to different solutions.\n\n**Diagnosis:**\n1. Define the SLO and reproduce the request with representative data.\n2. Use APM and database statistics to split time across application code, SQL execution, locks, and network.\n3. Inspect query count and plans; a large number of individually fast statements can still dominate latency.\n4. Check whether fetching multiple collections multiplies rows and whether the endpoint loads fields it never renders.\n\n**SGN3 case:**\n- The page listed a dataset of 26,705 enrollment records; this number was not a concurrency measurement.\n- One request generated roughly 48,000 statements through nested lazy loading and row multiplication.\n- The read path was redesigned with a simpler count, bounded pagination, deterministic ordering, DTO projections, a targeted LATERAL join, and batch loading for the remaining relationships.\n- The measured result was roughly ten statements and about two seconds, down from approximately sixteen minutes in the pathological case.\n\n**Decision order:**\n- Fix avoidable work first.\n- Add or adjust indexes based on actual plans and selectivity.\n- Cache only when staleness, invalidation, and hit rate are understood.\n- Scale horizontally when the optimized request is acceptable but aggregate capacity is insufficient.\n\nThe exact figures should be quoted only if they can be supported by the original trace or incident record.",
+    "keyPoints": [
+      "Dataset size is not the same as concurrent-user count",
+      "Define an SLO and measure before selecting a remedy",
+      "Many individually fast queries can create severe request latency",
+      "Remove unnecessary work before adding cache or servers",
+      "Validate every optimization with representative data and before/after measurements"
+    ],
+    "redFlags": [
+      "Calling a record count a concurrency figure",
+      "Prescribing cache or horizontal scaling before locating the bottleneck",
+      "Quoting performance numbers that cannot be explained or reproduced",
+      "Optimizing one query while ignoring total statements per request"
+    ],
+    "followUps": [
+      {
+        "question": "When would caching be the right next step after query optimization?",
+        "hint": "Discuss read frequency, acceptable staleness, invalidation, hit rate, and memory cost."
+      },
+      {
+        "question": "How would you test whether the endpoint also has a concurrency problem?",
+        "hint": "Use a representative load profile and observe throughput, pool saturation, locks, and latency percentiles."
+      },
+      {
+        "question": "Why can a sequential scan still be the correct database plan?",
+        "hint": "It may be cheaper when a query reads a large fraction of a table or the table is small."
+      }
+    ],
+    "tradeoffs": [
+      "DTO projections reduce hydration cost but create a query-specific read model",
+      "Exact total counts add work and may be optional for cursor-based interfaces",
+      "A PostgreSQL-specific LATERAL join trades portability for a simpler or faster read path",
+      "Caching improves repeated reads but introduces staleness and invalidation complexity"
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 enrollment-listing performance investigation",
+      "description": "A listing over 26,705 records generated roughly 48,000 SQL statements per request. APM-guided query redesign, pagination, projections, a targeted LATERAL join, and batch loading reduced it to about ten statements and roughly two seconds. The figures describe dataset and request behavior, not simultaneous users."
+    }
+  },
+  {
+    "id": "interview-sd-events-1",
+    "topic": "system-design",
+    "subtopic": "sd-events",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo diseñarías la confirmación de entregas para que el estado, las notificaciones, la facturación y la analítica evolucionen de forma independiente?",
+    "context": "Treat the logistics domain as a design exercise. State assumptions instead of presenting inferred REWE internals as facts.",
+    "clarifyingQuestions": [
+      "What acknowledgement must the driver receive synchronously?",
+      "What throughput and end-to-end latency are expected?",
+      "Which updates require ordering, and what is their business key?",
+      "Which consumers may be eventually consistent?",
+      "What are the recovery and audit requirements when a consumer is unavailable?"
+    ],
+    "shortAnswer": "Confirmaría la entrega tras almacenarla de forma duradera y publicaría un evento versionado mediante un transactional outbox. Los consumidores deben ser idempotentes y usar la misma clave de partición cuando el orden sea importante.",
+    "detailedAnswer": "A reasonable design is:\n\n1. The driver API authenticates the caller, validates the state transition, and assigns an event ID and delivery version.\n2. One local transaction updates the delivery aggregate and inserts an outbox record. This removes the database/Kafka dual-write window; it does not make publication exactly once.\n3. An outbox dispatcher publishes the event at least once. All events for a delivery use `delivery_id` as the key if per-delivery order is required.\n4. Notification, billing, tracking, and analytics consume independently. Each consumer records its own progress and applies an idempotent state transition.\n5. Retries use bounded backoff and jitter. Non-retriable or repeatedly failing records can move to a parking topic with alerting and a controlled replay process.\n\nImportant design details:\n- Include event schema version, event ID, aggregate ID, aggregate version, occurrence time, and correlation/causation IDs.\n- Reject or ignore stale aggregate versions according to domain rules; timestamps alone are not a safe ordering mechanism.\n- Define which outcome the driver sees if durable storage succeeds but downstream processing is delayed.\n- Monitor outbox age, publish failures, consumer lag, retry counts, and time from confirmation to each business outcome.\n\nThis pattern is transferable from durable JMS processing, but Kafka partitioning, offsets, and consumer rebalancing still require technology-specific experience.",
+    "keyPoints": [
+      "Persist business state and outbox record atomically",
+      "Outbox publication is normally at least once, so consumers remain idempotent",
+      "Partition by the entity whose event order must be preserved",
+      "Use aggregate versions rather than timestamps alone for stale-event handling",
+      "Define recovery, replay, and observability per consumer"
+    ],
+    "redFlags": [
+      "Claiming that an outbox makes end-to-end delivery exactly once",
+      "Publishing after the database commit with no recovery mechanism",
+      "Using retries without idempotency or a bounded retry policy",
+      "Sending every failure to a DLQ without considering ordering and replay"
+    ],
+    "followUps": [
+      {
+        "question": "What failure window does the transactional outbox close, and what failure modes remain?",
+        "hint": "It closes the local database/event-record dual write; publication duplicates, lag, and consumer failures remain."
+      },
+      {
+        "question": "How would you evolve the event schema without breaking consumers?",
+        "hint": "Prefer backward-compatible additions, explicit versions, consumer contract tests, and a migration window."
+      },
+      {
+        "question": "When would a synchronous call be preferable to an event?",
+        "hint": "When the caller needs an immediate authoritative result and the dependency is part of the same availability boundary."
+      }
+    ],
+    "tradeoffs": [
+      "Asynchronous consumers improve decoupling but introduce eventual consistency",
+      "The outbox adds storage, a dispatcher, monitoring, and cleanup work",
+      "Per-delivery ordering can constrain parallelism for unusually hot deliveries",
+      "A parking topic protects throughput but requires operational ownership and safe replay"
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferable durable-messaging experience",
+      "description": "SGN3 uses JMS consumers for independent integration work with retry, dead-letter handling, and idempotent processing. Those reliability concerns transfer, while Kafka partitioning, offsets, transactions, and rebalancing must not be presented as direct production experience."
+    }
+  },
+  {
+    "id": "interview-sd-data-1",
+    "topic": "system-design",
+    "subtopic": "sd-data",
+    "difficulty": "SENIOR",
+    "question": "Un cliente ve una entrega como completada mientras la facturación sigue pendiente. ¿Cómo razonarías sobre la consistencia y la recuperación?",
+    "context": "The goal is to make the business invariant, consistency boundary, and repair strategy explicit.",
+    "clarifyingQuestions": [
+      "Which system owns the authoritative delivery state?",
+      "Must billing complete before the driver receives confirmation?",
+      "What inconsistency window is acceptable?",
+      "Can billing be retried safely, and is the operation idempotent?",
+      "What evidence is required for audit and reconciliation?"
+    ],
+    "shortAnswer": "Primero definiría la invariante de negocio y la fuente de verdad. Si la consistencia eventual es aceptable, utilizaría eventos duraderos, idempotencia, reintentos limitados y reconciliación automática.",
+    "detailedAnswer": "Consistency is a business decision before it is a database setting. The design should answer:\n\n- **Invariant:** Is a delivery allowed to be complete before billing succeeds?\n- **Authority:** Which service owns delivery state, billing state, and the mapping between them?\n- **Consistency target:** Is the requirement immediate consistency, eventual consistency within an SLO, or a compensating workflow?\n\nFor an eventually consistent workflow:\n1. Commit the authoritative delivery transition once.\n2. Publish a durable, versioned event.\n3. Make billing idempotent using the delivery/event identity and a uniqueness constraint or equivalent business key.\n4. Retry only failures likely to be transient, with an overall deadline.\n5. Record terminal failure explicitly rather than silently dropping it.\n6. Run reconciliation that compares authoritative states and repairs or escalates discrepancies older than the allowed window.\n\nA saga may coordinate several steps when compensation is meaningful, but it does not provide ACID isolation across services. Compensation is a new business action, not a database rollback. For an invariant that truly cannot tolerate an intermediate state, keeping the data and transaction in one consistency boundary can be safer than distributing it.",
+    "keyPoints": [
+      "Define the business invariant and source of truth first",
+      "Eventual consistency needs a measurable convergence SLO",
+      "Retries require idempotency and an overall deadline",
+      "Reconciliation is part of the design, not an emergency script",
+      "Some invariants are evidence that data should remain in one transaction boundary"
+    ],
+    "redFlags": [
+      "Saying eventual consistency without defining an acceptable inconsistency window",
+      "Treating saga compensation as an automatic database rollback",
+      "Relying on retries without a durable failure state or reconciliation",
+      "Splitting a strong invariant across services only to follow a microservice style"
+    ],
+    "followUps": [
+      {
+        "question": "What would a reconciliation job compare?",
+        "hint": "Authoritative IDs, versions, expected state transitions, event publication state, and age beyond the convergence SLO."
+      },
+      {
+        "question": "When would you choose orchestration over choreography for a saga?",
+        "hint": "Discuss workflow visibility, coupling, number of steps, ownership, and failure handling."
+      },
+      {
+        "question": "How do optimistic locking and idempotency solve different problems?",
+        "hint": "Optimistic locking detects concurrent updates to one state; idempotency makes repeated requests or events safe."
+      }
+    ],
+    "tradeoffs": [
+      "A single transaction boundary simplifies invariants but increases coupling",
+      "Eventual consistency improves autonomy but requires retries, reconciliation, and user-visible intermediate states",
+      "Orchestration centralizes workflow visibility but can become a coupling hub",
+      "Choreography keeps participants independent but makes end-to-end reasoning harder"
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "interview-sd-ops-1",
+    "topic": "system-design",
+    "subtopic": "sd-ops",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo harías observable un servicio en producción y convertirías sus objetivos de fiabilidad en alertas accionables?",
+    "shortAnswer": "Parto de objetivos visibles para el usuario (SLIs y SLOs). Después defino métricas, trazas, logs y perfiles, generando alertas sobre síntomas reales y no sobre cualquier pico de infraestructura.",
+    "detailedAnswer": "Observability should help answer new questions about a system, not merely produce dashboards.\n\n**Start from service behavior:**\n- SLIs: successful-request ratio, latency distribution, event-processing delay, stale-data age, or business completion rate.\n- SLOs: explicit targets over a window, agreed with product and operations.\n- Alerts: urgent when users are at risk and action is possible; tickets or dashboards for slower trends.\n\n**Signals:**\n- Metrics for rates, latency percentiles, saturation, and alerting.\n- Distributed traces for causal request flow and dependency latency.\n- Structured logs for discrete events and diagnostic context.\n- Profiles when CPU, allocation, lock contention, or wall-clock hotspots need code-level analysis.\n\n**Correlation and hygiene:**\n- Propagate trace and correlation context across HTTP and messaging.\n- Include stable business identifiers only when policy allows it; avoid secrets and unnecessary PII.\n- Control cardinality in metric labels.\n- Sample traces deliberately while retaining errors or diagnostically valuable exemplars.\n\nA useful incident flow starts with an SLO symptom, narrows by service and dependency metrics, follows representative traces, and uses logs or profiles for the remaining detail. Alerts should name the affected objective and link to a runbook.",
+    "keyPoints": [
+      "Begin with user-visible SLIs and SLOs",
+      "Alert on actionable symptoms and error-budget burn",
+      "Use metrics, traces, logs, and profiles for different questions",
+      "Propagate correlation across synchronous and asynchronous boundaries",
+      "Control sensitive data and high-cardinality dimensions"
+    ],
+    "redFlags": [
+      "Alerting on every CPU spike without a user-impact hypothesis",
+      "Using average latency while ignoring tail behavior",
+      "Logging secrets or unrestricted personal data for convenience",
+      "Collecting telemetry with no retention, ownership, or incident workflow"
+    ],
+    "followUps": [
+      {
+        "question": "Why can p95 latency still hide a serious problem?",
+        "hint": "A small but important traffic segment or p99 tail can be unhealthy while p95 remains acceptable."
+      },
+      {
+        "question": "What makes an alert actionable?",
+        "hint": "Clear user impact, urgency, ownership, diagnostic context, and a known response."
+      },
+      {
+        "question": "How would you observe an asynchronous delivery-confirmation flow?",
+        "hint": "Track event age, outbox delay, consumer lag, processing outcome, retries, and correlation across stages."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 production diagnostics",
+      "description": "Glowroot traces and JVM metrics, Kibana logs, and PostgreSQL statistics were correlated to diagnose request-level query amplification. This is direct observability experience, while distributed tracing across microservices should be described as a next-step capability rather than claimed production use."
+    }
+  }
+]

@@ -1,0 +1,355 @@
+[
+  {
+    "id": "interview-kafka-1",
+    "topic": "kafka",
+    "subtopic": "kafka-fundamentals",
+    "difficulty": "BEGINNER",
+    "question": "¿Qué problema resuelve Kafka y cuándo elegirías una alternativa más simple?",
+    "shortAnswer": "Kafka es una plataforma de streaming de eventos distribuida basada en logs particionados y duraderos. Los productores añaden registros; los grupos de consumidores independientes rastrean sus propias posiciones, por lo que el consumo no elimina el registro y es posible re-procesar (replay) los datos dentro del periodo de retención. Lo elijo cuando la retención, los múltiples consumidores, el procesamiento ordenado por clave o el escalado de streams justifican su coste operativo, no simplemente porque el trabajo sea asíncrono.",
+    "detailedAnswer": "Kafka es útil cuando un sistema necesita varias de estas propiedades en conjunto:\n\n- Retención y re-procesamiento de eventos de forma duradera.\n- Múltiples grupos de consumidores independientes leyendo el mismo flujo.\n- Escalabilidad horizontal mediante particiones.\n- Orden garantizado para registros que comparten una partición.\n- Procesamiento de flujos, integraciones o un backbone de eventos.\n\nNo es automáticamente la mejor opción para cada tarea asíncrona. Una cola convencional puede ser más simple para la distribución de trabajo con confirmaciones (ACKs) gestionadas por el broker y enrutamiento por mensaje. Una llamada HTTP síncrona puede ser más clara cuando el emisor necesita un resultado inmediato y ambos servicios comparten el mismo límite de disponibilidad. Un patrón 'Transactional Outbox' con un broker más pequeño puede ser suficiente a escala moderada.\n\nLa decisión debe incluir el volumen y tamaño de los eventos, la retención, el re-procesamiento, el alcance del orden, la semántica de entrega, la evolución del esquema y la recuperación ante fallos, no solo una consigna de rendimiento (throughput).",
+    "keyPoints": [
+      "Kafka almacena logs particionados y retiene registros independientemente del consumo",
+      "Los grupos de consumidores mantienen posiciones independientes",
+      "El orden está garantizado dentro de una partición, no en todo el tópico",
+      "El re-procesamiento y los múltiples consumidores son señales claras de uso",
+      "El coste operativo y la semántica requerida determinan si Kafka está justificado"
+    ],
+    "redFlags": [
+      "Elegir Kafka solo porque un flujo de trabajo es asíncrono",
+      "Asumir que los registros desaparecen después de que un consumidor los lee",
+      "Prometer orden global en todas las particiones",
+      "Ignorar la evolución del esquema y la responsabilidad operativa"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo cambia la retención las opciones de recuperación comparado con una cola de trabajo tradicional?",
+        "hint": "Un consumidor puede resetear su posición y re-procesar datos retenidos; esto también significa que los handlers deben tolerar el re-procesamiento."
+      },
+      {
+        "question": "¿Cuándo sería una llamada HTTP directa la opción más clara?",
+        "hint": "Cuando se requiere una respuesta inmediata, el re-procesamiento es innecesario y el acoplamiento síncrono es aceptable."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferencia desde ActiveMQ Artemis",
+      "description": "La experiencia en producción con JMS, procesamiento asíncrono, reintentos, manejo de dead-letters e idempotencia es transferible a Kafka. Los logs retenidos, offsets, particiones y rebalanceo siguen siendo conceptos específicos de Kafka."
+    }
+  },
+  {
+    "id": "interview-kafka-2",
+    "topic": "kafka",
+    "subtopic": "kafka-delivery",
+    "difficulty": "SENIOR",
+    "question": "¿Qué garantiza exactamente la semántica 'exactly-once' de Kafka y qué no garantiza para efectos secundarios en bases de datos o APIs?",
+    "shortAnswer": "Las transacciones de Kafka pueden hacer que un ciclo de lectura-procesamiento-escritura sea atómico: los registros de salida y los offsets consumidos se confirman (commit) juntos, y los consumidores con `read_committed` ignoran las salidas abortadas. Esa garantía termina en el límite de la transacción de Kafka. Una actualización de base de datos o llamada HTTP no se vuelve 'exactly-once' simplemente activando la idempotencia del productor, por lo que utilizo claves de idempotencia, el patrón inbox/outbox o un 'sink' con una garantía explícita de extremo a extremo.",
+    "detailedAnswer": "Existen garantías relacionadas pero distintas:\n\n1. **Productor idempotente**: Evita entradas duplicadas en el log causadas por reintentos del productor, preservando el orden por partición. No elimina duplicados de dos solicitudes de negocio independientes.\n2. **Transacción de Kafka**: Confirma atómicamente registros en una o más particiones y, para flujos de consumo-transformación-producción, los offsets consumidos vía `sendOffsetsToTransaction`. Los consumidores deben usar `isolation.level=read_committed`. Kafka Streams gestiona esto con su modo 'exactly-once'.\n3. **Efectos externos**: Están fuera de esa transacción. Si un consumidor actualiza PostgreSQL y falla antes de confirmar su offset en Kafka, el registro puede entregarse de nuevo; si confirma el offset primero, un fallo posterior en la base de datos puede perder el efecto.\n\nDiseños comunes para efectos secundarios externos:\n- Operación idempotente basada en un ID de evento estable, forzada por una restricción de unicidad en la misma transacción de base de datos que el cambio de negocio.\n- Tabla 'Inbox' para IDs consumidos y cambios de negocio.\n- 'Transactional Outbox' cuando un cambio en la base de datos debe publicar un evento posteriormente.\n- Kafka Connect solo cuando el conector y el destino documentan la garantía requerida.\n\nLlamamos al resultado 'efectivamente una vez' solo tras definir el límite observable y los casos de fallo.",
+    "keyPoints": [
+      "La idempotencia del productor maneja duplicados por reintentos dentro de Kafka",
+      "Las transacciones de Kafka pueden confirmar atómicamente registros de salida y offsets",
+      "Los consumidores read_committed ocultan registros transaccionales abortados",
+      "Los efectos en BD y HTTP están fuera del límite transaccional de Kafka",
+      "Los patrones Inbox, Outbox y claves de idempotencia gestionan el re-envío externo"
+    ],
+    "redFlags": [
+      "Afirmar que acks=all proporciona procesamiento 'exactly-once'",
+      "Extender la garantía de transacción de Kafka a cualquier base de datos o API",
+      "Confirmar offsets sin explicar la ventana de fallo del efecto secundario",
+      "Usar la frase 'exactly once' sin definir el límite de observación"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué sucede si una actualización de base de datos se confirma y el consumidor falla antes de que su offset en Kafka se confirme?",
+        "hint": "El registro puede entregarse de nuevo; un ID de evento único y la actualización de negocio deben manejarse atómicamente para que el reintento sea inocuo."
+      },
+      {
+        "question": "¿Cuándo es útil un Transactional Outbox?",
+        "hint": "Cuando un cambio de estado en la base de datos y la intención de publicar un evento deben confirmarse atómicamente sin una transacción distribuida."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Transferencia desde idempotencia de consumidores JMS",
+      "description": "Uso de unicidad en base de datos y patrones `INSERT ... ON CONFLICT` para hacer que el re-envío en JMS sea seguro. El mismo principio de efectos secundarios externos aplica a Kafka."
+    }
+  },
+  {
+    "id": "interview-kafka-3",
+    "topic": "kafka",
+    "subtopic": "kafka-architecture",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo eliges una clave de partición (partition key) y qué puede salir mal si cambia el tráfico o el número de particiones?",
+    "shortAnswer": "La clave define el alcance del orden y, generalmente, la distribución de la carga. Primero identifico qué eventos deben procesarse en orden (ej. todos los eventos de una entrega) y luego verifico la cardinalidad y el sesgo (skew) con tráfico real. Una clave pobre crea particiones calientes (hot partitions) o huecos de orden no deseados. Aumentar el número de particiones puede re-mapear registros con clave, por lo que planeo ese cambio cuidadosamente.",
+    "detailedAnswer": "Una clave es una decisión de dominio antes que una de hashing:\n\n- `delivery_id` mantiene los eventos de una entrega en una sola partición y, por tanto, ordenados.\n- `driver_id` da un alcance de orden diferente y puede crear sesgo si un grupo pequeño de conductores es inusualmente activo.\n- Una clave de baja cardinalidad o sesgada deja algunas particiones saturadas y limita el paralelismo real del grupo de consumidores.\n- Una clave nula no da afinidad estable por entidad; el productor puede usar 'sticky batching', por lo que no debe usarse cuando el orden por entidad importa.\n\nEs vital monitorear la distribución de claves, el tráfico pico, el lag de la partición más lenta y si un tipo de registro es mucho más costoso de procesar. Aplicar 'salting' a una clave caliente mejora el paralelismo pero sacrifica el orden simple por clave y requiere agregación posterior.\n\nAñadir particiones aumenta el paralelismo potencial, pero la selección de partición basada en hash puede mapear una clave de forma distinta tras el cambio. Los registros antiguos y nuevos de una misma clave lógica pueden terminar en particiones diferentes.",
+    "keyPoints": [
+      "Elegir la clave basándose en el alcance del orden requerido",
+      "Medir el sesgo y el coste de procesamiento, no solo la cardinalidad de la clave",
+      "Una clave nula no proporciona afinidad de entidad estable",
+      "Las particiones calientes limitan el rendimiento incluso si otros consumidores están libres",
+      "Añadir particiones puede re-mapear claves y afectar las suposiciones de orden"
+    ],
+    "redFlags": [
+      "Seleccionar una clave sin nombrar qué debe ser ordenado",
+      "Asumir que muchas claves distintas garantizan un coste de procesamiento equilibrado",
+      "Usar una clave nula mientras se promete orden por entidad",
+      "Aumentar el número de particiones sin evaluar el re-mapeo de claves"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo detectarías una partición caliente?",
+        "hint": "Compara bytes por partición, tasa de registros, tiempo de procesamiento y lag del consumidor en lugar de mirar solo los totales del tópico."
+      },
+      {
+        "question": "¿Qué compromiso (trade-off) introduce el salting de claves?",
+        "hint": "Distribuye una entidad saturada entre particiones pero debilita el orden por entidad y puede requerir una segunda etapa de agregación."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kafka-4",
+    "topic": "kafka",
+    "subtopic": "kafka-consumers",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo interactúan los grupos de consumidores, los commits de offsets y el rebalanceo?",
+    "shortAnswer": "Dentro de un grupo de consumidores, cada partición del tópico se asigna a lo sumo a un miembro a la vez; por tanto, las particiones limitan el paralelismo. El grupo almacena los offsets confirmados como posiciones de recuperación. Cuando cambia la membresía o los metadatos, las particiones se re-asignan; un rebalanceo 'eager' las revoca de forma general, mientras que la asignación cooperativa puede moverlas incrementalmente. El trabajo tras el último offset confirmado puede procesarse de nuevo.",
+    "detailedAnswer": "Los grupos de consumidores permiten un consumo competitivo sobre las particiones:\n\n- Diferentes grupos leen el tópico de forma independiente.\n- Dentro de un grupo, una partición tiene un único dueño activo; los consumidores que exceden el número de particiones quedan inactivos.\n- El offset confirmado es la siguiente posición de recuperación, no una prueba de que cada efecto secundario ocurrió exactamente una vez.\n\nUn rebalanceo puede dispararse por miembros que entran o salen, heartbeats perdidos, cambios en la suscripción o cambios en las particiones. Con la asignación 'eager', los miembros revocan sus particiones antes de la re-asignación, causando una pausa global. Los asignadores cooperativos pueden revocar y transferir particiones incrementalmente, reduciendo la interrupción. La membresía estática puede evitar algunos rebalanceos en reinicios breves.\n\nAntes de ceder una partición, se debe finalizar o cancelar el trabajo en curso de forma consistente y confirmar solo los offsets cuyos efectos estén completos. Si el procesamiento tuvo éxito tras el último offset confirmado, la re-asignación provocará el re-procesamiento de esos registros.",
+    "keyPoints": [
+      "Las particiones limitan los consumidores activos dentro de un grupo",
+      "Los offsets confirmados son posiciones de recuperación",
+      "El rebalanceo eager y el cooperativo tienen perfiles de interrupción distintos",
+      "El trabajo completado pero no confirmado puede repetirse tras una re-asignación",
+      "El manejo de la revocación y la idempotencia protegen la integridad"
+    ],
+    "redFlags": [
+      "Asumir que más consumidores siempre aumentan el rendimiento",
+      "Decir que cada rebalanceo detiene necesariamente a cada consumidor bajo cualquier protocolo",
+      "Llamar 'offsets perdidos' a los no confirmados en lugar de explicar el re-procesamiento",
+      "Confirmar offsets antes de los efectos externos sin discutir el riesgo de pérdida"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué un consumidor puede exceder `max.poll.interval.ms` incluso si los heartbeats son saludables?",
+        "hint": "La aplicación puede tardar demasiado entre llamadas a poll; ajusta el tamaño del batch o mueve el trabajo preservando la seguridad del offset y la propiedad."
+      },
+      {
+        "question": "¿Qué debería hacer un listener de rebalanceo antes de que se revoquen las particiones?",
+        "hint": "Resolver el trabajo en curso y confirmar solo los offsets seguros; la acción depende de si el procesamiento es síncrono o asíncrono."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kafka-5",
+    "topic": "kafka",
+    "subtopic": "kafka-comparison",
+    "difficulty": "SENIOR",
+    "question": "¿Qué conceptos de JMS/ActiveMQ se transfieren a Kafka y qué suposiciones debes desaprender?",
+    "shortAnswer": "Las habilidades transferibles son los límites asíncronos, la idempotencia, las políticas de reintento, el manejo de dead-letters, la contrapresión (backpressure) y la observabilidad. El modelo de consumo cambia: una cola JMS puede tener consumidores competitivos y los ACKs provocan la eliminación, mientras que Kafka retiene un log particionado y los grupos de consumidores gestionan offsets. El re-procesamiento, el orden por partición y el rebalanceo de Kafka requieren un nuevo pensamiento operativo.",
+    "detailedAnswer": "Lo que se transfiere bien:\n- Diseñar handlers para re-entrega e idempotencia.\n- Separar reintentos transitorios del manejo de mensajes venenosos (poison messages).\n- Definir límites transaccionales alrededor de los efectos secundarios.\n- Monitorear el lag, la tasa de fallos y el tiempo de procesamiento.\n- Controlar la concurrencia y evitar el trabajo ilimitado.\n\nLo que necesita recalibración:\n- Una cola JMS puede tener múltiples consumidores competitivos; los tópicos JMS proporcionan pub/sub. Es inexacto reducir JMS a 'un consumidor por cola'.\n- Los mensajes confirmados en una cola JMS se eliminan normalmente del destino. Los registros de Kafka permanecen hasta que la retención o compactación los elimina, independientemente del offset de un grupo.\n- El orden en Kafka es por partición; el paralelismo y la elección de la clave están vinculados.\n- Los consumidores de Kafka realizan 'poll', confirman offsets y participan en rebalanceos de grupo.\n- XA puede coordinar parte del trabajo JMS/BD pero añade restricciones. Las transacciones de Kafka tienen un límite distinto.\n\nUna respuesta creíble menciona tanto los hábitos de mensajería maduros como los conceptos de Kafka que aún necesitan validación práctica.",
+    "keyPoints": [
+      "Los reintentos, la idempotencia y el aislamiento de fallos se transfieren",
+      "Las colas JMS pueden usar consumidores competitivos",
+      "La retención de Kafka es independiente del progreso del consumidor",
+      "Las particiones vinculan el orden al paralelismo",
+      "Los offsets y el rebalanceo requieren práctica operativa específica de Kafka"
+    ],
+    "redFlags": [
+      "Decir que JMS y Kafka son lo mismo con APIs diferentes",
+      "Afirmar que las colas JMS permiten solo un consumidor",
+      "Equiparar la profundidad de la cola directamente con el lag del consumidor en Kafka",
+      "Presentar XA o las transacciones de Kafka como soluciones sin esfuerzo para 'exactly-once'"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuál es el análogo más cercano en Kafka a los consumidores competitivos de una cola JMS?",
+        "hint": "Los consumidores del mismo grupo se dividen las particiones, pero la asignación y el orden se basan en la partición, no en el despacho por mensaje del broker."
+      },
+      {
+        "question": "¿Qué validarías primero en una prueba de concepto de Kafka?",
+        "hint": "Distribución de claves, comportamiento de offsets/commits, re-entrega, manejo de rebalanceo, compatibilidad de esquemas y observabilidad bajo fallos."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 JMS con ActiveMQ Artemis",
+      "description": "La experiencia en producción cubre integraciones asíncronas, concurrencia controlada, reintentos, manejo de dead-letters y consumidores idempotentes. La asignación de particiones de Kafka y la gestión de offsets se tratan explícitamente como nueva experiencia."
+    }
+  },
+  {
+    "id": "interview-kafka-6",
+    "topic": "kafka",
+    "subtopic": "kafka-producer",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo configurarías y operarías un productor cuando la durabilidad es crítica pero el rendimiento (throughput) sigue siendo un objetivo?",
+    "clarifyingQuestions": [
+      "¿Puede el emisor esperar por un ACK? ¿Qué pérdida o duplicación es aceptable?",
+      "¿Se requiere orden por clave? ¿Qué tan sesgada está esa clave?",
+      "¿Qué política de replicación del broker y `min.insync.replicas` se aplica?"
+    ],
+    "shortAnswer": "Trato las garantías del productor como un contrato del sistema, no solo un flag. Para escrituras duraderas uso replicación con `acks=all`, un `min.insync.replicas` compatible, reintentos e idempotencia, limitando el tiempo de entrega y manejando fallos terminales. Ajusto el batching, linger y compresión basándome en la latencia medida. La aplicación aún necesita una forma segura de publicar junto a cambios en BD, usualmente un 'outbox'.",
+    "detailedAnswer": "Las decisiones principales están conectadas:\n\n- **Durabilidad**: Con `acks=all`, cada réplica actualmente en el conjunto de réplicas sincronizadas (ISR) debe confirmar la escritura. `min.insync.replicas` es el tamaño mínimo del ISR necesario para aceptar la escritura. Se debe configurar de forma coherente con el factor de replicación.\n- **Reintentos y duplicados**: La idempotencia protege los reintentos permitidos de añadir registros duplicados en el log. La aplicación debe manejar resultados terminales ambiguos y no generar un nuevo ID de evento de negocio en cada reintento.\n- **Orden**: Elegir una clave de dominio estable. La configuración del productor y el comportamiento de reintento deben preservar el orden por partición requerido.\n- **Latencia vs Throughput**: Batches más grandes, un `linger` pequeño y la compresión mejoran el rendimiento y la eficiencia de red, pero añaden latencia y uso de memoria.\n- **Límites de fallo**: Establecer timeouts de entrega/solicitud intencionalmente y decidir si el emisor reintenta, persiste para publicación posterior o falla la operación de negocio.\n\nSi un evento representa un cambio confirmado en la base de datos, un 'Transactional Outbox' cierra la brecha de la 'doble escritura' de forma más confiable que llamar a `send()` dentro de la transacción de la base de datos.",
+    "keyPoints": [
+      "acks=all, el ISR actual y min.insync.replicas definen el comportamiento de forma conjunta",
+      "La idempotencia protege los reintentos del productor, no los comandos de negocio duplicados",
+      "El batching, linger y compresión sacrifican latencia por eficiencia",
+      "Las claves estables y la compatibilidad de esquemas son responsabilidad del productor",
+      "Un patrón outbox resuelve la brecha de doble escritura BD-Kafka"
+    ],
+    "redFlags": [
+      "Afirmar que acks=all por sí solo significa que nunca se perderá un mensaje",
+      "Ajustar flags del productor sin conocer la política de replicación del tópico",
+      "Reintentar indefinidamente sin un deadline de entrega o ruta de fallo",
+      "Publicar tras un commit de base de datos sin recuperación para la ventana de doble escritura"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo interactúa `min.insync.replicas` con `acks=all`?",
+        "hint": "Cada miembro actual del ISR confirma una escritura con acks=all; el broker la rechaza si el ISR es más pequeño que min.insync.replicas."
+      },
+      {
+        "question": "¿Qué hace el relay del outbox si la publicación tiene éxito pero marcar la fila como enviada falla?",
+        "hint": "Puede publicar de nuevo, por lo que los eventos necesitan IDs estables y el procesamiento posterior debe tolerar duplicados."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kafka-schema-1",
+    "topic": "kafka",
+    "subtopic": "kafka-producer",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo evolucionas el esquema de un evento cuando los productores y consumidores se despliegan de forma independiente?",
+    "shortAnswer": "Trato el evento como un contrato público versionado. Prefiero la evolución aditiva y compatible hacia atrás, mantengo la identidad y semántica del evento estables, valido la compatibilidad en CI mediante un Schema Registry o pruebas de contrato, y planeo la migración de los consumidores antes de eliminar campos. Un tópico no es una licencia para cambiar el significado de forma silenciosa.",
+    "detailedAnswer": "El despliegue independiente significa que los consumidores antiguos pueden leer mensajes nuevos y los nuevos pueden encontrar mensajes antiguos retenidos. Los campos opcionales añadidos con valores por defecto son más seguros que eliminarlos o cambiar tipos. La dirección de compatibilidad importa: la compatibilidad hacia atrás (backward) permite que los nuevos consumidores lean datos antiguos; la compatibilidad hacia adelante (forward) permite que los antiguos toleren datos nuevos.\n\nEs recomendable usar un formato de esquema explícito y un registro, o forzar contratos JSON con pruebas. Incluir metadatos de tipo/versión si hay varias formas válidas, pero no depender solo de un número de versión. Para cambios semánticos disruptivos, es mejor publicar un nuevo tipo de evento/tópico o realizar una migración deliberada con criterios de apagado claros. Los consumidores deben ignorar campos desconocidos si el formato lo permite.\n\nSe debe probar el re-procesamiento desde eventos históricos, no solo mensajes del productor actual. Monitorear fallos de deserialización y lag durante el despliegue; un cambio de esquema no está completo hasta que los consumidores y la recuperación operativa sean seguros.",
+    "keyPoints": [
+      "Los eventos son contratos duraderos entre despliegues independientes",
+      "Los cambios aditivos son más seguros que cambiar el significado o el tipo",
+      "La dirección de compatibilidad debe alinearse con el despliegue y la retención",
+      "Probar mensajes históricos durante las pruebas de migración"
+    ],
+    "redFlags": [
+      "Cambiar el significado de negocio de un campo sin un nuevo contrato",
+      "Asumir que todos los consumidores se despliegan al mismo tiempo",
+      "Probar solo mensajes emitidos por el nuevo productor"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuándo es un nuevo tipo de evento más seguro que otra versión del esquema?",
+        "hint": "Cuando el significado de negocio o la semántica de procesamiento difieren genuinamente, no solo la representación."
+      },
+      {
+        "question": "¿Por qué un nuevo consumidor todavía puede necesitar leer versiones antiguas del esquema?",
+        "hint": "Tópicos retenidos, reintentos y re-procesamientos pueden entregar eventos históricos mucho después del despliegue."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kafka-8",
+    "topic": "kafka",
+    "subtopic": "kafka-replication",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo funciona la replicación en Kafka y cómo la configurarías para evitar la pérdida de datos sin sacrificar demasiada disponibilidad?",
+    "shortAnswer": "Cada partición tiene un líder y N-1 seguidores (factor de replicación N). Solo las réplicas sincronizadas (ISR) pueden ser líderes. Configuración recomendada: replication.factor=3, min.insync.replicas=2, acks=all. Esto tolera el fallo de 1 broker sin pérdida de datos y sin bloquear escrituras. Si fallan 2 brokers, las escrituras se bloquean (protegiendo los datos) pero las lecturas continúan.",
+    "detailedAnswer": "**Cómo funciona la replicación:**\n\n1. Todas las producciones van al líder de la partición.\n2. Los seguidores obtienen datos del líder continuamente (como consumidores).\n3. Un seguidor está 'sincronizado' si replicó dentro de `replica.lag.time.max.ms` (10s por defecto).\n4. ISR = conjunto de réplicas que están al día.\n5. Elección de líder: solo los miembros del ISR son elegibles (a menos que se active `unclean.leader.election.enable`).\n\n**Configuración óptima (sin pérdida de datos + alta disponibilidad):**\nRF=3 + min.insync=2 + acks=all.\n\n**Escenarios de fallo:**\n- 1 broker caído: ISR=2 >= min.insync \u2192 las escrituras continúan.\n- 2 brokers caídos: ISR=1 < min.insync \u2192 las escrituras FALLAN (NotEnoughReplicas) pero no hay pérdida de datos.\n- Todos los brokers caídos: la partición no está disponible hasta que regrese un miembro del ISR.\n\n**Compromiso:** Un factor de replicación más alto implica más disco, red y latencia de escritura. Para la mayoría de los casos, RF=3 + min.insync=2 es el punto ideal.",
+    "keyPoints": [
+      "El líder maneja todas las lecturas/escrituras; los seguidores solo replican",
+      "ISR = réplicas dentro del tiempo máximo de lag respecto al líder",
+      "min.insync.replicas + acks=all = la combinación para prevenir pérdida de datos",
+      "RF=3, min.insync=2 tolera 1 fallo sin bloquear el servicio",
+      "Elección 'unclean': compromiso entre disponibilidad e integridad de datos"
+    ],
+    "redFlags": [
+      "No saber qué significa ISR",
+      "Confundir replication.factor con min.insync.replicas",
+      "No entender que acks=all no es suficiente por sí solo sin min.insync",
+      "Pensar que la replicación hace que Kafka sea lento (despreciable para RF=3)"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué sucede durante un reinicio progresivo (rolling restart)?",
+        "hint": "Cada broker cae brevemente. El ISR se reduce temporalmente pero, mientras se cumpla min.insync, las escrituras continúan. La elección de líder preferido rebalancea tras el reinicio."
+      },
+      {
+        "question": "¿Cómo monitorearías la salud de la replicación?",
+        "hint": "Métrica de particiones bajo-replicadas (UnderReplicatedPartitions). Alertar si es > 0 por un periodo extendido."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED",
+    "realExperience": {
+      "title": "Comparación con replicación JMS",
+      "description": "En SGN3 con ActiveMQ Artemis, la replicación se maneja vía almacenamiento compartido o pares live/backup. El modelo ISR de Kafka es más flexible: no necesita disco compartido, tiene elección automática de líder y durabilidad ajustable por tópico."
+    }
+  },
+  {
+    "id": "interview-kafka-9",
+    "topic": "kafka",
+    "subtopic": "kafka-reliability",
+    "difficulty": "SENIOR",
+    "question": "Explícame cómo configurarías un productor de Kafka para un tópico crítico de eventos de entrega donde no se puede perder ni duplicar ningún mensaje.",
+    "shortAnswer": "Activo el productor idempotente (`enable.idempotence=true`, que establece `acks=all` y `retries=MAX`), configuro `min.insync.replicas=2` en el tópico, elijo el ID de entrega como clave de partición para el orden, ajusto `batch.size` y `linger.ms` para el rendimiento sin latencia excesiva, e implemento un manejo de errores robusto con una caída a 'dead-letter'.",
+    "detailedAnswer": "**Configuración del productor:**\n`enable.idempotence=true` asegura que los reintentos no dupliquen mensajes. `acks=all` garantiza que todas las réplicas sincronizadas confirmen el mensaje.\n\n**Configuración del tópico:**\n`replication.factor=3` y `min.insync.replicas=2` para asegurar que las escrituras sean duraderas incluso si un broker falla.\n\n**Nivel de aplicación:**\nUso una clave de partición lógica (ID de entrega) para asegurar el orden de los eventos del mismo objeto de negocio. Manejo excepciones de forma explícita: si `send()` falla tras agotar los reintentos, el evento se envía a un almacenamiento de respaldo o tabla de reintentos (outbox).\n\n**Garantías logradas:**\n- Sin duplicados (productor idempotente + números de secuencia).\n- Sin pérdida de datos (acks=all + min.insync=2).\n- Orden por entrega (clave de partición).\n- Tiempo de reintento acotado (`delivery.timeout.ms`).",
+    "keyPoints": [
+      "enable.idempotence=true es el ajuste más importante",
+      "Clave de partición = ID de entrega para orden por entidad",
+      "min.insync.replicas en el lado del tópico completa el esquema",
+      "Respaldo 'dead-letter' para fallos irrecuperables",
+      "Compresión (lz4/snappy) para rendimiento con bajo coste de CPU"
+    ],
+    "redFlags": [
+      "Usar acks=0 o acks=1 para eventos críticos",
+      "No manejar errores en el send (fire and forget)",
+      "No mencionar el productor idempotente al hablar de evitar duplicados",
+      "Usar una clave de partición aleatoria (pierde la garantía de orden)"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuál es la diferencia entre retries y delivery.timeout.ms?",
+        "hint": "retries es el número máximo de intentos. delivery.timeout.ms es el presupuesto total de tiempo incluyendo reintentos, backoff y batching. Es el deadline real."
+      },
+      {
+        "question": "¿Cómo funciona el productor idempotente internamente?",
+        "hint": "El broker asigna un ProducerID + epoch. Cada mensaje recibe un número de secuencia por partición. El broker rechaza duplicados con el mismo PID y secuencia."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED",
+    "realExperience": {
+      "title": "Mensajería confiable en SGN3",
+      "description": "Implementación de productores JMS confiables con confirmación, reintentos y patrones de DLQ. Los mismos principios aplican: no enviar y olvidar eventos críticos, manejar fallos explícitamente y asegurar la idempotencia en el consumidor."
+    }
+  },
+  {
+    "id": "interview-kafka-10",
+    "topic": "kafka",
+    "subtopic": "kafka-internals",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Qué es la compactación de logs (log compaction) en Kafka y cómo la usarías en un sistema de seguimiento de entregas?",
+    "shortAnswer": "La compactación de logs mantiene solo el último valor por cada clave de mensaje, eliminando las entradas antiguas durante la compactación en segundo plano. Para el seguimiento de entregas: publico el estado actual (PLANNED, DISPATCHED, DELIVERED) con el ID de entrega como clave. Los consumidores que empiezan de cero siempre ven el último estado por entrega sin leer todo el historial. Es como un snapshot siempre actualizado.",
+    "detailedAnswer": "**Cómo funciona:**\nLa retención normal (delete) elimina segmentos completos tras un periodo. La compactación elimina valores antiguos para una misma clave dentro de los segmentos.\n\n**Caso de uso: Seguimiento de entregas:**\n- Tópico: `delivery-status` con `cleanup.policy=compact`.\n- Clave: ID de entrega.\n- Valor: estado actual + metadatos.\n- Un nuevo consumidor lee desde el principio \u2192 obtiene un snapshot de todas las entregas activas.\n- Un consumidor en tiempo real lee desde el final \u2192 obtiene actualizaciones en vivo.\n\n**Tombstones (borrar una clave):**\nSi se envía un mensaje con clave X y valor `null`, Kafka elimina todas las entradas para esa clave tras la compactación.\n\n**vs Event Sourcing:**\n- Compactación = estado actual (modelo de lectura CQRS).\n- Retención completa = historial de eventos (event sourcing).\n- Se pueden combinar: `cleanup.policy=compact,delete` para tener el último estado pero también un límite de tiempo.",
+    "keyPoints": [
+      "Mantiene el último valor por clave, elimina los antiguos",
+      "Tombstone (valor nulo) = borrar la clave tras la compactación",
+      "Útil para: estado actual por entidad, CDC, tópicos de configuración",
+      "Los nuevos consumidores obtienen un snapshot completo leyendo desde el offset 0",
+      "Combinable con tópicos de eventos: eventos (historial) + estados (snapshot compactado)"
+    ],
+    "redFlags": [
+      "Confundir compactación con compresión",
+      "Pensar que la compactación borra datos inmediatamente (corre en background)",
+      "Usar compactación para event sourcing (se necesita el historial completo)",
+      "No mencionar tombstones para el borrado de claves"
+    ],
+    "followUps": [
+      {
+        "question": "¿Se puede tener compactación y retención por tiempo a la vez?",
+        "hint": "Sí: compacta dentro de la ventana de retención y luego borra segmentos viejos. Útil si quieres el último estado pero con un límite temporal."
+      },
+      {
+        "question": "¿Cómo se relaciona KTable de Kafka Streams con la compactación?",
+        "hint": "KTable materializa un tópico compactado en un estado local. Cada actualización al tópico es una actualización a la KTable."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  }
+]

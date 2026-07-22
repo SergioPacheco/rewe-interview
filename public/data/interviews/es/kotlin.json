@@ -1,0 +1,700 @@
+[
+  {
+    "id": "interview-kotlin-why-1",
+    "topic": "kotlin",
+    "subtopic": "kt-why",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Qué haría que Kotlin fuera una buena —o mala— elección para un servicio backend en la JVM?",
+    "shortAnswer": "Kotlin puede reducir el código repetitivo (boilerplate), modelar la nulabilidad de forma explícita, ofrecer tipos sellados y de datos expresivos, y utilizar librerías de Java con una adopción gradual. Las corrutinas pueden simplificar el código asíncrono cuando el stack admite la suspensión. Los costes incluyen un segundo lenguaje y cadena de herramientas, compilaciones limpias más lentas en algunos proyectos, casos borde de interoperabilidad con Java y convenciones de frameworks en torno a clases finales y reflexión. Decidiría basándome en la capacidad del equipo y la carga de trabajo, no solo en la preferencia sintáctica.",
+    "detailedAnswer": "Kotlin tiene como objetivo la JVM y puede coexistir con Java en una misma base de código, lo que reduce el riesgo de migración. Su sistema de tipos, propiedades concisas, funciones de extensión, jerarquías selladas y corrutinas pueden mejorar el modelado de dominio y reducir la ceremonia. Estos beneficios dependen de un uso disciplinado; las cadenas densas de funciones de alcance o los DSLs complejos pueden hacer que el código sea menos accesible.\n\nOperativamente, se debe evaluar el tiempo de compilación, el soporte de IDE y análisis estático, la compatibilidad de librerías, la depuración, la observabilidad, la contratación y la capacidad del equipo para revisar código con corrutinas. Spring ofrece un sólido soporte para Kotlin, pero los frameworks basados en proxies, Jackson y JPA aún necesitan una configuración específica para Kotlin. Un buen caso de adopción presenta problemas concretos que Kotlin resuelve y criterios de éxito medibles. Un mal caso añade diversidad de lenguajes a un servicio estable sin propiedad del equipo ni plan de migración.",
+    "keyPoints": [
+      "Kotlin ofrece interoperabilidad con la JVM y adopción incremental",
+      "La nulabilidad y los tipos de dominio concisos pueden mejorar la corrección y la señal del código",
+      "Los costes de herramientas, compilación, framework y equipo forman parte de la decisión",
+      "La elección del lenguaje debe abordar necesidades de ingeniería medidas"
+    ],
+    "redFlags": [
+      "Describir a Kotlin simplemente como un 'Java mejor'",
+      "Afirmar que la seguridad nula elimina todas las posibles NullPointerException",
+      "Ignorar la propiedad del equipo, el rendimiento de la compilación y la integración con frameworks"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo evaluarías Kotlin con un piloto de bajo riesgo?",
+        "hint": "Elige un servicio o módulo acotado y mide la entrega, los defectos, el tiempo de compilación y la operabilidad."
+      },
+      {
+        "question": "¿Qué habilidades de Java se transfieren directamente?",
+        "hint": "El comportamiento de la JVM, las librerías, la arquitectura, los fundamentos de concurrencia, las pruebas y las operaciones se transfieren; los modismos siguen siendo diferentes."
+      },
+      {
+        "question": "¿Cuándo podría ser mantener un servicio en Java la opción más sólida?",
+        "hint": "Considera el código estable, la experiencia del equipo, las limitaciones de las herramientas y la ausencia de un beneficio concreto."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-fundamentals-1",
+    "topic": "kotlin",
+    "subtopic": "kt-fundamentals",
+    "difficulty": "BEGINNER",
+    "question": "¿Declarar una propiedad con val hace que el objeto referenciado sea inmutable?",
+    "shortAnswer": "No. val significa que la referencia de la propiedad no puede ser reasignada después de la inicialización; no dice nada sobre si el objeto referenciado puede cambiar. Un MutableList declarado con val aún puede añadir o eliminar elementos. La inmutabilidad efectiva requiere un diseño de valores inmutables, propiedad controlada y la ausencia de alias mutables, no simplemente val o una interfaz de solo lectura.",
+    "detailedAnswer": "El `val` de Kotlin crea una propiedad de solo lectura desde la perspectiva del llamador, mientras que `var` proporciona un setter. Para una referencia local o de respaldo, val impide la reasignación, pero los métodos del objeto aún pueden mutar su estado. Del mismo modo, `List<T>` es una interfaz de solo lectura en Kotlin, no una garantía de que ningún propietario mutable pueda cambiar la colección subyacente.\n\nEsta distinción es importante para la seguridad de hilos, las clases de datos (data classes) y los contratos de API. Utiliza tipos de elementos inmutables, copias defensivas, colecciones persistentes cuando sea apropiado y limita la propiedad para obtener garantías más sólidas. Las propiedades personalizadas también pueden tener getters calculados, por lo que un val no devuelve necesariamente el mismo valor cada vez. Una respuesta sólida separa la reasignación de referencias, el acceso de solo lectura de la API y la inmutabilidad profunda del objeto.",
+    "keyPoints": [
+      "val impide la reasignación de una propiedad, no la mutación de su objeto",
+      "var expone la reasignación a través de un setter",
+      "Las interfaces de colecciones de solo lectura no son garantías de inmutabilidad profunda",
+      "La propiedad y los alias determinan la mutabilidad efectiva"
+    ],
+    "redFlags": [
+      "Usar val e inmutable como sinónimos",
+      "Asumir que un List nunca puede cambiar detrás de una referencia de solo lectura",
+      "Ignorar elementos mutables dentro de una colección que de otro modo sería estable"
+    ],
+    "followUps": [
+      {
+        "question": "¿Puede una propiedad val devolver diferentes valores con el tiempo?",
+        "hint": "Un getter personalizado puede calcular un nuevo resultado en cada acceso."
+      },
+      {
+        "question": "¿Cómo expondrías una colección a través de una frontera de confianza?",
+        "hint": "Considera la copia, las estructuras inmutables/persistentes y la documentación de la propiedad."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-null-1",
+    "topic": "kotlin",
+    "subtopic": "kt-null",
+    "difficulty": "BEGINNER",
+    "question": "¿Cómo reduce los errores la seguridad nula de Kotlin y dónde pueden ocurrir todavía fallos de tiempo de ejecución relacionados con nulos?",
+    "shortAnswer": "Kotlin separa los tipos no nulos como String de los tipos nulables como String?, por lo que el compilador requiere una llamada segura, un valor por defecto Elvis, una comprobación explícita u otra prueba antes de la desreferenciación. Esto reduce enormemente los errores accidentales de nulos, pero no los elimina. `!!`, los tipos de plataforma de Java, la inicialización insegura o el escape del constructor, y las excepciones explícitas aún pueden producir NullPointerException.",
+    "detailedAnswer": "Un receptor nulable admite operaciones como `value?.length`, y `?:` suministra un valor de respaldo. Después de una comprobación de nulos estable, el smart cast a menudo reduce el tipo. Las conversiones seguras con `as?` devuelven null en lugar de lanzar ClassCastException. Estas características hacen que la ausencia sea parte del contrato de tipos en lugar de una convención no documentada.\n\nPersisten brechas en el tiempo de ejecución. `value!!` afirma una condición que el compilador no puede probar y lanza una excepción si es incorrecta. Las declaraciones de Java sin metadatos de nulabilidad utilizables aparecen como tipos de plataforma flexibles, por lo que Kotlin permite opciones que pueden fallar en tiempo de ejecución. Los problemas de orden de inicialización y la fuga de `this` durante la construcción también pueden violar las suposiciones. Utiliza validación explícita en las fronteras de Java, deserialización, base de datos y frameworks, y reserva el `!!` para casos con un invariante cercano aplicable en lugar de llamar al sistema a prueba de NPE.",
+    "keyPoints": [
+      "Los tipos nulables y no nulos hacen explícita la ausencia de valor",
+      "Las llamadas seguras, Elvis, las comprobaciones y los smart casts expresan el manejo de nulos",
+      "Los tipos de plataforma de Java debilitan las garantías de nulos en tiempo de compilación",
+      "El operador de aserción no nula aún puede lanzar NullPointerException"
+    ],
+    "redFlags": [
+      "Afirmar que Kotlin elimina todos los casos de NullPointerException",
+      "Usar !! repetidamente en lugar de modelar o validar la ausencia",
+      "Confiar en valores de Java o deserializados sin comprobaciones en las fronteras"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué es un tipo de plataforma de Java?",
+        "hint": "Kotlin tiene información de nulabilidad incompleta y permite tanto el uso nulable como el no nulo."
+      },
+      {
+        "question": "¿Cuándo es preferible requireNotNull a !!?",
+        "hint": "En una frontera donde la validación y un mensaje de fallo útil establecen un invariante."
+      },
+      {
+        "question": "¿En qué se diferencia una conversión segura (safe cast) de una aserción no nula?",
+        "hint": "as? produce null en caso de desajuste de tipo; !! lanza una excepción cuando un valor nulable es null."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-extensions-1",
+    "topic": "kotlin",
+    "subtopic": "kt-extensions",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Qué pueden hacer las funciones de extensión y qué comportamiento de despacho suele sorprender a los desarrolladores?",
+    "shortAnswer": "Una función de extensión añade una sintaxis de llamada para un tipo sin modificarlo, heredar de él ni obtener acceso privilegiado a dicho tipo. Las extensiones se resuelven estáticamente a partir del tipo de receptor declarado e importaciones visibles; no son sobrescrituras virtuales. Un miembro real con la misma firma aplicable gana. Utilizo extensiones para transformaciones cohesivas o adaptadores, no para ocultar servicios de negocio no relacionados como métodos.",
+    "detailedAnswer": "`fun String.toDomainId()` puede hacer que una conversión sea fácil de descubrir mientras sigue siendo una función ordinaria de estilo estático a nivel de bytecode. Solo puede acceder a la API visible del receptor. Las extensiones pueden tener receptores nulables, propiedades sin campos de respaldo (backing fields) y restricciones genéricas. Su aparente sintaxis de método no cambia la propiedad ni el encapsulamiento.\n\nLa resolución estática significa que una extensión seleccionada para una variable de tipo Base sigue siendo la extensión de Base incluso cuando el objeto en tiempo de ejecución es de tipo Derived. Esto difiere de los miembros sobrescritos. Las importaciones y el alcance del paquete también importan, por lo que las extensiones genéricas amplias pueden causar ambigüedad o contaminar el autocompletado. Las buenas extensiones son pequeñas, cohesivas con el receptor y no sorprenden. Si el comportamiento necesita dependencias, estado, despacho dinámico o una identidad de dominio independiente, un colaborador regular suele ser más claro.",
+    "keyPoints": [
+      "Las extensiones no modifican el tipo receptor ni acceden a su estado privado",
+      "La resolución utiliza el tipo de receptor declarado en lugar del despacho en tiempo de ejecución",
+      "Los miembros aplicables tienen prioridad sobre las extensiones",
+      "Las extensiones funcionan mejor para operaciones sin estado cohesivas"
+    ],
+    "redFlags": [
+      "Describir las extensiones como 'monkey patching' o métodos virtuales",
+      "Ocultar estados de red, base de datos o globales detrás de una sintaxis que parece inofensiva",
+      "Añadir extensiones amplias a Any o genéricas que creen ambigüedad"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué sucede cuando un miembro y una extensión tienen la misma firma?",
+        "hint": "Se selecciona el miembro."
+      },
+      {
+        "question": "¿Puede una propiedad de extensión almacenar estado?",
+        "hint": "No se añade ningún campo de respaldo; solo puede calcular a través de accessors."
+      },
+      {
+        "question": "¿Cómo ayuda una extensión en un receptor nulable?",
+        "hint": "Puede centralizar el comportamiento consciente de nulos e inspeccionar explícitamente `this == null`."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-functional-1",
+    "topic": "kotlin",
+    "subtopic": "kt-functional",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo apoyan las funciones de orden superior e inline el estilo funcional en Kotlin?",
+    "shortAnswer": "Las funciones de orden superior aceptan o devuelven funciones, lo que permite transformaciones reutilizables como map, filter y políticas específicas del dominio. Las funciones inline pueden reducir la asignación de lambdas y permitir parámetros de tipo reificados, pero el inlining aumenta el bytecode y no es automáticamente una victoria de rendimiento. El estilo funcional es más valioso cuando las transformaciones son explícitas y los efectos secundarios están controlados, no cuando cada bucle se convierte en una cadena densa.",
+    "detailedAnswer": "Los tipos de función como `(Order) -> Money` permiten que el comportamiento se pase como datos. Las lambdas pueden capturar variables del entorno, lo que puede asignar memoria o retener estado, y los retornos no locales solo se permiten en ciertos contextos de lambdas inline. `crossinline` y `noinline` restringen o preservan los valores de las lambdas cuando una función inline necesita un comportamiento diferente.\n\nLas transformaciones puras y los valores inmutables simplifican las pruebas y la concurrencia, pero Kotlin es multiparadigma: la mutación local dentro de un algoritmo bien contenido puede ser más clara y rápida que crear muchos valores intermedios. Las operaciones de colecciones son ansiosas (eager); Sequence ofrece un procesamiento perezoso (lazy) elemento por elemento con su propia sobrecarga. Utiliza funciones con nombre cuando las cadenas se vuelvan difíciles de explicar, aisla la E/S en las fronteras y realiza benchmarks del código caliente antes de confiar en suposiciones de inline o de secuencias.",
+    "keyPoints": [
+      "Los tipos de función hacen que el comportamiento sea composible y testeable",
+      "Inline puede eliminar parte de la sobrecarga de llamadas y asignación, y soporta tipos reificados",
+      "El estado capturado y los retornos no locales afectan el comportamiento de las lambdas",
+      "La sintaxis funcional debería mejorar la claridad y el control de los efectos secundarios"
+    ],
+    "redFlags": [
+      "Asumir que cada función inline es más rápida",
+      "Ocultar efectos secundarios dentro de operaciones de map o filter",
+      "Reemplazar un bucle claro con una cadena de transformación ilegible"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué permite 'reified' en una función inline?",
+        "hint": "El punto de llamada puede retener el tipo concreto para comprobaciones, conversiones o acceso a la clase."
+      },
+      {
+        "question": "¿Cuándo captura estado una lambda?",
+        "hint": "Cuando hace referencia a variables de su ámbito envolvente."
+      },
+      {
+        "question": "¿Se ejecutan de la misma manera el map de una colección y el map de una Sequence?",
+        "hint": "Las operaciones de colecciones son ansiosas; las de secuencias son perezosas y orientadas a elementos."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-data-classes-1",
+    "topic": "kotlin",
+    "subtopic": "kt-data-classes",
+    "difficulty": "BEGINNER",
+    "question": "¿Qué genera una clase de datos (data class) de Kotlin y qué no garantiza copy()?",
+    "shortAnswer": "Una data class genera equals, hashCode, toString, funciones de componente y copy a partir de las propiedades en su constructor primario. copy() es superficial (shallow): las listas u objetos mutables anidados permanecen compartidos a menos que se copien por separado. Las data classes no son automáticamente inmutables, y las propiedades declaradas solo en el cuerpo de la clase no participan en el contrato generado de igualdad, copia o desestructuración.",
+    "detailedAnswer": "Las data classes son tipos concisos orientados a valores. Al menos un parámetro del constructor primario debe ser una propiedad, y las funciones generadas utilizan esas propiedades del constructor. Un componente `var` es mutable, y un componente `val` puede referenciar un estado mutable, por lo que la inmutabilidad requiere más que el modificador data.\n\n`copy(status = ACTIVE)` construye una nueva instancia exterior mientras reutiliza cada componente no reemplazado. Esto es útil para actualizaciones de estilo inmutable solo cuando los componentes mismos tienen una semántica de valor adecuada. Las propiedades del cuerpo están excluidas de los métodos generados equals, hashCode, toString, componentN y copy, lo que puede sorprender en cachés y pruebas. Las data classes se ajustan a DTOs y valores; las entidades JPA con IDs generados, asociaciones lazy y mutación de ciclo de vida a menudo necesitan un diseño de identidad y métodos explícito en su lugar.",
+    "keyPoints": [
+      "Las funciones generadas utilizan las propiedades del constructor primario",
+      "copy crea una copia superficial",
+      "data no implica inmutable",
+      "La identidad de la entidad a menudo difiere de la igualdad de datos estructural"
+    ],
+    "redFlags": [
+      "Llamar a copy un clon profundo",
+      "Esperar que las propiedades del cuerpo afecten a la igualdad generada",
+      "Usar una data class mutable como clave de un mapa sin considerar la estabilidad del hash"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué sucede con un componente MutableList después de un copy()?",
+        "hint": "Ambas instancias exteriores referencian la misma lista a menos que se copie explícitamente."
+      },
+      {
+        "question": "¿Por qué puede ser problemática una data class como entidad JPA?",
+        "hint": "Considera la igualdad generada, los campos lazy, los proxies, los IDs y la mutación."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-sealed-1",
+    "topic": "kotlin",
+    "subtopic": "kt-sealed",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cuándo modelarías alternativas con una jerarquía sellada en lugar de un enum?",
+    "shortAnswer": "Un enum se ajusta a un conjunto fijo de constantes singleton con la misma forma básica. Una clase o interfaz sellada se ajusta a una familia cerrada cuyas alternativas llevan diferentes datos o comportamientos, como Success(value), Retry(after) y Failure(reason). El `when` puede entonces ser exhaustivo sin necesidad de un else cuando se cubren todas las alternativas directas conocidas, lo que hace que la evolución del dominio sea visible para los llamadores.",
+    "detailedAnswer": "Los tipos sellados restringen las subclases directas al mismo módulo y paquete, con reglas adicionales de conjuntos de fuentes en proyectos multiplataforma. Cada subtipo puede ser una data class, un objeto, un enum o una clase regular con su propio estado. Esto modela tipos de resultados y comandos de estilo algebraico con mayor precisión que los valores nulables, los flags o los resultados esperados impulsados por excepciones.\n\nUn enum sigue siendo más simple cuando cada caso es una constante sin estado y los consumidores necesitan nombres o propiedades independientes del orden. Una jerarquía sellada está cerrada en su frontera directa, pero los descendientes no sellados pueden tener sus propias reglas de extensión. El `when` exhaustivo es valioso, pero añadir una alternativa se convierte en un evento de compatibilidad de código para los consumidores, lo cual suele ser deseable, pero debe planificarse en librerías públicas y clientes desplegados por separado.",
+    "keyPoints": [
+      "Los enums representan constantes singleton fijas",
+      "Las alternativas selladas pueden llevar estados e implementaciones distintos",
+      "El 'when' exhaustivo hace visibles las alternativas faltantes",
+      "Añadir un subtipo puede requerir intencionalmente cambios en el consumidor"
+    ],
+    "redFlags": [
+      "Usar un enum más campos de carga nulables para datos de casos no relacionados",
+      "Añadir else a cada when y ocultar alternativas selladas recién introducidas",
+      "Asumir que sellado significa que ninguna subclase indirecta puede ser extendida jamás"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué omitir el else podría ser útil para una expresión when sellada?",
+        "hint": "El compilador puede informar sobre alternativas recién añadidas que no están siendo manejadas."
+      },
+      {
+        "question": "¿Puede un enum implementar una interfaz sellada?",
+        "hint": "Sí, un enum puede ser una implementación directa, aunque no puede extender una clase sellada."
+      },
+      {
+        "question": "¿Qué preocupación de compatibilidad de API surge al añadir un subtipo sellado?",
+        "hint": "Los consumidores exhaustivos pueden necesitar recompilación y una nueva decisión de manejo."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-objects-1",
+    "topic": "kotlin",
+    "subtopic": "kt-objects",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿En qué se diferencian las declaraciones de objetos, las expresiones de objetos y los objetos compañeros (companion objects)?",
+    "shortAnswer": "Una declaración de objeto define una instancia singleton inicializada de forma perezosa. Una expresión de objeto crea una instancia anónima cada vez que se evalúa. Un companion object es un objeto asociado a una clase, pero sus miembros no son miembros estáticos de Java a menos que las anotaciones de interoperabilidad o los accessors generados proporcionen esa forma. Evito el estado singleton global mutable incluso cuando la sintaxis de objeto lo hace conveniente.",
+    "detailedAnswer": "Las declaraciones de objeto proporcionan inicialización de singleton a nivel de lenguaje con seguridad de hilos en la JVM. Funcionan bien para utilidades sin estado, constantes agrupadas con comportamiento o un servicio deliberado para todo el proceso cuyo ciclo de vida es simple. Las expresiones de objeto son los objetos anónimos de Kotlin y pueden capturar estado local.\n\nUn companion object es un objeto con nombre dentro de una clase y puede implementar interfaces o contener fábricas. El código de Kotlin puede llamar a sus miembros a través del nombre de la clase, pero Java ve la instancia Companion a menos que anotaciones como `@JvmStatic` expongan métodos de estilo estático. La sintaxis de singleton no resuelve el aislamiento de pruebas, la configuración, la unicidad distribuida o el ciclo de vida. Prefiere la inyección de dependencias para servicios con estado cuya construcción y reemplazo sean importantes, y ten cuidado con los efectos secundarios de la inicialización.",
+    "keyPoints": [
+      "Las declaraciones de objeto representan una instancia singleton inicializada",
+      "Las expresiones de objeto crean instancias anónimas",
+      "Los miembros companion no son inherentemente métodos estáticos de la JVM",
+      "La sintaxis de singleton no justifica el estado global mutable"
+    ],
+    "redFlags": [
+      "Tratar una declaración de objeto como una única instancia a través de múltiples procesos",
+      "Poner estado de solicitud o de prueba en un objeto global",
+      "Asumir que los métodos companion son automáticamente ergonómicos desde Java"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo se inicializa una declaración de objeto en la JVM?",
+        "hint": "La inicialización ocurre en el primer acceso con la seguridad de inicialización de clases de la JVM."
+      },
+      {
+        "question": "¿Cuándo sería mejor la inyección de dependencias que un objeto?",
+        "hint": "Cuando el ciclo de vida, la configuración, el reemplazo, el alcance o el aislamiento de pruebas sean importantes."
+      },
+      {
+        "question": "¿Qué cambia @JvmStatic?",
+        "hint": "Genera un método estático o un accessor para la interoperabilidad con Java."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-collections-1",
+    "topic": "kotlin",
+    "subtopic": "kt-collections",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo afectan las colecciones de solo lectura de Kotlin y las funciones de alcance a la claridad de la API?",
+    "shortAnswer": "List expone operaciones de lectura mientras que MutableList expone la mutación, pero List es de solo lectura en lugar de una garantía de inmutabilidad profunda; otro alias aún podría mutar el objeto subyacente. Las funciones de alcance difieren principalmente por el nombre del receptor y el valor de retorno: let/run devuelven el resultado de la lambda, mientras que apply/also devuelven el receptor. Las uso con moderación cuando esa distinción hace que la intención sea más clara.",
+    "detailedAnswer": "Kotlin separa las interfaces de colecciones mutables y de solo lectura en tiempo de compilación. Exponer List impide que el llamador invoque add, pero un propietario mutable puede seguir cambiando la misma instancia, y los elementos pueden ser mutables ellos mismos. Copia o usa una colección persistente/inmutable cuando se requiera semántica de instantánea (snapshot). Las transformaciones de colecciones son ansiosas, mientras que las de Sequence son perezosas y pueden evitar intermediarios en pipelines adecuados.\n\nPara las funciones de alcance, `let` y `also` usan `it`; `run`, `apply` y `with` usan el estilo de receptor `this`. `let`, `run` y `with` devuelven el resultado del bloque; `apply` y `also` devuelven el objeto de contexto. Los usos típicos son transformaciones con alcance de nulos, configuración de objetos y observaciones laterales, pero anidar varias funciones oscurece qué receptor está activo. Una variable con nombre o un bloque ordinario suele ser más claro.",
+    "keyPoints": [
+      "Las APIs de colecciones de solo lectura restringen las operaciones pero no demuestran inmutabilidad",
+      "Las operaciones de colecciones son ansiosas; los pipelines de Sequence son perezosos",
+      "Las funciones de alcance difieren en la referencia del receptor y el valor de retorno",
+      "Las funciones de alcance anidadas pueden reducir en lugar de mejorar la legibilidad"
+    ],
+    "redFlags": [
+      "Llamar inmutable a cada implementación de List",
+      "Usar apply cuando el resultado intencionado es el valor de la lambda",
+      "Anidar funciones de alcance hasta que el 'this' o 'it' activo sea ambiguo"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuál es la diferencia entre also y let?",
+        "hint": "Ambos usan 'it'; 'also' devuelve el receptor, mientras que 'let' devuelve el resultado del bloque."
+      },
+      {
+        "question": "¿Cuándo puede ser Sequence más lenta que las operaciones de colecciones?",
+        "hint": "Pipelines pequeños pueden pagar la sobrecarga del iterador y las lambdas sin evitar un trabajo significativo."
+      },
+      {
+        "question": "¿Cómo devolverías una instantánea de colección estable?",
+        "hint": "Crea una copia independiente o usa una colección con semántica inmutable explícita."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-generics-1",
+    "topic": "kotlin",
+    "subtopic": "kt-generics",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo abordan la varianza y el borrado (erasure) los in, out, las proyecciones de estrella y los parámetros de tipo reificados?",
+    "shortAnswer": "Los genéricos de Kotlin son invariantes por defecto. `out T` hace que un productor sea covariante, de modo que puede devolver T pero no consumir un T arbitrario; `in T` hace que un consumidor sea contravariante. Las proyecciones en el punto de uso restringen una referencia, y la proyección de estrella representa un tipo seguro desconocido. El borrado de la JVM sigue aplicando; un parámetro reificado inline sustituye la información del tipo en el punto de llamada para comprobaciones soportadas y acceso a la clase.",
+    "detailedAnswer": "Si Box<T> consume y produce T, Box<Dog> no puede tratarse de forma segura como Box<Animal>. El `out` en el sitio de declaración es apropiado para una fuente como Provider<out T>; `in` se ajusta a un sumidero como Comparator<in T>. Las formas en el punto de uso como Array<out Animal> restringen las operaciones para un uso particular cuando la declaración misma debe permanecer invariante. La proyección de estrella no es simplemente Any?: expone solo operaciones seguras para un tipo desconocido bajo la varianza de la declaración.\n\nEn la JVM, los argumentos genéricos se borran generalmente, por lo que `value is List<String>` no está disponible como una comprobación completa en tiempo de ejecución. Un `reified T` inline puede generar comprobaciones que involucren el tipo concreto del punto de llamada, pero los argumentos genéricos anidados permanecen borrados. La reificación también aumenta el código generado en el punto de llamada. La varianza debe describir roles reales de productor/consumidor, no añadirse hasta que el compilador acepte un diseño inseguro.",
+    "keyPoints": [
+      "Los tipos genéricos de Kotlin son invariantes a menos que se declare o proyecte la varianza",
+      "out modela productores e in modela consumidores",
+      "La proyección de estrella es el acceso seguro a un tipo desconocido",
+      "Los parámetros inline reificados recuperan operaciones de tipo seleccionadas en el punto de llamada, no genéricos completos en tiempo de ejecución"
+    ],
+    "redFlags": [
+      "Usar out en un tipo que debe consumir valores T arbitrarios",
+      "Describir la proyección de estrella exactamente igual que Any?",
+      "Afirmar que reified hace que los argumentos genéricos anidados estén totalmente disponibles en tiempo de ejecución"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué List<Dog> es usable como List<Animal> en Kotlin?",
+        "hint": "La interfaz List de solo lectura declara su tipo de elemento covariante con out."
+      },
+      {
+        "question": "¿Por qué MutableList es invariante?",
+        "hint": "Lee y acepta elementos, por lo que la covarianza permitiría inserciones inseguras."
+      },
+      {
+        "question": "¿Qué puede hacer reified T que T ordinario no puede?",
+        "hint": "En un punto de llamada inline puede soportar comprobaciones 'is' seleccionadas, conversiones y acceso a T::class."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-delegation-1",
+    "topic": "kotlin",
+    "subtopic": "kt-delegation",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Qué problemas resuelven la delegación de clases y las propiedades delegadas en Kotlin?",
+    "shortAnswer": "La delegación de clases con `by` reenvía la implementación de una interfaz a un colaborador, apoyando la composición sin métodos de reenvío repetitivos. Las propiedades delegadas mueven la política de get/set a un objeto, como ocurre con lazy, observable o un delegado de persistencia personalizado. Ambos reducen la ceremonia, pero pueden ocultar costes y ciclos de vida, por lo que una propiedad que realiza E/S o un delegado con seguridad de hilos poco clara pueden sorprender a los llamadores.",
+    "detailedAnswer": "`class AuditedStore(delegate: Store) : Store by delegate` genera el reenvío para los miembros de Store, mientras que la clase puede sobrescribir comportamientos seleccionados. Esto es reutilización de la implementación a través de la composición, no herencia de subtipos del delegado. Hay que tener en cuenta que las llamadas realizadas internamente por el delegado no se enrutan dinámicamente a través de las sobrescrituras en el envoltorio de la forma en que algunos desarrolladores esperan.\n\nUn delegado de propiedad implementa `getValue` y opcionalmente `setValue`; ejemplos estándar incluyen `lazy`, observable, vetoable y propiedades respaldadas por un mapa. El `lazy` por defecto está sincronizado, mientras que otras opciones de LazyThreadSafetyMode intercambian garantías y sobrecarga. Los delegados pueden hacer reutilizable una política transversal, pero el trabajo costoso, el estado externo, las excepciones y el ciclo de vida deben permanecer visibles en la API. Evita convertir el acceso inocente a una propiedad en una llamada de red impredecible.",
+    "keyPoints": [
+      "La delegación de clases genera el reenvío a una implementación compuesta",
+      "Los delegados de propiedades centralizan la política de acceso o inicialización",
+      "La inicialización perezosa (lazy) tiene semántica de seguridad de hilos seleccionable",
+      "La delegación puede ocultar el comportamiento y el coste si el contrato no está claro"
+    ],
+    "redFlags": [
+      "Llamar a la delegación de clases herencia ordinaria",
+      "Asumir que las sobrescrituras del envoltorio interceptan cada llamada interna del delegado",
+      "Ocultar E/S lenta o propensa a fallos detrás de un getter de propiedad no documentado"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué garantías ofrece lazy por defecto?",
+        "hint": "El modo sincronizado por defecto publica un valor inicializado de forma segura."
+      },
+      {
+        "question": "¿Puede una clase delegada sobrescribir un miembro reenviado?",
+        "hint": "Sí, puede reemplazar comportamientos de reenvío seleccionados."
+      },
+      {
+        "question": "¿Cuándo es inapropiado un delegado de propiedad personalizado?",
+        "hint": "Cuando oculta semánticas materiales de E/S, fallos, transacciones o ciclos de vida."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-coroutines-1",
+    "topic": "kotlin",
+    "subtopic": "kt-coroutines",
+    "difficulty": "SENIOR",
+    "question": "¿Qué garantiza la concurrencia estructurada y qué no garantiza suspend?",
+    "shortAnswer": "La concurrencia estructurada vincula la vida de las corrutinas hijas a un alcance (scope): el alcance no se completa hasta que sus hijos terminan, y la cancelación o el fallo siguen reglas definidas de padre-hijo. `suspend` solo significa que una función puede suspenderse; no hace que el código bloqueante pase a ser no bloqueante ni inicia una nueva corrutina. Los Dispatchers y la librería llamada determinan dónde y cómo se ejecuta el trabajo.",
+    "detailedAnswer": "`coroutineScope` crea un alcance hijo y espera a todos los hijos. Un fallo normalmente cancela a los hijos hermanos y se propaga, mientras que `supervisorScope` aisla los fallos de los hermanos para que el llamador pueda elegir cómo combinar los resultados. `launch` devuelve un Job para trabajo sin un valor; `async` devuelve Deferred e informa de su resultado o fallo a través de await. Ninguno de los dos debe separarse en un GlobalScope para trabajo de solicitudes.\n\nLa cancelación es cooperativa: las funciones de suspensión la comprueban, y los bucles de CPU deben alcanzar las comprobaciones o llamar a `ensureActive`/`yield`. Capturar excepciones amplias no debe silenciar la CancellationException. Una función suspend puede invocar JDBC, Thread.sleep u otra API bloqueante y ocupar su hilo. Utiliza un dispatcher adecuado o un cliente genuinamente de suspensión, aplica timeouts como política en lugar de cancelación remota garantizada, y mantén los alcances bajo la propiedad del ciclo de vida de la aplicación.",
+    "keyPoints": [
+      "Los alcances estructurados poseen y esperan a sus corrutinas hijas",
+      "suspend no implica concurrencia, un cambio de dispatcher ni una implementación no bloqueante",
+      "La cancelación es cooperativa y debe propagarse",
+      "supervisorScope cambia deliberadamente la propagación de fallos entre hermanos"
+    ],
+    "redFlags": [
+      "Llamar directamente a una librería bloqueante y asumir que suspend la hace no bloqueante",
+      "Lanzar trabajo de solicitudes en GlobalScope",
+      "Capturar CancellationException como un fallo ordinario recuperable",
+      "Usar async cuando el trabajo no es realmente concurrente ni útil de forma independiente"
+    ],
+    "followUps": [
+      {
+        "question": "¿En qué se diferencian coroutineScope y supervisorScope ante el fallo de un hijo?",
+        "hint": "Un fallo de un hijo regular cancela a los hermanos; un supervisor permite que los hermanos se manejen de forma independiente."
+      },
+      {
+        "question": "¿Cómo llamarías a un driver JDBC bloqueante desde código de corrutinas?",
+        "hint": "Utiliza un dispatcher/capacidad diseñado para trabajo bloqueante y respeta el pool de conexiones."
+      },
+      {
+        "question": "¿Por qué un bucle de CPU puede ignorar la cancelación?",
+        "hint": "La cancelación es cooperativa; sin suspensión ni comprobaciones explícitas, el bucle sigue ejecutándose."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-flow-1",
+    "topic": "kotlin",
+    "subtopic": "kt-flow",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo difieren Flow (frío), StateFlow y SharedFlow, y cómo se gestionan los recolectores lentos?",
+    "shortAnswer": "Un Flow regular suele ser frío: su productor se ejecuta por separado para cada recolector. StateFlow y SharedFlow son calientes y existen independientemente de los recolectores; StateFlow siempre expone un valor de estado actual combinado (conflated), mientras que SharedFlow es configurable para re-procesamiento y buffering. Flow utiliza la suspensión para la contrapresión (backpressure), y buffer, conflate o collectLatest intercambian deliberadamente memoria o integridad por rendimiento.",
+    "detailedAnswer": "El constructor `flow` se ejecuta cuando se recolecta y debe respetar las reglas de preservación del contexto. Los operadores son generalmente transformaciones frías. `flowOn` cambia el contexto de la ejecución aguas arriba (upstream), no el contexto aguas abajo (downstream) del recolector. `catch` maneja las excepciones de aguas arriba pero no captura los fallos lanzados después por el recolector. La cancelación sigue la cooperación de las corrutinas.\n\nUn recolector lento normalmente ralentiza a un productor frío a través de la suspensión. `buffer` permite que el productor y el consumidor se solapen hasta una capacidad; `conflate` descarta valores intermedios y mantiene el último; `collectLatest` cancela el trabajo previo del recolector cuando llega un nuevo valor. Estas son opciones semánticas, no interruptores de ajuste. StateFlow es apropiado para el estado actual observable y combina por igualdad. SharedFlow representa difusiones/eventos con re-procesamiento y desbordamiento configurados. Evita convertir un flow frío en uno caliente de larga duración sin un alcance con propiedad explícita y una política de inicio compartido.",
+    "keyPoints": [
+      "El Flow frío inicia su trabajo aguas arriba para cada recolector",
+      "StateFlow modela el estado actual; SharedFlow modela difusiones configurables",
+      "La suspensión, el buffering, la combinación y la cancelación definen el comportamiento ante consumidores lentos",
+      "flowOn afecta al contexto aguas arriba en lugar de a la recolección aguas abajo"
+    ],
+    "redFlags": [
+      "Llamar a cada Flow caliente o frío sin distinguir los tipos",
+      "Añadir un buffer ilimitado en lugar de decidir una política de desbordamiento",
+      "Usar conflate donde cada evento deba ser procesado",
+      "Asumir que catch maneja excepciones lanzadas por el recolector aguas abajo"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuándo es correcto el uso de conflate?",
+        "hint": "Cuando solo importa el estado más reciente y los valores intermedios pueden omitirse."
+      },
+      {
+        "question": "¿En qué se diferencia collectLatest de conflate?",
+        "hint": "collectLatest cancela el bloque del recolector anterior cuando llega un nuevo valor."
+      },
+      {
+        "question": "¿Qué debe poseer un alcance sharedIn o stateIn?",
+        "hint": "Un ciclo de vida con semántica explícita de inicio, parada y recursos."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-dsl-1",
+    "topic": "kotlin",
+    "subtopic": "kt-dsl",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo diseñarías un DSL de Kotlin con seguridad de tipos sin que el flujo de control resulte oscuro?",
+    "shortAnswer": "Los DSLs de Kotlin suelen combinar lambdas con receptor, funciones de extensión, constructores (builders) y, a veces, convenciones de operadores para restringir el vocabulario válido. Mantengo la gramática pequeña, valido el estado requerido en la frontera y utilizo `@DslMarker` para evitar el acceso accidental a receptores externos. Un DSL se justifica cuando una estructura declarativa recurrente se vuelve más clara, no simplemente para que el código ordinario parezca 'mágico'.",
+    "detailedAnswer": "Una función como `route { get('/orders') { ... } }` pasa un builder con alcance de receptor a una lambda, de modo que sus miembros forman el vocabulario local. Los receptores anidados pueden exponer accidentalmente métodos externos; una anotación `@DslMarker` personalizada restringe la selección de receptor implícito y captura anidamientos ambiguos. Los builders deben seguir informando de errores de validación útiles y crear un resultado estable en lugar de filtrar un estado mutable parcialmente configurado.\n\nEl diseño de un DSL es diseño de API. Considera el autocompletado del IDE, la compatibilidad de código fuente, la depuración, las ubicaciones de los errores, la testabilidad y cómo interactúan los llamadores de Java. Los operadores sobrecargados, los globales implícitos y la E/S oculta pueden producir una sintaxis atractiva pero un mantenimiento deficiente. Prefiere funciones con nombre cuando el orden y los efectos secundarios importen. Un DSL de configuración debe separar la descripción de la ejecución para que leer el bloque no despliegue recursos ni realice llamadas de red inesperadamente.",
+    "keyPoints": [
+      "Las lambdas con receptor crean un vocabulario con alcance",
+      "@DslMarker limita el acceso accidental a través de receptores anidados",
+      "Los builders deben validar y producir resultados estables",
+      "Un DSL debe mejorar la expresión de un dominio recurrente lo suficiente como para justificar la nueva sintaxis"
+    ],
+    "redFlags": [
+      "Usar sobrecargas de operadores cuyo significado no esté relacionado con el operador",
+      "Realizar efectos secundarios remotos ocultos durante la configuración",
+      "Ignorar a los llamadores de Java, el diagnóstico y las necesidades de compatibilidad de código fuente"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué error ayuda a prevenir @DslMarker?",
+        "hint": "Evita llamadas implícitas no intencionadas a un receptor externo en alcances de DSL anidados."
+      },
+      {
+        "question": "¿Cómo probarías un DSL?",
+        "hint": "Prueba el modelo producido, los diagnósticos de validación y el uso representativo en tiempo de compilación."
+      },
+      {
+        "question": "¿Cuándo es preferible una API de builder normal?",
+        "hint": "Cuando la construcción es poco frecuente, el orden es procedimental o el uso entre lenguajes importa más."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-interop-1",
+    "topic": "kotlin",
+    "subtopic": "kt-interop",
+    "difficulty": "SENIOR",
+    "question": "¿Qué problemas de interoperabilidad Kotlin-Java revisarías en una frontera de API pública?",
+    "shortAnswer": "Reviso los metadatos de nulabilidad y tipos de plataforma, las excepciones comprobadas, los nombres y sobrecargas generados, los argumentos por defecto, los miembros companion, los comodines (wildcards) y las firmas de corrutinas. Kotlin puede llamar a Java de forma natural, pero los llamadores de Java pueden necesitar `@JvmOverloads`, `@JvmStatic`, `@Throws` o una fachada amigable para Java. Las funciones suspend se compilan con firmas de estilo Continuation y no son una API natural para Java por sí solas.",
+    "detailedAnswer": "Las declaraciones de Java sin anotaciones de nulabilidad reconocidas exponen tipos de plataforma, por lo que se deben validar los valores y mejorar las anotaciones donde se posea la frontera. Kotlin no impone las excepciones comprobadas de Java y no las declara a Java a menos que se use `@Throws` cuando sea apropiado. Los parámetros por defecto no crean automáticamente sobrecargas en Java; `@JvmOverloads` puede generarlas pero puede agrandar la API innecesariamente.\n\nLas propiedades se compilan en métodos accessor, las funciones de archivo en clases de fachada generadas y los miembros companion necesitan `@JvmStatic` para llamadas de Java de estilo estático. La varianza en el sitio de declaración puede generar comodines que necesiten `@JvmSuppressWildcards` solo después de comprobar la usabilidad real en Java. Los tipos de función de Kotlin y las funciones suspend pueden resultar incómodos desde Java, por lo que es mejor exponer CompletionStage, tipos de Reactor o un callback/fachada explícito cuando Java sea el consumidor principal. Trata la compatibilidad binaria como una preocupación separada de la compatibilidad del código fuente de Kotlin.",
+    "keyPoints": [
+      "Los tipos de plataforma requieren validación de nulos y anotaciones deliberadas",
+      "Los parámetros por defecto y los miembros companion tienen formas diferentes en Java",
+      "Los contratos de excepciones comprobadas necesitan decisiones de interoperabilidad explícitas",
+      "Las APIs de suspensión a menudo necesitan una fachada asíncrona amigable para Java"
+    ],
+    "redFlags": [
+      "Asumir que la interoperabilidad total significa una ergonomía de código idéntica",
+      "Exponer tipos de plataforma internamente sin validación",
+      "Añadir anotaciones de la JVM mecánicamente sin inspeccionar las firmas generadas"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué un argumento por defecto de Kotlin no ayuda automáticamente a un llamador de Java?",
+        "hint": "Java ve los métodos generados de la JVM, no la sintaxis de valores por defecto en el sitio de llamada de Kotlin."
+      },
+      {
+        "question": "¿Qué cambia @Throws?",
+        "hint": "Añade excepciones declaradas a la firma del método de la JVM para los contratos orientados a Java."
+      },
+      {
+        "question": "¿Cómo expondrías una operación suspend a Java?",
+        "hint": "Proporciona una fachada utilizando una abstracción asíncrona nativa de Java como CompletionStage."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-spring-1",
+    "topic": "kotlin",
+    "subtopic": "kt-spring",
+    "difficulty": "SENIOR",
+    "question": "¿Qué preocupaciones específicas de Kotlin importan en un servicio Spring Boot?",
+    "shortAnswer": "Las clases de Kotlin son finales por defecto, mientras que algunas características de Spring dependen de proxies, por lo que el plugin de Kotlin Spring abre las clases anotadas elegibles. También configuro el módulo de Kotlin de Jackson, utilizo la inyección por constructor, reviso la nulabilidad en las fronteras de Java/framework y pruebo el comportamiento de los proxies, como las transacciones. Los endpoints con corrutinas ayudan solo cuando toda la ruta de llamada utiliza el manejo adecuado de recursos de suspensión o bloqueo.",
+    "detailedAnswer": "Spring tiene APIs de Kotlin de primer nivel y metadatos de nulabilidad, pero la mecánica del framework sigue siendo importante. El plugin del compilador `kotlin-spring` configura el comportamiento 'all-open' para las anotaciones comunes de Spring para que el AOP basado en proxies pueda funcionar. La inyección por constructor se alinea con las propiedades no nulas y las dependencias explícitas. El módulo de Kotlin de Jackson suele ser necesario para los constructores primarios y los metadatos de Kotlin; los valores de JSON ausentes frente a los nulos y los parámetros por defecto deben cubrirse mediante pruebas de contrato.\n\nSpring MVC y WebFlux admiten funciones de controlador de suspensión, y WebFlux integra Reactor con corrutinas y Flow. Una firma suspend no transforma una llamada bloqueante de JDBC o SDK en trabajo no bloqueante. Haz coincidir el stack web, el cliente, el driver, el dispatcher, el modelo transaccional y los límites de capacidad. Recuerda también que la auto-invocación puede saltarse el consejo del proxy independientemente del lenguaje, y los métodos finales/privados pueden no ser interceptables bajo el mecanismo de proxy seleccionado.",
+    "keyPoints": [
+      "El plugin Kotlin Spring soporta clases anotadas que admiten proxies",
+      "La inyección por constructor y la nulabilidad de Kotlin hacen que las dependencias sean explícitas",
+      "Jackson necesita una configuración consciente de Kotlin y pruebas en las fronteras",
+      "Los beneficios de las corrutinas dependen del comportamiento de toda la ruta de E/S"
+    ],
+    "redFlags": [
+      "Asumir que suspend hace que JDBC u otro cliente bloqueante sea no bloqueante",
+      "Ignorar las limitaciones del proxy mientras se confía en las transacciones o el AOP",
+      "Saltarse las pruebas de JSON para valores por defecto, campos ausentes y valores nulos"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué Spring necesita que las clases estén abiertas en algunos casos?",
+        "hint": "Los proxies basados en clases crean una subclase del objetivo para aplicar el consejo (advice)."
+      },
+      {
+        "question": "¿Se puede usar un controlador de suspensión con Spring MVC?",
+        "hint": "El Spring actual admite valores de retorno de suspensión tanto en MVC como en WebFlux, con diferentes modelos de tiempo de ejecución."
+      },
+      {
+        "question": "¿Cómo probarías que el consejo @Transactional está activo?",
+        "hint": "Usa una prueba de integración a través del bean con proxy y verifica el rollback o el estado de la transacción."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-jpa-1",
+    "topic": "kotlin",
+    "subtopic": "kt-jpa",
+    "difficulty": "SENIOR",
+    "question": "¿Por qué Kotlin y JPA/Hibernate necesitan un cuidado especial con las entidades?",
+    "shortAnswer": "Las clases y miembros de Kotlin son finales por defecto, mientras que Hibernate puede usar proxies de subclases, y JPA espera una ruta de construcción sin argumentos. Los plugins de Kotlin JPA/all-open y no-arg pueden salvar esas mecánicas. Evito la igualdad por defecto de las data classes para las entidades porque los IDs generados, los campos mutables y las asociaciones lazy hacen que el equals estructural, el hashCode, el copy y el toString sean arriesgados.",
+    "detailedAnswer": "El diseño de las entidades debe alinear la semántica de Kotlin con el ciclo de vida de la persistencia. Los plugins del compilador pueden hacer que las clases y miembros de las entidades estén abiertos y sintetizar un constructor sin argumentos sin exponer código repetitivo en el fuente. La necesidad exacta de proxies depende de la configuración de Hibernate y de la estrategia de asociación, así que verifica el SQL generado y la carga diferida (lazy loading) en lugar de asumir que el plugin por sí solo resuelve los problemas de diseño.\n\nLas data classes generan métodos a partir de las propiedades del constructor primario. Incluir un ID generado puede cambiar el hashCode después de la persistencia; incluir colecciones lazy puede disparar consultas, recursión o fallos de acceso desacoplado durante el equals o toString. Define la semántica de la identidad deliberadamente, a menudo utilizando una clave de negocio estable o una identidad de entidad cuidadosamente especificada. `val` no es automáticamente compatible con todas las estrategias de hidratación, y las relaciones bidireccionales siguen siendo estructuras de ciclo de vida mutables. Mantén explícitos los límites de las transacciones, evita accesos N+1 accidentales y utiliza DTOs/objetos de valor para la semántica de datos estructurales.",
+    "keyPoints": [
+      "Las clases finales y la construcción sin argumentos interactúan con el proxy del ORM y las estrategias de instanciación",
+      "Los plugins del compilador resuelven la mecánica, no el diseño de la identidad de la entidad",
+      "Los métodos de data classes generados pueden tocar IDs y asociaciones lazy",
+      "El comportamiento de la persistencia debe verificarse mediante pruebas de integración y SQL"
+    ],
+    "redFlags": [
+      "Usar una data class por defecto para cada entidad",
+      "Incluir IDs generados mutables en la identidad basada en hash sin un plan",
+      "Disparar relaciones lazy desde toString o equals",
+      "Asumir que val por sí solo hace que un modelo persistente sea inmutable"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué puede suceder si el hashCode cambia después de que una entidad entra en un HashSet?",
+        "hint": "Es posible que el conjunto ya no encuentre la entidad en la cubeta elegida al momento de la inserción."
+      },
+      {
+        "question": "¿Qué proporcionan los plugins Kotlin JPA y all-open?",
+        "hint": "Suministran soporte para la construcción sin argumentos y apertura amigable para proxies para las anotaciones configuradas."
+      },
+      {
+        "question": "¿Cómo detectarías una carga diferida accidental?",
+        "hint": "Usa el registro de SQL o aserciones de recuento de consultas en una prueba de integración."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-performance-1",
+    "topic": "kotlin",
+    "subtopic": "kt-performance",
+    "difficulty": "SENIOR",
+    "question": "¿Qué características de Kotlin pueden afectar al rendimiento de la JVM y cómo las medirías?",
+    "shortAnswer": "Kotlin se ejecuta en la JVM y a menudo se optimiza de forma similar a Java, pero las abstracciones siguen teniendo costes: boxing en código numérico nulable o genérico, capturas de lambdas, intermediarios de colecciones, iteradores de secuencias, máquinas de estado de corrutinas, reflexión y métodos generados. Las funciones inline pueden eliminar cierta sobrecarga pero aumentan el bytecode. Realizo un perfilado del servicio real y uso JMH para hipótesis aisladas en lugar de inferir el rendimiento a partir de la concisión del código fuente.",
+    "detailedAnswer": "El rendimiento depende del bytecode generado, la optimización JIT, la asignación de memoria, la carga de trabajo y las librerías, no de la etiqueta del lenguaje. `Int?` generalmente necesita boxing, los valores genéricos se borran a referencias y las clases de valor pueden seguir sufriendo boxing en las fronteras de genéricos, nulables, interfaces o interoperabilidad. Las cadenas de colecciones ansiosas pueden asignar colecciones intermedias; Sequence evita algunos intermediarios pero añade sobrecarga de iterador y lambdas por elemento, por lo que no es universalmente más rápida.\n\nLas funciones suspend se compilan en continuaciones de estilo máquina de estados cuando la suspensión es posible. Las corrutinas pueden mejorar la escalabilidad al evitar hilos bloqueados con E/S de suspensión, pero la programación y los cambios de contexto tienen un coste y las llamadas bloqueantes siguen ocupando hilos. Utiliza perfiles de producción, datos de asignación y de GC, async-profiler/JFR y pruebas de carga de extremo a extremo. Para microbenchmarks, JMH maneja el calentamiento (warmup), la eliminación de código muerto y los forks de la JVM; aun así, conecta el resultado con las métricas del servicio visibles para el usuario.",
+    "keyPoints": [
+      "El bytecode de la JVM, el comportamiento del JIT, la asignación de memoria y las librerías determinan el rendimiento",
+      "La nulabilidad, los genéricos y las fronteras de abstracción pueden introducir boxing",
+      "Sequence e inline son compromisos que dependen de la carga de trabajo",
+      "Realiza perfiles de extremo a extremo y usa JMH para preguntas cuidadosamente aisladas"
+    ],
+    "redFlags": [
+      "Afirmar que Kotlin es inherentemente más rápido o más lento que Java",
+      "Asumir que Sequence siempre evita suficiente trabajo como para ser más rápida",
+      "Publicar un bucle cronometrado a mano como un benchmark fiable de la JVM",
+      "Equiparar la concurrencia de corrutinas con el paralelismo de la CPU"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuándo puede una clase de valor sufrir boxing?",
+        "hint": "Los usos nulables, genéricos, de interfaz y algunos de interoperabilidad requieren una representación de objeto."
+      },
+      {
+        "question": "¿Por qué JMH utiliza calentamiento (warmup) y forks?",
+        "hint": "Para tener en cuenta la compilación JIT e aislar el estado de la JVM y los efectos de la optimización."
+      },
+      {
+        "question": "¿Qué métricas a nivel de servicio importan más allá de un microbenchmark?",
+        "hint": "Percentiles de latencia, rendimiento, asignación de memoria, GC, CPU, memoria y saturación de servicios externos."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-pitfalls-1",
+    "topic": "kotlin",
+    "subtopic": "kt-pitfalls",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Qué construcciones de Kotlin ocultan con mayor frecuencia problemas de corrección o mantenimiento en el código backend?",
+    "shortAnswer": "Vigilo el uso de `!!` reemplazando el modelado de nulos, las funciones de alcance anidadas que oscurecen a los receptores, el GlobalScope o las corrutinas sin propietario, las llamadas bloqueantes en dispatchers inadecuados, las colecciones de solo lectura confundidas con las inmutables, los métodos de data classes que tocan estados lazy o mutables, y los tipos de plataforma en los que se confía sin validación. Estas características no son intrínsecamente malas; el riesgo reside en cuando la sintaxis concisa oculta la propiedad, el ciclo de vida o la semántica de los fallos.",
+    "detailedAnswer": "Kotlin hace que muchos patrones sean concisos, lo que puede comprimir decisiones importantes. Una cadena de `let`, `apply` y `also` puede ocultar la ramificación y los efectos secundarios. `runBlocking` dentro del manejo de solicitudes bloquea un hilo y puede crear inanición o interbloqueos (deadlocks) dependiendo del entorno de ejecución circundante. `lateinit` mueve la prueba de inicialización al tiempo de ejecución y lanza UninitializedPropertyAccessException cuando la promesa es falsa.\n\nLa igualdad también merece cuidado: `==` delega en la igualdad estructural, mientras que `===` comprueba la identidad de la referencia. Los argumentos por defecto, la resolución de extensiones y los tipos de plataforma se comportan de forma diferente a algunas expectativas de Java. La respuesta debe evitar prohibiciones absolutas. Un `!!` local después de un invariante forzado por un framework puede ser comprensible, y `runBlocking` es válido en un puente de nivel superior o en pruebas. Prefiere contratos explícitos, análisis estático, reglas de revisión enfocadas y pruebas en las fronteras de interoperabilidad y frameworks.",
+    "keyPoints": [
+      "La sintaxis concisa puede ocultar decisiones sobre el ciclo de vida, la mutación y los fallos",
+      "GlobalScope y runBlocking son herramientas sensibles al contexto, no patrones de servicio por defecto",
+      "lateinit pospone la validación de la inicialización al tiempo de ejecución",
+      "La igualdad estructural y la identidad utilizan operadores diferentes"
+    ],
+    "redFlags": [
+      "Convertir las guías en prohibiciones absolutas sin contexto",
+      "Usar GlobalScope para trabajo ligado a una solicitud",
+      "Confundir UninitializedPropertyAccessException con seguridad nula en tiempo de compilación",
+      "Usar funciones de alcance principalmente para minimizar el número de líneas"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuándo es apropiado el uso de runBlocking?",
+        "hint": "En un puente controlado como el método main o una prueba, no dentro de código de solicitud de suspensión."
+      },
+      {
+        "question": "¿Cuál es la diferencia entre == y ===?",
+        "hint": "== es igualdad estructural segura para nulos; === es identidad referencial."
+      },
+      {
+        "question": "¿Cómo reducirías el uso arriesgado de !! durante una migración?",
+        "hint": "Mejora las anotaciones de Java, valida las fronteras, modela estados nulables y añade reglas de análisis estático."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-kotlin-interview-1",
+    "topic": "kotlin",
+    "subtopic": "kt-interview",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo migrarías parte de un servicio Java Spring a Kotlin controlando el riesgo de entrega?",
+    "shortAnswer": "Empezaría con un módulo acotado cuyo contrato de Java sea estable, establecería líneas base de compilación y operativas, y mantendría el primer código de Kotlin idiomático pero no sorprendente. Reforzaría las fronteras de nulabilidad y serialización, configuraría los plugins de Spring/Jackson y ORM solo donde fuera necesario, mantendría APIs amigables para Java para los llamadores mixtos y realizaría el despliegue con la misma disciplina de pruebas, métricas, canary y rollback que cualquier cambio en el runtime.",
+    "detailedAnswer": "Primero aclara el motivo de la migración (reducción de defectos, legibilidad asíncrona, modelado de dominio o contratación) y define la evidencia que justificaría continuar. Añade Kotlin a la construcción con políticas explícitas de compilador, lint, cobertura y compatibilidad binaria. Un módulo periférico, un nuevo endpoint o un adaptador es más seguro que traducir un modelo de entidad central línea por línea. Mantén los commits preservando el comportamiento antes de adoptar corrutinas o rediseñar las APIs.\n\nEn las fronteras mixtas, añade anotaciones de nulabilidad, valida los tipos de plataforma, prueba el comportamiento de JSON y de la reflexión, y expón métodos amigables para Java donde Java siga siendo un consumidor. No conviertas un stack bloqueante a firmas de suspensión sin abordar el driver y el modelo de recursos. Compara el tiempo de compilación, la fiabilidad de las pruebas, la latencia, la asignación de memoria y el diagnóstico de incidentes. Capacita a los revisores en los modismos y modos de fallo de Kotlin, realiza un despliegue canary del cambio y detente o revierte si el beneficio esperado no se materializa.",
+    "keyPoints": [
+      "La migración necesita un objetivo concreto y criterios de continuación medibles",
+      "Empieza en una frontera acotada y separa la traducción del rediseño",
+      "La interoperabilidad, la serialización, la nulabilidad y el comportamiento del framework necesitan pruebas de contrato",
+      "El despliegue operativo y el aprendizaje del equipo son parte de la adopción del lenguaje"
+    ],
+    "redFlags": [
+      "Reescribir un núcleo estable únicamente para acortar la sintaxis",
+      "Cambiar el lenguaje, el modelo de concurrencia, el framework y la arquitectura en un solo paso",
+      "Ignorar a los consumidores de Java o asumir que la compilación demuestra la compatibilidad en tiempo de ejecución",
+      "Alegar una experiencia en Kotlin que no pueda sostenerse en una pregunta de seguimiento"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué módulo migrarías primero?",
+        "hint": "Elige un componente acotado y observable con contratos estables y un radio de impacto manejable."
+      },
+      {
+        "question": "¿Qué te haría detener la migración?",
+        "hint": "Utiliza señales predefinidas como regresión en la compilación, fiabilidad, operabilidad o falta del beneficio esperado."
+      },
+      {
+        "question": "¿Cómo responderías si has estudiado Kotlin pero no lo has usado en producción?",
+        "hint": "Declara el límite de forma honesta, demuestra conocimientos transferibles de la JVM y razona a través de un ejemplo concreto."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  }
+]

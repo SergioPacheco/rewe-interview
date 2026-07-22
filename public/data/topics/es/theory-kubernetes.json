@@ -1,0 +1,50 @@
+[
+  {
+    "id": "theory-k8s-pods",
+    "topic": "k8s",
+    "subtopic": "k8s-pods",
+    "title": "Kubernetes — Pods e Deployments",
+    "sections": [
+      {
+        "heading": "O que é Kubernetes?",
+        "content": "Kubernetes (K8s) = orquestrador que gerencia containers em produção: agendamento, escalabilidade, recuperação, rede e balanceamento de carga.\n\n<pre><code>Seu container (imagem Docker)\n       │\n       ▼\nPod (menor unidade implantável — 1+ containers)\n       │\n       ▼\nDeployment (gerencia N réplicas de pods — rolling updates)\n       │\n       ▼\nService (endpoint de rede estável — balanceia carga entre pods)\n       │\n       ▼\nIngress (tráfego externo → Service)</code></pre>\n\n<strong>Conceitos-chave:</strong>\n• <strong>Pod:</strong> um ou mais containers que compartilham rede/armazenamento (normalmente 1 container por pod)\n• <strong>Deployment:</strong> declara o estado desejado (\"quero 3 réplicas do delivery-service v2.1\")\n• <strong>Service:</strong> DNS estável + balanceamento de carga (pods entram e saem, o service permanece)\n• <strong>ConfigMap/Secret:</strong> configuração externalizada"
+      },
+      {
+        "heading": "Manifesto de Deployment",
+        "content": "<pre><code>apiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: delivery-service\nspec:\n  replicas: 3\n  selector:\n    matchLabels:\n      app: delivery-service\n  strategy:\n    type: RollingUpdate\n    rollingUpdate:\n      maxUnavailable: 0     # nunca ficar abaixo de 3\n      maxSurge: 1           # adiciona 1 novo antes de remover o antigo\n  template:\n    spec:\n      containers:\n      - name: delivery-service\n        image: registry.rewe.io/delivery-service:2.1.0\n        ports:\n        - containerPort: 8080\n        resources:\n          requests:\n            memory: \"512Mi\"\n            cpu: \"250m\"\n          limits:\n            memory: \"1Gi\"\n            cpu: \"1000m\"\n        env:\n        - name: SPRING_PROFILES_ACTIVE\n          value: \"prod\"\n        - name: DB_PASSWORD\n          valueFrom:\n            secretKeyRef:\n              name: db-credentials\n              key: password</code></pre>\n\n<strong>O que isso significa:</strong>\n• 3 réplicas rodando simultaneamente (alta disponibilidade)\n• Rolling update: nova versão implantada sem downtime\n• Limites de recursos evitam que um serviço consuma tudo no cluster\n• Secrets para configuração sensível (não na imagem!)"
+      }
+    ]
+  },
+  {
+    "id": "theory-k8s-services",
+    "topic": "k8s",
+    "subtopic": "k8s-services",
+    "title": "Kubernetes — Services, Probes e Escalabilidade",
+    "sections": [
+      {
+        "heading": "Health probes",
+        "content": "Kubernetes usa probes para saber se seu pod está vivo e pronto:\n\n<pre><code>livenessProbe:            # \"O app está vivo?\"\n  httpGet:                # → se falhar → K8s REINICIA o pod\n    path: /actuator/health/liveness\n    port: 8080\n  initialDelaySeconds: 30\n  periodSeconds: 10\n\nreadinessProbe:           # \"O app pode receber tráfego?\"\n  httpGet:                # → se falhar → K8s REMOVE do balanceador\n    path: /actuator/health/readiness\n    port: 8080\n  initialDelaySeconds: 10\n  periodSeconds: 5\n\nstartupProbe:             # \"O app ainda está iniciando?\"\n  httpGet:                # → dá tempo para apps lentos subirem\n    path: /actuator/health/liveness\n    port: 8080\n  failureThreshold: 30   # 30 × 10s = 5 minutos para iniciar\n  periodSeconds: 10</code></pre>\n\n<strong>Regras:</strong>\n• <strong>Liveness:</strong> deve indicar um estado interno irrecuperável. NUNCA inclua dependências externas (DB fora do ar ≠ reiniciar o pod!)\n• <strong>Readiness:</strong> deve representar se esta instância consegue atender tráfego útil. Inclua dependências externas apenas quando a aplicação realmente não puder servir nenhuma requisição sem elas, e evite desenhos que deixem todas as réplicas simultaneamente não prontas durante a queda de um recurso compartilhado.\n• Não torne as probes caras (sem consultas pesadas)\n• Spring Boot Actuator fornece esses endpoints pronto para uso"
+      },
+      {
+        "heading": "Escala e autoescalonamento",
+        "content": "<pre><code># Escala manual\nkubectl scale deployment delivery-service --replicas=5\n\n# Autoescalonamento baseado em CPU\napiVersion: autoscaling/v2\nkind: HorizontalPodAutoscaler\nmetadata:\n  name: delivery-service-hpa\nspec:\n  scaleTargetRef:\n    apiVersion: apps/v1\n    kind: Deployment\n    name: delivery-service\n  minReplicas: 2\n  maxReplicas: 10\n  metrics:\n  - type: Resource\n    resource:\n      name: cpu\n      target:\n        type: Utilization\n        averageUtilization: 70  # escala para cima quando CPU > 70%</code></pre>\n\n<strong>Para o transporte REWE:</strong>\n• Pico da manhã (planejamento de rotas): escalar para 8 pods\n• Noite (baixo tráfego): reduzir para 2 pods\n• Econômico: paga apenas pelos recursos usados\n\n<strong>O que seu app precisa para escalar horizontalmente:</strong>\n• Stateless (sem estado local — use DB/Redis)\n• Graceful shutdown (terminar requisições em andamento ao receber SIGTERM)\n• Health probes (K8s precisa saber quando está pronto)\n• Configuração externalizada (env vars, ConfigMaps)"
+      },
+      {
+        "heading": "Graceful shutdown",
+        "content": "Quando o Kubernetes termina um pod (deploy, scale-down), seu app deve encerrar de forma limpa:\n\n<pre><code># Spring Boot application.yml\nserver:\n  shutdown: graceful\nspring:\n  lifecycle:\n    timeout-per-shutdown-phase: 30s</code></pre>\n\n<strong>Sequência de desligamento (observação: algumas etapas podem se sobrepor):</strong>\n1. K8s envia SIGTERM para o pod\n2. O pod começa a ser removido dos endpoints do Service (a propagação leva tempo)\n3. O hook preStop executa (se configurado — comumente um breve sleep para permitir a propagação)\n4. O app para de aceitar novas requisições\n5. O app termina as requisições em andamento (até 30s)\n6. O app fecha conexões de DB, descarrega buffers, confirma offsets do Kafka\n7. O app encerra\n8. Se ainda estiver rodando após <code>terminationGracePeriodSeconds</code> → SIGKILL (forçado)\n\n<strong>Importante:</strong> As etapas 1 e 2 acontecem em paralelo. Requisições ainda podem chegar por um curto período após o SIGTERM porque a remoção do endpoint se propaga de forma assíncrona pelo cluster. Um sleep em <code>preStop</code> (por exemplo, 5s) dá tempo para essa propagação.\n\n<strong>O que dá errado sem graceful shutdown:</strong>\n• Requisições em andamento recebem erro 502\n• Offsets do Kafka não são commitados → mensagens reprocessadas\n• Transações de DB não são commitadas → perda de dados\n• Handles de arquivo não são fechados → corrupção"
+      },
+      {
+        "heading": "Perspectiva sênior",
+        "content": "Engenheiros sêniores usam Kubernetes para resolver problemas operacionais, não para adicionar palavras-chave ao currículo.\n\nDistinções principais:\n• Kubernetes é um custo operacional — só faz sentido quando os benefícios superam o custo\n• Requests de recursos afetam o agendamento; limits evitam noisy neighbors — ambos precisam ser ajustados\n• Liveness probes que incluem dependências externas causam reinícios em cascata durante incidentes\n• Graceful shutdown exige hooks preStop + remoção da readiness + drenagem de requisições em voo\n• Autoscaling precisa de métricas estáveis — não escale por CPU se o gargalo for conexões de banco"
+      },
+      {
+        "heading": "Perspectiva REWE",
+        "content": "No cluster Kubernetes da TRAB:\n\n• Serviços de entrega escalam horizontalmente durante os picos de planejamento da manhã (2→8 pods)\n• Pod Disruption Budgets garantem que pelo menos 2 réplicas sobrevivam à manutenção de nós\n• Requests de recursos são ajustados com base em profiling: a maioria dos serviços precisa de 512Mi–1Gi de memória\n• Rolling updates com maxUnavailable=0 garantem deploy sem downtime\n• Separação por namespace: logística, warehouse, drivers — cada um com quotas de recursos"
+      },
+      {
+        "heading": "Quando NÃO usar",
+        "content": "Quando NÃO usar Kubernetes:\n\n• Um único serviço, uma única equipe, deploy simples — VM ou PaaS é mais simples\n• Quando a equipe tem <3 serviços e nenhuma expertise operacional\n• Para jobs batch que rodam uma vez por dia — serverless ou schedulers gerenciados são mais simples\n• Quando o overhead de manter um cluster excede o benefício da orquestração\n• Se você não puder bancar uma plataforma dedicada ou um serviço Kubernetes gerenciado"
+      }
+    ]
+  }
+]

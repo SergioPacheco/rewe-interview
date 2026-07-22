@@ -1,0 +1,638 @@
+[
+  {
+    "id": "depth-spring-production",
+    "topic": "spring",
+    "subtopic": "spring-di",
+    "title": "Spring en Producción — Límites, proxies y modos de fallo",
+    "sections": [
+      {
+        "heading": "Lo que hace el contenedor — y lo que no hace",
+        "content": "Spring conecta grafos de objetos y aplica comportamiento transversal mediante proxies. Eso hace que la inyección de dependencias, las transacciones, la seguridad y el caché sean convenientes, pero la anotación no es magia. Una llamada de un método a otro método en la misma instancia puede saltarse un proxy; los límites de transacción, la propagación y las reglas de rollback deben coincidir con la operación de negocio.\n\nMantén los controllers centrados en el transporte, los services en la orquestación del caso de uso y los repositories/adapters en la persistencia o en I/O externa. Prueba la política en un test unitario enfocado y el wiring del framework en un test de integración."
+      }
+    ]
+  },
+  {
+    "id": "depth-jpa-production",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-fundamentals",
+    "title": "JPA en Producción — Persistence Context y coste de consultas",
+    "sections": [
+      {
+        "heading": "Las entidades gestionadas no son DTOs",
+        "content": "Dentro de una transacción, JPA rastrea las entidades gestionadas y puede hacer flush automático del estado cambiado. Eso es útil para actualizaciones de agregados, pero devolver entidades gestionadas desde una API acopla la serialización al lazy loading y puede disparar consultas inesperadas. Usa proyecciones o DTOs de respuesta dedicados para los endpoints de lectura.\n\nMide el SQL antes de cambiar los fetch types. Un problema N+1 es un problema de forma de consulta: elige un fetch join, entity graph, batch fetch o proyección para el caso de uso concreto, y luego verifica cardinalidad y paginación."
+      }
+    ]
+  },
+  {
+    "id": "depth-sql-production",
+    "topic": "data-persistence",
+    "subtopic": "dp-query-optimization",
+    "title": "Rendimiento SQL — Evidencia antes que índices",
+    "sections": [
+      {
+        "heading": "Lee el plan real",
+        "content": "Una consulta lenta necesita parámetros representativos, distribución real de datos y un plan de ejecución actual. Compara filas estimadas y reales, luego inspecciona scans, joins, sorts y spills de memoria. Un sequential scan no es automáticamente incorrecto; un índice solo ayuda cuando su selectividad y orden encajan con la ruta de acceso.\n\nCada índice mejora algunas lecturas, pero añade coste de escritura, almacenamiento y mantenimiento. Cambia una causa a la vez, prueba con datos parecidos a producción y monitorea después del despliegue porque la distribución de datos cambia."
+      }
+    ]
+  },
+  {
+    "id": "depth-rest-production",
+    "topic": "rest",
+    "subtopic": "rest-design",
+    "title": "APIs HTTP — Contratos, concurrencia y recuperación",
+    "sections": [
+      {
+        "heading": "Una API es un contrato de larga duración",
+        "content": "Los códigos de estado describen el resultado general; un formato de problema estable da a los clientes un código de error legible por máquina, detalle seguro e ID de correlación. No expongas stack traces, SQL ni internals de autorización.\n\nPara recursos mutables, los retries y la concurrencia pertenecen al contrato: usa orden determinista para paginación, validadores como ETag e If-Match para escrituras obsoletas, e idempotency keys para operaciones que no pueden repetirse con seguridad."
+      }
+    ]
+  },
+  {
+    "id": "depth-testing-production",
+    "topic": "testing",
+    "subtopic": "test-pyramid",
+    "title": "Estrategia de testing — Mapear riesgos a evidencia",
+    "sections": [
+      {
+        "heading": "La cobertura no es confianza",
+        "content": "Elige el test más estrecho que demuestre el riesgo. Los unit tests protegen reglas de negocio rápidamente; los integration tests prueban mapeos de base de datos, migraciones, serialización y wiring de seguridad; un pequeño número de end-to-end tests protege los recorridos críticos.\n\nCuando un defecto escapa, crea primero un regression test que falle con el comportamiento antiguo. Luego pregunta qué suposición faltó: límites de entrada, datos de producción, comportamiento de integración, autorización, tiempo o configuración de despliegue. Mide flakiness y tiempo de feedback junto con la cobertura."
+      }
+    ]
+  },
+  {
+    "id": "depth-concurrency-production",
+    "topic": "concurrency",
+    "subtopic": "conc-completable",
+    "title": "Trabajo asíncrono — Plazos, cancelación y responsabilidad",
+    "sections": [
+      {
+        "heading": "Un future con timeout puede seguir ejecutándose",
+        "content": "Un timeout de CompletableFuture solo completa el future de forma excepcional; no necesariamente cancela el trabajo de base de datos o un efecto secundario remoto. Define un deadline de extremo a extremo, configura timeouts de cliente, cierra recursos de forma determinista y haz explícito el manejo de interrupciones.\n\nPara comandos visibles externamente, la cancelación no puede deshacer trabajo ya aceptado por otro sistema. Usa idempotency keys, búsqueda de estado o compensación, y distingue entre que el llamador abandone la espera y detener de forma segura la operación subyacente."
+      }
+    ]
+  },
+  {
+    "id": "depth-kafka-production",
+    "topic": "kafka",
+    "subtopic": "kafka-producer",
+    "title": "Eventos Kafka — Contratos duraderos y recuperación",
+    "sections": [
+      {
+        "heading": "Los eventos sobreviven a los despliegues",
+        "content": "Producers y consumers se despliegan de forma independiente, y los eventos retenidos pueden reproducirse mucho después de una release. Prefiere evolución de esquema aditiva, identidades de evento estables y checks de compatibilidad en CI. No cambies silenciosamente el significado de un campo existente.\n\nLa entrega suele ser at-least-once: duplicados, retries y fallos parciales son esperables. Usa IDs de evento estables, consumers idempotentes y un outbox cuando un cambio en la base de datos y la publicación deban permanecer fiables juntos."
+      }
+    ]
+  },
+  {
+    "id": "depth-docker-production",
+    "topic": "docker",
+    "subtopic": "docker-basics",
+    "title": "Contenedores — Reproducibilidad, seguridad y diagnóstico",
+    "sections": [
+      {
+        "heading": "Una imagen es un artefacto de entrega",
+        "content": "Construye una vez, identifica la imagen por digest y promueve ese mismo artefacto a través de los entornos. Multi-stage builds, una imagen de runtime pequeña, un usuario no root, dependencias fijadas y un digest base pinneado mejoran la frontera de supply chain.\n\nCuando un contenedor sale, inspecciona el exit code, los logs, el comando efectivo, los mounts, el entorno y los límites de recursos antes de cambiar la imagen. Un contenedor solo está sano cuando su proceso principal y su comportamiento de readiness declarado coinciden con el contrato de despliegue."
+      }
+    ]
+  },
+  {
+    "id": "depth-security-production",
+    "topic": "security",
+    "subtopic": "security-auth",
+    "title": "Seguridad — Modelos de amenaza y límites de autorización",
+    "sections": [
+      {
+        "heading": "Autenticación no es autorización",
+        "content": "La autenticación establece quién hizo una petición; la autorización decide qué acción puede realizar esa identidad y sobre qué recurso. Aplica tanto reglas de rol generales como propiedad a nivel de objeto cuando sea necesario. Valida la entrada, aplica mínimo privilegio, protege secretos y asegúrate de que los logs nunca contengan credenciales ni datos personales sensibles.\n\nEmpieza por las amenazas: enumeración, escalada de privilegios, replay, inyección y exposición de datos. Una API segura tiene comportamiento de fallo explícito y tests para acceso denegado, no solo para login exitoso."
+      }
+    ]
+  },
+  {
+    "id": "depth-k8s-production",
+    "topic": "k8s",
+    "subtopic": "k8s-pods",
+    "title": "Kubernetes — Estado declarado y readiness de la aplicación",
+    "sections": [
+      {
+        "heading": "Un Pod no garantiza disponibilidad",
+        "content": "Kubernetes reemplaza contenedores fallidos, pero la aplicación debe exponer señales honestas de startup, readiness y liveness. Readiness controla el tráfico; liveness es para procesos realmente bloqueados; startup probes evitan que un arranque lento se mate demasiado pronto.\n\nConfigura requests y limits de recursos con evidencia, maneja SIGTERM con graceful shutdown y mantén el estado duradero fuera de réplicas desechables. Un despliegue exitoso significa que el servicio está listo bajo carga, es observable y se puede revertir de forma segura."
+      }
+    ]
+  },
+  {
+    "id": "depth-angular-production",
+    "topic": "angular",
+    "subtopic": "ng-signals",
+    "title": "Angular — Estado, renderizado y rendimiento",
+    "sections": [
+      {
+        "heading": "Mide la frontera costosa",
+        "content": "Signals hacen explícitas las dependencias locales; RxJS sigue siendo útil para flujos asíncronos, cancelación y eventos externos. Ninguno arregla una API lenta o un DOM enorme. Perfila la interacción del usuario, usa tracking estable en listas, mantén barato el estado derivado en templates y pagina o virtualiza colecciones grandes.\n\nUsa boundaries de componentes y OnPush deliberadamente. Los effects son para side effects, no para derivar estado que debería vivir en un computed signal."
+      }
+    ]
+  },
+  {
+    "id": "depth-architecture-production",
+    "topic": "software-architecture",
+    "subtopic": "arch-quality-attributes",
+    "title": "Arquitectura — Los atributos de calidad guían las decisiones",
+    "sections": [
+      {
+        "heading": "No existe una arquitectura universalmente mejor",
+        "content": "Empieza con atributos de calidad medibles: latencia, disponibilidad, seguridad, operabilidad, facilidad de cambio y coste. Una decisión que mejora uno puede perjudicar otro; las llamadas síncronas simplifican consistencia pero aumentan acoplamiento, mientras que los eventos mejoran el desacoplamiento pero añaden preocupaciones de entrega y observabilidad.\n\nRegistra decisiones importantes con contexto, alternativas, consecuencias y un trigger de revisión. La arquitectura se valida con evidencia en producción, no solo con diagramas."
+      }
+    ]
+  },
+  {
+    "id": "depth-system-design-production",
+    "topic": "system-design",
+    "subtopic": "sd-scaling",
+    "title": "Diseño de sistemas — Escala el cuello de botella, no el diagrama",
+    "sections": [
+      {
+        "heading": "La capacidad sigue un modelo de carga",
+        "content": "Aclara tasa de lecturas/escrituras, patrones de pico, tamaño del payload, necesidades de consistencia, objetivos de latencia y comportamiento ante fallos antes de proponer componentes. Usa colas, cachés, particiones y réplicas solo para un cuello de botella concreto.\n\nCada frontera asíncrona necesita idempotencia, política de retries, tratamiento de dead-letter y observabilidad. Define SLOs y prueba la ruta crítica bajo carga; si no, un diagrama plausible no es un diseño."
+      }
+    ]
+  },
+  {
+    "id": "depth-solid-production",
+    "topic": "solid",
+    "subtopic": "solid-dip",
+    "title": "SOLID — Mantén local el cambio",
+    "sections": [
+      {
+        "heading": "Los principios son diagnósticos, no ceremonias",
+        "content": "Usa SOLID para detectar acoplamiento y falta de cohesión. La inversión de dependencias significa que el código de negocio posee la capacidad que necesita mientras la infraestructura la implementa; no exige una interfaz para cada clase.\n\nUna buena abstracción es pequeña, estable y expresada en términos de negocio. Si filtra tipos del proveedor, tiene métodos no soportados o cambia cada vez que cambia una implementación, la frontera probablemente está mal."
+      }
+    ]
+  },
+  {
+    "id": "depth-patterns-production",
+    "topic": "patterns",
+    "subtopic": "pat-strategy",
+    "title": "Patrones de diseño — Nombra el trade-off",
+    "sections": [
+      {
+        "heading": "Los patrones no son arquitectura por defecto",
+        "content": "Strategy es útil cuando un algoritmo varía de forma independiente y la selección sigue siendo comprensible. Factory centraliza la construcción cuando la política de creación importa; Observer desacopla notificaciones pero necesita semántica de entrega; Builder mejora la construcción legible para objetos complejos válidos.\n\nEmpieza por el comportamiento que cambia y elige el patrón más pequeño que lo localice. Más clases e indirection son costes, no una mejora automática."
+      }
+    ]
+  },
+  {
+    "id": "depth-collections-production",
+    "topic": "collections",
+    "subtopic": "java-api",
+    "title": "Java Collections — Igualdad, mutabilidad y coste",
+    "sections": [
+      {
+        "heading": "Elige primero por semántica",
+        "content": "Usa List para duplicados ordenados, Set para unicidad y Map para búsqueda por clave. La corrección depende de equals y hashCode estables: mutar una clave después de insertarla puede volverla inaccesible.\n\nConoce el trade-off: ArrayList favorece lecturas indexadas y append, HashMap da una búsqueda de coste constante promedio, y las colecciones concurrentes resuelven patrones concretos de acceso en lugar de hacer atómicas las operaciones compuestas arbitrarias."
+      }
+    ]
+  },
+  {
+    "id": "depth-java-basics",
+    "topic": "collections",
+    "subtopic": "java-basics",
+    "title": "Fundamentos Java — Valores, referencias y contratos de API",
+    "sections": [
+      {
+        "heading": "Razona sobre el estado con precisión",
+        "content": "Java pasa argumentos por valor; para objetos, el valor copiado es la referencia. Un método puede mutar el objeto referenciado, pero no puede reasignar la variable del llamador. Esta distinción evita muchos errores de API y depuración.\n\nDiseña métodos alrededor de ownership claro: valida en los bordes, devuelve vistas inmutables cuando los llamadores no deban mutar el estado, y documenta nulabilidad y comportamiento de excepciones como parte del contrato."
+      }
+    ]
+  },
+  {
+    "id": "depth-oop",
+    "topic": "oop",
+    "subtopic": "oop-composition",
+    "title": "OOP — Invariantes, colaboración y cambio",
+    "sections": [
+      {
+        "heading": "Los objetos protegen estado con significado",
+        "content": "La encapsulación es más que campos privados: operaciones como aprobar, cancelar y despachar protegen transiciones válidas. Compón políticas y colaboradores independientes cuando el comportamiento cambie por separado; reserva la herencia para subtipos semánticos estables.\n\nUn buen diseño de objetos hace que los estados ilegales sean difíciles de representar, mantiene explícitas las dependencias y da a cada regla un dueño claro."
+      }
+    ]
+  },
+  {
+    "id": "depth-kotlin",
+    "topic": "kotlin",
+    "subtopic": "kt-null",
+    "title": "Kotlin — La nulabilidad como herramienta de diseño de fronteras",
+    "sections": [
+      {
+        "heading": "Haz la ausencia explícita",
+        "content": "El valor por defecto no nulo de Kotlin es más valioso cuando la nulabilidad se decide en las fronteras del sistema. Convierte los valores nulos de base de datos, HTTP y Java-platform en decisiones explícitas del dominio cuanto antes; mantén invariantes internas no nulas siempre que sea posible.\n\nEvita usar !! como salida fácil. Para resultados complejos, modela alternativas con sealed results en lugar de hacer que cada llamador interprete qué significa null."
+      }
+    ]
+  },
+  {
+    "id": "depth-behavioral",
+    "topic": "behavioral",
+    "subtopic": "beh-leadership",
+    "title": "Historias conductuales — Evidencia, ownership y reflexión",
+    "sections": [
+      {
+        "heading": "Una historia fuerte tiene una decisión",
+        "content": "Usa situación, tarea, acción y resultado, pero dedica la mayor parte al razonamiento: qué era incierto, qué opciones existían, qué hiciste personalmente y cómo mediste el resultado. Incluye un trade-off o una lección aprendida.\n\nEvita afirmaciones vagas de equipo. Sé preciso sobre el alcance y honesto sobre lo que cambiarías la próxima vez; eso demuestra ownership mejor que una historia perfecta."
+      }
+    ]
+  },
+  {
+    "id": "depth-stories",
+    "topic": "stories",
+    "subtopic": "story-logistics",
+    "title": "Historias profesionales — Conserva contexto e impacto",
+    "sections": [
+      {
+        "heading": "Explica por qué importó el trabajo",
+        "content": "Una historia técnica es memorable cuando conecta la implementación con personas y operaciones. Expón el riesgo manual original, la complejidad de la regla, la frontera del sistema y el flujo de trabajo cambiado. Luego distingue impacto observado de impacto estimado.\n\nEl orgullo encaja en la historia cuando está anclado en una transformación real: volver confiable un proceso difícil y propenso a errores es un logro de ingeniería, no autopromoción vacía."
+      }
+    ]
+  },
+  {
+    "id": "depth-mindset",
+    "topic": "mindset",
+    "subtopic": "ms-tradeoffs",
+    "title": "Mentalidad de ingeniería — Decisiones bajo incertidumbre",
+    "sections": [
+      {
+        "heading": "Nombra el trade-off explícitamente",
+        "content": "Los ingenieros fuertes aclaran las restricciones antes de proponer tecnología: impacto en el usuario, corrección de datos, latencia, coste, habilidades del equipo y carga operativa. Declara qué se optimiza, qué se sacrifica y cómo se validará la decisión.\n\nUn experimento pequeño y reversible suele ser mejor que un rediseño grande sin medir. Usa señales de producción y feedback para revisar decisiones cuando cambien las suposiciones."
+      }
+    ]
+  },
+  {
+    "id": "depth-portfolio",
+    "topic": "portfolio",
+    "subtopic": "portfolio-overview",
+    "title": "Portfolio — Muestra evidencia, no un inventario tecnológico",
+    "sections": [
+      {
+        "heading": "Haz navegable la historia de ingeniería",
+        "content": "Abre con el problema, los usuarios y el flujo de trabajo; luego muestra la decisión arquitectónica, una restricción difícil, evidencia de calidad y un enlace al código. Una lista larga de tecnologías tiene poco valor sin explicar por qué existe cada una.\n\nSé exacto sobre experiencia de proyectos personales frente a producción. El objetivo es demostrar juicio, disciplina de entrega y profundidad de aprendizaje mediante artefactos verificables."
+      }
+    ]
+  },
+  {
+    "id": "depth-rewe",
+    "topic": "rewe",
+    "subtopic": "rewe-connection",
+    "title": "Investigación de rol — Conecta evidencia sin sobreafirmar",
+    "sections": [
+      {
+        "heading": "Traduce, no imites",
+        "content": "Conecta el trabajo previo con el dominio objetivo a través de problemas transferibles: estado de workflows, integraciones, calidad de datos, observabilidad y colaboración. Separa hechos confirmados de la empresa de inferencias razonables, y no impliques experiencia con un sistema interno que no has usado.\n\nLa conexión más fuerte es concreta: explica una decisión previa, la restricción detrás de ella y cómo investigarías una restricción similar en el nuevo contexto."
+      }
+    ]
+  },
+  {
+    "id": "depth-spring-tx",
+    "topic": "spring",
+    "subtopic": "spring-transactions",
+    "title": "Transacciones — Consistencia, proxies y efectos externos",
+    "sections": [
+      {
+        "heading": "Mantén honesto el límite atómico",
+        "content": "Una transacción de base de datos puede proteger atómicamente cambios locales; no puede incluir atómicamente una llamada HTTP, un email o una publicación Kafka sin un patrón deliberado. Mantén la transacción corta, entiende propagación e isolation, y publica trabajo externo mediante un outbox o un mecanismo after-commit cuando la fiabilidad importe."
+      }
+    ]
+  },
+  {
+    "id": "depth-jpa-relations",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-relations",
+    "title": "Relaciones JPA — Ownership, fetching y ciclo de vida",
+    "sections": [
+      {
+        "heading": "Modela la propiedad antes que las anotaciones",
+        "content": "Elige las relaciones según la propiedad del dominio y el ciclo de vida, y luego haz explícito el lado propietario. Los cascades son reglas de ciclo de vida, no switches de conveniencia; orphan removal puede borrar datos. Carga solo lo que necesita un caso de uso y evita fetch joins de colecciones con paginación sin medir filas duplicadas."
+      }
+    ]
+  },
+  {
+    "id": "depth-sql-tx",
+    "topic": "data-persistence",
+    "subtopic": "dp-transactions",
+    "title": "Transacciones SQL — Aislamiento y lost updates",
+    "sections": [
+      {
+        "heading": "La concurrencia forma parte de la corrección",
+        "content": "El aislamiento determina qué pueden observar transacciones concurrentes, no si el código es generalmente seguro. Usa versiones optimistas o updates condicionales para ediciones concurrentes; usa bloqueos más fuertes solo cuando la contención y las invariantes lo justifiquen. Diseña retries para fallos de serialización y haz que los comandos sean idempotentes."
+      }
+    ]
+  },
+  {
+    "id": "depth-rest-versioning",
+    "topic": "rest",
+    "subtopic": "rest-versioning",
+    "title": "Evolución de API — Compatibilidad antes que números de versión",
+    "sections": [
+      {
+        "heading": "Evoluciona contratos deliberadamente",
+        "content": "Añadir un campo opcional suele ser compatible, pero los clientes estrictos aún pueden romperse. Eliminar campos, cambiar significado o endurecer la entrada aceptada requiere un plan de migración. Usa consumer contracts, telemetría, guías de deprecación y una ventana observada de migración antes de eliminar."
+      }
+    ]
+  },
+  {
+    "id": "depth-testing-integration",
+    "topic": "testing",
+    "subtopic": "test-integration",
+    "title": "Tests de integración — Fidelidad sin flakiness",
+    "sections": [
+      {
+        "heading": "Usa la frontera real cuando ese sea el riesgo",
+        "content": "Usa el motor de base de datos de producción para dialecto, migraciones y constraints; simula fallos HTTP externos de forma determinista; reserva smoke tests contra sistemas vivos para entornos controlados. Los contenedores mejoran la fidelidad pero no crean aislamiento automáticamente — fixtures, limpieza, readiness y seguridad para ejecución paralela siguen necesitando diseño."
+      }
+    ]
+  },
+  {
+    "id": "depth-concurrency-jmm",
+    "topic": "concurrency",
+    "subtopic": "conc-jmm",
+    "title": "Java Memory Model — Visibilidad antes que ingenio",
+    "sections": [
+      {
+        "heading": "Los hilos necesitan una relación happens-before",
+        "content": "Sin sincronización, volatile, safe publication u otro mecanismo definido, un hilo puede no observar la escritura de otro. Los objetos inmutables son más fáciles de compartir solo cuando la construcción termina antes de la publicación. Atomicidad, visibilidad y orden son propiedades separadas; prueba cuál necesita la operación."
+      }
+    ]
+  },
+  {
+    "id": "depth-kafka-consumers",
+    "topic": "kafka",
+    "subtopic": "kafka-consumers",
+    "title": "Consumidores Kafka — Rebalances, retries e idempotencia",
+    "sections": [
+      {
+        "heading": "Consumir es un proceso de recuperación",
+        "content": "Los offsets son marcadores de progreso, no prueba de que un efecto de negocio ocurrió exactamente una vez. Diseña handlers tolerantes a duplicados, clasifica fallos reintentables, limita los retries y enruta mensajes tóxicos para investigación. Los rebalances significan que el procesamiento puede moverse; mantén el trabajo del consumer acotado y haz explícita la recuperación de estado."
+      }
+    ]
+  },
+  {
+    "id": "depth-angular-rxjs",
+    "topic": "angular",
+    "subtopic": "ng-rxjs",
+    "title": "RxJS — Ciclo de vida, cancelación y flujo de datos",
+    "sections": [
+      {
+        "heading": "Los streams necesitan ownership",
+        "content": "Usa operadores para modelar composición asíncrona y cancelación, no suscripciones anidadas. Vincula las suscripciones de UI al ciclo de vida del componente, maneja estados de carga/error/vacío, y usa switchMap cuando una entrada nueva deba cancelar peticiones obsoletas. Mantén los side effects en fronteras claras y expón un estado que el template pueda renderizar de forma predecible."
+      }
+    ]
+  },
+  {
+    "id": "depth-compose",
+    "topic": "docker",
+    "subtopic": "docker-compose",
+    "title": "Compose — Entornos locales predecibles",
+    "sections": [
+      {
+        "heading": "El orden de arranque no es readiness",
+        "content": "El DNS de los servicios y las health checks hacen que las dependencias locales sean reproducibles, pero una aplicación sigue necesitando retry y timeout porque las dependencias pueden fallar después del arranque. Fija versiones, expón solo los puertos necesarios, mantén secretos fuera de archivos versionados y documenta comandos destructivos para reiniciar volúmenes."
+      }
+    ]
+  },
+  {
+    "id": "depth-k8s-services",
+    "topic": "k8s",
+    "subtopic": "k8s-services",
+    "title": "Servicios Kubernetes — Tráfico, probes y rollouts",
+    "sections": [
+      {
+        "heading": "El tráfico sigue al readiness",
+        "content": "Un Service da descubrimiento estable mientras los Pods cambian. El readiness debe representar la capacidad de servir tráfico real; el graceful shutdown debería primero dejar de estar ready y después terminar el trabajo en vuelo antes de finalizar. Prueba rolling updates bajo tráfico realista y asegúrate de que las métricas distingan arranque, fallo de dependencia y sobrecarga."
+      }
+    ]
+  },
+  {
+    "id": "depth-spring-actuator",
+    "topic": "spring",
+    "subtopic": "spring-actuator",
+    "title": "Observabilidad Spring — Señales para operadores",
+    "sections": [
+      {
+        "heading": "Expón decisiones, no solo números de JVM",
+        "content": "Los health checks, métricas y traces deberían responder si los usuarios están teniendo éxito y qué dependencia es responsable cuando no lo están. Protege los endpoints de management, evita etiquetas de alta cardinalidad en métricas, propaga IDs de correlación y alerta sobre objetivos de servicio en lugar de cada síntoma técnico transitorio."
+      }
+    ]
+  },
+  {
+    "id": "depth-security-web",
+    "topic": "security",
+    "subtopic": "security-web",
+    "title": "Seguridad web — Límites del navegador y confianza",
+    "sections": [
+      {
+        "heading": "El navegador es un cliente controlado por un atacante",
+        "content": "Escapa la salida no confiable para prevenir XSS, define CORS desde orígenes reales en lugar de comodines y entiende cuándo la autenticación con cookies requiere protección CSRF. Content Security Policy, flags seguros de cookies y autorización del lado servidor se complementan; ningún check del lado cliente es un límite de control de acceso."
+      }
+    ]
+  },
+  {
+    "id": "depth-events",
+    "topic": "system-design",
+    "subtopic": "sd-events",
+    "title": "Diseño event-driven — Contratos, orden y recuperación",
+    "sections": [
+      {
+        "heading": "La asíncronia mueve la complejidad",
+        "content": "Los eventos desacoplan producers y consumers, pero introducen visibilidad retrasada, duplicados, alcance de orden y rutas de recuperación. Incluye identidad y versión del evento, haz idempotentes los handlers, define política de retries/dead-letter y expón señales de lag y fallo. Usa eventos cuando los consumers independientes y el desacoplamiento temporal sean valiosos, no como sustituto por defecto de cada llamada."
+      }
+    ]
+  },
+  {
+    "id": "depth-architecture-docs",
+    "topic": "software-architecture",
+    "subtopic": "arch-documentation",
+    "title": "Documentación de arquitectura — Decisiones que siguen siendo útiles",
+    "sections": [
+      {
+        "heading": "Documenta el porqué al nivel correcto",
+        "content": "Mantén los diagramas centrados en una pregunta: contexto, contenedores, componentes o despliegue. Acompáñalos con ADRs ligeros que registren contexto, alternativas, decisión, consecuencias y trigger de revisión. La documentación se vuelve confiable cuando cambia con la entrega y enlaza evidencia ejecutable como tests, dashboards y definiciones de despliegue."
+      }
+    ]
+  },
+  {
+    "id": "depth-kotlin-coroutines",
+    "topic": "kotlin",
+    "subtopic": "kt-coroutines",
+    "title": "Coroutines Kotlin — concurrencia estructurada y cancelación",
+    "sections": [
+      {
+        "heading": "Una coroutine necesita un owner",
+        "content": "Lanza trabajo en un scope ligado al ciclo de vida de una request, pantalla o servicio; evita GlobalScope para trabajo de aplicación. La suspensión es cooperativa, así que usa APIs cancelables, propaga la cancelación y mueve llamadas bloqueantes a un dispatcher adecuado. La concurrencia estructurada hace visibles el fallo y la limpieza en vez de dejar trabajo en segundo plano huérfano."
+      }
+    ]
+  },
+  {
+    "id": "depth-java-exceptions",
+    "topic": "collections",
+    "subtopic": "java-exceptions",
+    "title": "Excepciones — contratos, contexto y recuperación",
+    "sections": [
+      {
+        "heading": "Las excepciones comunican contratos fallidos",
+        "content": "Usa excepciones para fallos excepcionales con contexto útil; no captures de forma amplia solo para continuar en un estado desconocido. Separa validación, conflicto de negocio y fallo de infraestructura para que los llamadores puedan decidir si corregir, reintentar o reportar. Conserva la causa, añade contexto de correlación y evita exponer internals en las fronteras de la API."
+      }
+    ]
+  },
+  {
+    "id": "depth-oop-encapsulation",
+    "topic": "oop",
+    "subtopic": "oop-encapsulation",
+    "title": "Encapsulación — Haz difícil crear estado inválido",
+    "sections": [
+      {
+        "heading": "Expón intenciones, no setters",
+        "content": "Métodos como reservar, aprobar y cancelar comunican transiciones permitidas y pueden proteger invariantes relacionadas de forma atómica. Los campos privados por sí solos no bastan cuando los llamadores reciben colecciones mutables o setters genéricos. Elige una API pública estrecha y mantén los cambios de representación detrás de ella."
+      }
+    ]
+  },
+  {
+    "id": "depth-solid-srp",
+    "topic": "solid",
+    "subtopic": "solid-srp",
+    "title": "SRP — La cohesión trata de razones para cambiar",
+    "sections": [
+      {
+        "heading": "Divide por presión de cambio",
+        "content": "Una clase puede tener varios métodos y seguir siendo cohesionada si sirven a una sola responsabilidad de negocio. Divide cuando pricing, notificación, persistencia o formato cambian por razones distintas y tienen dueños distintos. Evita convertir cada método en una clase; la fragmentación innecesaria hace más difíciles los flujos de trabajo."
+      }
+    ]
+  },
+  {
+    "id": "depth-pattern-factory",
+    "topic": "patterns",
+    "subtopic": "pat-factory",
+    "title": "Factories — Centralizan la política de creación",
+    "sections": [
+      {
+        "heading": "La construcción puede ser lógica de negocio",
+        "content": "Usa una factory cuando la construcción válida elige implementaciones, valida combinaciones u oculta la configuración de infraestructura. No hace falta una factory solo para reemplazar un constructor. Mantén su entrada expresiva y devuelve una abstracción estable solo cuando los llamadores no deban depender del tipo concreto."
+      }
+    ]
+  },
+  {
+    "id": "depth-jpa-queries",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-queries",
+    "title": "Consultas JPA — modelos de lectura y paginación",
+    "sections": [
+      {
+        "heading": "Consulta para el caso de uso",
+        "content": "Los endpoints de lectura suelen necesitar una proyección en lugar de un agregado gestionado. Selecciona solo las columnas necesarias, aplica un orden determinista y usa paginación keyset cuando grandes datasets mutables vuelven costoso el offset. Mantén filtros de autorización en cada ruta de consulta e inspecciona el SQL generado para joins e índices."
+      }
+    ]
+  },
+  {
+    "id": "depth-rest-verbs",
+    "topic": "rest",
+    "subtopic": "rest-verbs",
+    "title": "Semántica HTTP — Retries y cambios de estado",
+    "sections": [
+      {
+        "heading": "Idempotente no significa inocuo",
+        "content": "GET es seguro; PUT y DELETE son idempotentes en el efecto de estado esperado; POST puede representar una creación o un comando. Un retry sigue necesitando control de concurrencia, e idempotencia no significa respuestas idénticas ni ausencia de logs. Haz coincidir la semántica del método con el contrato del recurso antes de elegir la forma de la URL."
+      }
+    ]
+  },
+  {
+    "id": "depth-beh-conflict",
+    "topic": "behavioral",
+    "subtopic": "beh-conflict",
+    "title": "Conflicto — Discrepar de forma productiva",
+    "sections": [
+      {
+        "heading": "Cuestiona la decisión, no a la persona",
+        "content": "Declara la meta compartida, aporta evidencia y aclara restricciones antes de proponer una alternativa. Escucha la información que no tienes, deja explícito quién decide y comprométete una vez tomada la decisión. Reflexiona sobre el resultado para que el desacuerdo mejore la siguiente decisión en lugar de convertirse en fricción personal."
+      }
+    ]
+  },
+  {
+    "id": "depth-sql-joins",
+    "topic": "data-persistence",
+    "subtopic": "dp-joins-patterns",
+    "title": "Joins SQL — Cardinalidad antes que agregación",
+    "sections": [
+      {
+        "heading": "Cuenta filas antes de confiar en totales",
+        "content": "Un join refleja la cardinalidad de la relación. Unir dos tablas hijas one-to-many puede multiplicar filas e inflar sumas; agrega cada conjunto hijo por separado o consulta de manera separada. Usa inner joins cuando la ausencia excluye una fila y left joins cuando la ausencia es significativa, y luego inspecciona los conjuntos de resultados reales en vez de confiar en los nombres de las tablas."
+      }
+    ]
+  },
+  {
+    "id": "depth-kafka-delivery",
+    "topic": "kafka",
+    "subtopic": "kafka-delivery",
+    "title": "Entrega Kafka — exactly once es una afirmación acotada",
+    "sections": [
+      {
+        "heading": "Define la frontera de la garantía",
+        "content": "Las transacciones del broker pueden dar garantías fuertes dentro de Kafka, pero una base de datos externa o un side effect HTTP sigue necesitando idempotencia o un outbox. Nombra la semántica de entrega para cada frontera, guarda un ID de evento estable y haz del replay una ruta operativa soportada, no una sorpresa de emergencia."
+      }
+    ]
+  },
+  {
+    "id": "depth-testing-junit",
+    "topic": "testing",
+    "subtopic": "test-junit",
+    "title": "Unit tests — comportamiento sobre implementación",
+    "sections": [
+      {
+        "heading": "Haz que los fallos sean diagnósticos",
+        "content": "Un test debe preparar una condición significativa, ejecutar un comportamiento y afirmar un resultado observable. Simula fronteras reales, no objetos de valor ni cada llamada interna. Verifica interacciones solo cuando enviar un comando forma parte del contrato; de lo contrario, prefiere aserciones sobre estado, salida o error."
+      }
+    ]
+  },
+  {
+    "id": "depth-docker-build",
+    "topic": "docker",
+    "subtopic": "docker-basics",
+    "title": "Container builds — caché y supply chain",
+    "sections": [
+      {
+        "heading": "Rápido no es el único objetivo",
+        "content": "Ordena primero las entradas estables de dependencias y luego el código que cambia con frecuencia, usa multi-stage builds y mantén credenciales fuera de las capas con secret mounts. Fija imágenes base por digest y bloquea dependencias para reproducibilidad. Escanea y actualiza de forma deliberada: una imagen fijada es auditable, no permanentemente segura."
+      }
+    ]
+  },
+  {
+    "id": "depth-k8s-resources",
+    "topic": "k8s",
+    "subtopic": "k8s-pods",
+    "title": "Recursos Kubernetes — Los requests son contratos de scheduling",
+    "sections": [
+      {
+        "heading": "Ajusta los límites con medición",
+        "content": "Requests afectan al scheduling; limits restringen el comportamiento en runtime. Límites de CPU demasiado bajos pueden throttlear servicios sensibles a la latencia, mientras que límites de memoria pueden causar OOM kills. Mide con carga representativa, configura alertas de saturación y dimensiona el autoscaling según la demanda y la capacidad downstream, no solo por CPU."
+      }
+    ]
+  },
+  {
+    "id": "depth-angular-forms",
+    "topic": "angular",
+    "subtopic": "ng-forms",
+    "title": "Angular Forms — validación como feedback de usuario y defensa de frontera",
+    "sections": [
+      {
+        "heading": "La validación del cliente es orientación",
+        "content": "Usa modelos de formularios tipados, mensajes de validación explícitos y estados disabled/pending para que los flujos sean comprensibles. La validación del servidor sigue siendo la autoridad porque el cliente puede ser evadido. Mapea errores de campo de vuelta a los controles, conserva la entrada del usuario tras fallos recuperables y evita duplicar reglas de negocio complejas de forma inconsistente."
+      }
+    ]
+  },
+  {
+    "id": "depth-mindset-mistakes",
+    "topic": "mindset",
+    "subtopic": "ms-mistakes",
+    "title": "Aprender de los errores — mejorar el sistema",
+    "sections": [
+      {
+        "heading": "Convierte un error en un control",
+        "content": "Describe el contexto, el impacto, la decisión y lo que cambió después. El resultado útil no es la culpa; es una mejora duradera como un test, una checklist, una alerta, una práctica de revisión o una ownership más clara. Sé honesto sobre la incertidumbre mientras muestras cómo evitas la recurrencia."
+      }
+    ]
+  }
+]

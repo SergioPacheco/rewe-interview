@@ -1,0 +1,602 @@
+[
+  {
+    "id": "senior-java-1",
+    "topic": "collections",
+    "subtopic": "java-inheritance",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "A service uses a five-level inheritance hierarchy. A new requirement applies to only two subclasses. How would you change the design without breaking the remaining implementations?",
+    "interviewerIntent": "Tests refactoring judgment \u2014 composition vs inheritance, interface segregation.",
+    "answer": "I'd extract the new behavior into an interface or composition-based capability. The two subclasses implement/compose it; the others remain unchanged. If the hierarchy is deep, this is a signal to flatten it \u2014 replace inheritance with strategy/composition where subtypes differ in behavior, not identity.",
+    "keyPoints": [
+      "Extract interface for new capability",
+      "Composition over deep inheritance",
+      "Don't modify base class for 2/5 subclasses",
+      "Consider flattening"
+    ],
+    "followUps": [
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "What if the two subclasses need access to protected state from the base class?",
+        "hint": "Pass required state via constructor or method parameter. Protected state leaking into strategy objects signals the base class has too many responsibilities."
+      },
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Have you refactored a deep inheritance hierarchy?",
+        "hint": "SGN3 document generation: Template Method (3 levels). New document type needed different behavior \u2014 extracted varying steps into strategy objects instead of adding subclass."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "redFlags": [
+      "Adding a flag in the base class",
+      "Modifying base class for minority requirement"
+    ]
+  },
+  {
+    "id": "senior-java-2",
+    "topic": "collections",
+    "subtopic": "java-inheritance",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "Explain a real situation where polymorphism removed conditional logic from your code. What was the original code structure?",
+    "interviewerIntent": "Tests whether candidate uses OOP in practice, not just theory.",
+    "answer": "[REAL EXAMPLE REQUIRED \u2014 document generation or notification routing in SGN3 where switch/case on type was replaced by polymorphic dispatch]",
+    "keyPoints": [
+      "Show before (switch chain) vs after (polymorphism)",
+      "Explain why worth refactoring",
+      "Testing benefit"
+    ],
+    "followUps": [
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "When would you keep the conditional instead of polymorphism?",
+        "hint": "2-3 stable cases \u2014 polymorphism for 2 cases is over-engineering."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-java-3",
+    "topic": "collections",
+    "subtopic": "java-api",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "A mutable object is used as a HashMap key and is modified after insertion. What happens and why?",
+    "interviewerIntent": "Tests deep understanding of hashCode contract.",
+    "answer": "The entry becomes unreachable via get() because the hash bucket was computed from the original hashCode. After mutation, the new hashCode points to a different bucket. The object exists in the map (memory leak) but cannot be found. containsKey returns false, size unchanged.",
+    "keyPoints": [
+      "Hash bucket at insertion time",
+      "Mutation \u2192 wrong bucket",
+      "Orphaned entry (leak)",
+      "equals/hashCode contract violation"
+    ],
+    "followUps": [
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "How would you implement equals/hashCode for a JPA entity with database-generated ID?",
+        "hint": "Use business key if available. Surrogate ID breaks before persist. Hibernate proxies may trigger lazy load on equals."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-java-4",
+    "topic": "concurrency",
+    "subtopic": "conc-safety",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "A Spring singleton service contains a mutable HashMap used as a cache. What concurrency problems can occur?",
+    "interviewerIntent": "Tests thread safety understanding in web apps.",
+    "answer": "Multiple request threads access the singleton simultaneously. HashMap is not thread-safe \u2014 concurrent put() corrupts internal structure. Even ConcurrentHashMap doesn't protect compound operations (check-then-act). Fixes: ConcurrentHashMap with computeIfAbsent, or dedicated cache with TTL and max size.",
+    "keyPoints": [
+      "Singleton = shared across threads",
+      "HashMap corruption under concurrency",
+      "ConcurrentHashMap compound ops still unsafe",
+      "computeIfAbsent for atomicity"
+    ],
+    "followUps": [
+      {
+        "type": "FAILURE_SCENARIO",
+        "question": "Two threads call computeIfAbsent with same key simultaneously?",
+        "hint": "ConcurrentHashMap blocks same-key concurrent computation (segment lock). For expensive computations, consider async loading cache."
+      },
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Thread-safety issue in production?",
+        "hint": "SGN3: ArchUnit rule enforces @Stateless no mutable fields. Caches: ConcurrentHashMap + TTL."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-java-5",
+    "topic": "java-modern",
+    "subtopic": "modern-streams",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "When would you deliberately avoid Java Streams and use an imperative loop instead?",
+    "interviewerIntent": "Tests pragmatism.",
+    "answer": "Avoid streams when: (1) early exit with complex conditions, (2) mutable accumulation clearer imperatively, (3) debugging needed, (4) forEach with side effects is a loop in disguise, (5) tight loops where boxing matters. Streams for clear transformations; loops for procedural control.",
+    "keyPoints": [
+      "Early exit/break",
+      "Side-effect forEach = disguised loop",
+      "Debug difficulty",
+      "Boxing overhead"
+    ],
+    "followUps": [
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "What can go wrong with parallelStream() in a web app?",
+        "hint": "Uses shared ForkJoinPool across ALL requests. One slow stream blocks others. Side effects and ordering break."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-java-6",
+    "topic": "collections",
+    "subtopic": "java-api",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "Describe a memory leak that can happen in Java even though the JVM has garbage collection.",
+    "interviewerIntent": "Tests understanding of reachability-based GC.",
+    "answer": "(1) Static collections without eviction (cache growing forever). (2) Listeners registered but never deregistered. (3) ThreadLocal not cleaned in thread pools. (4) Classloader leaks on hot-redeploy. (5) Unclosed resources (direct ByteBuffers, JDBC). The GC only collects unreachable objects \u2014 if a reference chain from GC root exists, the object lives forever.",
+    "keyPoints": [
+      "Static collections without eviction",
+      "Listeners never deregistered",
+      "ThreadLocal in pools",
+      "GC roots keep alive"
+    ],
+    "followUps": [
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Memory leak in production?",
+        "hint": "SGN3: @ViewScoped beans retaining large entity graphs. Heap dumps showed DTOs with lazy collections. Fix: DTO projections."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-jpa-1",
+    "topic": "data-persistence",
+    "subtopic": "jpa-relations",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "An endpoint executes 48,000 SQL statements for one request. Walk me through how you would investigate it before changing any code.",
+    "interviewerIntent": "Tests systematic diagnosis.",
+    "answer": "1. Reproduce in APM (Glowroot): confirm query count. 2. Examine trace: same query repeated? (N+1 signature). 3. Identify trigger: which collection/relationship fans out? 4. Count: how many items? (26,705 in my case). 5. Then decide: pagination + batch loading.",
+    "keyPoints": [
+      "Confirm in APM first",
+      "Identify N+1 signature",
+      "Find triggering collection",
+      "Count the N",
+      "Then choose fix"
+    ],
+    "followUps": [
+      {
+        "type": "CHANGE_REQUIREMENT",
+        "question": "Why not just JOIN FETCH?",
+        "hint": "26k+ records with multiple collections = Cartesian product. Pagination + batch is correct at scale."
+      },
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Your actual case?",
+        "hint": "26,705 inscriptions, ~48k queries from JSF lazy loads during render. Pagination (50/page) + batch IN. 16min \u2192 2sec."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-jpa-2",
+    "topic": "data-persistence",
+    "subtopic": "jpa-relations",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "You discover an N+1 problem. Compare JOIN FETCH, entity graphs, batch fetching, and DTO queries. When is each dangerous?",
+    "interviewerIntent": "Tests depth beyond 'just use JOIN FETCH'.",
+    "answer": "JOIN FETCH: dangerous with pagination (duplicates) or multiple collections (Cartesian). Entity graphs: same risk, harder to debug. Batch (@BatchSize): safe for moderate N, palliative. DTO projection: safest for read-only \u2014 no managed entities, no lazy traps. Choice depends on read/write, collection count, result size.",
+    "keyPoints": [
+      "JOIN FETCH + pagination = broken",
+      "Multiple collections = Cartesian",
+      "Batch is palliative",
+      "DTO safest for listings"
+    ],
+    "followUps": [
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "Why does JOIN FETCH + pagination produce wrong results?",
+        "hint": "JOIN multiplies rows. Hibernate deduplicates in memory AFTER fetching all. LIMIT/OFFSET in SQL happens before dedup \u2192 wrong results."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-jpa-3",
+    "topic": "data-persistence",
+    "subtopic": "jpa-queries",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "Two logistics planners assign the same vehicle simultaneously. How do you prevent a lost update?",
+    "interviewerIntent": "Tests concurrency control.",
+    "answer": "Optimistic locking: @Version column. Second planner gets OptimisticLockException \u2192 'vehicle just assigned, refresh'. Pessimistic (SELECT FOR UPDATE) blocks but reduces throughput. For rare conflicts: optimistic is better. If frequent: reservation pattern or queue-based assignment.",
+    "keyPoints": [
+      "@Version for optimistic",
+      "User sees conflict message",
+      "Pessimistic for frequent conflicts",
+      "Reservation pattern"
+    ],
+    "followUps": [
+      {
+        "type": "CHANGE_REQUIREMENT",
+        "question": "Conflicts reach 50+/hour?",
+        "hint": "Optimistic causes user frustration. Consider: reservation with expiry, or queue-based (one assigner at a time)."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "senior-sql-1",
+    "topic": "data-persistence",
+    "subtopic": "sql-indexes",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "An index exists on filter columns but PostgreSQL still chooses sequential scan. What would you investigate?",
+    "interviewerIntent": "Tests real EXPLAIN ANALYZE experience.",
+    "answer": "Causes: (1) Low selectivity (>10-15% of rows). (2) Outdated statistics (ANALYZE). (3) Column order doesn't match (leftmost prefix). (4) Expression in WHERE (function on column). (5) Table is small enough. (6) Physical correlation. Check: EXPLAIN (ANALYZE, BUFFERS).",
+    "keyPoints": [
+      "Low selectivity",
+      "Outdated stats",
+      "Column order",
+      "Expression mismatch",
+      "Small table"
+    ],
+    "followUps": [
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Seen this in production?",
+        "hint": "SGN3: unit filter returning 80% of records for large units \u2014 seq scan was correct. Fix: more selective filters (status, date range)."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-sql-2",
+    "topic": "data-persistence",
+    "subtopic": "sql-performance",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "A query is fast in staging but slow in production. Which differences would you inspect?",
+    "interviewerIntent": "Tests environment-aware diagnosis.",
+    "answer": "(1) Data volume \u2014 different selectivity. (2) Statistics \u2014 real vs uniform distribution. (3) Concurrent load \u2014 I/O contention. (4) Table bloat \u2014 dead tuples. (5) Memory settings (work_mem). (6) Parallel query settings. (7) Buffer cache state. Diagnosis: EXPLAIN ANALYZE on both, compare estimates vs actuals.",
+    "keyPoints": [
+      "Volume changes selectivity",
+      "Stats differ",
+      "Concurrent load",
+      "Bloat",
+      "Memory config"
+    ],
+    "followUps": [
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "How to prove optimization didn't change business result?",
+        "hint": "Compare counts, spot-check records, run both queries in parallel on prod data and diff."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-spring-1",
+    "topic": "spring",
+    "subtopic": "spring-di",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "You have extensive Jakarta EE experience but are joining a Spring Boot team. Which concepts transfer directly, and which require special attention?",
+    "interviewerIntent": "Tests self-awareness about gaps.",
+    "answer": "Transfers: DI (CDI\u2192Spring), TX (JTA\u2192@Transactional), JPA, REST (JAX-RS\u2192MVC), validation, testing. Attention: (1) Proxy @Transactional (self-invocation trap \u2014 different from EJB CMT). (2) Auto-configuration magic. (3) Spring Security vs Shiro. (4) Spring Data abstraction. (5) Reactive stack (no Jakarta EE equivalent). (6) application.yml vs standalone.xml.",
+    "keyPoints": [
+      "DI/TX/JPA/REST transfer",
+      "Proxy TX self-invocation trap",
+      "Auto-config requires understanding",
+      "Reactive is new"
+    ],
+    "followUps": [
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Biggest conceptual difference?",
+        "hint": "CMT: every @Stateless public method is transactional by default. Spring: only @Transactional methods, self-invocation bypasses proxy."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "senior-spring-2",
+    "topic": "spring",
+    "subtopic": "spring-transactions",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "Why might @Transactional not work when one method calls another in the same class?",
+    "interviewerIntent": "Tests proxy mechanism understanding.",
+    "answer": "Spring @Transactional uses dynamic proxy. External calls \u2192 proxy \u2192 interceptor. Internal calls (this.method()) bypass proxy \u2014 annotation ignored. In EJB, CMT applies to ALL public methods regardless. Fix: separate bean, self-injection, or TransactionTemplate.",
+    "keyPoints": [
+      "Proxy-based interception",
+      "Self-invocation bypasses",
+      "Different from EJB CMT",
+      "Fix: separate bean or Template"
+    ],
+    "followUps": [
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "When use TransactionTemplate instead of @Transactional?",
+        "hint": "Fine-grained control: different TX for parts of method, TX inside loop, custom failure handling."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "senior-kafka-1",
+    "topic": "kafka",
+    "subtopic": "kafka-delivery",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "A Kafka consumer completes the database update but crashes before committing the offset. What happens after restart?",
+    "interviewerIntent": "Tests at-least-once semantics understanding.",
+    "answer": "Consumer reads from last committed offset \u2192 reprocesses message. DB update happens AGAIN. Without idempotency: duplicates. Fix: INSERT ON CONFLICT, conditional UPDATE WHERE status = EXPECTED, or dedup table with message ID.",
+    "keyPoints": [
+      "Uncommitted offset \u2192 reprocess",
+      "DB already updated \u2192 duplicate",
+      "Idempotent consumer mandatory",
+      "INSERT ON CONFLICT"
+    ],
+    "followUps": [
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "How do you implement idempotency?",
+        "hint": "SGN3 MDB: INSERT INTO mensagem_processada ON CONFLICT DO NOTHING. 0 rows = skip."
+      },
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "Partition key for delivery events?",
+        "hint": "delivery_id: ordering per delivery guaranteed. But hot partition risk if one delivery is very active."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "senior-kafka-2",
+    "topic": "kafka",
+    "subtopic": "kafka-delivery",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "A malformed event retries continuously and blocks processing. How do you handle it?",
+    "interviewerIntent": "Tests poison pill handling.",
+    "answer": "Poison pill problem. (1) Limit retries (3-5 + backoff). (2) After max \u2192 Dead Letter Topic. (3) Log full payload + error. (4) Continue other messages. (5) Alert on DLT. (6) Replay tool after fix. Consumer must progress, not block indefinitely.",
+    "keyPoints": [
+      "Poison pill blocks partition",
+      "Max retries + DLT",
+      "Must not block others",
+      "Alert + replay tool"
+    ],
+    "followUps": [
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Current system?",
+        "hint": "Artemis max-delivery-attempts \u2192 DLQ. MDB throws exception for redelivery. Monitor DLQ depth."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "senior-kafka-3",
+    "topic": "kafka",
+    "subtopic": "kafka-comparison",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "Under which circumstances would JMS or a relational outbox be a better choice than Kafka?",
+    "interviewerIntent": "Tests ability to argue AGAINST Kafka.",
+    "answer": "JMS: low volume (100 msgs/day), request-reply, message priority, team has no Kafka expertise. Outbox: need atomicity between DB write and event without distributed TX, no broker exists, CDC can relay later.",
+    "keyPoints": [
+      "Kafka overkill for low volume",
+      "JMS has request-reply natively",
+      "Outbox for atomicity",
+      "Team expertise matters"
+    ],
+    "followUps": [
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Why does SGN use JMS not Kafka?",
+        "hint": "Embedded Artemis in WildFly \u2014 zero ops overhead, same JVM, JTA transactions. 80 queues at our volume doesn't justify Kafka operational complexity."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-sd-1",
+    "topic": "system-design",
+    "subtopic": "Event-Driven Architecture",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "A truck remains offline for two hours and sends conflicting events. How would you reconcile them?",
+    "interviewerIntent": "Tests conflict resolution in distributed systems.",
+    "answer": "Clarify first: (1) Source of truth per state? (2) Can truck events override central? (3) Time-sensitive decisions during offline? Strategy depends on domain rules. Options: last-write-wins (simple, lossy), event sourcing with merge (complex, lossless), manual resolution for critical states. Key: detect conflict first, then apply domain rules.",
+    "keyPoints": [
+      "Clarify source of truth",
+      "Detect before resolving",
+      "Domain rules determine strategy",
+      "Not all conflicts auto-resolve"
+    ],
+    "followUps": [
+      {
+        "type": "FAILURE_SCENARIO",
+        "question": "Driver confirmed delivery, central shows cancelled 1h ago. Which wins?",
+        "hint": "Physical delivery happened \u2014 can't un-deliver. Mark 'delivered despite cancellation', trigger compensation."
+      }
+    ],
+    "experienceLevel": "INFERENCE"
+  },
+  {
+    "id": "senior-sd-2",
+    "topic": "system-design",
+    "subtopic": "Idempotency",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "The driver confirms delivery twice because the app didn't receive the first acknowledgment. What must the backend guarantee?",
+    "interviewerIntent": "Tests idempotency for mobile scenarios.",
+    "answer": "Idempotent: same confirmation twice \u2192 same result. (1) Unique key (delivery_id + driver_id + type). (2) INSERT ON CONFLICT or conditional UPDATE WHERE status = IN_TRANSIT. (3) Return success on duplicate (don't error). (4) Downstream (invoice, notification) also idempotent or gated on transition.",
+    "keyPoints": [
+      "Same input \u2192 same output",
+      "ON CONFLICT or conditional UPDATE",
+      "Success on duplicate",
+      "Downstream also idempotent"
+    ],
+    "followUps": [
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "How do you implement idempotency?",
+        "hint": "INSERT INTO mensagem_processada ON CONFLICT DO NOTHING. 0 rows = already processed, skip."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "senior-sd-3",
+    "topic": "system-design",
+    "subtopic": "Resilience",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "An external carrier API starts taking 25 seconds to respond. Explain your timeout, retry, circuit-breaker, and fallback strategy.",
+    "interviewerIntent": "Tests resilience design for real external dependency.",
+    "answer": "Before designing: is the call synchronous (user waits) or async? If async (queue-based): timeout 5s, retry 3x with backoff, circuit breaker opens after 5 consecutive failures, queue survives outage. If sync: timeout 5s, single retry, degrade gracefully (provisional status). Key: the external call must NOT hold a database connection (separate TX boundary).",
+    "keyPoints": [
+      "Ask sync vs async first",
+      "Timeout is mandatory (5s)",
+      "Circuit breaker for sustained failure",
+      "Never hold DB connection during external call"
+    ],
+    "followUps": [
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "External API resilience in production?",
+        "hint": "SGN3: Moodle (60s timeout, slow), LDAP (10s). Enforced: calls outside TX boundary, mandatory timeouts, async via JMS for non-critical."
+      },
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "Why not just increase timeout to 30s?",
+        "hint": "30s timeout \u00d7 100 concurrent requests = 3000 request-seconds of blocked threads. Pool exhaustion. This is exactly why we separate TX from external calls."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-sd-4",
+    "topic": "system-design",
+    "subtopic": "Observability",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "How would you design observability so a support engineer can trace one delivery across APIs, Kafka, and database operations?",
+    "interviewerIntent": "Tests end-to-end tracing thinking.",
+    "answer": "Correlation ID (delivery_id or trace_id) propagated across all layers: HTTP headers, Kafka message headers, log MDC, database comments. Support engineer queries by correlation ID in: (1) APM for latency per hop, (2) Logs for business events and errors, (3) Kafka consumer lag for async steps. Minimum viable: structured logs with correlation ID + timestamp + operation. Advanced: distributed tracing (OpenTelemetry).",
+    "keyPoints": [
+      "Correlation ID across all layers",
+      "Propagate in HTTP headers, Kafka headers, log MDC",
+      "Query by ID in APM, logs, Kafka",
+      "Structured logs are minimum viable"
+    ],
+    "followUps": [
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "How do you trace requests currently?",
+        "hint": "SGN3: Glowroot for single-service tracing (transaction \u2192 queries). No distributed tracing (single deployment). For cross-module: log with business ID (id_matricula, id_turma) + Kibana search."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
+  },
+  {
+    "id": "senior-behavioral-1",
+    "topic": "behavioral",
+    "subtopic": "beh-adaptability",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "Tell me about the most significant production-performance problem you personally diagnosed. What evidence changed your initial hypothesis?",
+    "interviewerIntent": "Tests real diagnosis and intellectual honesty.",
+    "answer": "Inscription listing: 16 minutes. Initial hypothesis: missing index. Evidence that changed it: Glowroot showed not ONE slow query but ~48,000 fast queries (20-40ms each). Problem wasn't query speed \u2014 it was query COUNT. Root cause: JSF lazy loads for 26,705 records. Fix: pagination + batch. The index hypothesis was wrong.",
+    "keyPoints": [
+      "Initial hypothesis was wrong",
+      "Evidence: count not speed",
+      "48k \u00d7 20ms = 16min",
+      "Pagination + batch"
+    ],
+    "followUps": [
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "How validate fix didn't change business result?",
+        "hint": "Compared totals, spot-checked records, Glowroot confirmed ~10 queries."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-behavioral-2",
+    "topic": "behavioral",
+    "subtopic": "beh-culture",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "How do you react when joining a team that uses technologies you have studied but not operated in production?",
+    "interviewerIntent": "Tests honesty and learning approach.",
+    "answer": "Transparent: 'I know concepts from JMS (same patterns) but haven't operated Kafka in production. Transfers: consumers, idempotency, DLQ. Need to learn: operational model, rebalancing, schema registry.' Then: 'Can I pair with someone on an existing consumer first?' Seniors who fake expertise get exposed in week one.",
+    "keyPoints": [
+      "Transparent about studied vs operated",
+      "Name what transfers",
+      "Ask for ramp-up",
+      "Honesty builds trust"
+    ],
+    "followUps": [
+      {
+        "type": "REAL_EXPERIENCE",
+        "question": "Your actual situation with Spring/Kafka?",
+        "hint": "8 years Jakarta EE. Spring studied (transfers). Kafka studied (patterns from JMS). Would say exactly this."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-behavioral-3",
+    "topic": "behavioral",
+    "subtopic": "beh-leadership",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "Tell me about a time you improved an existing system without being explicitly asked.",
+    "interviewerIntent": "Tests initiative and ownership.",
+    "answer": "Static analysis tooling for Jakarta EE migration. Nobody asked. Built because: manual review catching violations too late, team introducing new ones faster than fixing. Automated detection on every branch prevents regression. Result: new code follows target patterns automatically.",
+    "keyPoints": [
+      "Identified gap proactively",
+      "Tooling scales (not one-time)",
+      "Prevents future violations",
+      "Saves team review time"
+    ],
+    "followUps": [
+      {
+        "type": "CHALLENGE_CHOICE",
+        "question": "How did you justify time on tooling vs features?",
+        "hint": "Showed recurring cost: X hours/sprint catching patterns in review. Tooling eliminates that. Pays back in 2 sprints."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "senior-behavioral-4",
+    "topic": "behavioral",
+    "subtopic": "beh-pressure",
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "question": "Describe a situation where the best architecture had to be simplified to meet a deadline. What debt did you consciously accept?",
+    "interviewerIntent": "Tests pragmatism and trade-off awareness.",
+    "answer": "[REAL EXAMPLE REQUIRED \u2014 e.g., synchronous call instead of outbox because of deadline, documented as tech debt with plan to fix]",
+    "keyPoints": [
+      "Name ideal vs delivered",
+      "Conscious decision",
+      "Debt documented",
+      "Plan to pay back"
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  }
+]

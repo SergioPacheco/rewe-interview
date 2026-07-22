@@ -1,0 +1,122 @@
+[
+  {
+    "id": "theory-security-auth",
+    "topic": "security",
+    "subtopic": "security-auth",
+    "title": "Authentication & Authorization",
+    "sections": [
+      {
+        "heading": "Core distinction",
+        "content": "Authentication answers who the user is; authorization answers what that authenticated user may do. In a logistics platform, a driver, warehouse operator, planner and administrator may all authenticate through the same identity provider but receive different permissions."
+      },
+      {
+        "heading": "OAuth2 and OpenID Connect",
+        "content": "OAuth2 is an authorization framework. OpenID Connect adds identity on top of OAuth2. A browser or mobile client normally uses Authorization Code with PKCE. The application receives an access token for APIs and optionally an ID token containing identity claims."
+      },
+      {
+        "heading": "Roles and permissions",
+        "content": "Prefer permission-based checks such as DELIVERY_READ or ROUTE_ASSIGN over broad role checks. Roles can group permissions, but business code should depend on the smallest capability required. Apply authorization at both API boundaries and sensitive service methods."
+      },
+      {
+        "heading": "Interview answer",
+        "content": "I separate authentication from authorization, use short-lived access tokens, validate issuer, audience, signature and expiry, and enforce least privilege. For high-risk operations I also require audit logging and sometimes step-up authentication."
+      }
+    ]
+  },
+  {
+    "id": "theory-security-spring",
+    "topic": "security",
+    "subtopic": "security-spring",
+    "title": "Spring Security",
+    "sections": [
+      {
+        "heading": "Security filter chain",
+        "content": "Spring Security processes requests through a SecurityFilterChain. Configure public endpoints explicitly, require authentication by default, and place the most specific matchers before broader ones."
+      },
+      {
+        "heading": "JWT resource server",
+        "content": "A Spring Boot API can act as an OAuth2 Resource Server. It validates JWT signatures using the identity provider's JWK set and converts claims or scopes into GrantedAuthority values."
+      },
+      {
+        "heading": "Method security",
+        "content": "Use @PreAuthorize for sensitive business actions, for example @PreAuthorize(\"hasAuthority('ROUTE_ASSIGN')\"). Method security protects the use case even when it is called from another controller or integration path."
+      },
+      {
+        "heading": "Production guidance",
+        "content": "Do not disable security globally for convenience. Keep actuator endpoints restricted, avoid logging tokens, use secure cookies for browser sessions, and test both allowed and denied scenarios."
+      }
+    ]
+  },
+  {
+    "id": "theory-security-web",
+    "topic": "security",
+    "subtopic": "security-web",
+    "title": "Web Security: XSS, CSRF and CORS",
+    "sections": [
+      {
+        "heading": "XSS",
+        "content": "Cross-site scripting happens when untrusted content is rendered as executable HTML or JavaScript. Escape output, sanitize rich text, avoid unsafe innerHTML, and use a strict Content Security Policy."
+      },
+      {
+        "heading": "CSRF",
+        "content": "CSRF abuses a browser's automatic credential submission. It matters mainly for cookie-based sessions. Use Spring Security CSRF protection and SameSite cookies. Pure bearer-token APIs that do not use cookies are generally not vulnerable in the same way."
+      },
+      {
+        "heading": "CORS",
+        "content": "CORS is a browser access-control mechanism, not authentication. Allow only known origins, methods and headers. Never combine wildcard origins with credentials."
+      },
+      {
+        "heading": "Interview answer",
+        "content": "I treat XSS, CSRF and CORS as different problems: output encoding for XSS, anti-forgery controls for cookie sessions, and a narrow origin policy for CORS."
+      }
+    ]
+  },
+  {
+    "id": "theory-security-api",
+    "topic": "security",
+    "subtopic": "security-api",
+    "title": "API & Service Security",
+    "sections": [
+      {
+        "heading": "Service-to-service authentication",
+        "content": "Internal services should authenticate each other using workload identity, mTLS or OAuth2 client credentials. Network location alone is not proof of identity."
+      },
+      {
+        "heading": "Resilience and abuse controls",
+        "content": "Apply rate limits, request-size limits, timeouts and circuit breakers. Validate payloads at the boundary and reject unknown or dangerous fields."
+      },
+      {
+        "heading": "Secrets",
+        "content": "Store secrets in a secret manager or Kubernetes Secret integrated with encryption and access control. Never commit credentials, private keys or production tokens to source control."
+      },
+      {
+        "heading": "Auditability",
+        "content": "Log security-relevant business events such as route reassignment, permission changes and manual delivery overrides. Logs should identify actor, action, target, time and outcome without exposing sensitive data."
+      }
+    ]
+  },
+  {
+    "id": "theory-security-data",
+    "topic": "security",
+    "subtopic": "security-data",
+    "title": "Data Protection & GDPR",
+    "sections": [
+      {
+        "heading": "Data minimization",
+        "content": "Collect and retain only the personal data required for the operational purpose. Driver location data, customer addresses and phone numbers require clear purpose and restricted access."
+      },
+      {
+        "heading": "Protection",
+        "content": "Encrypt data in transit with TLS and at rest using platform-managed encryption. Mask sensitive fields in logs and non-production databases."
+      },
+      {
+        "heading": "GDPR principles",
+        "content": "Key principles include lawfulness, purpose limitation, data minimization, accuracy, storage limitation, integrity, confidentiality and accountability."
+      },
+      {
+        "heading": "Operational design",
+        "content": "Define retention periods, deletion workflows, access auditing and incident response before production. Privacy requirements must be part of architecture, not an afterthought."
+      }
+    ]
+  }
+]

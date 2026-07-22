@@ -2,7 +2,7 @@
   <img class="hero-banner__img" src="assets/images/startseite_arena_troy.webp" alt="" aria-hidden="true" loading="eager" />
 </section>
 
-<h1 class="hero-title">Time to prepare for your next interview</h1>
+<h1 class="hero-title">{{ 'dashboard.heroTitle' | t }}</h1>
 
 <!-- ===== SECTION 1: LEARN ===== -->
 <section class="dashboard-section dashboard-section--learn" aria-labelledby="learn-title">
@@ -14,9 +14,9 @@
           <path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H15a2 2 0 0 0-2 2v15a2 2 0 0 1 2-2h2.5a2.5 2.5 0 0 1 2.5 2.5v-15Z"/>
         </svg>
       </span>
-      <h2 class="dashboard-section__title" id="learn-title">Learn</h2>
+      <h2 class="dashboard-section__title" id="learn-title">{{ 'dashboard.sections.learn.title' | t }}</h2>
     </div>
-    <p class="dashboard-section__desc">Master the concepts. Explanations, examples, code — answers fully visible.</p>
+    <p class="dashboard-section__desc">{{ 'dashboard.sections.learn.desc' | t }}</p>
   </div>
   <div class="product-grid">
     @for (topic of learnTopics(); track topic.id) {
@@ -30,8 +30,8 @@
         <h3 class="product-card__name">{{ topic.name }}</h3>
         <p class="product-card__desc">{{ topic.desc }}</p>
         <div class="product-card__footer">
-          <span class="product-card__tag product-card__tag--learn">Learn</span>
-          <span class="product-card__price product-card__price--dark">{{ getTheoryCount(topic.id) }} chapters</span>
+          <span class="product-card__tag product-card__tag--learn">{{ 'dashboard.tags.learn' | t }}</span>
+          <span class="product-card__price product-card__price--dark">{{ getTheoryCount(topic.id) }} {{ 'dashboard.units.chapters' | t }}</span>
         </div>
       </a>
     }
@@ -49,9 +49,9 @@
           <path d="M12 2v3M22 12h-3M12 22v-3M2 12h3"/>
         </svg>
       </span>
-      <h2 class="dashboard-section__title" id="practice-title">Practice</h2>
+      <h2 class="dashboard-section__title" id="practice-title">{{ 'dashboard.sections.practice.title' | t }}</h2>
     </div>
-    <p class="dashboard-section__desc">Test your understanding. Answer hidden until you try.</p>
+    <p class="dashboard-section__desc">{{ 'dashboard.sections.practice.desc' | t }}</p>
   </div>
   <div class="product-grid">
     @for (topic of practiceTopics(); track topic.id) {
@@ -65,8 +65,8 @@
         <h3 class="product-card__name">{{ topic.name }}</h3>
         <p class="product-card__desc">{{ topic.desc }}</p>
         <div class="product-card__footer">
-          <span class="product-card__tag">Practice</span>
-          <span class="product-card__price">{{ getExerciseCount(topic.id) }} questions</span>
+          <span class="product-card__tag">{{ 'dashboard.tags.practice' | t }}</span>
+          <span class="product-card__price">{{ getExerciseCount(topic.id) }} {{ 'dashboard.units.questions' | t }}</span>
         </div>
       </a>
     }
@@ -83,9 +83,9 @@
           <path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/>
         </svg>
       </span>
-      <h2 class="dashboard-section__title" id="interview-title">Interview</h2>
+      <h2 class="dashboard-section__title" id="interview-title">{{ 'dashboard.sections.interview.title' | t }}</h2>
     </div>
-    <p class="dashboard-section__desc">Simulate senior pressure. Clarify, decide, defend — answer only after follow-ups.</p>
+    <p class="dashboard-section__desc">{{ 'dashboard.sections.interview.desc' | t }}</p>
   </div>
   <div class="product-grid">
     @for (topic of interviewTopics(); track topic.id) {
@@ -96,8 +96,8 @@
         <h3 class="product-card__name">{{ topic.name }}</h3>
         <p class="product-card__desc">{{ topic.desc }}</p>
         <div class="product-card__footer">
-          <span class="product-card__tag product-card__tag--interview">Interview</span>
-          <span class="product-card__price product-card__price--dark">Senior level</span>
+          <span class="product-card__tag product-card__tag--interview">{{ 'dashboard.tags.interview' | t }}</span>
+          <span class="product-card__price product-card__price--dark">{{ 'dashboard.units.seniorLevel' | t }}</span>
         </div>
       </a>
     }
@@ -114,9 +114,9 @@
           <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M3 12h18M10 12v2h4v-2"/>
         </svg>
       </span>
-      <h2 class="dashboard-section__title" id="experience-title">My Experience</h2>
+      <h2 class="dashboard-section__title" id="experience-title">{{ 'dashboard.sections.experience.title' | t }}</h2>
     </div>
-    <p class="dashboard-section__desc">Real cases, real numbers, real tools. Defensible in 10 minutes without help.</p>
+    <p class="dashboard-section__desc">{{ 'dashboard.sections.experience.desc' | t }}</p>
   </div>
   <div class="product-grid">
     @for (topic of experienceTopics(); track topic.id) {
@@ -127,8 +127,8 @@
         <h3 class="product-card__name">{{ topic.name }}</h3>
         <p class="product-card__desc">{{ topic.desc }}</p>
         <div class="product-card__footer">
-          <span class="product-card__tag product-card__tag--experience">Evidence</span>
-          <span class="product-card__price product-card__price--dark">Real cases</span>
+          <span class="product-card__tag product-card__tag--experience">{{ 'dashboard.tags.evidence' | t }}</span>
+          <span class="product-card__price product-card__price--dark">{{ 'dashboard.units.realCases' | t }}</span>
         </div>
       </a>
     }
@@ -145,9 +145,9 @@
           <path d="M3 10a3 3 0 0 0 5 2 3 3 0 0 0 4 0 3 3 0 0 0 4 0 3 3 0 0 0 5-2M8 21v-5h5v5"/>
         </svg>
       </span>
-      <h2 class="dashboard-section__title" id="rewe-title">REWE</h2>
+      <h2 class="dashboard-section__title" id="rewe-title">{{ 'dashboard.sections.rewe.title' | t }}</h2>
     </div>
-    <p class="dashboard-section__desc">Confirmed facts, inferences, and questions to ask. Nothing claimed without evidence.</p>
+    <p class="dashboard-section__desc">{{ 'dashboard.sections.rewe.desc' | t }}</p>
   </div>
   <div class="product-grid">
     @for (topic of reweTopics(); track topic.id) {
@@ -158,8 +158,8 @@
         <h3 class="product-card__name">{{ topic.name }}</h3>
         <p class="product-card__desc">{{ topic.desc }}</p>
         <div class="product-card__footer">
-          <span class="product-card__tag product-card__tag--rewe">REWE</span>
-          <span class="product-card__price product-card__price--dark">Facts + Inferences</span>
+          <span class="product-card__tag product-card__tag--rewe">{{ 'dashboard.tags.rewe' | t }}</span>
+          <span class="product-card__price product-card__price--dark">{{ 'dashboard.units.factsInferences' | t }}</span>
         </div>
       </a>
     }

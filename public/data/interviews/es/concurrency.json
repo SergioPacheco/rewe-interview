@@ -1,0 +1,241 @@
+[
+  {
+    "id": "interview-concurrency-threads-1",
+    "topic": "concurrency",
+    "subtopic": "conc-threads",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cómo configurarías un ExecutorService para una carga de trabajo en producción?",
+    "shortAnswer": "Comienzo por la carga de trabajo y el recurso que se desea proteger. El trabajo intensivo en CPU (CPU-bound) suele necesitar una concurrencia cercana a los núcleos disponibles; el trabajo bloqueante puede justificar más hilos, pero los límites de conexión y tasas de transferencia (rate limits) de los sistemas externos siguen limitando la concurrencia útil. Elijo deliberadamente los límites de la cola, el comportamiento de rechazo, los nombres de los hilos, el reporte de fallos y el apagado (shutdown), validando luego con pruebas de carga en lugar de confiar en una fórmula universal de tamaño de pool.",
+    "detailedAnswer": "El ExecutorService separa la entrega de tareas de la gestión de hilos, pero su configuración es parte de la capacidad del sistema. Un pool fijo con una cola ilimitada puede seguir aceptando trabajo después de que se exceda la capacidad del servicio, convirtiendo la sobrecarga en alta latencia y presión de memoria. Una cola limitada junto con un RejectedExecutionHandler explícito hace visible el comportamiento de sobrecarga: rechazar, descartar, bloquear al productor mediante otro mecanismo, o ejecutar en el hilo del llamador solo cuando se entienden las consecuencias.\n\nEstimo la concurrencia a partir de la utilización de CPU, el ratio de bloqueo, la capacidad de los sistemas externos y los objetivos de latencia, y luego mido. Nombro los hilos y expongo los fallos no capturados para que los incidentes sean diagnosticables. Defino un apagado ordenado: dejar de aceptar trabajo, esperar un periodo limitado y decidir cómo se manejan las tareas no finalizadas. En Jakarta EE u otro entorno gestionado, utilizo su ejecutor gestionado para preservar el ciclo de vida y el contexto. Los ejecutores de un-hilo-virtual-por-tarea (virtual threads) siguen una economía diferente y no deben agruparse en pools para limitar la concurrencia; los límites de recursos siguen siendo explícitos.",
+    "keyPoints": [
+      "El pool, la cola y la política de rechazo forman una única decisión de capacidad",
+      "Las colas ilimitadas pueden convertir la sobrecarga en uso excesivo de memoria y latencia",
+      "Los límites de los sistemas externos restringen la concurrencia útil",
+      "La observabilidad de los hilos y la semántica de apagado pertenecen al diseño de producción"
+    ],
+    "redFlags": [
+      "Usar una cola ilimitada sin un análisis de sobrecarga",
+      "Aplicar una única fórmula de conteo de hilos para cada carga de trabajo",
+      "Ignorar las tareas rechazadas, las excepciones de tareas o el apagado del ejecutor"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué puede lograr CallerRunsPolicy y qué riesgo conlleva?",
+        "hint": "Puede ralentizar a los productores, pero también ejecuta trabajo en un hilo llamador que podría no ser adecuado."
+      },
+      {
+        "question": "¿Cómo dimensionarías una carga de trabajo mixta de CPU y bloqueo?",
+        "hint": "Separa las clases de carga de trabajo donde sea posible, ten en cuenta la capacidad de los sistemas externos y mide."
+      },
+      {
+        "question": "¿Qué métricas expondrías para un pool de hilos?",
+        "hint": "Profundidad de la cola, hilos activos, tareas completadas y rechazadas, tiempo de espera, tiempo de ejecución y saturación."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+  },
+  {
+    "id": "interview-concurrency-sync-1",
+    "topic": "concurrency",
+    "subtopic": "conc-sync",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Qué garantías ofrecen synchronized y volatile, y en qué se diferencian?",
+    "shortAnswer": "Un bloque synchronized proporciona exclusión mutua para el mismo monitor y una relación 'happens-before' desde una liberación (unlock) hasta un bloqueo (lock) posterior. Una escritura en una variable volatile tiene una relación 'happens-before' con una lectura posterior de esa variable y evita reordenamientos relevantes, pero no hace que una secuencia de lectura-modificación-escritura (como count++) sea atómica. Uso volatile para la publicación de estado independiente y locks cuando un invariante abarca múltiples operaciones o campos.",
+    "detailedAnswer": "La sincronización resuelve tanto la coordinación como la visibilidad. Solo un hilo a la vez ejecuta el código protegido por el mismo monitor, y los cambios realizados antes de liberar ese monitor se vuelven visibles para un hilo que lo adquiera posteriormente. Por lo tanto, el objeto de bloqueo debe compartirse de manera consistente; sincronizar sobre objetos diferentes no proporciona protección común.\n\nLas lecturas y escrituras volatile tienen semántica de orden de memoria pero no una sección crítica general. Es adecuado para flags, instantáneas (snapshots) inmutables publicadas de forma segura y estados donde cada actualización es una asignación única e independiente. `count++` es una operación de lectura, suma y escritura, por lo que volatile por sí solo pierde actualizaciones bajo contención. Usa synchronized, Lock o una operación atómica dependiendo del invariante. ReentrantLock añade adquisición temporizada e interrumpible y múltiples condiciones, al coste de una disciplina explícita de try/finally. Elige el constructo más simple que exprese todo el invariante.",
+    "keyPoints": [
+      "synchronized combina exclusión mutua con visibilidad",
+      "volatile proporciona publicación y orden para una variable, no atomicidad compuesta",
+      "Todos los participantes deben usar el mismo protocolo de sincronización",
+      "El invariante protegido determina el primitivo adecuado"
+    ],
+    "redFlags": [
+      "Llamar atómico a un incremento de una variable volatile",
+      "Sincronizar lecturas y escrituras en diferentes objetos monitor",
+      "Usar un lock sin liberarlo en un bloque finally"
+    ],
+    "followUps": [
+      {
+        "question": "¿Puede ser correcto el bloqueo de doble comprobación (double-checked locking) en Java?",
+        "hint": "Sí, cuando la referencia compartida es volatile y la construcción no permite la fuga de 'this'."
+      },
+      {
+        "question": "¿Cuándo sería preferible ReentrantLock a synchronized?",
+        "hint": "Adquisición temporizada o interrumpible, múltiples condiciones o una necesidad medida de sus características."
+      },
+      {
+        "question": "¿Garantiza synchronized la equidad (fairness)?",
+        "hint": "No; la planificación y la adquisición del monitor no proporcionan un contrato de equidad."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+  },
+  {
+    "id": "interview-concurrency-completable-1",
+    "topic": "concurrency",
+    "subtopic": "conc-completable",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo compondrías llamadas paraleles a APIs con CompletableFuture sin perder el control de fallos y tiempos de espera?",
+    "shortAnswer": "Lanzo llamadas independientes en un ejecutor explícito adecuado para el entorno, compongo los resultados con thenCombine o allOf, y defino si un fallo debe invalidar toda la operación o degradar un componente. Los tiempos de espera de conexión/lectura de red protegen la E/S real; orTimeout establece un límite para el future pero no garantiza que el trabajo subyacente se detenga. También limito la concurrencia y preservo el contexto de la solicitud intencionalmente.",
+    "detailedAnswer": "CompletableFuture es útil cuando operaciones genuinamente independientes pueden solaparse. `thenCombine` combina directamente dos resultados; `allOf` espera a un array de etapas pero devuelve `CompletableFuture<Void>`, por lo que los resultados aún deben recolectarse. Si no se suministra un ejecutor a los métodos asíncronos, normalmente usan el ForkJoinPool común, que puede ser inadecuado para E/S bloqueante o contextos de aplicaciones gestionadas.\n\nLa política de fallos debe ser explícita. `exceptionally` suministra un valor de respaldo, `handle` observa el éxito o el fallo, y `whenComplete` observa sin transformar el resultado. Evita ocultar fallos parciales detrás de un valor vacío a menos que el dominio permita la degradación. `orTimeout` completa el CompletableFuture de forma excepcional cuando expira su plazo, pero no es prueba de que una llamada de socket o solicitud remota se haya cancelado; configura tiempos de espera y cancelación también en el cliente de E/S. `allOf` tampoco cancela automáticamente el trabajo hermano. Aplica un tiempo de espera global, limita el abanico de salida (fan-out), propaga el contexto de rastreo/seguridad deliberadamente y prueba fallos parciales y simultáneos.",
+    "keyPoints": [
+      "Usa un ejecutor explícito para el control de la carga de trabajo y del entorno",
+      "allOf espera pero no agrega resultados tipados ni cancela tareas hermanas",
+      "Los plazos de los Futures complementan, no reemplazan, los tiempos de espera de E/S",
+      "Las políticas de fallo parcial y propagación de contexto deben ser deliberadas"
+    ],
+    "redFlags": [
+      "Ejecutar E/S bloqueante en el pool común sin análisis de capacidad",
+      "Asumir que orTimeout detiene la operación de red subyacente",
+      "Crear un future por cada entrada en una colección ilimitada",
+      "Convertir cada fallo en nulo y perder el contexto de diagnóstico"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué devuelve allOf y cómo se recuperan los resultados tipados?",
+        "hint": "Devuelve Void; recolecta o une (join) los futures originales después de una finalización exitosa."
+      },
+      {
+        "question": "¿Cómo cancelarías el trabajo hermano después de que falle una llamada requerida?",
+        "hint": "Coordina la cancelación explícitamente y asegúrate de que el cliente subyacente la respete."
+      },
+      {
+        "question": "¿Por qué podría ser necesario thenCompose en lugar de thenApply?",
+        "hint": "thenCompose aplana una función que ya devuelve un CompletionStage."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+  },
+  {
+    "id": "interview-concurrency-safety-1",
+    "topic": "concurrency",
+    "subtopic": "conc-safety",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo puedes diseñar para la seguridad de hilos (thread safety) sin poner un único bloqueo alrededor de todo?",
+    "shortAnswer": "Primero reduzco el estado mutable compartido mediante la inmutabilidad, el confinamiento y el paso de mensajes. Cuando el estado debe compartirse, utilizo un primitivo que coincida con el invariante: atómicos para transiciones independientes pequeñas, colecciones concurrentes por sus operaciones atómicas documentadas, o un bloqueo enfocado para la consistencia de múltiples campos. Los componentes seguros para hilos aún necesitan una composición segura; las llamadas atómicas separadas no hacen que un flujo de trabajo compuesto sea atómico.",
+    "detailedAnswer": "El estado más fácil de sincronizar es el que no se comparte. Las instantáneas inmutables pueden publicarse de forma segura, los valores locales de la solicitud están confinados al hilo y las colas pueden transferir la propiedad entre trabajadores. Los servicios sin estado (stateless) son seguros solo si sus colaboradores y cualquier caché oculta también lo son.\n\nPara el estado compartido, AtomicInteger y AtomicReference admiten transiciones compare-and-set sin bloqueos, pero un bucle CAS debe recalcular a partir del último valor y permanecer libre de efectos secundarios inseguros. ConcurrentHashMap proporciona métodos atómicos como compute y putIfAbsent para operaciones en sus entradas; una secuencia de get seguida de put sigue siendo una condición de carrera. Las funciones de mapeo deben ser cortas y no deben modificar recursivamente el mismo mapeo. LongAdder escala contadores bajo contención, pero sum() no es una instantánea atómica. Cuando un invariante abarca varias claves o campos, un bloqueo claro o un límite transaccional puede ser más seguro que el uso ingenioso de atómicos.",
+    "keyPoints": [
+      "La inmutabilidad, el confinamiento y la propiedad reducen las necesidades de sincronización",
+      "Las colecciones concurrentes garantizan operaciones específicas, no flujos de trabajo arbitrarios",
+      "CAS se ajusta a pequeñas transiciones de estado atómicas pero requiere lógica segura para reintentos",
+      "Los invariantes de múltiples campos pueden justificar un bloqueo enfocado o una transacción"
+    ],
+    "redFlags": [
+      "Asumir que una colección segura para hilos hace que cada acción compuesta sea atómica",
+      "Poner trabajo bloqueante o recursivo dentro de una función de cómputo de un mapa",
+      "Usar atómicos en varias variables sin un invariante coherente",
+      "Llamar a un servicio 'stateless' mientras muta colaboradores compartidos no seguros"
+    ],
+    "followUps": [
+      {
+        "question": "¿En qué se diferencian putIfAbsent y computeIfAbsent?",
+        "hint": "Uno recibe un valor ya calculado; el otro calcula condicionalmente bajo su contrato de mapa."
+      },
+      {
+        "question": "¿Cuándo es preferible LongAdder a AtomicLong?",
+        "hint": "Estadísticas de alta contención donde no se requiere un total atómico instantáneo."
+      },
+      {
+        "question": "¿Qué es el problema ABA en un algoritmo de compare-and-set?",
+        "hint": "Un valor cambia a otro y vuelve al original, ocultando una transición de estado intermedia."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+  },
+  {
+    "id": "interview-concurrency-jmm-1",
+    "topic": "concurrency",
+    "subtopic": "conc-jmm",
+    "difficulty": "SENIOR",
+    "question": "¿Qué garantiza una relación 'happens-before' en el Modelo de Memoria de Java (JMM)?",
+    "shortAnswer": "Si la acción A ocurre-antes-de (happens-before) la acción B, B debe observar los efectos de A según el Modelo de Memoria de Java, y el orden es transitivo. El orden del programa, la liberación-adquisición de un monitor, la escritura-lectura de volatile, el inicio de un hilo y un join exitoso crean aristas importantes. El orden del reloj de pared por sí solo no lo hace: sin una arista de sincronización, una carrera de datos puede exponer valores obsoletos o reordenamientos incluso si un hilo se ejecutó primero físicamente.",
+    "detailedAnswer": "El JMM define qué escrituras puede observar una lectura a través de los hilos. Happens-before combina orden y visibilidad: las acciones antes de liberar un monitor se vuelven visibles después de una adquisición posterior de ese monitor; una escritura volatile precede a una lectura posterior de la misma variable; las acciones antes de Thread.start se vuelven visibles en el hilo iniciado; y las acciones de un hilo se vuelven visibles después de que otro hilo regresa exitosamente de un join. Estas aristas se componen transitivamente.\n\nExiste una carrera de datos (data race) cuando accesos conflictivos a datos compartidos no están ordenados por happens-before y al menos uno es una escritura. El programa puede entonces observar un estado obsoleto o inesperadamente reordenado incluso si las pruebas suelen pasar en una máquina. Los campos finales (final fields) reciben garantías especiales de inicialización cuando un objeto se construye correctamente y 'this' no se escapa durante la construcción, pero los objetos referenciados mutables aún requieren una publicación segura y sincronización. `sleep`, los logs o el observar que una tarea suele terminar primero no establecen un contrato de orden de memoria.",
+    "keyPoints": [
+      "Happens-before define la visibilidad y el orden entre acciones",
+      "Las operaciones de monitor, volatile, start y join establecen aristas comunes",
+      "El tiempo físico no reemplaza a la sincronización",
+      "Las garantías de campos finales dependen de una construcción y publicación adecuadas"
+    ],
+    "redFlags": [
+      "Usar Thread.sleep para hacer que la comunicación de memoria compartida sea correcta",
+      "Asumir que la coherencia de caché por sí sola establece el orden a nivel de Java",
+      "Publicar 'this' desde un constructor antes de que los campos finales se inicialicen de forma segura"
+    ],
+    "followUps": [
+      {
+        "question": "¿Establece AtomicInteger relaciones de happens-before?",
+        "hint": "Sus lecturas y escrituras de estilo volatile y sus operaciones atómicas tienen efectos de memoria especificados."
+      },
+      {
+        "question": "¿Por qué un flag de parada no-volatile puede, en principio, entrar en un bucle infinito?",
+        "hint": "No hay una arista de sincronización que obligue a las lecturas repetidas a observar al escritor."
+      },
+      {
+        "question": "¿Qué requiere la publicación segura de un objeto inmutable?",
+        "hint": "Construcción completa sin escape, seguida de un mecanismo de publicación visible para los lectores."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+  },
+  {
+    "id": "interview-concurrency-cancellation-1",
+    "topic": "concurrency",
+    "subtopic": "conc-completable",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo diseñas la cancelación, los tiempos de espera (timeouts) y la limpieza de recursos en un flujo de trabajo asíncrono en Java?",
+    "shortAnswer": "Un timeout debe ser parte del presupuesto total de extremo a extremo y la cancelación debe llegar al trabajo que realmente puede detenerse. Propago los plazos (deadlines), hago que la E/S bloqueante y el código de las tareas sean conscientes de las interrupciones donde se admita, libero recursos en bloques finally o ámbitos estructurados, y distingo entre abandonar la espera de un llamador y cancelar el efecto secundario subyacente. Los reintentos y la compensación necesitan una semántica de idempotencia explícita.",
+    "detailedAnswer": "`CompletableFuture.orTimeout` puede completar un future de forma excepcional, pero no detiene mágicamente una solicitud remota o una tarea subyacente arbitraria. Defino un plazo de solicitud y lo divido intencionalmente entre las llamadas posteriores en lugar de otorgar a cada dependencia un timeout independiente completo. Para el código que poseo, compruebo la interrupción en puntos de bloqueo y bucles, restauro el estado de interrupción al capturar `InterruptedException` a menos que lo traduzca deliberadamente, y cierro los recursos de forma determinista. Los clientes HTTP/base de datos necesitan su propia configuración de timeout de conexión/lectura/consulta.\n\nLa cancelación es tanto una decisión de negocio como un mecanismo de hilos. Si un comando de pedido ya fue aceptado por un sistema remoto, cancelar el future local no puede deshacerlo; usa una clave de idempotencia, consulta de estado o acción compensatoria. Asegúrate de que las finalizaciones tardías no puedan mutar el estado de una solicitud descartada, y observa los conteos de timeout/cancelación por separado de los fallos de dependencia.\n\nEl candidato debe evitar ambos extremos: no aplicar nunca timeouts lleva al agotamiento de recursos; interrumpir indiscriminadamente tareas compartidas puede corromper las suposiciones de propiedad. Define quién es el dueño del trabajo y su limpieza.",
+    "keyPoints": [
+      "Aplicar timeout a un plazo total, no solo a una espera local",
+      "El timeout de un Future no cancela necesariamente la E/S subyacente",
+      "Hacer explícita la limpieza y la propiedad de las tareas",
+      "Tratar los efectos secundarios visibles externamente con idempotencia o compensación"
+    ],
+    "redFlags": [
+      "Asumir que la cancelación deshace un efecto secundario remoto ya completado",
+      "Ignorar (tragar) la InterruptedException",
+      "Dar a cada llamada posterior todo el presupuesto de tiempo de la solicitud"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué cancelar un CompletableFuture podría no detener el trabajo en la base de datos?",
+        "hint": "El future y el mecanismo de ejecución/cancelación del driver pueden ser independientes; configura e invoca los controles soportados por el driver."
+      },
+      {
+        "question": "¿Qué debería suceder cuando un cliente se desconecta después de que se envió un comando de pago?",
+        "hint": "No asumas la reversión; reconcilia usando una clave de idempotencia o el estado de la operación y haz que el resultado sea recuperable."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+  },
+  {
+    "id": "interview-ej-conc-1",
+    "topic": "concurrency",
+    "subtopic": "conc-threads",
+    "difficulty": "SENIOR",
+    "question": "¿Qué significa en la práctica 'sincronizar el acceso a datos mutables compartidos'? ¿Es suficiente con volatile?",
+    "shortAnswer": "La sincronización sirve para DOS propósitos: exclusión mutua (atomicidad) Y visibilidad (consistencia de memoria). volatile solo proporciona visibilidad — garantiza que las lecturas vean la última escritura — pero NO proporciona atomicidad para operaciones compuestas como el incremento (lectura-modificación-escritura). Para ++count o verificar-luego-actuar, necesitas synchronized, AtomicInteger o Lock. Regla: si una variable es escrita por un hilo y leída por otro, sincroniza TODOS los accesos a ella.",
+    "detailedAnswer": "**Effective Java Item 78:**\n\n**volatile es SUFICIENTE para:**\n```java\n// Flag simple leído/escrito por diferentes hilos\nprivate volatile boolean stopped = false;\n// Funciona porque la lectura y escritura son atómicas para booleanos\n```\n\n**volatile NO ES SUFICIENTE para:**\n```java\n// ❌ Condición de carrera: lectura + incremento + escritura no es atómico\nprivate volatile int count;\npublic void increment() { count++; } // ROTO con múltiples hilos\n\n// ✅ Soluciones:\nprivate final AtomicInteger count = new AtomicInteger();\npublic void increment() { count.incrementAndGet(); }\n// O\nprivate int count;\npublic synchronized void increment() { count++; }\n```\n\n**El problema de visibilidad:**\nSin sincronización, la JVM puede que nunca propague una escritura a otros hilos (optimización de 'hoisting', caché de CPU). Esta no es una preocupación teórica — causa bucles infinitos reales en producción.",
+    "keyPoints": [
+      "Sincronización = atomicidad + visibilidad",
+      "volatile = solo visibilidad, sin atomicidad",
+      "AtomicInteger para contadores sin bloqueos (lock-free)",
+      "Si es mutable compartido: sincroniza TODOS los accesos (tanto lectura como escritura)"
+    ],
+    "redFlags": [
+      "Creer que volatile siempre es suficiente",
+      "No conocer el problema de visibilidad",
+      "Confundir synchronized con volatile"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué son los Virtual Threads y cómo cambian los patrones de concurrencia?",
+        "hint": "Los hilos virtuales de Java 21 son ligeros (millones posibles), gestionados por la JVM. Hacen que el modelo de hilo-por-solicitud sea viable de nuevo para trabajo bloqueado por E/S. No los agrupes en pools. synchronized sigue funcionando pero puede 'anclar' (pin) el hilo portador — prefiere ReentrantLock para secciones críticas largas."
+      },
+      {
+        "question": "¿Cuándo usarías ConcurrentHashMap frente a un HashMap sincronizado?",
+        "hint": "ConcurrentHashMap siempre. Ofrece mejor concurrencia (bloqueo segmentado/striped locking, lecturas sin bloqueos) y operaciones atómicas útiles (computeIfAbsent, merge). Collections.synchronizedMap bloquea todo el mapa en cada operación."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+  }
+]

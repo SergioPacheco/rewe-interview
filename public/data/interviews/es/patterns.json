@@ -1,0 +1,144 @@
+[
+  {
+    "id": "interview-patterns-strategy-1",
+    "topic": "patterns",
+    "subtopic": "pat-strategy",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cuándo mejora el patrón Strategy un diseño y cuándo es más claro un condicional?",
+    "shortAnswer": "Strategy es útil cuando varios algoritmos implementan el mismo contrato significativo y evolucionan, se despliegan o se prueban de forma independiente. El contexto delega en la estrategia seleccionada, a menudo elegida mediante configuración o un registro. Un condicional exhaustivo pequeño puede ser más claro cuando las alternativas son cerradas, estables y comparten un único cambio cohesivo. Elijo basándome en el eje de variación real, no en el nombre del patrón.",
+    "detailedAnswer": "Strategy encapsula el comportamiento intercambiable detrás de un contrato común. Un servicio de rutas podría delegar el cálculo de costes a políticas para entrega en bicicleta, furgoneta o refrigerada, manteniendo la orquestación estable. La selección puede ocurrir en una raíz de composición, configuración de DI, factoría o un mapa tipado; no debe estar dispersa entre los llamadores. Cada estrategia necesita la misma semántica de entrada y salida, incluyendo errores y efectos secundarios.\n\nEl patrón tiene un coste en tipos adicionales, registro y navegación. Si hay dos casos simples que siempre cambian juntos, un switch exhaustivo puede comunicar la decisión completa de forma más directa. Strategy también se complica cuando las implementaciones necesitan entradas incompatibles, lo que puede llevar a un objeto de contexto impreciso o a castings. Refactorizo cuando el historial de cambios muestra variantes independientes o cuando las ramas condicionales se han vuelto difíciles de probar, no únicamente porque exista una sentencia 'if'.",
+    "keyPoints": [
+      "Las estrategias comparten un contrato de comportamiento y varían independientemente",
+      "La selección pertenece a un límite explícito o a un registro",
+      "La semántica de errores y efectos secundarios es parte de la intercambiabilidad",
+      "Un condicional cerrado pequeño puede ser el diseño más simple"
+    ],
+    "redFlags": [
+      "Crear una clase de estrategia para cada condicional trivial",
+      "Pasar un saco de contexto genérico porque las implementaciones no comparten un contrato real",
+      "Mover en lugar de eliminar la lógica de selección dispersa"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo seleccionarías una estrategia sin un switch creciente en cada llamador?",
+        "hint": "Usa una factoría, calificadores de DI, configuración o un mapa validado de tipo a estrategia."
+      },
+      {
+        "question": "¿En qué se diferencia Strategy de Template Method?",
+        "hint": "Strategy compone el comportamiento; Template Method varía los pasos mediante herencia."
+      },
+      {
+        "question": "¿Qué pruebas de contrato compartirían todas las estrategias?",
+        "hint": "Prueba invariantes de dominio, semántica de errores y salidas comunes a cada implementación."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+  },
+  {
+    "id": "interview-patterns-factory-1",
+    "topic": "patterns",
+    "subtopic": "pat-factory",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Qué problema debe resolver una factoría y cómo puede la inyección de dependencias cambiar su rol?",
+    "shortAnswer": "Una factoría centraliza una decisión de creación que los llamadores no deberían conocer: seleccionar una implementación, validar entradas de construcción o ensamblar un gráfico de objetos. La inyección de dependencias (DI) puede realizar el cableado estático de la aplicación, pero una factoría sigue siendo útil cuando la selección depende de datos en tiempo de ejecución o la construcción tiene semántica de dominio. Debe devolver un contrato veraz y evitar convertirse en un localizador de servicios con dependencias ocultas.",
+    "detailedAnswer": "Las factorías separan el uso de la creación. Un `CarrierClientFactory.forRegion(region)` podría validar la configuración y seleccionar un adaptador, mientras los llamadores trabajan con `CarrierClient`. Una factoría estática con nombre también puede mejorar un constructor expresando intención, cacheando instancias o devolviendo un subtipo. Factory Method delega la creación a través de un método sobrescribible; Abstract Factory crea familias relacionadas. En las entrevistas, describir la necesidad importa más que recitar cada variante del patrón.\n\nUn contenedor de DI ya ensambla componentes de larga duración a partir de una configuración conocida, por lo que añadir una factoría escrita a mano para cada servicio inyectado es redundante. La selección en tiempo de ejecución, objetos de dominio de vida corta, configuración multi-inquilino o invariantes de construcción aún pueden justificar una. Evito las factorías que exponen el contenedor, aceptan tokens de clase arbitrarios o acumulan lógica de creación no relacionada. Las dependencias deben seguir siendo explícitas y las selecciones desconocidas deben fallar con un error con significado de dominio en lugar de un nulo tardío.",
+    "keyPoints": [
+      "Las factorías ocultan una decisión significativa de creación o selección",
+      "La DI maneja la composición pero no todos los problemas de construcción en ejecución",
+      "Las factorías con nombre pueden aclarar la intención sin necesidad de una jerarquía",
+      "Una factoría no debe convertirse en un localizador de servicios global"
+    ],
+    "redFlags": [
+      "Añadir una factoría que solo llama a un constructor público sin ninguna lógica",
+      "Buscar servicios de aplicación arbitrarios a través de un registro estático global",
+      "Devolver null para una solicitud de creación no soportada"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo se diferencia una factoría de un builder?",
+        "hint": "Una factoría posee la política de selección o creación; un builder acumula parámetros o pasos de construcción."
+      },
+      {
+        "question": "¿Cuándo puede ser mejor un método de factoría estático que un constructor?",
+        "hint": "Puede tener un nombre, devolver un subtipo, cachear o validar antes de la construcción."
+      },
+      {
+        "question": "¿Qué hace que una factoría se convierta en un localizador de servicios?",
+        "hint": "Los llamadores extraen dependencias ocultas de ella en lugar de declararlas."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+  },
+  {
+    "id": "interview-patterns-observer-1",
+    "topic": "patterns",
+    "subtopic": "pat-observer",
+    "difficulty": "SENIOR",
+    "question": "¿Qué compromisos (trade-offs) aparecen al usar Observer para eventos de dominio?",
+    "shortAnswer": "Observer desacopla a un publicador de sus suscriptores, pero también hace que el flujo de control, el orden, los fallos y el ciclo de vida sean menos explícitos. Para observadores dentro del mismo proceso, defino la entrega síncrona frente a la asíncrona, el registro y limpieza de suscriptores, el aislamiento de excepciones y la reentrada. Para eventos duraderos entre servicios, un broker añade persistencia y reintentos, pero también duplicados, consistencia eventual, evolución de esquemas y preocupaciones de observabilidad.",
+    "detailedAnswer": "En el patrón Observer clásico, un sujeto notifica a los observadores registrados cuando el estado cambia. Esto puede soportar actualizaciones de UI o puntos de extensión internos, pero los callbacks síncronos extienden la pila de llamadas del publicador: un observador lento o que falla puede retrasar o hacer fallar la operación original, y un observador puede disparar actualizaciones reentrantes. Los publicadores de larga duración también pueden retener suscriptores olvidados y crear fugas de memoria.\n\nUn bus de eventos cambia la sintaxis más que la semántica a menos que las garantías de entrega sean explícitas. Pasar a un broker de mensajería cruza un límite de fiabilidad. La entrega puede ser 'al menos una vez', el orden está acotado, los consumidores necesitan idempotencia, los esquemas necesitan compatibilidad y publicar atómicamente con una actualización de base de datos puede requerir un patrón 'outbox' u otra estrategia de consistencia. Observer es adecuado cuando desacoplar a los suscriptores vale estos costes. Para un colaborador requerido con semántica de éxito inmediato, una llamada directa al método puede ser más clara y fácil de razonar.",
+    "keyPoints": [
+      "Observer oculta el conocimiento de los suscriptores pero hace indirecto el flujo de control",
+      "El tiempo de entrega, el orden, los errores y el ciclo de vida de la suscripción necesitan contratos",
+      "Un broker introduce durabilidad y compromisos de sistemas distribuidos",
+      "El comportamiento síncrono requerido puede ser más claro como una dependencia directa"
+    ],
+    "redFlags": [
+      "Asumir que un bus de eventos hace que el trabajo sea automáticamente asíncrono o fiable",
+      "Ignorar la limpieza de suscriptores en un publicador interno de larga duración",
+      "Publicar un evento derivado de la base de datos sin considerar la atomicidad",
+      "Tratar la entrega duplicada del broker como algo imposible"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo evitarías que un observador interno que falla corrompa el comportamiento del publicador?",
+        "hint": "Define explícitamente la semántica de aislamiento, orden, transacciones y reporte de errores."
+      },
+      {
+        "question": "¿Cuándo usarías un patrón outbox?",
+        "hint": "Cuando un cambio en la base de datos y la publicación de un evento duradero no deben divergir."
+      },
+      {
+        "question": "¿En qué se diferencia Observer de una interfaz de callback directa?",
+        "hint": "La multiplicidad, el descubrimiento, el ciclo de vida y si la dependencia es obligatoria son diferencias clave."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+  },
+  {
+    "id": "interview-patterns-builder-1",
+    "topic": "patterns",
+    "subtopic": "pat-builder",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cuándo mejora Builder la construcción de objetos y qué invariantes debe preservar?",
+    "shortAnswer": "Builder ayuda cuando la construcción tiene muchos valores opcionales, cuando los pasos con nombre mejoran la legibilidad o cuando la validación debe ocurrir antes de producir un objeto complejo. `build()` debe rechazar estados incompletos o inconsistentes y, normalmente, crear un objeto que ya no dependa del builder mutable. Para un valor pequeño con pocos componentes obligatorios, un constructor, una factoría con nombre o un record suele ser más simple.",
+    "detailedAnswer": "Un builder acumula opciones de construcción y crea el objetivo en un único paso controlado. Evita los constructores telescópicos por posición y es útil para configuraciones inmutables, objetos de solicitud (requests) y fixtures de prueba con valores por defecto sensatos. Los valores obligatorios pueden ser aceptados por la factoría o el constructor del builder, mientras que `build()` valida los invariantes entre campos. Si se aceptan colecciones u otros valores mutables, el objetivo puede necesitar copias defensivas para que una mutación posterior del builder o del llamador no altere la instancia construida.\n\nLos builders añaden código repetitivo (boilerplate) y pueden debilitar las garantías en tiempo de compilación si cada campo es opcional hasta el build. Los builders por etapas (staged builders) pueden codificar el orden en los tipos, pero su complejidad se justifica solo para protocolos importantes. Los builders generados por Lombok reducen el código pero no validan automáticamente, no copian profundamente ni hacen que una clase sea inmutable por sí solos. Un record de Java es conciso y tiene campos finales, pero los componentes pueden seguir referenciando objetos mutables y un constructor canónico largo puede seguir siendo ilegible.",
+    "keyPoints": [
+      "Builder hace que la construcción con múltiples parámetros sea legible y controlada",
+      "build() debe validar invariantes y desacoplarse del estado mutable del builder",
+      "Los builders generados no proporcionan automáticamente inmutabilidad profunda",
+      "Constructores simples, factorías o records son preferibles para valores sencillos"
+    ],
+    "redFlags": [
+      "Usar Builder para un valor con dos parámetros obligatorios obvios",
+      "Permitir que build() produzca un objeto inválido o parcialmente configurado",
+      "Compartir referencias de colecciones mutables entre el builder y el objetivo",
+      "Asumir que un record o una anotación de Lombok garantiza inmutabilidad profunda"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo representarías campos obligatorios en un builder?",
+        "hint": "Acéptalos al inicio, valídalos en el build o usa construcción por etapas cuando esté justificado."
+      },
+      {
+        "question": "¿Cuándo es preferible un record a un builder?",
+        "hint": "Un valor transparente pequeño con un conjunto claro de componentes obligatorios a menudo no necesita un builder."
+      },
+      {
+        "question": "¿Qué hace valioso a un builder de datos de prueba?",
+        "hint": "Valores por defecto estables y válidos permiten que cada prueba declare solo la propiedad relevante para su comportamiento."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+  }
+]

@@ -1,0 +1,139 @@
+[
+  {
+    "id": "interview-testing-1",
+    "topic": "testing",
+    "subtopic": "test-pyramid",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo construyes una estrategia de pruebas para un servicio en lugar de simplemente apuntar a un número de cobertura?",
+    "shortAnswer": "Empiezo por los riesgos y la velocidad de retroalimentación. Las reglas de negocio puras reciben muchas pruebas unitarias enfocadas; la persistencia, la serialización y el cableado del framework reciben pruebas de integración contra componentes realistas; un pequeño conjunto de pruebas de extremo a extremo o de aceptación protege los recorridos críticos. La pirámide es una heurística, no un porcentaje fijo. Hago seguimiento de los defectos que se escapan, la inestabilidad (flakiness) y la duración de la suite junto con la cobertura, porque las líneas ejecutadas no demuestran aserciones útiles.",
+    "detailedAnswer": "Una estrategia mapea los modos de fallo a la prueba más barata que pueda detectarlos con confianza:\n\n- **Pruebas unitarias**: cálculos, validación, transiciones de estado y política de errores, con dependencias sustituidas en límites estables. Deben ser rápidas y facilitar la localización de fallos.\n- **Pruebas de componente/integración**: mapeos SQL, migraciones, serialización HTTP, reglas de seguridad, configuración de dependencias y contratos de mensajes usando el framework y la infraestructura relevantes.\n- **Pruebas de contrato**: supuestos entre productores y consumidores de API o eventos desplegados de forma independiente.\n- **Pruebas de extremo a extremo**: unos pocos recorridos críticos de negocio a través de la pila desplegada. Detectan problemas de cableado y entorno, pero son más lentas y difíciles de diagnosticar.\n- **Verificación en producción**: comprobaciones de salud, sondas sintéticas, canarios y monitoreo complementan las pruebas previas al lanzamiento; no las sustituyen.\n\nLa forma correcta depende de la arquitectura. Una biblioteca de transformación puede probarse mayormente con pruebas unitarias; un servicio dominado por restricciones de base de datos necesita más cobertura de integración. La cobertura puede identificar código no ejecutado, pero los objetivos útiles son la confianza en el comportamiento crítico, la retroalimentación rápida, las pruebas deterministas y las brechas visibles. Las pruebas inestables deben tener un dueño y corregirse o ponerse en cuarentena con un plazo, no normalizarse.",
+    "keyPoints": [
+      "Elegir las pruebas según los riesgos y las necesidades de retroalimentación",
+      "La pirámide de pruebas es una heurística, no una proporción obligatoria",
+      "Las pruebas de integración cubren los contratos de framework e infraestructura",
+      "La cobertura es una métrica de diagnóstico, no una prueba de calidad",
+      "La inestabilidad y el tiempo de retroalimentación son señales de primer orden sobre la salud de la suite"
+    ],
+    "redFlags": [
+      "Usar un porcentaje de cobertura como toda la estrategia",
+      "Simular (mockear) el comportamiento de persistencia que la prueba debería verificar",
+      "Depender solo de pruebas de extremo a extremo lentas para las reglas de negocio",
+      "Aceptar las pruebas inestables como un estado normal inevitable"
+    ],
+    "followUps": [
+      {
+        "question": "¿Dónde probarías una regla de autorización basada en la propiedad de un objeto?",
+        "hint": "Probar la política con pruebas unitarias por casos y añadir una prueba de integración que demuestre que el cableado real de seguridad de la solicitud/método no puede eludirlos."
+      },
+      {
+        "question": "¿Qué métricas te indican que una suite de pruebas se está volviendo poco saludable?",
+        "hint": "Tasa de inestabilidad, número de reintentos, duración, localización de fallos, defectos escapados y tiempo dedicado a mantener pruebas frágiles."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Portafolio de pruebas automatizadas de SGN3",
+      "description": "El código base usa una gran suite de la capa de negocio con JUnit/Mockito, pruebas de integración con CDI, pruebas de consultas respaldadas por base de datos y reglas de ArchUnit, seleccionando distintos alcances de prueba para la lógica, el cableado y la arquitectura."
+    }
+  },
+  {
+    "id": "interview-testing-2",
+    "topic": "testing",
+    "subtopic": "test-junit",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Qué hace valiosa y mantenible a una prueba unitaria con JUnit y Mockito?",
+    "shortAnswer": "Una buena prueba unitaria comunica un solo comportamiento: una preparación significativa, una acción y resultados observables. Uso nombres descriptivos y builders para que los detalles irrelevantes queden ocultos, simulo (mock) solo límites genuinos, y evito verificar cada llamada interna. Un comportamiento puede requerir varias aserciones relacionadas; el objetivo es una única razón diagnóstica de fallo, no mecánicamente una sola sentencia de aserción.",
+    "detailedAnswer": "Una prueba clara suele seguir el patrón Arrange–Act–Assert, pero la legibilidad importa más que los comentarios que nombran cada fase:\n\n```java\n@Test\nvoid rejectsEnrollmentWhenClassIsFull() {\n    var courseClass = aCourseClass().withAvailableSeats(0).build();\n    when(repository.findById(42L)).thenReturn(Optional.of(courseClass));\n\n    var error = assertThrows(NoSeatAvailable.class,\n        () -> service.enroll(42L, studentId));\n\n    assertAll(\n        () -> assertEquals(42L, error.courseClassId()),\n        () -> verify(repository, never()).save(any())\n    );\n}\n```\n\nDirectrices:\n- Nombrar el comportamiento y la condición; no repetir nombres de métodos de implementación sin significado.\n- Mantener los datos de fixture mínimos pero válidos. Los builders/factories ayudan cuando los modelos son grandes.\n- Simular un repositorio, reloj o cliente remoto cuando el contrato de la unidad es el foco. No simular objetos de valor ni cadenas de elementos internos solo para forzar una ruta.\n- Verificar el estado devuelto, los errores lanzados o los comandos duraderos. Verificar interacciones cuando la interacción sea una responsabilidad observable, como publicar un evento o no guardar un estado inválido.\n- Evitar sobreespecificar el orden de las llamadas o las llamadas internas exactas a menos que el orden forme parte del contrato.\n- Las pruebas parametrizadas son útiles para una familia de ejemplos equivalentes; las pruebas separadas son más claras para comportamientos distintos.\n\nLos métodos privados normalmente se cubren a través del comportamiento público. La extracción se justifica cuando la lógica oculta es un concepto independiente, no simplemente para hacer que un método privado sea directamente testeable.",
+    "keyPoints": [
+      "Una prueba debe comunicar un solo comportamiento y una sola razón de fallo",
+      "Varias aserciones cohesivas pueden describir un único resultado",
+      "Simular límites, no el grafo interno de implementación",
+      "Verificar interacciones solo cuando son responsabilidades observables",
+      "Usar builders y pruebas parametrizadas donde mejoren la intención"
+    ],
+    "redFlags": [
+      "Verificar cada llamada al colaborador sin importar el comportamiento",
+      "Usar stubs laxos para ocultar una preparación irrelevante u obsoleta",
+      "Compartir estado de fixture mutable entre pruebas",
+      "Cambiar la visibilidad de producción solo para que un helper privado pueda probarse directamente"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuándo es correcta la aserción `verify` de Mockito?",
+        "hint": "Cuando enviar o no enviar un comando/evento forma parte del contrato observable de la unidad, no simplemente un paso de implementación."
+      },
+      {
+        "question": "¿Cuál es el riesgo de `@InjectMocks` en una clase con muchas dependencias?",
+        "hint": "La prueba puede ocultar un olor de diseño y ambigüedad en el constructor; la construcción explícita hace visible el límite de la unidad."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-testing-3",
+    "topic": "testing",
+    "subtopic": "test-integration",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo usas Testcontainers y otros dobles de prueba para verificar integraciones con la base de datos y sistemas externos?",
+    "clarifyingQuestions": [
+      "¿Qué comportamiento pertenece a nuestro adaptador y cuál al proveedor externo?",
+      "¿La prueba requiere el motor exacto de producción o simplemente un sustituto relacional?",
+      "¿Cómo se aislará el estado y se reproducirán los fallos en CI?"
+    ],
+    "shortAnswer": "Para mapeos, consultas y migraciones específicos de PostgreSQL, ejecuto la versión real del motor con Testcontainers, aplico las migraciones de producción y aíslo el estado de la prueba. Para las dependencias HTTP, las pruebas unitarias simulan el límite del cliente, los servidores stub verifican la serialización y el manejo de fallos, y las pruebas de contrato o de sandbox controlado comprueban los supuestos del proveedor. Evito que la suite normal de CI dependa de un servicio en vivo no controlado, aunque sigo permitiendo pruebas de humo deliberadas donde aportan valor.",
+    "detailedAnswer": "Usa el límite realista más estrecho que pruebe el riesgo:\n\n**Base de datos**:\n- Probar la política de negocio con pruebas unitarias usando un repositorio falso/simulado cuando el SQL es irrelevante.\n- Usar un contenedor de PostgreSQL para el SQL nativo, el comportamiento del dialecto, las restricciones, la semántica de transacciones y las migraciones. Un sustituto ligero aún puede ser útil para pruebas agnósticas de la base de datos, pero no puede validar comportamiento específico de PostgreSQL.\n- Fijar una versión deliberada de la base de datos, ejecutar la misma ruta de migración que producción, y hacer visibles los fallos en lugar de autogenerar un esquema distinto.\n- Aislar el estado con rollback, truncate/reinicio de esquema o un contenedor nuevo según la concurrencia y los límites de transacción. La reutilización de contenedores acelera una suite, pero no garantiza por sí sola el aislamiento.\n\n**Dependencia HTTP/API**:\n- Simular el cliente tipado en las pruebas unitarias.\n- Usar un servidor stub como WireMock para el mapeo de solicitud/respuesta, los tiempos de espera, los payloads malformados, los reintentos y los códigos de estado.\n- Usar pruebas de contrato consumidor/proveedor para servicios desplegados de forma independiente.\n- Un sandbox de proveedor controlado o una prueba de humo puede validar credenciales y compatibilidad real, pero debe mantenerse separado del CI rápido y determinista, y hacer explícitos los efectos secundarios.\n\n**Mensajería**:\n- Probar directamente el comportamiento del manejador con pruebas unitarias.\n- Usar el broker/contenedor real cuando el reconocimiento (acknowledgement), la reentrega, el ordenamiento o el comportamiento transaccional sean lo que la prueba debe demostrar.\n\nTestcontainers mejora la fidelidad ambiental, no el diseño de la prueba: la disponibilidad, los fixtures deterministas, la limpieza, la ejecución paralela y los registros de fallo accionables aún necesitan atención.",
+    "keyPoints": [
+      "Usar el motor de base de datos real para comportamiento específico del motor",
+      "Aplicar las migraciones de producción en lugar de un esquema solo para pruebas",
+      "El ciclo de vida del contenedor y el aislamiento del estado de la prueba son preocupaciones separadas",
+      "Los servidores stub ejercitan rutas de fallo sin una dependencia no controlada",
+      "Los contratos y las pruebas de sandbox deliberadas complementan los dobles locales"
+    ],
+    "redFlags": [
+      "Suponer que Testcontainers aísla automáticamente cada prueba",
+      "Usar una base de datos en memoria para aprobar SQL específico de PostgreSQL",
+      "Llamar a una API similar a producción y no controlada en cada ejecución de CI",
+      "Probar solo las respuestas exitosas de la dependencia"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué deberían ejecutarse los scripts de migración en las pruebas de integración?",
+        "hint": "Verifican que la ruta de esquema desplegada -no un esquema autogenerado solo para pruebas- admite las consultas y restricciones de la aplicación."
+      },
+      {
+        "question": "¿Cómo probarías el comportamiento de reintento sin volver lenta la suite?",
+        "hint": "Inyectar una política de reloj/backoff controlable y usar un stub que falle un número definido de veces; no esperar los intervalos reales de producción."
+      }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Pruebas de integración en producción más Testcontainers en un proyecto",
+      "description": "El trabajo en producción cubre límites de integración simulados y pruebas específicas de PostgreSQL. El proyecto SinapiPRO proporciona evidencia práctica de Testcontainers y migraciones; ese uso en un proyecto no debería presentarse como experiencia de Testcontainers en producción de la empresa."
+    }
+  },
+  {
+    "id": "interview-testing-regression-1",
+    "topic": "testing",
+    "subtopic": "test-pyramid",
+    "difficulty": "SENIOR",
+    "question": "Un defecto de producción se escapó a pesar de tener alta cobertura. ¿Cómo lo convertirías en una prueba de regresión útil y mejorarías la estrategia de pruebas?",
+    "shortAnswer": "Primero reproduzco el fallo visible para el cliente con la prueba realista más pequeña posible en el límite donde vive el supuesto defectuoso. Añado una prueba de regresión que habría fallado antes de la corrección, y luego me pregunto qué riesgo faltaba: combinaciones de entrada, comportamiento de integración, autorización, temporización, migración de datos u observabilidad. Una alta cobertura de líneas puede haber ejecutado el código sin verificar el comportamiento defectuoso.",
+    "detailedAnswer": "Empezar por los hechos del incidente en lugar de por la corrección de código propuesta: entrada, estado, configuración, respuesta de la dependencia, temporización y resultado de negocio esperado. Preservar un fixture minimizado que sea seguro y determinista. Si una regla de negocio pura estaba equivocada, una prueba unitaria suele ser la mejor salvaguarda de regresión. Si el fallo provino del dialecto SQL, la serialización, el cableado de seguridad, una migración o el comportamiento del broker, usar una prueba de integración o de contrato que incluya ese límite real.\n\nLuego realizar una pequeña revisión de aprendizaje. ¿El requisito era ambiguo? ¿Las pruebas verificaban llamadas de implementación en lugar de resultados? ¿Los fixtures generados omitieron un estado importante? ¿A una ruta de extremo a extremo le faltaba una señal de salud? Añadir el control duradero más estrecho posible, no una prueba de extremo a extremo lenta para cada defecto. Las pruebas basadas en propiedades o parametrizadas pueden ayudar donde se pasó por alto una familia de valores límite; las pruebas de mutación pueden revelar aserciones débiles en módulos críticos seleccionados.\n\nUn equipo saludable registra la prueba de regresión junto con el incidente, elimina las pruebas obsoletas si el comportamiento cambió intencionalmente, y observa si problemas similares reaparecen. El propósito es la confianza y el aprendizaje, no usar el incidente para inflar los números de cobertura.",
+    "keyPoints": [
+      "Crear una prueba que falle demostrablemente contra el comportamiento previo a la corrección",
+      "Colocar la salvaguarda de regresión en el límite que realmente falló",
+      "Usar el defecto para identificar un modelo de riesgo faltante, no simplemente una línea faltante",
+      "Preferir la prueba determinista más estrecha que aporte confianza duradera"
+    ],
+    "redFlags": [
+      "Añadir solo una lista de verificación manual tras un defecto reproducible",
+      "Añadir una prueba de extremo a extremo lenta sin entender el límite del fallo",
+      "Tratar la alta cobertura como evidencia de que se verificó el comportamiento relevante"
+    ],
+    "followUps": [
+      { "question": "¿Cuándo sería una prueba basada en propiedades una mejor salvaguarda de regresión que un solo ejemplo?", "hint": "Cuando un invariante debería cumplirse en muchas entradas generadas y el defecto escapado sugiere toda una clase de casos." },
+      { "question": "¿Qué debería demostrar una prueba de regresión antes de fusionar la corrección de producción?", "hint": "Debería fallar para el comportamiento defectuoso y pasar solo una vez que exista la corrección prevista." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  }
+]

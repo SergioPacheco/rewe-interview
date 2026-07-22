@@ -13,8 +13,8 @@ const fs = require('fs');
 const path = require('path');
 
 const dataDir = path.resolve(__dirname, '../public/data');
-const topicsDir = path.join(dataDir, 'topics');
-const exercisesDir = path.join(dataDir, 'exercises');
+const topicsDir = path.join(dataDir, 'topics', 'en');
+const exercisesDir = path.join(dataDir, 'exercises', 'en');
 const topicServicePath = path.resolve(__dirname, '../src/app/core/services/topic.service.ts');
 
 /**

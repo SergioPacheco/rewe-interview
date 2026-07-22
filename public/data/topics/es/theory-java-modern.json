@@ -1,0 +1,194 @@
+[
+  {
+    "id": "theory-collections-17-records",
+    "title": "Java Records — Contenedores de datos inmutables",
+    "sections": [
+      {
+        "heading": "¿Qué son los Records? (Java 16+)",
+        "content": "Los records son clases de datos inmutables con equals, hashCode, toString y accesores generados automáticamente.\n\n<pre><code>// Antes de los Records — DTO verboso:\npublic class DeliveryDTO {\n    private final Long id;\n    private final String driverId;\n    private final DeliveryStatus status;\n\n    public DeliveryDTO(Long id, String driverId, DeliveryStatus status) {\n        this.id = id;\n        this.driverId = driverId;\n        this.status = status;\n    }\n\n    public Long getId() { return id; }\n    public String getDriverId() { return driverId; }\n    public DeliveryStatus getStatus() { return status; }\n\n    @Override public boolean equals(Object o) { /* 15 líneas */ }\n    @Override public int hashCode() { /* ... */ }\n    @Override public String toString() { /* ... */ }\n}\n\n// Con Records — UNA LÍNEA:\npublic record DeliveryDTO(Long id, String driverId, DeliveryStatus status) {}</code></pre>\n\n<strong>Lo que obtienes gratis:</strong>\n• Constructor con todos los campos\n• Métodos de acceso: `id()`, `driverId()`, `status()` (sin prefijo `get`)\n• `equals()` comparando todos los campos\n• `hashCode()` usando todos los campos\n• `toString()` mostrando todos los campos\n• Inmutabilidad (los campos son final)"
+      },
+      {
+        "heading": "Records — validación y constructores personalizados",
+        "content": "<pre><code>public record CreateDeliveryRequest(\n    @NotBlank String driverId,\n    @NotNull @Future LocalDateTime scheduledAt,\n    @Size(min = 1, max = 50) List&lt;StopRequest&gt; stops\n) {\n    // Constructor compacto — validación\n    public CreateDeliveryRequest {\n        if (stops == null) stops = List.of();\n        stops = List.copyOf(stops);  // copia defensiva (realmente inmutable)\n    }\n\n    // Método factory personalizado\n    public static CreateDeliveryRequest urgent(String driverId, List&lt;StopRequest&gt; stops) {\n        return new CreateDeliveryRequest(driverId, LocalDateTime.now().plusHours(1), stops);\n    }\n}\n\n// Uso:\nvar req = new CreateDeliveryRequest(\"D-42\", tomorrow, stops);\nString driver = req.driverId();  // ¡sin prefijo \"get\"!\n</code></pre>\n\n<strong>Cuándo usar Records:</strong>\n• DTOs (request/response)\n• Value objects (Money, Coordinate, DateRange)\n• Payloads de eventos Kafka\n• Tipos de retorno con múltiples valores\n• Claves de Map (equals/hashCode automáticos)\n\n<strong>Cuándo NO usarlos:</strong>\n• Entidades JPA (necesitan estado mutable + constructor sin args)\n• Objetos con ciclo de vida/comportamiento complejo\n• Cuando necesitas herencia (los records son final)"
+      }
+    ],
+    "topic": "java-modern",
+    "subtopic": "modern-records"
+  },
+  {
+    "id": "theory-collections-17-sealed",
+    "title": "Clases Sealed — Jerarquías controladas",
+    "sections": [
+      {
+        "heading": "Clases sealed (Java 17)",
+        "content": "Las clases sealed restringen qué clases pueden extenderlas — el compilador conoce TODOS los subtipos.\n\n<pre><code>// Solo existen estos 4 tipos de eventos de entrega:\npublic sealed interface DeliveryEvent\n    permits DeliveryPlanned, DeliveryDispatched, DeliveryCompleted, DeliveryFailed {\n\n    String deliveryId();\n    Instant timestamp();\n}\n\npublic record DeliveryPlanned(String deliveryId, Instant timestamp, String driverId)\n    implements DeliveryEvent {}\n\npublic record DeliveryDispatched(String deliveryId, Instant timestamp, String route)\n    implements DeliveryEvent {}\n\npublic record DeliveryCompleted(String deliveryId, Instant timestamp, int stopsDelivered)\n    implements DeliveryEvent {}\n\npublic record DeliveryFailed(String deliveryId, Instant timestamp, String reason)\n    implements DeliveryEvent {}\n</code></pre>\n\n<strong>¿Por qué sealed?</strong>\n• El compilador conoce TODOS los casos → switch exhaustivo (no hace falta default)\n• Documenta el dominio con claridad (\"estos son los ÚNICOS tipos de evento\")\n• Evita subtipos inesperados\n• Permite pattern matching con completitud garantizada"
+      },
+      {
+        "heading": "Pattern matching con tipos sealed",
+        "content": "<pre><code>// Java 21: switch exhaustivo con pattern matching\npublic String describe(DeliveryEvent event) {\n    return switch (event) {\n        case DeliveryPlanned p -> \"Planned for driver \" + p.driverId();\n        case DeliveryDispatched d -> \"Dispatched on route \" + d.route();\n        case DeliveryCompleted c -> c.stopsDelivered() + \" stops delivered\";\n        case DeliveryFailed f -> \"Failed: \" + f.reason();\n        // ¡No hace falta default! El compilador sabe que todos los casos están cubiertos.\n    };\n}\n\n// Si añades un nuevo tipo de evento → ERROR de compilador en cada switch\n// Obliga a manejar el nuevo caso en todas partes (evolución segura)</code></pre>\n\n<strong>Ejemplo REWE transport:</strong>\nLos estados de entrega son un conjunto CERRADO. Usar sealed + records garantiza que cada handler cubra explícitamente todos los estados posibles. Añadir un nuevo estado se convierte en un refactor asistido por el compilador (no en una sorpresa en runtime)."
+      }
+    ],
+    "topic": "java-modern",
+    "subtopic": "modern-records"
+  },
+  {
+    "id": "theory-collections-17-pattern",
+    "title": "Pattern Matching y Text Blocks",
+    "sections": [
+      {
+        "heading": "Pattern matching para instanceof (Java 16+)",
+        "content": "<pre><code>// Antes — cast después de comprobar (redundante):\nif (event instanceof DeliveryCompleted) {\n    DeliveryCompleted completed = (DeliveryCompleted) event;\n    log.info(\"Delivered {} stops\", completed.stopsDelivered());\n}\n\n// Después — enlaza la variable en la comprobación:\nif (event instanceof DeliveryCompleted completed) {\n    log.info(\"Delivered {} stops\", completed.stopsDelivered());\n}\n\n// Combinado con switch (Java 21):\nString message = switch (notification) {\n    case SmsNotification sms -> \"SMS to \" + sms.phoneNumber();\n    case EmailNotification email -> \"Email to \" + email.address();\n    case PushNotification push -> \"Push to device \" + push.deviceId();\n    default -> \"Unknown channel\";\n};</code></pre>\n\n<strong>Guards en patterns (Java 21):</strong>\n<pre><code>switch (delivery) {\n    case Delivery d when d.status() == DELAYED && d.priority() == HIGH\n        -> escalateToManager(d);\n    case Delivery d when d.status() == DELAYED\n        -> notifyPlanner(d);\n    case Delivery d\n        -> processNormally(d);\n}</code></pre>"
+      },
+      {
+        "heading": "Text blocks (Java 15+)",
+        "content": "<pre><code>// Antes — infierno de concatenación de strings:\nString query = \"SELECT d.id, d.status, dr.name \" +\n    \"FROM delivery d \" +\n    \"JOIN driver dr ON d.driver_id = dr.id \" +\n    \"WHERE d.status = :status \" +\n    \"ORDER BY d.scheduled_at\";\n\n// Después — text blocks (preserva el formato):\nString query = \"\"\"\n    SELECT d.id, d.status, dr.name\n    FROM delivery d\n    JOIN driver dr ON d.driver_id = dr.id\n    WHERE d.status = :status\n    ORDER BY d.scheduled_at\n    \"\"\";\n\n// Plantillas JSON:\nString json = \"\"\"\n    {\n        \"deliveryId\": \"%s\",\n        \"status\": \"%s\",\n        \"timestamp\": \"%s\"\n    }\n    \"\"\".formatted(id, status, Instant.now());</code></pre>\n\n<strong>Úsalos para:</strong> consultas SQL, plantillas JSON, fragmentos HTML, mensajes de log multilínea, datos de prueba"
+      },
+      {
+        "heading": "Switch expressions (Java 14+)",
+        "content": "<pre><code>// Switch antiguo (sentencia — puedes olvidar break):\nString label;\nswitch (status) {\n    case PLANNED: label = \"Waiting\"; break;\n    case DISPATCHED: label = \"On the way\"; break;\n    default: label = \"Unknown\"; break;\n}\n\n// Switch nuevo (expresión — devuelve valor, sin break, sin fall-through):\nString label = switch (status) {\n    case PLANNED -> \"Waiting\";\n    case DISPATCHED -> \"On the way\";\n    case IN_TRANSIT -> \"Moving\";\n    case DELIVERED -> \"Done\";\n    default -> \"Unknown\";\n};\n\n// Bloques multilínea:\nint priority = switch (delivery.getType()) {\n    case EXPRESS -> {\n        log.info(\"Express delivery detected\");\n        yield 1;  // 'yield' devuelve un valor desde el bloque\n    }\n    case SAME_DAY -> { yield 2; }\n    default -> { yield 3; }\n};</code></pre>"
+      }
+    ],
+    "topic": "java-modern",
+    "subtopic": "modern-patterns"
+  },
+  {
+    "id": "theory-modern-streams",
+    "topic": "java-modern",
+    "subtopic": "modern-streams",
+    "title": "Streams y Optional — Pipelines de datos declarativos",
+    "sections": [
+      {
+        "heading": "Stream API — pipelines funcionales",
+        "content": "Los streams te permiten expresar transformaciones de datos de forma declarativa: filter, map, flatMap, reduce, collect. Son perezosos (lazy) — las operaciones intermedias construyen un pipeline; las operaciones terminales disparan la ejecución.\n\n<pre><code>// Encontrar entregas activas con ETA vencido\nList<Delivery> overdue = deliveries.stream()\n    .filter(d -> d.getStatus() == ACTIVE)\n    .filter(d -> d.getEta().isBefore(Instant.now()))\n    .sorted(Comparator.comparing(Delivery::getEta))\n    .toList(); // Java 16+ — lista inmutable</code></pre>"
+      },
+      {
+        "heading": "Collectors y agrupación",
+        "content": "Collectors transforman resultados de streams en mapas, listas, estadísticas o contenedores personalizados.\n\n<pre><code>// Agrupar entregas por driver, contando cada una\nMap<String, Long> countByDriver = deliveries.stream()\n    .collect(Collectors.groupingBy(\n        Delivery::getDriverId,\n        Collectors.counting()\n    ));\n\n// Particionar en a tiempo vs tarde\nMap<Boolean, List<Delivery>> partitioned = deliveries.stream()\n    .collect(Collectors.partitioningBy(d -> d.isOnTime()));</code></pre>"
+      },
+      {
+        "heading": "Optional — ausencia explícita",
+        "content": "Optional obliga al llamador a manejar el caso ausente. Nunca uses Optional para campos o parámetros — solo para tipos de retorno.\n\n<pre><code>// Bien: método que podría no encontrar resultado\npublic Optional<Driver> findAvailableDriver(String zone) {\n    return drivers.stream()\n        .filter(d -> d.getZone().equals(zone) && d.isAvailable())\n        .findFirst();\n}\n\n// El consumidor maneja la ausencia explícitamente\nDriver driver = findAvailableDriver(\"Berlin-Mitte\")\n    .orElseThrow(() -> new NoDriverAvailableException(zone));</code></pre>"
+      },
+      {
+        "heading": "Trampas de rendimiento",
+        "content": "Los streams no siempre son más rápidos que los bucles. Evita: streams paralelos en colecciones pequeñas, streams que disparan llamadas N+1 a base de datos, boxing innecesario con mapToInt/mapToLong y recolectar a una lista solo para iterarla otra vez. Usa streams por legibilidad cuando el pipeline sea claro; usa bucles cuando la mutación o la salida temprana sea más simple."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-threads",
+    "topic": "java-modern",
+    "subtopic": "modern-threads",
+    "title": "Virtual Threads — Concurrencia ligera (Java 21)",
+    "sections": [
+      {
+        "heading": "El problema con los platform threads",
+        "content": "Cada platform thread se mapea 1:1 a un thread del SO (~1MB de stack). Un servicio que maneje 10.000 solicitudes concurrentes necesita 10.000 threads del SO — prohibitivo en memoria. El atajo fue usar código reactivo/async (CompletableFuture, WebFlux), que sacrifica legibilidad."
+      },
+      {
+        "heading": "Virtual threads — la solución",
+        "content": "Las virtual threads (Project Loom) son hilos ligeros gestionados por la JVM, no por el SO. Pueden existir millones a la vez. El I/O bloqueante desmonta la virtual thread de su carrier — no se desperdicia un thread esperando.\n\n<pre><code>// Crear virtual threads — trivialmente barato\ntry (var executor = Executors.newVirtualThreadPerTaskExecutor()) {\n    for (DeliveryTask task : tasks) {\n        executor.submit(() -> processDelivery(task));\n    }\n} // cierre automático, espera a la finalización</code></pre>"
+      },
+      {
+        "heading": "Qué cambia para Spring Boot",
+        "content": "Spring Boot 3.2+ soporta virtual threads con una sola propiedad:\n\n<pre><code>spring.threads.virtual.enabled=true</code></pre>\n\nCada handler de request se ejecuta en una virtual thread. Escribe código bloqueante simple — la JVM se encarga de la planificación. No hace falta WebFlux ni reactivo salvo que necesites streaming/backpressure."
+      },
+      {
+        "heading": "Peligros y cuándo NO usarlas",
+        "content": "Las virtual threads no ayudan al trabajo CPU-bound — brillan en I/O bloqueante. Evita bloques synchronized (anclan el carrier thread); usa ReentrantLock en su lugar. Las variables ThreadLocal funcionan pero pueden acumular memoria entre millones de virtual threads — prefiere scoped values (preview de Java 21). Los pools de conexiones (HikariCP) siguen limitando la concurrencia al tamaño del pool — las virtual threads esperan en el pool, no en el SO."
+      },
+      {
+        "heading": "Perspectiva REWE",
+        "content": "Un servicio de tracking de entregas que maneja miles de actualizaciones GPS concurrentes se beneficia de inmediato: código bloqueante simple, concurrencia masiva, sin complejidad reactiva. La plataforma NEO puede adoptar virtual threads de forma incremental — activar la flag, monitorizar y ajustar tamaños de pool."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-evolution",
+    "topic": "java-modern",
+    "subtopic": "modern-evolution",
+    "title": "Evolución Java 17 → 21 — Lo que importa para REWE",
+    "sections": [
+      {
+        "heading": "Aspectos destacados de Java 17 LTS",
+        "content": "Clases sealed (restringen herencia), pattern matching para instanceof, text blocks, NullPointerExceptions más útiles (muestran qué variable fue null), encapsulación fuerte de internals del JDK (sin más --illegal-access). Java 17 es la base para Spring Boot 3.x y Jakarta EE 10."
+      },
+      {
+        "heading": "Aspectos destacados de Java 21 LTS",
+        "content": "Virtual threads (GA), colecciones secuenciadas (SequencedMap, SequencedSet), record patterns en switch, string templates (preview), scoped values (preview). Java 21 está listo para producción y es el objetivo para nuevos servicios greenfield."
+      },
+      {
+        "heading": "Estrategia de migración",
+        "content": "Para servicios existentes: mantenerse en Java 17 LTS hasta que las dependencias soporten 21 (Spring Boot 3.2+, Hibernate 6.4+). Para servicios nuevos: empezar en Java 21. Tareas clave de migración: reemplazar javax.* por jakarta.*, eliminar APIs deprecadas (SecurityManager, Applet), corregir acceso por reflexión a internals del JDK, actualizar plugins de build."
+      },
+      {
+        "heading": "Respuesta de entrevista",
+        "content": "Sigo la evolución de Java de forma pragmática. Los records y sealed classes mejoran el modelado del dominio hoy. Las virtual threads eliminan el debate reactivo vs imperativo para servicios I/O-bound. Adopto funciones que reducen complejidad sin crear riesgo de migración para el equipo."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-records-deep",
+    "topic": "java-modern",
+    "subtopic": "modern-records",
+    "title": "Records en producción — Inmutabilidad, igualdad y fronteras",
+    "sections": [
+      {
+        "heading": "Un record es inmutable de forma superficial",
+        "content": "Los componentes de un record son referencias final; no convierten una colección u objeto referenciado en inmutable. Copia las entradas mutables en la frontera, especialmente cuando el record es un mensaje, una clave de caché o un value object.\n\n<pre><code>public record RoutePlan(String id, List&lt;String&gt; stops) {\n    public RoutePlan {\n        stops = List.copyOf(stops);\n    }\n}</code></pre>\n\nSin la copia, un llamador puede cambiar la lista después de construir el objeto. Eso también puede cambiar igualdad y hashing, lo que es peligroso cuando el record se coloca en un Set o Map."
+      },
+      {
+        "heading": "Elegir la frontera correcta",
+        "content": "Los records funcionan bien para DTOs de request/response, eventos y pequeños value objects con igualdad estructural transparente. No son un reemplazo universal de entidades: identidad de persistencia, proxies perezosos, mutación de ciclo de vida e invariantes ocultos suelen hacer que una clase normal sea mejor opción.\n\nPregúntate si el significado público del tipo es exactamente el de sus componentes declarados. Si sí, un record hace explícito ese contrato. Si no, usa una clase cuya API comunique comportamiento y ciclo de vida."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-patterns-deep",
+    "topic": "java-modern",
+    "subtopic": "modern-patterns",
+    "title": "Pattern Matching — Exhaustividad y branching seguro",
+    "sections": [
+      {
+        "heading": "Scope, dominance y null",
+        "content": "Una variable de pattern existe solo donde Java puede probar que la coincidencia tuvo éxito. El orden en un pattern-switch importa: un caso amplio como <code>case Object value</code> domina casos no nulos posteriores y el compilador lo rechaza.\n\nManeja <code>null</code> deliberadamente con <code>case null</code> cuando sea una entrada válida; no se maneja automáticamente con <code>default</code>. Usa pattern matching para hacer más clara la ramificación sobre formas de datos, no para reemplazar comportamiento cohesivo con un único switch central cada vez más grande."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-streams-deep",
+    "topic": "java-modern",
+    "subtopic": "modern-streams",
+    "title": "Streams en producción — Ciclo de vida y rendimiento",
+    "sections": [
+      {
+        "heading": "Los pipelines son de un solo uso y perezosos",
+        "content": "Las operaciones intermedias construyen un pipeline; una operación terminal lo activa. Un stream no es una colección y no puede reutilizarse después de una operación terminal. Mantén los efectos secundarios fuera de <code>peek</code>, y cierra los streams respaldados por E/S o recursos de base de datos con try-with-resources.\n\nLos parallel streams usan por defecto el common ForkJoinPool. Rara vez son una buena forma de añadir concurrencia bloqueante de servicio: capacidad, contexto de request y límites aguas abajo se vuelven más difíciles de controlar. Prefiere un bucle cuando la salida temprana o la mutación sean más claras."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-threads-deep",
+    "topic": "java-modern",
+    "subtopic": "modern-threads",
+    "title": "Virtual Threads — La capacidad sigue siendo un problema de diseño",
+    "sections": [
+      {
+        "heading": "Protege dependencias escasas",
+        "content": "Las virtual threads hacen que el I/O bloqueante escale, pero no hacen ilimitada una base de datos, una API remota o un pool de conexiones. Crea una virtual thread por tarea y, por separado, limita recursos escasos con un pool de conexiones, semáforo, rate limit y timeout de extremo a extremo.\n\nObserva percentiles de latencia, saturación aguas abajo, utilización de carriers y pinning con la versión de JDK que realmente despliegas. Las JDK modernas eliminaron el antiguo problema general de pinning por monitores, pero llamadas nativas y foreign calls todavía pueden pinnear. Mide en lugar de aplicar reglas genéricas obsoletas."
+      }
+    ]
+  },
+  {
+    "id": "theory-modern-evolution-deep",
+    "topic": "java-modern",
+    "subtopic": "modern-evolution",
+    "title": "Actualizar Java con seguridad — Runtime, tooling y despliegue",
+    "sections": [
+      {
+        "heading": "Trata una actualización como un cambio operativo",
+        "content": "Inventaría plugins de build, annotation processors, agentes, librerías nativas, imágenes de contenedor y dependencias que usan internals del JDK. Prueba la imagen desplegable en la JDK objetivo, no solo la compilación local.\n\nEstablece una línea base de arranque, memoria, GC, throughput y latencia; luego usa un canary con criterios de rollback. Separa la adopción del runtime de la refactorización de features del lenguaje para que una regresión tenga una causa clara. Las preview features requieren <code>--enable-preview</code> en compilación y runtime, y deben ser una política explícita del equipo."
+      }
+    ]
+  }
+]

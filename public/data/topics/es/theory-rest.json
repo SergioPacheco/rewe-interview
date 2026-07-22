@@ -1,0 +1,70 @@
+[
+  {
+    "id": "theory-rest-fundamentals",
+    "title": "REST Fundamentals — Verbs, Resources, Status Codes",
+    "sections": [
+      {
+        "heading": "What is REST?",
+        "content": "REST (Representational State Transfer) is an architectural style for APIs built on HTTP.\n\nCore constraints:\n• <strong>Stateless</strong> — each request contains all info needed (no server-side session)\n• <strong>Resource-oriented</strong> — URLs identify resources (nouns), not actions (verbs)\n• <strong>Uniform interface</strong> — HTTP verbs define the operation\n• <strong>Cacheable</strong> — responses can be cached by clients/proxies\n\n<pre><code>// Resources are NOUNS (not verbs!)\nGET  /deliveries          ← list deliveries\nGET  /deliveries/4567     ← get one delivery\nPOST /deliveries          ← create a delivery\nPUT  /deliveries/4567     ← replace a delivery\nPATCH /deliveries/4567    ← partial update\nDELETE /deliveries/4567   ← delete a delivery\n\n// ❌ Anti-pattern: verbs in URLs\nPOST /createDelivery\nGET  /getDeliveryById?id=4567\nPOST /deleteDelivery</code></pre>"
+      },
+      {
+        "heading": "HTTP Verbs and their semantics",
+        "content": "<pre><code>GET     — Read (no side effects, idempotent, cacheable)\nPOST    — Create (not idempotent — calling twice creates 2 resources)\nPUT     — Replace entirely (idempotent — calling twice = same result)\nPATCH   — Partial update (may or may not be idempotent)\nDELETE  — Remove (idempotent — deleting twice = same state)</code></pre>\n\n<strong>Idempotent</strong> = calling N times produces the same result as calling once.\n• GET, PUT, DELETE are idempotent\n• POST is NOT idempotent (creates new resource each time)\n• PATCH depends on the operation\n\n<strong>Safe</strong> = does not modify server state.\n• GET, HEAD, OPTIONS are safe\n• POST, PUT, PATCH, DELETE are NOT safe\n\n<strong>Interview question:</strong> \"What's the difference between PUT and PATCH?\"\nPUT replaces the ENTIRE resource. PATCH updates only the fields you send.\n<pre><code>// PUT — must send ALL fields (missing = set to null/default)\nPUT /deliveries/4567\n{ \"driverId\": \"d-42\", \"route\": \"R-7\", \"status\": \"DISPATCHED\", \"stops\": [...] }\n\n// PATCH — send ONLY what changes\nPATCH /deliveries/4567\n{ \"status\": \"DISPATCHED\" }</code></pre>"
+      },
+      {
+        "heading": "HTTP Status Codes",
+        "content": "<pre><code>2xx — SUCCESS\n  200 OK              — general success (GET, PUT, PATCH)\n  201 Created         — resource created (POST) + Location header\n  204 No Content      — success with no body (DELETE)\n\n3xx — REDIRECTION\n  301 Moved Permanently\n  304 Not Modified    — cache still valid (ETag)\n\n4xx — CLIENT ERROR (your fault)\n  400 Bad Request     — validation failed, malformed payload\n  401 Unauthorized    — not authenticated (missing/bad token)\n  403 Forbidden       — authenticated but not authorized\n  404 Not Found       — resource doesn't exist\n  409 Conflict        — state conflict (duplicate, version mismatch)\n  422 Unprocessable   — semantically invalid (valid JSON but bad data)\n  429 Too Many Reqs   — rate limited\n\n5xx — SERVER ERROR (our fault)\n  500 Internal Error  — unexpected failure (bug, timeout)\n  502 Bad Gateway     — upstream service failed\n  503 Unavailable     — overloaded or maintenance\n  504 Gateway Timeout — upstream timed out</code></pre>\n\n<strong>Interview tip:</strong> \"400 vs 422?\" — 400 = can't even parse the request. 422 = parsed it, but the content violates business rules."
+      }
+    ],
+    "topic": "rest",
+    "subtopic": "rest-verbs"
+  },
+  {
+    "id": "theory-rest-design",
+    "title": "API Design — Pagination, Error Format, Versioning",
+    "sections": [
+      {
+        "heading": "Pagination",
+        "content": "Never return unbounded lists. Always paginate:\n\n<pre><code>GET /deliveries?offset=0&limit=20&sort=createdAt,desc\n\n// Response includes pagination metadata\n{\n  \"content\": [...],\n  \"page\": { \"offset\": 0, \"limit\": 20, \"total\": 1543 },\n  \"links\": {\n    \"next\": \"/deliveries?offset=20&limit=20\",\n    \"prev\": null\n  }\n}</code></pre>\n\n<strong>Cursor-based (for high volume):</strong>\n<pre><code>GET /deliveries?after=2026-07-19T10:00:00Z&afterId=4567&limit=50\n// More efficient than offset for large datasets (no COUNT, no skip)</code></pre>\n\n<strong>Rules:</strong>\n• Always set a max limit server-side (e.g., max 100)\n• Always use deterministic ordering (include ID as tiebreaker)\n• Never paginate without ORDER BY"
+      },
+      {
+        "heading": "Error response format",
+        "content": "Consistent error responses across all endpoints:\n\n<pre><code>// Validation error (400)\n{\n  \"code\": \"VALIDATION_FAILED\",\n  \"message\": \"Request validation failed\",\n  \"details\": [\n    { \"field\": \"driverId\", \"error\": \"must not be blank\" },\n    { \"field\": \"scheduledAt\", \"error\": \"must be in the future\" }\n  ]\n}\n\n// Business error (409)\n{\n  \"code\": \"DELIVERY_ALREADY_DISPATCHED\",\n  \"message\": \"Delivery 4567 is already dispatched and cannot be modified\"\n}\n\n// Not found (404)\n{\n  \"code\": \"DELIVERY_NOT_FOUND\",\n  \"message\": \"Delivery with ID 4567 does not exist\"\n}</code></pre>\n\n<strong>Rules:</strong>\n• Machine-readable code (for client switch statements)\n• Human-readable message (for logs/debugging)\n• NEVER expose stack traces or internal details\n• NEVER return 200 with an error in the body"
+      },
+      {
+        "heading": "Versioning strategies",
+        "content": "<strong>URL path versioning</strong> (most common, clearest):\n<pre><code>GET /api/v1/deliveries\nGET /api/v2/deliveries</code></pre>\n\n<strong>Header versioning:</strong>\n<pre><code>GET /api/deliveries\nAccept: application/vnd.rewe.v2+json</code></pre>\n\n<strong>When to create a new version:</strong>\n• Removing a field from the response\n• Changing the type/meaning of an existing field\n• Making an optional parameter required\n• Changing the response structure\n\n<strong>When you DON'T need a new version:</strong>\n• Adding a new optional field to the response (backward-compatible)\n• Adding a new endpoint\n\n<strong>REWE practical approach:</strong> URL versioning (v1, v2). Keep both versions running during migration. Share business logic — each version is a thin adapter. Never duplicate business code between versions."
+      },
+      {
+        "heading": "Idempotency for safe retries",
+        "content": "When a client doesn't receive a response (timeout, network error), it may retry. Without idempotency, retry = duplicate.\n\n<pre><code>// Problem: POST is not idempotent\nPOST /deliveries (timeout... did it create or not?)\nPOST /deliveries (retry... now you have 2 deliveries!)\n\n// Solution: Idempotency Key\nPOST /deliveries\nHeaders: Idempotency-Key: 550e8400-e29b-41d4-a716-446655440000\n\n// Server stores: key → response\n// Same key again → returns stored response (no duplicate)</code></pre>\n\n<strong>Implementation:</strong>\n1. Client sends unique key per logical operation\n2. Server checks: \"did I already process this key?\"\n3. If yes → return the original response\n4. If no → process, store result, return response\n\n<strong>Natural idempotency:</strong>\n• PUT is naturally idempotent (same data → same state)\n• DELETE is naturally idempotent (deleting non-existent = 404 or 204)\n• Only POST needs explicit idempotency keys for critical operations"
+      }
+    ],
+    "topic": "rest",
+    "subtopic": "rest-design"
+  },
+  {
+    "id": "theory-rest-interview",
+    "title": "REST Interview — Common Questions",
+    "sections": [
+      {
+        "heading": "Top interview questions and answers",
+        "content": "<strong>\"PUT vs POST?\"</strong>\nPOST creates a new resource (server assigns ID). PUT replaces a resource at a known URL.\nPOST /deliveries → 201 + Location header.\nPUT /deliveries/4567 → 200 (replaced) or 201 (created at that URL).\n\n<strong>\"How do you handle versioning?\"</strong>\nURL path versioning (/v1/, /v2/) for clarity. Both versions delegate to the same business logic. Version adapters handle request/response transformation. Never duplicate business code.\n\n<strong>\"How do you secure a REST API?\"</strong>\n• Authentication: JWT/OAuth2 tokens in Authorization header\n• Authorization: role/permission checks in the business layer\n• Input validation: Bean Validation + max sizes + parameterized queries\n• Rate limiting: per-client quotas (API gateway)\n• HTTPS: always (never plain HTTP in production)\n\n<strong>\"REST vs GraphQL?\"</strong>\nREST: simpler, cacheable, well-understood. Better for CRUD and standard APIs.\nGraphQL: flexible queries, reduces over/under-fetching. Better for complex UIs with varied data needs.\nFor REWE transport logistics: REST is the standard choice (well-defined resources, predictable patterns).\n\n<strong>\"What makes an API 'RESTful'?\"</strong>\nStateless, resource-oriented, proper HTTP verbs, proper status codes, HATEOAS (links in responses — often skipped in practice). The pragmatic answer: \"We follow REST conventions for verbs and status codes, resource-oriented URLs, and stateless communication. We don't implement full HATEOAS because the ROI is low for internal APIs.\""
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "Senior engineers design APIs for evolution, not just for today's requirements.\n\nKey distinctions:\n• API versioning strategy must be decided BEFORE the first consumer exists\n• Idempotency is not optional for any operation that can be retried\n• Pagination must use stable ordering — offset/limit breaks with concurrent inserts\n• Error responses should help the client recover, not just report failure\n• Rate limiting, circuit breaking and timeout budgets are API design concerns, not afterthoughts"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "In TRAB's API ecosystem:\n\n• The delivery tracking API serves mobile apps, warehouse dashboards and external carriers — all with different needs\n• Versioning (v1, v2) allows evolving the API without breaking existing consumers during rolling deploys\n• Webhook callbacks notify external carriers of delivery status changes — requiring idempotent receivers\n• Bulk endpoints (POST /deliveries/batch) handle morning route planning imports (500+ deliveries at once)\n• API Gateway handles authentication, rate limiting and routing to the correct service version"
+      },
+      {
+        "heading": "When NOT to use",
+        "content": "When REST is not the best choice:\n\n• Real-time bidirectional communication (use WebSocket or SSE)\n• High-frequency internal service communication where HTTP overhead matters (use gRPC)\n• Event notification between services (use messaging — Kafka, RabbitMQ)\n• File uploads >100MB (use streaming or chunked upload protocols)\n• When you need strong typing across service boundaries (consider gRPC + protobuf)"
+      }
+    ],
+    "topic": "rest",
+    "subtopic": "rest-versioning"
+  }
+]

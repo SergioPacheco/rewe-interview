@@ -1,0 +1,388 @@
+[
+  {
+    "id": "interview-java-basics-1",
+    "topic": "collections",
+    "subtopic": "java-basics",
+    "difficulty": "PRINCIPIANTE",
+    "question": "¿Qué sucede entre la compilación de un archivo fuente Java y la ejecución de su código?",
+    "shortAnswer": "javac normalmente compila el código fuente en bytecode de la JVM almacenado en archivos .class. En tiempo de ejecución, los class loaders cargan y vinculan las clases, el verificador comprueba las restricciones del bytecode y la JVM interpreta o compila mediante JIT (just-in-time) el código 'caliente' a instrucciones nativas. El mismo archivo .class puede ejecutarse en JVMs compatibles, aunque el comportamiento puede depender de la versión del JDK, las librerías nativas y el entorno operativo.",
+    "detailedAnswer": "La compilación traduce el código fuente Java en archivos .class que contienen bytecode y metadatos. El entorno de ejecución carga las clases bajo demanda, verifica las reglas estructurales y de seguridad de tipos, vincula referencias simbólicas, inicializa el estado estático y ejecuta los métodos. Las JVM modernas suelen comenzar con interpretación o código compilado de bajo nivel y optimizan las rutas ejecutadas con frecuencia utilizando perfiles de tiempo de ejecución. El código optimizado puede ser desoptimizado posteriormente si sus suposiciones dejan de ser válidas.\n\n'Escribe una vez, ejecuta en cualquier lugar' describe la portabilidad del bytecode, no una independencia ambiental absoluta. Un programa puede depender de una versión mínima de archivo .class, convenciones del sistema de archivos, codificaciones, zonas horarias, código nativo o límites de contenedores. También es útil distinguir entre el lenguaje, la librería estándar y la JVM: otros lenguajes pueden tener como objetivo la JVM, y el código Java puede comportarse de manera diferente en distintas versiones de runtime soportadas sin cambiar su código fuente.",
+    "keyPoints": [
+      "javac produce bytecode y metadatos de clase",
+      "La carga de clases, vinculación, inicialización y ejecución son fases distintas",
+      "La JVM puede perfilar, compilar mediante JIT y desoptimizar el código",
+      "La portabilidad del bytecode no elimina las preocupaciones de compatibilidad de runtime y entorno"
+    ],
+    "redFlags": [
+      "Decir que el código fuente Java se interpreta directamente línea por línea",
+      "Tratar JDK, JVM y lenguaje Java como términos intercambiables",
+      "Afirmar que el bytecode garantiza un comportamiento idéntico en todos los entornos"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué una clase compilada en un JDK más reciente puede fallar en un runtime más antiguo?",
+        "hint": "Considera las versiones de archivos de clase y las APIs introducidas después del runtime antiguo."
+      },
+      {
+        "question": "¿Qué es la desoptimización JIT?",
+        "hint": "El código optimizado puede volver atrás cuando las suposiciones de tiempo de ejecución dejan de ser válidas."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+  },
+  {
+    "id": "interview-java-types-1",
+    "topic": "collections",
+    "subtopic": "java-types",
+    "difficulty": "PRINCIPIANTE",
+    "question": "¿Qué diferencias prácticas entre tipos primitivos y tipos envolventes (wrappers) importan en producción Java?",
+    "shortAnswer": "Los primitivos contienen valores y no pueden ser nulos; los wrappers son objetos, pueden ser nulos, funcionan con genéricos y añaden semántica de asignación de memoria o 'boxing'. El autoboxing es conveniente pero puede ocultar NullPointerExceptions durante el unboxing, comparaciones de identidad sorprendentes y sobrecarga en rutas críticas (hot paths). Utilizo equals() para comparar valores de wrappers y elijo la nulabilidad deliberadamente en lugar de alternar mecánicamente entre ambos.",
+    "detailedAnswer": "Los ocho tipos primitivos de Java tienen una semántica de valor definida por el lenguaje. Sus wrappers (Integer, Long, Boolean, entre otros) son tipos de referencia necesarios para colecciones genéricas y APIs que representan la ausencia de valor con null. El autoboxing y unboxing hacen que las conversiones sean implícitas, pero `Integer count = null; int n = count;` lanza una NullPointerException.\n\nEl operador `==` compara valores primitivos pero referencias en los wrappers. Los enteros pequeños en caché suelen estar pre-asignados, por lo que algunas comparaciones de identidad parecen funcionar y luego fallan con otros valores; esa caché no es una razón para usar `==`. Los wrappers también añaden costes de memoria y posibles asignaciones, aunque la JVM puede optimizar algunas de ellas. En código de dominio ordinario, la claridad importa más que la micro-optimización; en grandes arrays numéricos o bucles críticos medidos, el almacenamiento especializado en primitivos puede ser sustancial.",
+    "keyPoints": [
+      "Los primitivos son valores no nulos; los wrappers son referencias nulables",
+      "Los genéricos requieren tipos de referencia, lo que introduce el 'boxing'",
+      "Hacer unboxing de un wrapper nulo lanza NullPointerException",
+      "La identidad del wrapper y la igualdad de valor son cosas diferentes"
+    ],
+    "redFlags": [
+      "Comparar valores de wrappers con ==",
+      "Asumir que el autoboxing es invisible en cuanto a comportamiento con nulos",
+      "Hacer afirmaciones de rendimiento sin considerar la carga de trabajo o mediciones"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué las comparaciones de Integer con == pueden parecer inconsistentes?",
+        "hint": "Discute la identidad de referencia y la caché utilizada para algunos valores empaquetados (boxed)."
+      },
+      {
+        "question": "¿Dónde puede el boxing volverse operativamente significativo?",
+        "hint": "Piensa en grandes colecciones, tasa de asignación de memoria, GC y bucles numéricos intensivos."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+  },
+  {
+    "id": "interview-java-operators-1",
+    "topic": "collections",
+    "subtopic": "java-operators",
+    "difficulty": "PRINCIPIANTE",
+    "question": "¿Cuál es la diferencia entre los operadores booleanos de cortocircuito y los de no cortocircuito en Java?",
+    "shortAnswer": "Para booleanos, && y || evalúan el operando derecho solo cuando este puede afectar al resultado. Los operadores & y | evalúan ambos operandos, y también sirven como operadores bit a bit para tipos enteros. El cortocircuito es útil para guardas como `value != null && value.isValid()`; elegir la forma sin cortocircuito puede disparar efectos secundarios o excepciones en el lado derecho.",
+    "detailedAnswer": "Con `a && b`, Java omite `b` cuando `a` es falso; con `a || b`, omite `b` cuando `a` es verdadero. Esto permite expresiones de guarda seguras y puede evitar trabajo costoso. Los operadores booleanos `&` y `|` siempre evalúan ambos operandos, mientras que en operandos integrales realizan operaciones de bits. `^` es el OR exclusivo y también evalúa ambos operandos booleanos.\n\nLa corrección del código no debería depender de efectos secundarios oscuros dentro de expresiones booleanas. Incluso cuando se entiende el cortocircuito, extraer predicados complejos a métodos con nombre suele mejorar la legibilidad y las pruebas. Los paréntesis son preferibles cuando la mezcla de operadores dificulta ver la precedencia. Una respuesta sólida explica tanto el comportamiento de evaluación como por qué es importante, en lugar de simplemente listar los símbolos.",
+    "keyPoints": [
+      "&& y || omiten condicionalmente el operando derecho",
+      "Los booleanos & y | evalúan siempre ambos operandos",
+      "Los mismos tokens & y | son operadores bit a bit para tipos integrales",
+      "Las expresiones de guarda pueden prevenir desreferencias inválidas o trabajo costoso"
+    ],
+    "redFlags": [
+      "Tratar & y && como intercambiables en expresiones booleanas",
+      "Depender de mutaciones ocultas dentro de una condición compleja",
+      "Ignorar la legibilidad al mezclar varios operadores"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué sucede en obj != null && obj.isReady()?",
+        "hint": "El método no se llama si obj es null."
+      },
+      {
+        "question": "¿Cuándo es intencional el uso de & booleano?",
+        "hint": "Raramente, solo cuando ambos cómputos booleanos deben ejecutarse; haz los efectos secundarios explícitos si es posible."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+  },
+  {
+    "id": "interview-java-arrays-1",
+    "topic": "collections",
+    "subtopic": "java-arrays",
+    "difficulty": "PRINCIPIANTE",
+    "question": "¿Cuándo elegirías un array en lugar de un List en Java?",
+    "shortAnswer": "Elijo un array cuando el tamaño es fijo, el almacenamiento indexado es el contrato natural, una librería lo requiere, o cuando el almacenamiento de primitivos y la baja sobrecarga son críticos. Un List suele ser más claro cuando la colección crece, expone operaciones de colección o debe ocultar su representación. Los arrays son covariantes y reificados, mientras que los genéricos son invariantes y borrados (erased), lo que crea diferentes compromisos en la seguridad de tipos.",
+    "detailedAnswer": "Los arrays tienen una longitud fija y soportan acceso indexado en tiempo constante. Pueden almacenar primitivos directamente y mantienen su tipo de componente en tiempo de ejecución. Los Lists proporcionan redimensionamiento y una API más rica, y una interfaz como List suele dar a los llamadores menos conocimiento sobre los detalles del almacenamiento.\n\nLos arrays en Java son covariantes: un String[] puede asignarse a un Object[], pero almacenar un Integer entonces lanza una ArrayStoreException en tiempo de ejecución. Las colecciones genéricas son invariantes por defecto, por lo que un List<String> no es un List<Object>; esto captura esa categoría de error en tiempo de compilación. Los arrays y los genéricos también interactúan con dificultad porque los tipos de componentes genéricos se borran (erasure), razón por la cual generalmente no se permite crear `new T[]`. La decisión debe basarse en el contrato de la API y las restricciones medidas, no en una afirmación universal de que uno es más rápido que el otro.",
+    "keyPoints": [
+      "Los arrays tienen longitud fija y pueden almacenar primitivos directamente",
+      "Los Lists ofrecen redimensionamiento y operaciones orientadas a colecciones",
+      "La covarianza de los arrays puede diferir un error de tipo hasta el tiempo de ejecución",
+      "Las colecciones genéricas son invariantes a menos que se exprese varianza con comodines (wildcards)"
+    ],
+    "redFlags": [
+      "Clasificar HashMap como un concepto de array",
+      "Afirmar que los arrays siempre son más rápidos sin evidencia de carga de trabajo",
+      "No percibir el riesgo en tiempo de ejecución introducido por la covarianza de arrays"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué asignar String[] a Object[] puede fallar más tarde?",
+        "hint": "El tipo de componente en tiempo de ejecución sigue impidiendo almacenar algo que no sea un String."
+      },
+      {
+        "question": "¿Por qué new T[] suele ser ilegal en una clase genérica?",
+        "hint": "Los arrays necesitan un tipo de componente reificado en tiempo de ejecución, mientras que T se borra (erasure)."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+  },
+  {
+    "id": "interview-java-loops-1",
+    "topic": "collections",
+    "subtopic": "java-loops",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cómo puedes eliminar elementos de forma segura mientras iteras sobre una colección en Java?",
+    "shortAnswer": "Para una colección mutable, utiliza el método remove() del iterador después de llamar a next(), o utiliza removeIf() cuando un predicado exprese la operación claramente. Mutar la colección directamente durante una iteración fail-fast suele causar una ConcurrentModificationException, pero el comportamiento fail-fast es un 'mejor esfuerzo' y no una garantía de concurrencia. Para colecciones concurrentes, la semántica de iteración depende de la implementación específica.",
+    "detailedAnswer": "Un bucle 'for' mejorado típicamente utiliza un Iterator internamente. La modificación estructural a través de la colección mientras ese iterador está activo puede invalidar su estado, por lo que muchas colecciones de propósito general detectan el cambio y lanzan ConcurrentModificationException. La ruta de mutación soportada es `Iterator.remove()`, sujeta al contrato del iterador, o una operación de colección como `removeIf`.\n\nEsta excepción es un detector de errores, no una sincronización. La detección no está garantizada y evitar la excepción no hace que el acceso concurrente sea seguro. Los iteradores de ConcurrentHashMap son débilmente consistentes: no lanzan ConcurrentModificationException y pueden reflejar algunas actualizaciones durante el recorrido. CopyOnWriteArrayList itera sobre una instantánea (snapshot), haciendo que las lecturas sean estables pero las escrituras costosas. Elige la colección y el recorrido basándote en la consistencia requerida, la frecuencia de mutación y la propiedad de los datos.",
+    "keyPoints": [
+      "Iterator.remove y removeIf son mecanismos de mutación soportados",
+      "La iteración fail-fast es un mejor esfuerzo, no una característica de seguridad de hilos",
+      "Las colecciones concurrentes definen su propia consistencia de iteración",
+      "La iteración sobre instantáneas (snapshot) sacrifica coste de escritura por lecturas estables"
+    ],
+    "redFlags": [
+      "Capturar ConcurrentModificationException como parte del flujo de control normal",
+      "Asumir que fail-fast significa que es seguro para hilos (thread-safe)",
+      "Aplicar una sola regla de iteración a cada colección concurrente"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué ConcurrentModificationException se describe como 'mejor esfuerzo'?",
+        "hint": "Su mecanismo de detección no es un protocolo de sincronización ni un detector de condiciones de carrera garantizado."
+      },
+      {
+        "question": "¿En qué se diferencian los iteradores de ConcurrentHashMap y CopyOnWriteArrayList?",
+        "hint": "Compara la consistencia débil con la semántica de instantáneas y el coste de escritura."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+  },
+  {
+    "id": "interview-java-methods-1",
+    "topic": "collections",
+    "subtopic": "java-methods",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Java pasa por referencia o por valor? ¿Por qué es importante la distinción?",
+    "shortAnswer": "Java siempre pasa por valor. Para un argumento de tipo objeto, el valor copiado en el parámetro es una referencia al mismo objeto. Un método puede mutar el estado de ese objeto, pero asignar el parámetro a otro objeto no reasigna la variable del llamador. Esta distinción explica muchas sorpresas en las APIs y en las pruebas sin necesidad de llamar a Java 'paso por referencia'.",
+    "detailedAnswer": "Cuando se llama a un método, cada expresión de argumento produce un valor que se copia en un parámetro. Para un primitivo, ese valor es el valor primitivo. Para un tipo de referencia, es el valor de la referencia. Por lo tanto, tanto el llamador como el receptor pueden referirse al mismo objeto mutable, pero el parámetro en sí es una variable separada.\n\nUn método como `rename(User user)` puede llamar a `user.setName(...)` y el llamador observará la mutación. Si ejecuta `user = new User()`, solo cambia el parámetro local. Los arrays siguen la misma regla porque una variable de array es una referencia. La propiedad clara y la inmutabilidad reducen la confusión: los métodos pueden devolver un nuevo valor en lugar de mutar una entrada compartida, y las APIs deben documentar si los argumentos se conservan o se modifican.",
+    "keyPoints": [
+      "Cada argumento en Java se pasa copiando su valor",
+      "Una variable de objeto contiene un valor de referencia",
+      "Mutar el objeto referenciado es diferente a reasignar el parámetro",
+      "Los contratos de propiedad y mutación deben ser explícitos"
+    ],
+    "redFlags": [
+      "Decir que Java pasa por referencia porque la mutación de objetos es visible",
+      "Asumir que reasignar un parámetro cambia la variable del llamador",
+      "Dejar la mutación de argumentos sin documentar"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué un método puede mutar un objeto pero no reemplazar la variable del llamador?",
+        "hint": "La referencia copiada apunta al mismo objeto, pero las variables permanecen distintas."
+      },
+      {
+        "question": "¿Tienen los arrays una semántica de paso de parámetros diferente?",
+        "hint": "No; el valor copiado es una referencia al array."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+  },
+  {
+    "id": "interview-java-inheritance-1",
+    "topic": "collections",
+    "subtopic": "java-inheritance",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cómo eliges entre una interfaz y una clase abstracta en el Java moderno?",
+    "shortAnswer": "Utilizo una interfaz para definir un rol que tipos no relacionados pueden implementar y cuando es útil la herencia múltiple de contratos. Utilizo una clase abstracta cuando las subclases comparten estado protegido, reglas de construcción o una implementación parcial deliberada. Los métodos por defecto (default methods) de las interfaces pueden evolucionar el comportamiento, pero no convierten a la interfaz en un buen lugar para estado mutable compartido o acoplamiento de ciclo de vida.",
+    "detailedAnswer": "Las interfaces definen capacidades y permiten que una clase implemente varios roles. Pueden contener métodos estáticos, privados y por defecto, pero el estado de la instancia permanece en las implementaciones. Las clases abstractas soportan constructores, campos de instancia, miembros protegidos y una plantilla controlada compartida por subclases relacionadas. Una clase solo puede extender una clase, por lo que esa relación consume su opción de herencia y crea un acoplamiento más fuerte.\n\nLos métodos por defecto se introdujeron en parte para evolucionar las interfaces de forma compatible, sin embargo, añadir uno todavía puede causar conflictos o sorpresas de comportamiento. Las clases abstractas pueden sufrir el problema de la 'clase base frágil' si las subclases dependen de internos no documentados. Elige basándote en la relación semántica y el estado requerido, no en la regla obsoleta de que las interfaces no contienen implementación. Para un comportamiento reutilizable ortogonal, la composición puede ser más clara que cualquier forma de herencia.",
+    "keyPoints": [
+      "Las interfaces modelan roles y soportan herencia múltiple de contratos",
+      "Las clases abstractas pueden poseer construcción, estado e implementación parcial",
+      "Los métodos por defecto no proporcionan estado de instancia compartido",
+      "La composición sigue siendo una alternativa para el comportamiento reutilizable ortogonal"
+    ],
+    "redFlags": [
+      "Decir que las interfaces no pueden contener métodos implementados",
+      "Elegir una clase abstracta solo para evitar una pequeña cantidad de duplicación",
+      "Ignorar el contrato semántico y la restricción de herencia simple de clases"
+    ],
+    "followUps": [
+      {
+        "question": "¿Qué sucede cuando dos interfaces implementadas proporcionan el mismo método por defecto?",
+        "hint": "La clase que las implementa debe resolver el conflicto explícitamente."
+      },
+      {
+        "question": "¿Cuándo es preferible la composición a una clase base abstracta?",
+        "hint": "Considera el comportamiento que varía de forma independiente y evita el acoplamiento con el estado protegido."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+  },
+  {
+    "id": "interview-java-exceptions-1",
+    "topic": "collections",
+    "subtopic": "java-exceptions",
+    "difficulty": "INTERMEDIO",
+    "question": "¿En qué se diferencian las excepciones comprobadas (checked) y las no comprobadas (unchecked), y cómo eliges entre ellas?",
+    "shortAnswer": "Las excepciones comprobadas deben capturarse o declararse; RuntimeException y sus subclases no. Elijo basándome en el contrato de la API, no en si el error es común: una excepción comprobada puede hacer explícita una condición recuperable, mientras que una no comprobada se ajusta a errores de programación o fallos que los llamadores no pueden manejar localmente de forma razonable. En los límites del sistema (boundaries), traduzco las excepciones de bajo nivel sin perder la causa o el contexto útil.",
+    "detailedAnswer": "El compilador obliga a manejar los subtipos de Throwable comprobados que no sean RuntimeException o Error. Esto puede documentar una ruta de recuperación, pero también puede crear una propagación ruidosa a través de capas que no pueden actuar sobre el fallo. Las excepciones no comprobadas reducen la fricción en la firma de los métodos, pero aún deben documentarse cuando forman parte de un contrato público.\n\nLa elección depende de los llamadores esperados y de la recuperación. Una API de un parser puede usar una excepción comprobada cuando los clientes pueden corregir la entrada; un invariante violado es normalmente no comprobado. Los fallos de infraestructura a menudo necesitan traducción a una excepción con significado de dominio en un límite arquitectónico. Conserva la causa original, evita loguear el mismo fallo en cada capa, utiliza try-with-resources para una limpieza determinista y no captures 'Exception' simplemente para devolver un valor neutral. 'Error' generalmente representa condiciones serias de la JVM o del entorno y raramente es algo que el código de la aplicación deba absorber.",
+    "keyPoints": [
+      "Las excepciones comprobadas están impuestas por reglas de capturar-o-declarar",
+      "El tipo de excepción debe reflejar las opciones reales de recuperación del llamador",
+      "La traducción en los límites debe preservar la causa y el contexto",
+      "try-with-resources maneja la limpieza y las excepciones suprimidas"
+    ],
+    "redFlags": [
+      "Capturar 'Exception' y continuar silenciosamente",
+      "Loguear y volver a lanzar el mismo fallo en cada capa",
+      "Descartar la causa original durante la traducción de la excepción"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuándo puede una excepción comprobada volverse perjudicial para una API?",
+        "hint": "Considera a los llamadores que no pueden recuperarse y la propagación a través de múltiples capas."
+      },
+      {
+        "question": "¿Qué sucede cuando fallan tanto un bloque try como la operación de cierre de recursos?",
+        "hint": "try-with-resources mantiene la excepción primaria y registra los fallos de cierre como suprimidos."
+      },
+      {
+        "question": "¿Dónde debería una excepción de infraestructura convertirse en una excepción de dominio?",
+        "hint": "Traduce en el límite que entiende ambos vocabularios."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+  },
+  {
+    "id": "interview-java-api-hashmap-1",
+    "topic": "collections",
+    "subtopic": "java-api",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo funciona HashMap en las implementaciones actuales de Java y qué detalles son contractuales?",
+    "shortAnswer": "HashMap utiliza hashCode para elegir una cubeta (bucket) y equals para encontrar la clave coincidente dentro de esa cubeta. En las implementaciones actuales de OpenJDK, las cubetas comienzan como nodos enlazados y pueden convertirse en árboles equilibrados después de suficientes colisiones y suficiente capacidad de la tabla; el redimensionamiento ocurre tras un umbral de carga. Esos umbrales de árbol son detalles de implementación, mientras que el soporte de nulos, la semántica de las claves y la falta de seguridad de hilos son preocupaciones de la API.",
+    "detailedAnswer": "Un HashMap calcula un hash disperso a partir del hashCode de la clave y lo mapea a un índice en una tabla de potencia de dos. Las entradas que colisionan comparten una cubeta. En el OpenJDK moderno, una cubeta suficientemente llena puede ser 'arbolizada' (treeified), normalmente al llegar a ocho entradas y solo cuando la tabla ha alcanzado una capacidad mínima de 64; de lo contrario, se prefiere el redimensionamiento. El factor de carga por defecto es 0.75, y cruzar la capacidad multiplicada por el factor de carga dispara un redimensionamiento. Estos números describen una implementación y no deben tratarse como el contrato de Map.\n\nLa corrección depende de equals y hashCode: claves iguales deben tener hashes iguales, y los campos involucrados en ellos no deben cambiar mientras la clave está almacenada. Se espera que get y put tengan un tiempo constante promedio con una buena distribución, pero la complejidad y el comportamiento de la memoria dependen de las colisiones y el redimensionamiento. HashMap permite una clave nula y valores nulos, y no es seguro para hilos. Utiliza ConcurrentHashMap o propiedad explícita cuando se requiera mutación concurrente; envolver llamadas individuales no hace que las acciones compuestas sean atómicas automáticamente.",
+    "keyPoints": [
+      "hashCode estrecha la búsqueda; equals establece la igualdad de la clave",
+      "Los contenedores de árbol (tree bins) y los valores de umbral son detalles de implementación de OpenJDK",
+      "Campos de clave mutables pueden hacer que una entrada sea efectivamente inalcanzable",
+      "HashMap no es seguro para mutación concurrente no sincronizada"
+    ],
+    "redFlags": [
+      "Clasificar HashMap bajo el subtema de Arrays",
+      "Afirmar que la arbolización de colisiones siempre ocurre exactamente a las ocho entradas",
+      "Afirmar que la búsqueda en el peor de los casos es universalmente O(1)",
+      "Usar campos de negocio mutables en equals y hashCode mientras el objeto actúa como clave"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué los objetos iguales deben tener códigos hash iguales?",
+        "hint": "De lo contrario, la búsqueda podría mirar en una cubeta diferente y nunca llamar a equals sobre la clave almacenada."
+      },
+      {
+        "question": "¿Por qué HashMap podría redimensionarse en lugar de arbolizar una cubeta llena?",
+        "hint": "En capacidades pequeñas, se prefiere dispersar las entradas en una tabla más grande."
+      },
+      {
+        "question": "¿Es Collections.synchronizedMap suficiente para flujos de trabajo compute-if-absent?",
+        "hint": "Comprueba el contrato de operaciones compuestas del wrapper y compáralo con ConcurrentHashMap."
+      }
+    ],
+    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+  },
+  {
+    "id": "interview-java-api-streams-1",
+    "topic": "collections",
+    "subtopic": "java-api",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cómo se ejecutan los pipelines de Java Stream y cuándo preferirías un bucle?",
+    "shortAnswer": "Un stream describe un pipeline de un solo uso: las operaciones intermedias son generalmente perezosas (lazy) y una operación terminal dispara el recorrido. La implementación puede fusionar etapas y realizar cortocircuitos, por lo que el código debe evitar interferir con la fuente o depender del orden de los efectos secundarios. Prefiero un bucle cuando la mutación, el manejo de errores comprobados, la depuración temprana o un algoritmo con estado son más claros; los streams paralelos requieren medición y una carga de trabajo adecuada.",
+    "detailedAnswer": "Un Stream no es una colección y normalmente no almacena elementos. Envuelve una fuente y una secuencia de operaciones intermedias como map o filter. Estas operaciones son perezosas; una operación terminal como collect, reduce, findFirst o count inicia el procesamiento. Un stream no puede ser reutilizado después de una operación terminal. El orden de encuentro, el cortocircuito y el mantenimiento de estado dependen tanto de la fuente como de las operaciones.\n\nLos parámetros de comportamiento no deben ser interferentes y usualmente deben ser sin estado (stateless). Mutar colecciones compartidas en un forEach, especialmente en un stream paralelo, crea peligros de ordenación y seguridad de hilos; prefiere colectores diseñados para reducción. Los streams paralelos utilizan un ForkJoinPool compartido por defecto y ayudan solo para trabajos adecuados, suficientemente grandes, divisibles y orientados a CPU después de realizar mediciones. El I/O bloqueante, entradas pequeñas, pipelines ordenados y el contexto del servidor de aplicaciones pueden empeorarlos. Un bucle convencional es a menudo la respuesta más mantenible cuando el flujo de control o la mutación son centrales.",
+    "keyPoints": [
+      "Las operaciones intermedias son generalmente perezosas; las operaciones terminales inician el recorrido",
+      "Los streams son abstracciones de pipeline de un solo uso, no estructuras de datos",
+      "La no interferencia y los efectos secundarios limitados permiten una optimización correcta",
+      "La ejecución paralela es un compromiso medido, no una mejora de velocidad gratuita"
+    ],
+    "redFlags": [
+      "Reutilizar un stream después de una operación terminal",
+      "Mutar estado compartido desde un forEach paralelo",
+      "Elegir parallelStream para I/O bloqueante sin controlar los recursos de ejecución",
+      "Afirmar que los streams son categóricamente más rápidos o legibles que los bucles"
+    ],
+    "followUps": [
+      {
+        "question": "¿Por qué peek puede parecer que no se ejecuta para cada elemento de la fuente?",
+        "hint": "La pereza (laziness), el cortocircuito y las optimizaciones de la implementación afectan al recorrido."
+      },
+      {
+        "question": "¿Qué hace que un colector sea seguro para una reducción paralela?",
+        "hint": "Su supplier, accumulator, combiner y characteristics deben formar una reducción válida."
+      },
+      {
+        "question": "¿Cuándo es preferible Optional a null, y dónde resulta incómodo?",
+        "hint": "Es útil como tipo de retorno; los campos, parámetros y la serialización necesitan un juicio específico según el contexto."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+  },
+  {
+    "id": "interview-ej-coll-1",
+    "topic": "collections",
+    "subtopic": "java-methods",
+    "difficulty": "INTERMEDIO",
+    "question": "¿Cuándo usarías un método de fábrica estático (static factory method) en lugar de un constructor? Da ejemplos reales.",
+    "shortAnswer": "Cuando necesitas construcción con nombre (valueOf, of, newInstance), caché de instancias (Boolean.valueOf), devolver subtipos (Collections.unmodifiableList) o cuando la clase a instanciar no se conoce en tiempo de compilación (service loaders). Los constructores están bien para casos simples, pero las fábricas escalan mejor para APIs complejas.",
+    "detailedAnswer": "**Effective Java Item 1 — Ventajas clave:**\n\n1. **Tienen nombres:** `BigInteger.probablePrime()` es más claro que `new BigInteger(int, int, Random)`\n2. **No están obligados a crear nuevos objetos:** `Boolean.valueOf(true)` siempre devuelve la misma instancia\n3. **Pueden devolver subtipos:** `List.of()` devuelve una implementación optimizada basada en el tamaño\n4. **La clase del objeto devuelto puede variar según la entrada:** `EnumSet.of()` devuelve `RegularEnumSet` (<64 elementos) o `JumboEnumSet`\n\n**En el contexto de Spring Boot:**\n- `ResponseEntity.ok(body)` — fábrica estática, intención clara\n- `Optional.of()`, `Optional.empty()` — instancias en caché\n- `Collections.unmodifiableList()` — devuelve una implementación oculta",
+    "keyPoints": [
+      "La construcción con nombre es autodocumentada",
+      "El control de instancias permite caché y singletons",
+      "Puede devolver tipos de interfaz ocultando la implementación",
+      "Base para el Service Provider Framework"
+    ],
+    "redFlags": [
+      "No poder nombrar ninguna ventaja más allá de 'se ve más limpio'",
+      "No saber que List.of() o Optional.of() son fábricas estáticas",
+      "Confundirlo con el patrón de diseño Factory Method"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cuál es la desventaja de los métodos de fábrica estáticos?",
+        "hint": "Las clases sin constructores públicos no pueden tener subclases. Además, son difíciles de encontrar en la documentación (no tienen una sección de Javadoc como los constructores)."
+      },
+      {
+        "question": "¿Cómo se relaciona la inyección de dependencias de Spring con el Item 5?",
+        "hint": "DI es la respuesta a nivel de framework para 'no cablear recursos'. Spring gestiona el ciclo de vida de la fábrica + inyección."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+  },
+  {
+    "id": "interview-ej-coll-2",
+    "topic": "collections",
+    "subtopic": "java-basics",
+    "difficulty": "SENIOR",
+    "question": "Explica el contrato equals/hashCode. ¿Qué se rompe si lo violas?",
+    "shortAnswer": "Contrato: objetos iguales DEBEN tener códigos hash iguales. Violación: HashMap/HashSet funcionan mal silenciosamente — put() y get() utilizan cubetas diferentes para objetos lógicamente iguales. El objeto 'desaparece' del mapa. Esta es una fuente común de bugs sutiles en producción, especialmente con entidades JPA utilizadas como claves de Map.",
+    "detailedAnswer": "**El contrato (Items 10, 11):**\n1. `equals` debe ser reflexivo, simétrico, transitivo, consistente y devolver false para null\n2. Si `a.equals(b)` entonces `a.hashCode() == b.hashCode()` (OBLIGATORIO)\n3. Si `a.hashCode() != b.hashCode()` entonces `!a.equals(b)` (contrapositivo)\n4. Objetos desiguales PUEDEN tener códigos hash iguales (las colisiones están permitidas)\n\n**Qué se rompe:**\n```java\nSet<MyObject> set = new HashSet<>();\nset.add(new MyObject(\"key\"));\nset.contains(new MyObject(\"key\")); // ¡FALSE si no se sobrescribió hashCode!\n```\n\n**Trampa de producción con JPA:**\n- equals/hashCode por defecto usa la identidad del objeto\n- Una entidad detached ≠ entidad gestionada incluso con el mismo ID\n- Usa una clave de negocio o un equals basado en ID (con chequeo de nulo para entidades nuevas)",
+    "keyPoints": [
+      "Objetos iguales DEBEN tener códigos hash iguales",
+      "HashMap usa hashCode para la cubeta y equals para la identidad dentro de la cubeta",
+      "Las entidades JPA necesitan una implementación cuidadosa de equals/hashCode",
+      "Los 'Records' autogeneran equals/hashCode correctamente"
+    ],
+    "redFlags": [
+      "No poder enunciar el contrato con precisión",
+      "No saber que HashMap falla de forma silenciosa",
+      "Usar == en lugar de equals para objetos"
+    ],
+    "followUps": [
+      {
+        "question": "¿Cómo implementarías equals/hashCode para una entidad JPA?",
+        "hint": "Usa una clave de negocio (clave natural) si es estable, o usa @Id con chequeo de nulos. Nunca uses solo un ID @GeneratedValue (es nulo antes de persistir). Los Records solucionan esto para DTOs."
+      },
+      {
+        "question": "¿Por qué la clase String de Java cachea su hashCode?",
+        "hint": "Los Strings son inmutables y se usan frecuentemente como claves de Map. Cachear ahorra el re-cómputo. El hashCode se calcula una vez en la primera llamada y se guarda en un campo."
+      }
+    ],
+    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+  }
+]

@@ -1,5 +1,6 @@
 import { Component, computed, inject, input, effect, OnDestroy, signal } from '@angular/core';
 import { InterviewService } from '../../core/services/interview.service';
+import { I18nService } from '../../core/services/i18n.service';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 import { CodeBlockComponent } from '../../shared/components/code-block/code-block.component';
 
@@ -17,6 +18,7 @@ import { CodeBlockComponent } from '../../shared/components/code-block/code-bloc
 })
 export class InterviewComponent implements OnDestroy {
   private interviewService = inject(InterviewService);
+  private i18n = inject(I18nService);
 
   /** Topic ID passed from parent (TheoryComponent) */
   topicId = input.required<string>();
@@ -47,11 +49,13 @@ export class InterviewComponent implements OnDestroy {
   // UI state
   readonly expandedSections = new Set<string>();
   readonly isReadingCoreAnswer = signal(false);
+  readonly readingSection = signal<string | null>(null);
 
   constructor() {
-    // Load interview data when topicId changes
+    // Load interview data when topicId OR locale changes
     effect(() => {
       const topicId = this.topicId();
+      const _locale = this.i18n.locale(); // track locale changes
       if (topicId) {
         this._selectedIndex.set(0);
         this.interviewService.loadForTopic(topicId);
@@ -65,6 +69,7 @@ export class InterviewComponent implements OnDestroy {
       this._selectedIndex.set(index);
     }
     this.stopCoreAnswerAudio();
+    this.stopSectionAudio();
     this.expandedSections.clear();
   }
 
@@ -74,6 +79,7 @@ export class InterviewComponent implements OnDestroy {
       this._selectedIndex.set(idx + 1);
     }
     this.stopCoreAnswerAudio();
+    this.stopSectionAudio();
     this.expandedSections.clear();
   }
 
@@ -83,6 +89,7 @@ export class InterviewComponent implements OnDestroy {
       this._selectedIndex.set(idx - 1);
     }
     this.stopCoreAnswerAudio();
+    this.stopSectionAudio();
     this.expandedSections.clear();
   }
 
@@ -100,9 +107,53 @@ export class InterviewComponent implements OnDestroy {
 
   ngOnDestroy(): void {
     this.stopCoreAnswerAudio();
+    this.stopSectionAudio();
   }
 
-  /** Uses the device's available British-English browser voice. */
+  /** Plays text from any section in the current locale's voice. */
+  toggleSectionAudio(text: string, sectionId: string): void {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+
+    if (this.readingSection() === sectionId) {
+      this.stopSectionAudio();
+      return;
+    }
+
+    const speechText = this.toSpeechText(text);
+    if (!speechText) return;
+
+    const synthesis = window.speechSynthesis;
+    synthesis.cancel();
+    this.isReadingCoreAnswer.set(false);
+
+    const utterance = new SpeechSynthesisUtterance(speechText);
+    const locale = this.i18n.locale();
+    utterance.lang = locale === 'es' ? 'es-ES' : 'en-GB';
+    utterance.rate = 0.95;
+
+    const voices = synthesis.getVoices();
+    const matchedVoice = voices.find(voice =>
+      voice.lang.toLowerCase().startsWith(locale === 'es' ? 'es' : 'en-gb')
+    ) ?? voices.find(voice =>
+      voice.lang.toLowerCase().startsWith(locale)
+    );
+    if (matchedVoice) utterance.voice = matchedVoice;
+
+    utterance.onend = () => this.readingSection.set(null);
+    utterance.onerror = () => this.readingSection.set(null);
+
+    this.readingSection.set(sectionId);
+    synthesis.speak(utterance);
+  }
+
+  private stopSectionAudio(): void {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
+    this.readingSection.set(null);
+  }
+
+  /** Uses the device's available browser voice matching the current locale. */
   toggleCoreAnswerAudio(markdown: string): void {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
@@ -116,12 +167,18 @@ export class InterviewComponent implements OnDestroy {
 
     const synthesis = window.speechSynthesis;
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-GB';
+
+    // Match voice to current locale
+    const locale = this.i18n.locale();
+    const langCode = locale === 'es' ? 'es' : 'en-GB';
+    utterance.lang = langCode;
     utterance.rate = 0.95;
 
-    const britishVoice = synthesis.getVoices()
-      .find(voice => voice.lang.toLowerCase().startsWith('en-gb'));
-    if (britishVoice) utterance.voice = britishVoice;
+    const voices = synthesis.getVoices();
+    const matchedVoice = voices.find(voice =>
+      voice.lang.toLowerCase().startsWith(langCode.toLowerCase().split('-')[0])
+    );
+    if (matchedVoice) utterance.voice = matchedVoice;
 
     utterance.onend = () => this.isReadingCoreAnswer.set(false);
     utterance.onerror = () => this.isReadingCoreAnswer.set(false);
@@ -145,6 +202,18 @@ export class InterviewComponent implements OnDestroy {
       .replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
+  }
+
+  /** Joins array items into a speakable sentence list */
+  toSpeechList(items: string[]): string {
+    return items.map((item, i) => `${i + 1}. ${item}`).join('. ');
+  }
+
+  /** Joins follow-up questions into speakable text */
+  toSpeechFollowUps(followUps: Array<{ question: string; hint?: string }>): string {
+    return followUps.map((fu, i) =>
+      `Question ${i + 1}: ${fu.question}${fu.hint ? '. Hint: ' + fu.hint : ''}`
+    ).join('. ');
   }
 
   /** CSS class for difficulty badge */

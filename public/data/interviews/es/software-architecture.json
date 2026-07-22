@@ -1,0 +1,337 @@
+[
+  {
+    "id": "interview-arch-1",
+    "topic": "software-architecture",
+    "subtopic": "arch-foundations",
+    "difficulty": "BEGINNER",
+    "question": "¿Qué es la arquitectura de software?",
+    "shortAnswer": "La arquitectura de software es el conjunto de estructuras, límites, relaciones y decisiones guía que permiten a un equipo razonar sobre un sistema y sus atributos de calidad. La significancia arquitectónica es contextual: una decisión importa cuando cambiarla es costoso o afecta cualidades importantes. La arquitectura no está terminada antes de programar; se prueba y evoluciona continuamente a medida que cambian el sistema y sus restricciones.",
+    "detailedAnswer": "La arquitectura de software es más que un diagrama o una lista de tecnologías. Describe las estructuras usadas para construir y operar un sistema, las responsabilidades y relaciones de sus partes, y los principios que restringen su evolución.\n\nUna decisión es arquitectónicamente significativa cuando afecta de manera material cualidades como la disponibilidad, la seguridad, el rendimiento, la capacidad de despliegue o el costo del cambio. La significancia depende del contexto: la elección de una base de datos puede ser difícil de revertir en un sistema y reemplazable detrás de un límite bien probado en otro.\n\nLa arquitectura también incluye retroalimentación. Las funciones de aptitud (fitness functions), los SLO, las reglas de dependencia, las métricas de entrega y el aprendizaje de incidentes ponen a prueba si una arquitectura prevista sigue funcionando en la práctica. Los descubrimientos emergentes pueden requerir un ADR o un cambio de límite después de que comienza la implementación.\n\nEn SGN3, algunos ejemplos son mantener un despliegue monolítico para las transacciones locales, usar reglas de paquete/servicio para limitar el acoplamiento, y usar mensajería duradera para trabajo que no debería bloquear la solicitud de un usuario. Los esquemas de base de datos ayudan a organizar, pero solo son evidencia de un límite de módulo cuando también se aplican reglas de propiedad y dependencia.",
+    "keyPoints": [
+      "Estructuras, relaciones, límites y decisiones guía",
+      "Estructuras para razonar sobre el sistema",
+      "No es una actividad puntual: la arquitectura evoluciona",
+      "Priorización de atributos de calidad (qué importa MÁS)",
+      "La arquitectura se valida y evoluciona mediante retroalimentación operativa y de entrega"
+    ],
+    "redFlags": [
+      "\"La arquitectura es el diagrama que dibujamos al principio\"",
+      "Confundir la arquitectura con el stack tecnológico",
+      "\"No tenemos arquitectura\" (todo sistema tiene una, aunque sea implícita)",
+      "No poder nombrar una decisión arquitectónica en su propio sistema"
+    ],
+    "followUps": [
+      { "question": "¿Cuál es la diferencia entre arquitectura y diseño?", "hint": "El límite es contextual; hablar de alcance, impacto en la calidad, interesados y costo del cambio en lugar de una taxonomía rígida." },
+      { "question": "¿Quién es responsable de la arquitectura en tu equipo?", "hint": "Todos contribuyen, pero alguien debe ser dueño de la visión y asegurar que las decisiones sean consistentes." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Límites arquitectónicos de SGN3 en la práctica",
+      "description": "El despliegue monolítico, las reglas de dependencia de servicio/paquete, la organización de la base de datos y la mensajería duradera son decisiones de larga duración en SGN3. Los esquemas ayudan a organizar la propiedad, pero no crean límites por sí solos; las convenciones, la revisión y las pruebas de arquitectura son las que los hacen cumplir."
+    }
+  },
+  {
+    "id": "interview-arch-2",
+    "topic": "software-architecture",
+    "subtopic": "arch-quality-attributes",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Qué atributos de calidad consideras antes de elegir una arquitectura?",
+    "shortAnswer": "Empiezo por escenarios de negocio medibles, y luego considero la confiabilidad y disponibilidad, la seguridad y privacidad, la latencia y el rendimiento, la escalabilidad, la recuperabilidad, la modificabilidad, la testabilidad, la capacidad de despliegue, la observabilidad y el costo. No es una lista fija: ordeno por prioridad las cualidades que importan para este sistema, expongo los compromisos (trade-offs) y defino la evidencia que mostrará si el diseño los cumple.",
+    "detailedAnswer": "Los atributos de calidad impulsan la arquitectura solo cuando son concretos y medibles. En lugar de decir que un sistema debe ser rápido y disponible, hay que definir escenarios: el origen de una solicitud, la carga de trabajo esperada, las condiciones normales y de fallo, la respuesta medida y la respuesta objetivo.\n\nLos atributos comunes incluyen disponibilidad, confiabilidad, latencia, rendimiento (throughput), escalabilidad, seguridad, recuperabilidad, mantenibilidad, testabilidad, capacidad de despliegue, observabilidad, accesibilidad y costo. No todos los atributos tienen la misma prioridad en cada parte de un sistema.\n\nLos compromisos también deben expresarse con precisión:\n- Más redundancia puede mejorar la disponibilidad, pero aumenta el costo y la complejidad operativa.\n- El caché agresivo puede reducir la latencia, pero genera problemas de invalidación y datos obsoletos.\n- Los servicios independientes pueden mejorar la autonomía de despliegue, a la vez que dificultan la consistencia y el diagnóstico.\n- Ante una partición de red, un sistema distribuido puede tener que rechazar algunas operaciones o aceptar datos divergentes; CAP no es una elección general entre consistencia y disponibilidad durante la operación normal.\n\nEl resultado debería ser un pequeño conjunto de escenarios priorizados y medibles, junto con las tácticas arquitectónicas destinadas a satisfacerlos. Esos objetivos luego se verifican con pruebas y telemetría de producción.",
+    "keyPoints": [
+      "No se pueden optimizar TODOS los atributos de calidad; se requieren compromisos",
+      "Disponibilidad, escalabilidad, rendimiento, mantenibilidad, testabilidad, capacidad de despliegue",
+      "Los atributos de calidad IMPULSAN las decisiones arquitectónicas (no las tecnologías)",
+      "Sistemas distintos priorizan de forma distinta (startup vs. empresa vs. tiempo real)",
+      "Medir y fijar objetivos (SLO), no solo metas aspiracionales"
+    ],
+    "redFlags": [
+      "\"Optimizamos todo\" (imposible, existen compromisos)",
+      "Elegir la tecnología antes de entender las necesidades de calidad",
+      "No poder nombrar los compromisos en su propia arquitectura",
+      "Pensar solo en requisitos funcionales"
+    ],
+    "followUps": [
+      { "question": "¿Cómo mides si tu arquitectura logra un atributo de calidad?", "hint": "Funciones de aptitud, SLO, métricas. La evaluación de la arquitectura es continua, no puntual." },
+      { "question": "¿Qué compromiso de atributo de calidad hizo SGN3 y cómo lo verificarías?", "hint": "Evitar afirmar que los monolitos no pueden escalar horizontalmente; hablar del acoplamiento real, el despliegue, las transacciones, la capacidad y la evidencia operativa." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-arch-3",
+    "topic": "software-architecture",
+    "subtopic": "arch-styles",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Cómo decides entre un monolito y microservicios?",
+    "shortAnswer": "Compararía los límites y atributos de calidad requeridos: propiedad, autonomía de lanzamiento, consistencia, aislamiento de fallos, perfil de escalado y capacidad operativa. Un monolito modular suele ser el punto de partida de menor riesgo porque mantiene las llamadas y transacciones locales, pero aun así necesita límites internos aplicados. Los servicios se vuelven atractivos cuando la propiedad u operación independiente aporta un valor medible que supera los costos de red, consistencia de datos y plataforma.",
+    "detailedAnswer": "Empiezo por las fuerzas en juego, no por un estilo preferido. Un único desplegable es atractivo cuando importan las transacciones locales, la entrega simple y el bajo costo operativo. Aun así puede escalar horizontalmente cuando su estado e infraestructura lo permiten. Sus principales riesgos suelen ser el acoplamiento, los lanzamientos coordinados y una propiedad mal aplicada, no la forma del despliegue por sí sola.\n\nLos servicios son útiles cuando un límite necesita propiedad, cadencia de lanzamiento, aislamiento de fallos, tecnología o escalado genuinamente independientes. Esos beneficios tienen un precio: llamadas remotas, fallos parciales, trabajo de plataforma duplicado, observabilidad más difícil y consistencia explícita entre servicios. Más equipos no implica automáticamente más servicios; la Ley de Conway es una presión a examinar, no una fórmula de dimensionamiento.\n\nUn monolito modular es una opción deliberada, no simplemente una etapa temporal. Los módulos deben poseer su comportamiento y acceso a datos, exponer contratos pequeños, y tener reglas de dependencia verificadas por pruebas o herramientas. Un esquema de base de datos puede ayudar a organizar, pero no impone un límite de módulo por sí solo.\n\nPara un sistema existente, mediría el dolor actual y extraería solo un límite cuyo beneficio de autonomía supere el costo de la distribución. También definiría criterios de éxito —por ejemplo, el tiempo de entrega de un lanzamiento, la contención de fallos o el aislamiento de recursos— antes de cambiar la topología.",
+    "keyPoints": [
+      "Elegir según el contexto y las fuerzas medibles, no una regla fija por tamaño de equipo",
+      "La topología de equipos, el acoplamiento del dominio y la capacidad operativa son fuerzas de diseño",
+      "Un monolito modular aún requiere límites reales de dependencia y propiedad",
+      "Los microservicios añaden complejidad distribuida (red, consistencia, depuración)",
+      "Ley de Conway: la arquitectura sigue la estructura de comunicación"
+    ],
+    "redFlags": [
+      "\"Los microservicios siempre son mejores\" (moda sin fundamento)",
+      "\"Necesitamos microservicios para escalar\" sin medir los límites actuales",
+      "No considerar la madurez operativa requerida",
+      "Elegir la arquitectura por currículum, no por el problema"
+    ],
+    "followUps": [
+      { "question": "¿Qué es un monolito modular y cómo ayuda?", "hint": "Describir módulos comprensibles de forma independiente dentro de un solo desplegable, más una aplicación concreta de propiedad y dependencia." },
+      { "question": "¿Cómo influye la Ley de Conway en esta decisión?", "hint": "Tratar las vías de comunicación como una fuerza de diseño. La topología del equipo puede revelar límites útiles, pero no determina mecánicamente la cantidad de servicios." }
+    ],
+    "clarifyingQuestions": [
+      "¿Qué tan grande es el equipo?",
+      "¿Qué tan acoplado está el dominio?",
+      "¿Distintas partes necesitan despliegue independiente?",
+      "¿Cuál es la madurez operativa (monitoreo, respuesta a incidentes)?",
+      "¿Es un proyecto nuevo o la evolución de un sistema existente?"
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3: monolito modular por diseño",
+      "description": "SGN3 mantiene en un solo despliegue los flujos de matrícula, horarios y finanzas estrechamente relacionados, mientras que los contratos de la capa de servicio y las reglas de arquitectura limitan la dirección de las dependencias. Los esquemas ayudan a organizar, pero no son el mecanismo de aplicación por sí solos. Un servicio satélite orientado a integración ilustra una extracción selectiva donde un ciclo de vida separado tiene valor concreto."
+    }
+  },
+  {
+    "id": "interview-arch-4",
+    "topic": "software-architecture",
+    "subtopic": "arch-application",
+    "difficulty": "INTERMEDIATE",
+    "question": "Explica la arquitectura hexagonal. ¿Cómo ayuda a una aplicación Jakarta EE?",
+    "shortAnswer": "La arquitectura hexagonal coloca el comportamiento de la aplicación detrás de puertos y conecta las preocupaciones de entrega o infraestructura mediante adaptadores. Un adaptador de entrada llama a un puerto de caso de uso; la aplicación llama a puertos de salida para capacidades como la persistencia o la mensajería. La propiedad importante es la dirección de la dependencia: la infraestructura depende de los contratos de la aplicación. En Jakarta EE, los recursos REST, los beans JSF, los repositorios JPA y los clientes JMS pueden ser adaptadores alrededor de un núcleo poco atado al framework.",
+    "detailedAnswer": "Puertos y Adaptadores organiza el sistema alrededor del comportamiento de la aplicación en lugar de los frameworks.\n\n- Los puertos de entrada expresan los casos de uso que ofrece la aplicación. Los recursos REST, los beans JSF, los trabajos programados y los consumidores de mensajes son adaptadores de entrada que traducen la entrada externa en esas llamadas.\n- Los puertos de salida expresan capacidades que necesita un caso de uso, como cargar un estudiante, publicar un evento o consultar un sistema externo. Los repositorios JPA, los productores JMS y los clientes REST implementan esos contratos.\n- Los objetos de dominio y los servicios de aplicación permanecen ajenos a HTTP, JSF, SQL o los detalles del broker siempre que esa separación resulte rentable.\n\nUna interfaz no es automáticamente un puerto. Debe representar un límite de la aplicación y ser de propiedad de la aplicación, en lugar de reflejar cada clase de infraestructura. La inversión de dependencias tampoco vuelve a los adaptadores intercambiables al instante: la semántica de persistencia, los límites de transacción y las capacidades de consulta aún pueden filtrarse a través de un contrato deficiente. El límite de transacción normalmente envuelve el caso de uso de la aplicación o un adaptador de entrada; el fragmento a continuación se centra en la dirección de la dependencia y omite deliberadamente el cableado de Jakarta EE y el interceptor de transacciones.\n\nPara un sistema Jakarta EE, esta arquitectura permite pruebas rápidas de casos de uso con dobles de prueba (fakes), mantiene las preocupaciones de entrega fuera de las reglas de negocio, y crea puntos de costura para una modernización incremental. Debe aplicarse de forma selectiva: un CRUD sencillo puede necesitar solo capas claras, mientras que las reglas complejas y las integraciones volátiles son las que más se benefician.",
+    "keyPoints": [
+      "Los puertos expresan límites de la aplicación, no interfaces arbitrarias",
+      "Los adaptadores de entrada invocan casos de uso; los de salida implementan las capacidades necesarias",
+      "Las dependencias de infraestructura apuntan hacia contratos propiedad de la aplicación",
+      "La semántica de transacción y persistencia aún requiere límites deliberados",
+      "Usar el patrón donde el aislamiento y la testabilidad justifiquen su costo de abstracción"
+    ],
+    "redFlags": [
+      "Confundir hexagonal con arquitectura por capas",
+      "\"Son solo interfaces\" (se pierde el principio de la dirección de dependencia)",
+      "No poder explicar el beneficio para las pruebas",
+      "Sobrediseñar un CRUD sencillo con hexagonal (YAGNI)"
+    ],
+    "followUps": [
+      { "question": "¿Cuál es la diferencia entre Clean Architecture y Hexagonal?", "hint": "Mismo principio (inversión de dependencias). Clean añade más capas (entidades, casos de uso, adaptadores de interfaz). Hexagonal es más simple (núcleo + puertos + adaptadores)." },
+      { "question": "¿Cuándo es excesiva la arquitectura hexagonal?", "hint": "CRUD sencillo sin lógica de dominio compleja. Las capas de abstracción añaden costo sin beneficio." }
+    ],
+    "codeExamples": [
+      {
+        "language": "java",
+        "title": "Núcleo y adaptador de persistencia (se omite el cableado transaccional)",
+        "code": "// Puerto de salida, nombrado en términos de la aplicación\npublic interface StudentRepository {\n    Optional<Student> findById(Long id);\n    void save(Student student);\n}\n\n// Servicio de aplicación poco atado al framework\npublic final class EnrollStudent {\n    private final StudentRepository students;\n\n    public EnrollStudent(StudentRepository students) {\n        this.students = students;\n    }\n\n    public void execute(Long studentId, Long classId) {\n        Student student = students.findById(studentId)\n            .orElseThrow(() -> new StudentNotFound(studentId));\n        student.enrollIn(classId);\n        students.save(student);\n    }\n}\n\n// Adaptador de salida\n@ApplicationScoped\npublic class StudentJpaRepository implements StudentRepository {\n    @PersistenceContext EntityManager entityManager;\n\n    public Optional<Student> findById(Long id) {\n        return Optional.ofNullable(entityManager.find(Student.class, id));\n    }\n}"
+      }
+    ],
+    "visualBlocks": [
+      {
+        "type": "ARCHITECTURE",
+        "title": "Hexagonal en términos de SGN3",
+        "content": "        Adaptadores de entrada     Núcleo             Adaptadores de salida\n        ──────────────────────    ─────              ─────────────────────\n        WebBean (JSF)      →    Negocio      →    Repositorio (JPA)\n        Endpoint REST      →    (dominio)    →    RestClient (Moodle)\n        MDB (JMS)          →                 →    Productor JMS\n                                   │\n                           define interfaces\n                           (puertos = contratos)"
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "SGN3 se aproxima a hexagonal",
+      "description": "El flujo WebBean→Service→Business→Repository de SGN3 proporciona puntos de costura útiles que se asemejan a puertos y adaptadores, especialmente donde el código de negocio está aislado de JSF o de los clientes de integración. Llamarlo una aproximación es más preciso que afirmar una arquitectura hexagonal pura: las entidades y las preocupaciones transaccionales aún pueden tener acoplamiento con la persistencia, mientras que las pruebas de arquitectura aplican reglas de dependencia seleccionadas."
+    }
+  },
+  {
+    "id": "interview-arch-5",
+    "topic": "software-architecture",
+    "subtopic": "arch-modularity",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo defines los límites de un módulo o servicio?",
+    "shortAnswer": "Busco capacidades de negocio cohesivas con su propio lenguaje, reglas, patrones de cambio y propiedad. Un contexto delimitado (bounded context) es un candidato útil, no un mapeo automático uno a uno con un módulo o servicio. El límite debe ser propietario de los cambios a su comportamiento y datos, y exponer un contrato deliberado. Los esquemas pueden apoyar esa propiedad, pero son las reglas de dependencia, las API, las pruebas y las prácticas del equipo las que hacen real el límite.",
+    "detailedAnswer": "Descubro los límites candidatos a partir de los flujos de negocio, la terminología, los invariantes, la propiedad y lo que cambia junto. Matrícula, horarios, finanzas y certificación pueden ser contextos separados, pero los casos de uso reales y las necesidades transaccionales determinan el corte final.\n\nLuego pongo a prueba cada candidato:\n- ¿Puede el equipo explicar su responsabilidad sin usar el modelo interno de otro módulo?\n- ¿Qué invariantes deben ser consistentes en una sola transacción?\n- ¿La comunicación entre límites tiene un propósito, o cada solicitud es charlatana?\n- ¿El límite tiene propiedad estable y un contrato público pequeño?\n- ¿El despliegue independiente, el escalado o el aislamiento de fallos aportarían un valor medible?\n\nUna comunicación intensa es una señal diagnóstica, no una prueba de que el límite está mal. Algunos flujos de trabajo legítimamente coordinan varias capacidades. El diseño debe hacer explícita esa orquestación y su modelo de consistencia.\n\nLa aplicación puede incluir visibilidad de paquetes, pruebas de arquitectura, propiedad de repositorios, contratos de API o eventos, y reglas de revisión. Un esquema es útil para nombrar y otorgar permisos, pero las credenciales de base de datos compartidas o los joins sin restricciones pueden eludir el límite previsto. Normalmente empiezo con un límite de módulo y extraigo un servicio solo cuando su beneficio de autonomía justifica las transacciones distribuidas, las operaciones y la observabilidad.",
+    "keyPoints": [
+      "Límites por dominio/capacidad de negocio, no por capa técnica",
+      "El módulo posee: sus datos, sus reglas, su interfaz pública",
+      "Usar patrones de comunicación y transacción para probar los límites candidatos",
+      "Aplicar los límites con propiedad, contratos, reglas de arquitectura y permisos",
+      "Extraer un servicio solo cuando el dolor del acoplamiento > el dolor de la distribución"
+    ],
+    "redFlags": [
+      "Límites por capa técnica (todos los controladores, todos los servicios, todos los repos)",
+      "\"Todo es un microservicio\" sin análisis de dominio",
+      "No poder explicar cómo validar un límite",
+      "Sin mecanismo de aplicación (los límites existen solo en el papel)"
+    ],
+    "followUps": [
+      { "question": "¿Qué es una capa anticorrupción y cuándo la necesitas?", "hint": "Capa de traducción entre módulos con modelos distintos. Evita que el modelo de un módulo infecte a otro." },
+      { "question": "¿Cómo manejas datos que dos módulos necesitan?", "hint": "Mantener un único propietario autoritativo; los consumidores pueden llamar a un contrato o mantener proyecciones específicas para su propósito. Un kernel o base de datos compartida puede ser un compromiso consciente y gobernado, no una dependencia accidental." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Organización por esquemas de SGN3 como ayuda al límite",
+      "description": "SGN3 usa varios esquemas y acceso a través de la capa de servicio para organizar un modelo operativo grande. En la entrevista, nombrar solo las reglas de propiedad de escritura y dependencia que se puedan demostrar personalmente. Las lecturas de reportes entre esquemas son una excepción pragmática, así que los esquemas pueden apoyar los límites previstos sin probar el aislamiento por sí solos."
+    }
+  },
+  {
+    "id": "interview-arch-6",
+    "topic": "software-architecture",
+    "subtopic": "arch-distributed",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo manejas los fallos parciales en un sistema distribuido?",
+    "shortAnswer": "Primero defino el plazo, la criticidad, las necesidades de consistencia y la semántica de fallos de la operación. Luego combino tiempos de espera acotados, reintentos solo para trabajo transitorio y repetible de forma segura, cortacircuitos (circuit breaking), aislamiento de concurrencia, idempotencia y degradación observable. El objetivo no es ocultar todos los fallos; es contenerlos, preservar el comportamiento más valioso, y dar a los operadores y llamantes un resultado honesto.",
+    "detailedAnswer": "El fallo parcial es esperable siempre que el trabajo cruce un límite de proceso o red. Diseño la respuesta desde el caso de uso en lugar de aplicar una política global.\n\n1. **Plazos y cancelación:** Asignar el presupuesto de tiempo total del llamante entre las dependencias. Los tiempos de espera de conexión y respuesta deben basarse en la latencia medida y el plazo de negocio, y el trabajo abandonado debe cancelarse cuando sea posible.\n2. **Reintentos:** Reintentar solo resultados conocidos como transitorios y solo cuando la operación es idempotente o está protegida por una clave de idempotencia. Los códigos de estado por sí solos son insuficientes: un 409 puede representar un conflicto optimista reintentable, mientras que un timeout puede dejar un resultado de escritura desconocido. Usar backoff exponencial, jitter, un presupuesto de reintentos y respetar las indicaciones del servidor.\n3. **Contención:** Los cortacircuitos pueden detener las llamadas repetidas a una dependencia no saludable. Los bulkheads, los límites de concurrencia, las colas y la contrapresión (backpressure) evitan que una dependencia o inquilino agote los recursos compartidos.\n4. **Consistencia:** La deduplicación, los patrones transaccionales outbox/inbox y la reconciliación manejan duplicados o resultados inciertos. Una DLQ es un área de retención operativa, no un sustituto de la propiedad de la recuperación.\n5. **Degradación:** Devolver resultados en caché o reducidos solo cuando su antigüedad e impacto de negocio sean aceptables. Hacer visible el estado degradado en lugar de perder silenciosamente trabajo importante.\n6. **Evidencia:** Emitir métricas y trazas de intentos, latencia, saturación, estado del cortacircuito, antigüedad de la cola y resultados finales; probar las rutas de fallo con inyección de fallos controlada.",
+    "keyPoints": [
+      "Derivar los plazos del presupuesto de extremo a extremo y propagar la cancelación",
+      "Reintentar solo operaciones transitorias y repetibles de forma segura, con un presupuesto de reintentos",
+      "Usar cortacircuitos, bulkheads, límites y contrapresión para contener los fallos",
+      "Diseñar para duplicados y resultados desconocidos con idempotencia y reconciliación",
+      "Degradar de forma explícita y observar el resultado de negocio final",
+      "Probar las rutas de fallo en condiciones controladas"
+    ],
+    "redFlags": [
+      "Sin estrategia de tiempo de espera (\"confiamos en la red\")",
+      "Reintentar fallos de cliente no transitorios o escrituras desconocidas sin idempotencia segura",
+      "Sin idempotencia (el reintento crea duplicados)",
+      "Hacer que una dependencia opcional falle todo el caso de uso sin una razón de negocio"
+    ],
+    "followUps": [
+      { "question": "¿Cuál es la diferencia entre un timeout y un cortacircuito?", "hint": "Timeout: protección de una llamada individual. Cortacircuito: deja de llamar tras fallos repetidos (protege el sistema, no solo una llamada)." },
+      { "question": "¿Cómo pruebas los patrones de resiliencia?", "hint": "Usar pruebas de contrato más inyección controlada de latencia, error, desconexión, saturación y entrega duplicada. Verificar resultados de negocio, recuperación de recursos, alertas y procedimientos del operador." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Resiliencia de SGN3 para integraciones externas",
+      "description": "SGN3 separa cierta sincronización externa seleccionada de la transacción de matrícula mediante mensajería duradera. Los tiempos de espera configurados en el cliente acotan las integraciones síncronas, mientras que el reenvío del broker y una DLQ hacen visible el trabajo asíncrono fallido para su recuperación. En una entrevista, la versión más sólida de este ejemplo debe indicar qué integraciones realmente usan cada política y cómo se monitorean los resultados finales."
+    }
+  },
+  {
+    "id": "interview-arch-7",
+    "topic": "software-architecture",
+    "subtopic": "arch-evolution",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo modernizas un monolito heredado de forma incremental?",
+    "shortAnswer": "Modernizo en función de un resultado medible, no simplemente hacia tecnología más nueva. Primero caracterizo el comportamiento actual y creo observabilidad; luego encuentro una costura, muevo una capacidad delgada detrás de un contrato estable, desplazo gradualmente el tráfico o los llamantes, comparo resultados, y elimino la ruta antigua solo después de que la evidencia lo respalde. Strangler Fig y branch by abstraction son técnicas útiles, mientras que una reescritura sigue siendo una opción contextual con una carga de prueba mucho mayor.",
+    "detailedAnswer": "Un plan de modernización comienza con el problema: runtime sin soporte, riesgo de lanzamiento, exposición de seguridad, alto costo de cambio, capacidad, o una capacidad de negocio requerida. Establezco una línea base de ese resultado y mapeo los flujos críticos, las dependencias, la propiedad de datos y las restricciones de reversión. Las pruebas de caracterización y la telemetría de producción reducen el riesgo de preservar un comportamiento desconocido.\n\nPara cada porción elijo una costura: una ruta HTTP, un contrato de mensaje, una API de módulo o una abstracción alrededor de una implementación. Strangler Fig puede redirigir tráfico seleccionado a una nueva ruta; branch by abstraction puede ejecutar las implementaciones antigua y nueva detrás de un solo contrato. Los feature flags, las lecturas en sombra (shadow reads), la reconciliación y el despliegue canario ayudan a comparar el comportamiento antes de la transición.\n\nLos datos merecen una estrategia de migración explícita: acceso compartido temporal, backfill más captura de cambios, lecturas duales o proyecciones alimentadas por eventos; cada una tiene compromisos de consistencia y reversión. Las escrituras duales sin un diseño de recuperación son especialmente arriesgadas. Cada porción necesita métricas de aceptación, propiedad, observabilidad, reglas de compatibilidad y una condición de eliminación para que el programa no cree un segundo sistema permanente.\n\nUn reemplazo completo puede justificarse cuando las costuras incrementales son poco prácticas o la plataforma existente bloquea el resultado requerido, pero aun así debe demostrar alcance, paridad de comportamiento, migración de datos, transición y preparación operativa. La elección es económica y técnica, no un eslogan.",
+    "keyPoints": [
+      "Strangler Fig: lo nuevo junto a lo antiguo, migrar de forma incremental",
+      "Vincular la modernización a resultados de negocio u operativos medibles",
+      "Hacer que las porciones sean verificables y reversibles de forma independiente cuando sea posible",
+      "Planificar explícitamente la propiedad de datos, la migración, la reconciliación y la reversión",
+      "Definir criterios de compatibilidad y eliminación para evitar un sistema dual permanente"
+    ],
+    "redFlags": [
+      "Proponer una reescritura sin evidencia de resultado, migración o transición",
+      "Elegir una transición de una sola vez sin demostrar por qué la coexistencia es impracticable",
+      "Ignorar la complejidad de la migración de datos",
+      "Romper consumidores activos de forma no intencional durante un período de coexistencia"
+    ],
+    "followUps": [
+      { "question": "¿Cuándo se puede justificar un reemplazo?", "hint": "Comparar las costuras incrementales con la economía del reemplazo y los resultados requeridos. La caracterización, la migración, la transición y la evidencia de recuperación reducen el riesgo; ningún elemento de una lista por sí solo hace correcta una reescritura." },
+      { "question": "¿Cómo manejas la base de datos durante una migración strangler?", "hint": "La parte más difícil. Opciones: BD compartida al principio, CDC para sincronizar, o una base de datos por servicio con consistencia eventual." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Modernización incremental de SGN3",
+      "description": "El ejemplo defendible de SGN3 es la extracción selectiva de responsabilidades de integración hacia senai-services mientras el núcleo seguía operando. Las actualizaciones de versión pueden apoyar la misma historia incremental, pero sus versiones exactas de antes/después y su estado actual deben confirmarse antes de la entrevista. Presentar el resultado a través de la reducción del riesgo o la independencia del ciclo de vida, no solo mediante el nombre del patrón."
+    }
+  },
+  {
+    "id": "interview-arch-8",
+    "topic": "software-architecture",
+    "subtopic": "arch-documentation",
+    "difficulty": "INTERMEDIATE",
+    "question": "¿Qué es un Registro de Decisión Arquitectónica (ADR) y por qué usarlo?",
+    "shortAnswer": "Un ADR es un registro pequeño y versionado de una decisión arquitectónicamente significativa. Captura el contexto y las fuerzas, la opción elegida, el estado, las alternativas y las consecuencias esperadas. Preserva un razonamiento que el código y los diagramas rara vez revelan, de modo que un equipo pueda revisitar la decisión cuando cambien los supuestos en lugar de tratarla como una política eterna.",
+    "detailedAnswer": "Un ADR práctico tiene un título y un estado claros —por ejemplo propuesto, aceptado, obsoleto o reemplazado— además del contexto y las fuerzas, la decisión, alternativas creíbles, y consecuencias positivas y negativas. Registra lo que el equipo sabía en ese momento, en lugar de intentar demostrar que la elección fue universalmente correcta.\n\nPor ejemplo, una decisión de mover cierta sincronización externa seleccionada a mensajería duradera debería identificar la latencia visible para el usuario y los fallos de dependencia que la motivaron, comparar las llamadas síncronas, el trabajo en proceso y la entrega mediante broker, y registrar consecuencias como la consistencia eventual, el manejo de duplicados, las operaciones del broker y la propiedad de la recuperación. Decir solo 'usar JMS' es una nota tecnológica, no un contexto de decisión suficiente.\n\nLos ADR deben vivir cerca del sistema y enlazarse desde la documentación o los cambios relevantes. Cuando cambian los supuestos, hay que preservar el registro antiguo y añadir un ADR que lo reemplace; no reescribir la historia en silencio. Una plantilla pequeña y un hábito de revisión importan más que un documento extenso. Las notas en un ticket o commit pueden conservar contexto útil, pero son más difíciles de descubrir y gobernar que un registro de decisiones deliberado.",
+    "keyPoints": [
+      "Captura el POR QUÉ, no solo el QUÉ (el código muestra el qué)",
+      "Contexto + Decisión + Alternativas + Consecuencias",
+      "Apoya una revisión informada cuando cambian las restricciones o la evidencia",
+      "Los nuevos miembros del equipo entienden el razonamiento",
+      "Es mejor algo ligero que ninguna documentación"
+    ],
+    "redFlags": [
+      "Ninguna documentación arquitectónica",
+      "Documentación que solo muestra el estado final (sin razonamiento)",
+      "\"El código es la documentación\" para decisiones arquitectónicas",
+      "No poder explicar por qué se tomó una decisión"
+    ],
+    "followUps": [
+      { "question": "¿Cómo mantienes actualizados los ADR?", "hint": "Marcar como reemplazado cuando cambian las decisiones. El nuevo ADR referencia al antiguo. El historial de Git preserva la línea de tiempo." },
+      { "question": "¿Qué otra documentación de arquitectura usas?", "hint": "Modelo C4 (contexto, contenedores, componentes, código). Diagramas de secuencia para flujos complejos. Diagramas de despliegue." }
+    ],
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
+    "realExperience": {
+      "title": "Documentación de decisiones de SGN3 mediante análisis de funcionalidades",
+      "description": "Los documentos de análisis de funcionalidades que registran restricciones, decisiones y compromisos ejercitan la misma habilidad de razonamiento, pero no deberían presentarse como una adopción formal de ADR si no se mantienen el estado, las alternativas y la sustitución. El estudio formal aporta la estructura del ADR; la evidencia de producción es documentación de decisiones transferible."
+    }
+  },
+  {
+    "id": "interview-arch-9",
+    "topic": "software-architecture",
+    "subtopic": "arch-integration",
+    "difficulty": "SENIOR",
+    "question": "¿Cuándo elegirías una API síncrona frente a mensajería o eventos asíncronos?",
+    "shortAnswer": "Elijo según la semántica de la interacción. Una API síncrona encaja cuando el llamante necesita una decisión inmediata o un resultado actual y puede tolerar el acoplamiento temporal. La mensajería encaja cuando el trabajo puede completarse más tarde o necesita amortiguación (buffering), difusión (fan-out) o recuperación independiente. El compromiso no es simplemente velocidad: los flujos asíncronos requieren garantías de entrega explícitas, idempotencia, alcance de ordenamiento, observabilidad y una forma de comunicar los resultados de negocio finales.",
+    "detailedAnswer": "Primero pregunto qué debe saber el llamante antes de poder continuar. Una solicitud síncrona suele ser la más clara para lecturas, validaciones o comandos que necesitan un resultado autoritativo inmediato. Es fácil de seguir, pero acopla los presupuestos de disponibilidad y latencia a lo largo de la cadena de llamadas; hay que diseñar plazos, protección contra sobrecarga y semántica de fallos.\n\nUna cola o un mensaje de comando es útil cuando el trabajo puede aceptarse y completarse más tarde, cuando las ráfagas necesitan amortiguación, o cuando el productor y el consumidor deben recuperarse de forma independiente. Un evento es un hecho que ya ocurrió y puede apoyar la difusión o las proyecciones. No debería disfrazarse de comando remoto. La entrega al menos una vez es común, así que los consumidores necesitan idempotencia y efectos secundarios seguros ante duplicados; el ordenamiento normalmente solo se garantiza dentro de una partición o clave definida.\n\nUn híbrido común acepta un comando de forma síncrona, confirma el estado y un registro outbox de forma atómica, publica un evento de forma asíncrona, y expone el estado mediante sondeo, un callback u otro evento. Eso crea consistencia eventual, así que los estados pendientes y fallidos, la reconciliación, la compatibilidad de esquemas, la correlación y la propiedad deben ser visibles.\n\nDocumentaría el contrato de la API o del evento en torno al significado de negocio, no a las filas de la base de datos, y probaría la compatibilidad de los consumidores antes del lanzamiento. La mejor elección es la interacción más simple que satisfaga la latencia, la consistencia, la disponibilidad y el comportamiento de recuperación requeridos.",
+    "keyPoints": [
+      "Elegir según el resultado requerido, la latencia, la consistencia y el acoplamiento",
+      "Distinguir los comandos que solicitan trabajo de los eventos que informan hechos",
+      "Diseñar explícitamente la entrega, la idempotencia, el alcance de ordenamiento y la recuperación",
+      "Usar un outbox cuando el cambio de estado y la publicación deben coordinarse",
+      "Exponer los estados de negocio pendientes, fallidos y reconciliados"
+    ],
+    "redFlags": [
+      "Usar eventos solo porque parecen más escalables",
+      "Llamar evento a un mensaje imperativo para ocultar la propiedad",
+      "Suponer efectos de negocio exactamente una vez sin definir el límite",
+      "Sin plan para la evolución de esquemas, duplicados o consumidores fallidos"
+    ],
+    "followUps": [
+      { "question": "¿Cómo evolucionarías un evento sin romper a los consumidores?", "hint": "Preferir adiciones compatibles, semántica estable, pruebas de contrato, inventario de consumidores, y una ruta explícita de migración o versionado para cambios que rompen compatibilidad." },
+      { "question": "¿Cómo ayuda el outbox transaccional, y qué no resuelve?", "hint": "Registra de forma atómica el estado y la intención de publicación. El reenvío aún puede duplicar mensajes, así que los consumidores y la recuperación operativa siguen siendo necesarios." }
+    ],
+    "clarifyingQuestions": [
+      "¿El llamante requiere un resultado de negocio inmediato?",
+      "¿Qué retraso de consistencia es aceptable?",
+      "¿Los comandos se duplican de forma segura?",
+      "¿Qué alcance de ordenamiento se necesita realmente?",
+      "¿Cómo verán los usuarios y operadores el trabajo pendiente o fallido?"
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Flujo central síncrono con trabajo de integración duradero",
+      "description": "El ejemplo de SGN3 puede contrastar las reglas de matrícula inmediatas con cierta sincronización externa seleccionada enviada mediante mensajería duradera. La respuesta de entrevista debería indicar qué estado se confirma primero, cómo se maneja la entrega duplicada, cómo se visibiliza una sincronización fallida y quién es dueño de la reconciliación, en lugar de quedarse en 'usamos JMS'."
+    }
+  },
+  {
+    "id": "interview-arch-10",
+    "topic": "software-architecture",
+    "subtopic": "arch-data",
+    "difficulty": "SENIOR",
+    "question": "¿Cómo diseñas la propiedad de datos y la consistencia entre límites de módulo o servicio?",
+    "shortAnswer": "Asigno un único propietario autoritativo para cada hecho de negocio y derivo el modelo de consistencia a partir de los invariantes. Las reglas que deben tener éxito de forma atómica pertenecen, cuando es posible, a un único límite de transacción. Otros consumidores usan una API, una proyección alimentada por eventos, o un modelo de lectura gobernado, y aceptan un objetivo de actualidad explícito. Tanto una base de datos compartida como una base de datos por servicio pueden funcionar; la propiedad, la aplicación del acceso, la migración y la recuperación importan más que el eslogan.",
+    "detailedAnswer": "Empiezo por los invariantes de negocio: ¿qué hechos deben verificarse y cambiarse juntos, y qué retraso o desacuerdo temporal es aceptable? Eso identifica el límite de transacción de forma más confiable que partir de tablas o servicios. Un módulo debería ser autoritativo para cada modelo de escritura y publicar un contrato en lugar de exponer tablas internas sin restricciones.\n\nDentro de un límite, una transacción ACID local suele ser la forma más simple de proteger los invariantes. Entre límites, las opciones incluyen orquestación síncrona, una saga con acciones compensatorias, o propagación asíncrona hacia proyecciones específicas para su propósito. No son equivalentes: una compensación es una nueva acción de negocio, no un rollback de base de datos, y la consistencia eventual requiere estados pendientes visibles, idempotencia, reconciliación y propiedad por parte del operador.\n\nUna base de datos compartida puede ser una elección pragmática de monolito modular si la propiedad de escritura, los permisos, las migraciones y las consultas entre módulos están gobernados. Las bases de datos separadas fortalecen la autonomía, pero añaden costos de replicación, joins, análisis y flujos de trabajo distribuidos. La publicación de eventos comúnmente usa un outbox transaccional; los consumidores rastrean los mensajes procesados o hacen que las actualizaciones sean naturalmente idempotentes.\n\nLos cambios de esquema deben seguir una secuencia de expandir-migrar-contraer cuando las versiones antigua y nueva se solapan. Para los reportes, prefiero un modelo de lectura dedicado o un data warehouse cuando los joins operativos derrotarían la propiedad o el aislamiento de la carga de trabajo. Valido el diseño con escenarios de fallo: eventos duplicados, consumidores retrasados, reproducción (replay), migración parcial y reconciliación tras una interrupción.",
+    "keyPoints": [
+      "Derivar los límites de transacción de los invariantes de negocio",
+      "Dar a cada hecho de negocio un único propietario de escritura autoritativo",
+      "Hacer explícitos la actualidad, los estados pendientes y la reconciliación",
+      "Tratar las bases de datos compartidas y separadas como compromisos contextuales",
+      "Evolucionar los esquemas de forma compatible y probar la reproducción y la recuperación"
+    ],
+    "redFlags": [
+      "Varios servicios actualizando las mismas tablas sin propiedad",
+      "Llamar a la compensación un rollback garantizado",
+      "Afirmar consistencia eventual sin un plan de actualidad o recuperación",
+      "Escrituras duales a una base de datos y un broker sin estrategia de atomicidad"
+    ],
+    "followUps": [
+      { "question": "¿Cuándo es aceptable una base de datos compartida?", "hint": "Hablar de un único despliegue o un contexto estrechamente coordinado, propiedad de escritura explícita, permisos, coordinación de migraciones y la autonomía sacrificada intencionalmente." },
+      { "question": "¿Cómo reconciliarías una proyección tras eventos perdidos o corruptos?", "hint": "Usar checkpoints, fuentes reproducibles o instantáneas autoritativas, reconstrucciones idempotentes, métricas de comparación y un procedimiento de reparación documentado." }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
+    "realExperience": {
+      "title": "Propiedad en base de datos compartida como compromiso de diseño",
+      "description": "La organización por esquemas de SGN3 puede ilustrar la propiedad dentro de una única base de datos operativa si las rutas de escritura de la capa de servicio y las excepciones de reportes se verifican a partir del código en el que trabajaste. Presentar los esquemas como apoyo organizativo, describir los controles de dependencia que puedas demostrar, y reconocer que las lecturas sin restricciones entre esquemas reducen el aislamiento."
+    }
+  }
+]

@@ -52,7 +52,7 @@
         "content": "<pre><code>-- ═══════════════════════════════════════════════\n-- JSONB (PostgreSQL)\n-- ═══════════════════════════════════════════════\n-- Store and consulta JSON\nCREATE TABLE delivery_meta (\n  delivery_id BIGINT PRIMARY KEY,\n  metadata    JSONB NOT NULL DEFAULT '{}'\n);\n\nINSERT INTO delivery_meta VALUES (1, '{\"priority\": \"alto\", \"tags\": [\"express\", \"fragile\"]}');\n\n-- Access fields\nSELECT metadata->>'priority' FROM delivery_meta;           -- text: 'alto'\nSELECT metadata->'tags' FROM delivery_meta;                -- jsonb: [\"express\",\"fragile\"]\nSELECT metadata->'tags'->>0 FROM delivery_meta;            -- text: 'express'\nSELECT metadata #>> '{tags,0}' FROM delivery_meta;         -- text: 'express' (path)\n\n-- Filter\nSELECT * FROM delivery_meta WHERE metadata->>'priority' = 'alto';\nSELECT * FROM delivery_meta WHERE metadata @> '{\"priority\": \"alto\"}';\nSELECT * FROM delivery_meta WHERE metadata ? 'priority';   -- clave exists\nSELECT * FROM delivery_meta WHERE metadata->'tags' ? 'express'; -- array contiene\n\n-- Update JSONB\nUPDATE delivery_meta SET metadata = metadata || '{\"urgent\": true}';    -- merge\nUPDATE delivery_meta SET metadata = metadata - 'priority';             -- remove clave\nUPDATE delivery_meta SET metadata = jsonb_set(metadata, '{priority}', '\"bajo\"');\n\n-- Index JSONB\nCREATE INDEX idx_meta_gin ON delivery_meta USING GIN (metadata);\nCREATE INDEX idx_meta_priority ON delivery_meta ((metadata->>'priority'));\n\n-- ═══════════════════════════════════════════════\n-- ARRAYS (PostgreSQL)\n-- ═══════════════════════════════════════════════\nSELECT ARRAY[1, 2, 3];                    -- {1,2,3}\nSELECT ARRAY_AGG(id) FROM delivery;       -- aggregate en array\nSELECT UNNEST(ARRAY[1,2,3]);              -- expand array to filas\nSELECT * FROM delivery WHERE 42 = ANY(stop_ids);  -- array contiene\nSELECT * FROM delivery WHERE stop_ids @> ARRAY[42]; -- contiene\nSELECT ARRAY_LENGTH(stop_ids, 1) FROM delivery;  -- array length\n\n-- ═══════════════════════════════════════════════\n-- PARTITIONING (PostgreSQL 10+)\n-- ═══════════════════════════════════════════════\nCREATE TABLE events (\n  id BIGSERIAL, event_time TIMESTAMPTZ, payload JSONB\n) PARTITION BY RANGE (event_time);\n\nCREATE TABLE events_2026_q3 PARTITION OF events\n  FOR VALUES FROM ('2026-07-01') TO ('2026-10-01');\n\n-- List partición\nCREATE TABLE delivery_by_region (\n  id BIGSERIAL, region TEXT, datos JSONB\n) PARTITION BY LIST (region);\n\nCREATE TABLE delivery_north PARTITION OF delivery_by_region\n  FOR VALUES IN ('NORTH', 'NORTHEAST');\n\n-- ═══════════════════════════════════════════════\n-- OTHER USEFUL PostgreSQL FEATURES\n-- ═══════════════════════════════════════════════\n-- EXPLAIN ANALYZE: show plan de ejecución con real timing\nEXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)\n  SELECT * FROM delivery WHERE status = 'ACTIVE';\n\n-- Copy (bulk import/export)\nCOPY delivery FROM '/path/to/file.csv' WITH (FORMAT csv, HEADER true);\nCOPY (SELECT * FROM delivery WHERE status = 'ACTIVE') TO '/tmp/active.csv' CSV HEADER;\n\n-- Generate series\nSELECT * FROM generate_series(1, 10) AS n;  -- numbers 1..10\nSELECT * FROM generate_series('2026-01-01'::date, '2026-12-31'::date, '1 month');\n\n-- Conditional aggregation (pivot-like)\nSELECT driver_id,\n  COUNT(*) FILTER (WHERE status = 'DELIVERED') AS delivered,\n  COUNT(*) FILTER (WHERE status = 'FAILED') AS failed,\n  COUNT(*) FILTER (WHERE status = 'ACTIVE') AS active\nFROM delivery GROUP BY driver_id;</code></pre>"
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-sql-fundamentals"
   },
   {
@@ -80,7 +80,7 @@
         "content": "```sql\n-- Count comments por post\nSELECT p.id, p.title, COUNT(c.id) AS comment_count\nFROM post p\nLEFT JOIN post_comment c ON c.post_id = p.id\nGROUP BY p.id, p.title\nHAVING COUNT(c.id) > 5\nORDER BY comment_count DESC;\n\n-- Conditional aggregation (pivot-like)\nSELECT\n    date_trunc('month', created_on) AS month,\n    COUNT(*) FILTER (WHERE status = 'PENDING') AS pending,\n    COUNT(*) FILTER (WHERE status = 'SHIPPED') AS shipped,\n    COUNT(*) FILTER (WHERE status = 'DELIVERED') AS delivered\nFROM orders\nGROUP BY 1\nORDER BY 1;\n```\n\n`FILTER (WHERE ...)` is PostgreSQL-specific but very clean for conditional counts."
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-joins-patterns"
   },
   {
@@ -108,7 +108,7 @@
         "content": "**Índice parcial:** Solo índice filas that match a condición:\n```sql\n-- Solo índice active orders (skip 90% of historical datos)\nCREATE INDEX idx_active_orders ON orders(created_on)\nWHERE status = 'ACTIVE';\n```\nMuch smaller índice → más rápido búsquedas, menos disco, menos maintenance.\n\n**Índice de expresión:** Index a computed valor:\n```sql\n-- Case-insensitive search\nCREATE INDEX idx_email_lower ON users(LOWER(email));\nSELECT * FROM users WHERE LOWER(email) = 'user@example.com';\n\n-- JSONB field\nCREATE INDEX idx_meta_type ON products((metadata->>'type'));\n```"
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-indexing"
   },
   {
@@ -136,7 +136,7 @@
         "content": "```java\n// Default: REQUIRED — join existing TX or create nuevo one\n@Transactional\npublic void transfer(Long desde, Long to, BigDecimal amount) {\n    Account sender = accountRepo.findByIdForUpdate(desde); // pessimistic\n    Account receiver = accountRepo.findById(to).orElseThrow();\n    sender.debit(amount);\n    receiver.credit(amount);\n    // TX commits on method exit — both accounts updated atomically\n}\n\n// REQUIRES_NEW — siempre nuevo TX (útil for audit logging)\n@Transactional(propagation = Propagation.REQUIRES_NEW)\npublic void auditLog(String action) {\n    // Committed even if caller transacción rolls back\n}\n```\n\n**Error habitual:** Calling `@Transactional` methods desde within the misma clase. Spring proxies only intercept calls desde fuera del bean — la autoinvocación evita el proxy."
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-transactions"
   },
   {
@@ -172,7 +172,7 @@
         "content": "When NOT to optimize SQL prematurely:\n\n• Don't add índices antes measuring — each índice costs escritura rendimiento and almacenamiento\n• Don't denormalize antes proving the JOIN is actually the bottleneck\n• No lo utilices base de datos-level caching cuando aplicación-level caching (Redis) is más appropriate\n• No lo utilices SERIALIZABLE aislamiento unless you puede prove the anomaly you're preventing\n• No lo utilices stored procedures for business logic that changes frequently"
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-query-optimization"
   },
   {
@@ -200,7 +200,7 @@
         "content": "DDIA makes a crucial distinction entre two almacenamiento patterns:\n\n<pre><code>                OLTP (fila-oriented)          OLAP (columna-oriented)\nRead pattern    Small number of registros       Aggregate sobre muchos filas\n                by clave (búsquedas puntuales)        (escaneo grande datasets)\nWrite pattern   Random-access, bajo-latency    Bulk import (ETL) or event\n                user-driven inserts           streaming\nUsed by         End users via web app         Internal analysts, BI tools\nData size       GB to bajo TB                  TB to PB\nBottleneck      Disk seek time                Disk bandwidth\nExample         PostgreSQL, MySQL              BigQuery, Redshift, Clickhouse\n</code></pre>\n\n<strong>Almacenamiento orientado a columnas (OLAP):</strong>\n• Stores all valores of a columna together (not all columnas of a fila)\n• Enables incredible compression (run-length encoding, bitmap encoding)\n• Reads only the columnas necesario for the consulta\n• Vectorized processing: CPU operates on compressed columna vectors\n\n<pre><code>-- This consulta in columna store lecturas ONLY status and scheduled_at columnas:\nSELECT status, COUNT(*) FROM delivery\nWHERE scheduled_at >= '2026-01-01'\nGROUP BY status;\n-- In fila store: lecturas ENTIRE filas (40 columnas) just to use 2</code></pre>\n\n<strong>Vistas materializadas y cubos de datos:</strong>\nPre-computed aggregates for habitual consultas. Trade almacenamiento and escritura cost for instant lecturas. DDIA calls this \"aggregation: datos cubes and materialized views.\""
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-storage-engines"
   },
   {
@@ -232,7 +232,7 @@
         "content": "<strong>Decision framework for interview:</strong>\n\n| Requirement | Strategy |\n|---|---|\n| Strong consistency, single region | Single líder (PostgreSQL streaming) |\n| Alta disponibilidad, tolerate lag | Single líder + async seguidores |\n| Multi-region escrituras | Multilíder (accept conflicto complexity) |\n| Maximum availability, consistencia eventual OK | Sin líder (Cassandra/DynamoDB) |\n| Escalabilidad de lectura | Add leer réplicas to any estrategia |\n\n<strong>Key Kleppmann quotes for interviews:</strong>\n• \"If the líder fails and is not recoverable, any escrituras that have not yet been replicated to seguidores are lost.\"\n• \"Pretending that replication is synchronous cuando in fact it is asynchronous is a recipe for problems down the line.\"\n• \"There is no general solución to conflicto resolution... the aplicación developer debe resolve conflictos in a way that makes sense for the business logic.\"\n\n<strong>REWE aplicación:</strong>\n• Delivery tracking base de datos: líder único PostgreSQL con streaming replication (strong consistency for order estado)\n• Analytics/reporting: leer réplicas in each region\n• Driver GPS events: could use leaderless for maximum availability (stale position is better than no position)"
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-replication"
   },
   {
@@ -264,7 +264,7 @@
         "content": "<pre><code>Three approaches:\n\n1. Client contacts ANY nodo → nodo forwards to correcto partición\n   [Client] → [Node 2] → [Node 5 has partición]\n\n2. Client contacts enrutamiento tier (partición-aware load balancer)\n   [Client] → [Router] → [Node 5 has partición]\n\n3. Client is partición-aware (knows the mapeo)\n   [Client] ─────────────→ [Node 5 has partición]</code></pre>\n\n<strong>How does anyone know which partición lives donde?</strong>\n• <strong>ZooKeeper/etcd</strong>: centralized metadata store (utilizado by HBase, Kafka, SolrCloud)\n• <strong>Gossip protocol</strong>: nodos share partición ownership among themselves (Cassandra)\n• <strong>Config file</strong>: manual partición mapeo (sencillo but static)\n\n<strong>PostgreSQL partitioning (built-in since v10):</strong>\n<pre><code>-- Declarative partitioning — no external coordinator necesario\nCREATE TABLE delivery_events (\n    id BIGINT,\n    event_time TIMESTAMPTZ,\n    event_type TEXT\n) PARTITION BY RANGE (event_time);\n\nCREATE TABLE events_2026_q1 PARTITION OF delivery_events\n    FOR VALUES FROM ('2026-01-01') TO ('2026-04-01');\nCREATE TABLE events_2026_q2 PARTITION OF delivery_events\n    FOR VALUES FROM ('2026-04-01') TO ('2026-07-01');\n-- Query planner automáticamente prunes irrelevant particiones</code></pre>\n\n<strong>REWE aplicación:</strong>\n• delivery_events: partitioned by month (most consultas have date rango)\n• GPS telemetry: partitioned by driver_id hash (even distribution)\n• Historical orders: partición by year, mover antiguo particiones to cold almacenamiento"
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-partitioning"
   },
   {
@@ -296,7 +296,7 @@
         "content": "<strong>Cuándo utilizarlo each aislamiento level:</strong>\n\n<strong>READ COMMITTED (PostgreSQL predeterminado):</strong>\n• Standard web CRUD applications\n• Most REST APIs\n• When leer-modify-escritura is done con atomic operations (UPDATE ... SET x = x + 1)\n• 90% of aplicación code lives here\n\n<strong>REPEATABLE READ / Snapshot Isolation:</strong>\n• Reporting consultas that necesitar a consistente point-in-time view\n• Backups (consistente instantánea)\n• Analytics consultas scanning grande datasets\n• Long-running lote jobs\n\n<strong>SERIALIZABLE:</strong>\n• Financial transacciones donde correctness > throughput\n• Booking systems (prevent double-booking)\n• Any escritura skew scenario the aplicación puede't handle\n• <strong>Always</strong> build reintentar logic cuando using SERIALIZABLE\n\n<strong>Application-level alternatives to SERIALIZABLE:</strong>\n<pre><code>-- 1. Explicit locking (FOR UPDATE)\nSELECT * FROM inventory WHERE product_id = 42 FOR UPDATE;\n-- Locks this fila, other TXs wait\n\n-- 2. Atomic operations (no leer-modify-escritura cycle)\nUPDATE inventory SET quantity = quantity - 1\nWHERE product_id = 42 AND quantity > 0;\n-- Single statement = atomic, no race condición\n\n-- 3. UNIQUE constraints (prevent duplicates)\nCREATE UNIQUE INDEX idx_booking_unique\n  ON bookings (room_id, time_slot);\n-- Database enforces uniqueness atomically</code></pre>\n\n<strong>REWE delivery sistema ejemplo:</strong>\n• Assigning driver to delivery: use SELECT FOR UPDATE on the driver fila\n• Confirming delivery: atomic UPDATE con WHERE status = 'IN_TRANSIT'\n• Generating daily reports: REPEATABLE READ to get consistente instantánea\n• Financial reconciliation: SERIALIZABLE (if possible) or explicit locking"
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-isolation-mvcc"
   },
   {
@@ -324,7 +324,7 @@
         "content": "```java\n@Entity\n@Table(name = \"post\")  // explicit tabla name\npublic class Post {\n\n    @Id\n    @GeneratedValue(estrategia = GenerationType.SEQUENCE)\n    private Long id;\n\n    @Column(nullable = false, length = 255)\n    private String title;\n\n    @Version  // optimistic locking\n    private int version;\n\n    @Enumerated(EnumType.STRING)  // nunca ORDINAL in producción\n    private PostStatus status;\n\n    @Column(updatable = false)  // set once, nunca changed\n    private LocalDateTime createdOn;\n\n    @Lob  // grande text\n    private String content;\n}\n```\n\n**Rules:**\n- Always use `@Version` for optimistic locking in web apps\n- `EnumType.STRING` — nunca `ORDINAL` (breaks cuando enum order changes)\n- Prefer `LocalDateTime` sobre `Date` (immutable, no timezone confusion)\n- `FetchType.LAZY` is the predeterminado for collections — keep it that way"
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-jpa-fundamentals"
   },
   {
@@ -348,7 +348,7 @@
         "content": "Instead of JOIN FETCH (which complicates pagination), use `@BatchSize` on the collection:\n\n```java\n@OneToMany(mappedBy = \"post\", fetch = FetchType.LAZY)\n@BatchSize(size = 25)  // load comments for 25 posts at once\nprivate List<Comment> comments;\n```\n\nWith `@BatchSize(25)`, accessing `post.getComments()` for the primero time loads comments for up to 25 already-loaded posts in a single `WHERE post_id IN (?, ?, ..., ?)` consulta.\n\n**Trade-off:** Not as optimal as JOIN FETCH for single-entidad fetches, but works cleanly con pagination and doesn't require consulta changes."
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-jpa-relations"
   },
   {
@@ -376,12 +376,12 @@
         "content": "Use Criteria API cuando the consulta structure depends on runtime condiciones (filters, search):\n\n```java\nCriteriaBuilder cb = em.getCriteriaBuilder();\nCriteriaQuery<Post> cq = cb.createQuery(Post.class);\nRoot<Post> raíz = cq.desde(Post.class);\n\nList<Predicate> predicates = nuevo ArrayList<>();\n\nif (status != null) {\n    predicates.add(cb.equal(raíz.get(\"status\"), status));\n}\nif (author != null) {\n    predicates.add(cb.equal(raíz.get(\"author\"), author));\n}\nif (fromDate != null) {\n    predicates.add(cb.greaterThanOrEqualTo(raíz.get(\"createdOn\"), fromDate));\n}\n\ncq.donde(predicates.toArray(nuevo Predicate[0]));\ncq.orderBy(cb.desc(raíz.get(\"createdOn\")));\n\nreturn em.createQuery(cq).setMaxResults(20).getResultList();\n```\n\n**Cuándo NO utilizarlo:** Static consultas known at compile time → JPQL is más readable."
       }
     ],
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-jpa-queries"
   },
   {
     "id": "theory-dp-hibernate-performance",
-    "topic": "datos-persistence",
+    "topic": "data-persistence",
     "subtopic": "dp-hibernate-performance",
     "title": "Rendimiento de Hibernate — N+1, procesamiento por lotes, caché y bloqueos",
     "sections": [

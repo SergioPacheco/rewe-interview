@@ -103,7 +103,7 @@
     "difficulty": "senior",
     "subtopic": "dp-query-optimization",
     "question": "Una consulta de reporte tarda 15 segundos. Explícame tu proceso de optimización.",
-    "modelAnswer": "**Proceso paso a paso:**\n\n**1. EXPLAIN ANALYZE (entender el plan):**\n```sql\nEXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)\nSELECT ... FROM delivery d JOIN stop s ON ... WHERE ...;\n```\n\n**2. Identificar los nodos costosos:**\n- ¿Seq Scan en una tabla grande? \u2192 necesita índice.\n- ¿Sort en disco externo? \u2192 añadir índice para el ORDER BY.\n- ¿Nested Loop con muchas iteraciones? \u2192 falta índice en la tabla interna.\n- ¿Hash Join construyendo una tabla hash gigante? \u2192 filtrar antes.\n\n**3. Verificar estimaciones vs realidad:**\n- Si estimated=100 pero actual=500,000 \u2192 estadísticas obsoletas. Ejecutar `ANALYZE`.\n\n**4. Correcciones comunes:**\n- Crear índices faltantes.\n- Evitar funciones que impidan el uso de índices (sargability).\n- Seleccionar solo las columnas necesarias (evitar SELECT *).\n- Usar paginación de tipo keyset para grandes conjuntos de datos.",
+    "modelAnswer": "**Proceso paso a paso:**\n\n**1. EXPLAIN ANALYZE (entender el plan):**\n```sql\nEXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)\nSELECT ... FROM delivery d JOIN stop s ON ... WHERE ...;\n```\n\n**2. Identificar los nodos costosos:**\n- ¿Seq Scan en una tabla grande? → necesita índice.\n- ¿Sort en disco externo? → añadir índice para el ORDER BY.\n- ¿Nested Loop con muchas iteraciones? → falta índice en la tabla interna.\n- ¿Hash Join construyendo una tabla hash gigante? → filtrar antes.\n\n**3. Verificar estimaciones vs realidad:**\n- Si estimated=100 pero actual=500,000 → estadísticas obsoletas. Ejecutar `ANALYZE`.\n\n**4. Correcciones comunes:**\n- Crear índices faltantes.\n- Evitar funciones que impidan el uso de índices (sargability).\n- Seleccionar solo las columnas necesarias (evitar SELECT *).\n- Usar paginación de tipo keyset para grandes conjuntos de datos.",
     "tags": [
       "optimization",
       "explain",
@@ -146,7 +146,7 @@
     "difficulty": "inter",
     "subtopic": "dp-sql-fundamentals",
     "question": "¿Qué son las CTEs (Common Table Expressions)? ¿Cuándo las usas frente a las subconsultas?",
-    "modelAnswer": "**CTE (cláusula WITH) — conjunto de resultados temporales con nombre:**\n```sql\nWITH entregas_activas AS (\n    SELECT d.*, dr.name FROM delivery d\n    JOIN driver dr ON d.driver_id = dr.id\n    WHERE d.status = 'ACTIVE'\n)\nSELECT * FROM entregas_activas ORDER BY scheduled_at;\n```\n\n**CTEs vs Subconsultas:**\n| Aspecto | CTE | Subconsulta |\n|--------|-----|----------|\n| Legibilidad | \u2705 Nombradas, flujo de arriba a abajo | \u274c Anidadas, difíciles de leer |\n| Reutilización | \u2705 Se puede referenciar varias veces | \u274c Hay que repetirla |\n| Recursividad | \u2705 WITH RECURSIVE | \u274c No es posible |\n\n**Cuándo usar CTEs:**\n- Consultas complejas con múltiples pasos lógicos.\n- Cuando necesitas referenciar la misma tabla derivada dos veces.\n- Consultas recursivas (jerarquías).\n- Para descomponer consultas de 100 líneas en trozos comprensibles.",
+    "modelAnswer": "**CTE (cláusula WITH) — conjunto de resultados temporales con nombre:**\n```sql\nWITH entregas_activas AS (\n    SELECT d.*, dr.name FROM delivery d\n    JOIN driver dr ON d.driver_id = dr.id\n    WHERE d.status = 'ACTIVE'\n)\nSELECT * FROM entregas_activas ORDER BY scheduled_at;\n```\n\n**CTEs vs Subconsultas:**\n| Aspecto | CTE | Subconsulta |\n|--------|-----|----------|\n| Legibilidad | ✅ Nombradas, flujo de arriba a abajo | ❌ Anidadas, difíciles de leer |\n| Reutilización | ✅ Se puede referenciar varias veces | ❌ Hay que repetirla |\n| Recursividad | ✅ WITH RECURSIVE | ❌ No es posible |\n\n**Cuándo usar CTEs:**\n- Consultas complejas con múltiples pasos lógicos.\n- Cuando necesitas referenciar la misma tabla derivada dos veces.\n- Consultas recursivas (jerarquías).\n- Para descomponer consultas de 100 líneas en trozos comprensibles.",
     "tags": [
       "cte",
       "readability",
@@ -220,7 +220,7 @@
     "difficulty": "inter",
     "subtopic": "dp-hibernate-performance",
     "question": "Dos despachadores intentan asignar la misma entrega a diferentes conductores simultáneamente. ¿Cómo previenes el conflicto?",
-    "modelAnswer": "**Bloqueo Optimista (Optimistic Locking) con @Version:**\n\n```java\n@Entity\npublic class Delivery {\n    @Id private Long id;\n    @Version private Integer version; // se autoincrementa en cada UPDATE\n    private Long driverId;\n}\n```\n\n**Funcionamiento:**\n1. La TX1 lee la entrega (versión=1).\n2. La TX2 lee la misma entrega (versión=1).\n3. La TX1 asigna y guarda \u2192 `UPDATE ... SET version=2 WHERE id=1 AND version=1` \u2705.\n4. La TX2 intenta guardar \u2192 `UPDATE ... SET version=2 WHERE id=1 AND version=1` \u274c.\n5. El UPDATE de TX2 afecta a 0 filas \u2192 Hibernate lanza `OptimisticLockException`.",
+    "modelAnswer": "**Bloqueo Optimista (Optimistic Locking) con @Version:**\n\n```java\n@Entity\npublic class Delivery {\n    @Id private Long id;\n    @Version private Integer version; // se autoincrementa en cada UPDATE\n    private Long driverId;\n}\n```\n\n**Funcionamiento:**\n1. La TX1 lee la entrega (versión=1).\n2. La TX2 lee la misma entrega (versión=1).\n3. La TX1 asigna y guarda → `UPDATE ... SET version=2 WHERE id=1 AND version=1` ✅.\n4. La TX2 intenta guardar → `UPDATE ... SET version=2 WHERE id=1 AND version=1` ❌.\n5. El UPDATE de TX2 afecta a 0 filas → Hibernate lanza `OptimisticLockException`.",
     "tags": [
       "optimistic-locking",
       "concurrency",
@@ -590,6 +590,482 @@
     "id": "sql-lc176-second-highest"
   },
   {
+    "type": "FILL_BLANK",
+    "difficulty": "intermediate",
+    "subtopic": "dp-sql-fundamentals",
+    "mission": "Complete the query to get the Nth highest salary using DENSE_RANK (handles ties correctly):",
+    "code": "WITH ranked AS (\n  SELECT Salary,\n    _____(_____ ORDER BY Salary DESC) AS rnk\n  FROM Employee\n)\nSELECT Salary FROM ranked WHERE rnk = N;",
+    "answer": "DENSE_RANK() OVER",
+    "explain": "DENSE_RANK() OVER (ORDER BY Salary DESC) assigns ranks without gaps. If two employees share the highest salary, both get rank 1, and the next gets rank 2. This is preferred over ROW_NUMBER (which would arbitrarily pick one) or RANK (which leaves gaps). For N=2 with salaries (300, 300, 200): DENSE_RANK gives 200, RANK would skip rank 2. (LeetCode #177)",
+    "topic": "data-persistence",
+    "id": "sql-lc177-nth-highest"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "intermediate",
+    "subtopic": "dp-sql-fundamentals",
+    "mission": "What does DENSE_RANK() return for these scores? Ties get same rank, no gaps after ties.",
+    "code": "SELECT Score, DENSE_RANK() OVER (ORDER BY Score DESC) AS \"Rank\"\nFROM Scores;\n\n-- Scores: 4.00, 4.00, 3.85, 3.65, 3.65, 3.50\n-- What ranks are assigned?",
+    "choices": [
+      "1, 1, 2, 3, 3, 4",
+      "1, 2, 3, 4, 5, 6",
+      "1, 1, 3, 4, 4, 6",
+      "1, 1, 2, 3, 3, 5"
+    ],
+    "answer": "1, 1, 2, 3, 3, 4",
+    "explain": "DENSE_RANK: ties share the same rank, next rank is always +1 (no gaps). Two 4.00 → both rank 1, 3.85 → rank 2, two 3.65 → both rank 3, 3.50 → rank 4. Compare: RANK would give 1,1,3,4,4,6 (gaps after ties). ROW_NUMBER would give 1,2,3,4,5,6 (no ties). (LeetCode #178)",
+    "topic": "data-persistence",
+    "id": "sql-lc178-rank-scores"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "intermediate",
+    "subtopic": "dp-joins-patterns",
+    "mission": "Find numbers that appear at least 3 times CONSECUTIVELY in the Logs table (id, num). Which approach is correct?",
+    "code": "-- Logs: (1,1), (2,1), (3,1), (4,2), (5,1), (6,2), (7,2)\n-- Answer should be: 1 (appears 3 times in rows 1-2-3)",
+    "choices": [
+      "SELECT DISTINCT a.Num FROM Logs a JOIN Logs b ON a.id = b.id+1 AND a.num = b.num JOIN Logs c ON a.id = c.id+2 AND a.num = c.num",
+      "SELECT Num FROM Logs GROUP BY Num HAVING COUNT(*) >= 3",
+      "SELECT Num FROM Logs WHERE Num = LAG(Num) OVER (ORDER BY id)",
+      "SELECT DISTINCT Num FROM Logs WHERE Num IN (SELECT Num FROM Logs GROUP BY Num HAVING COUNT(*) >= 3)"
+    ],
+    "answer": "SELECT DISTINCT a.Num FROM Logs a JOIN Logs b ON a.id = b.id+1 AND a.num = b.num JOIN Logs c ON a.id = c.id+2 AND a.num = c.num",
+    "explain": "The self-join approach checks that three consecutive rows (id, id+1, id+2) all have the same num. Option B counts total occurrences (not consecutive). Options C and D don't enforce consecutiveness properly. A modern alternative uses LAG/LEAD: SELECT DISTINCT Num FROM (SELECT Num, LAG(Num) OVER(ORDER BY id) AS prev, LEAD(Num) OVER(ORDER BY id) AS next FROM Logs) t WHERE Num = prev AND Num = next. (LeetCode #180)",
+    "topic": "data-persistence",
+    "id": "sql-lc180-consecutive-nums"
+  },
+  {
+    "type": "FILL_BLANK",
+    "difficulty": "basic",
+    "subtopic": "dp-joins-patterns",
+    "mission": "Find employees who earn more than their managers using a self-join:",
+    "code": "SELECT E.Name AS Employee\nFROM Employee E\nJOIN Employee M\nON E._____ = M._____\nAND E.Salary > M.Salary;",
+    "answer": "ManagerId, Id",
+    "explain": "Self-join: join Employee to itself where E.ManagerId = M.Id links each employee to their manager row. Then filter E.Salary > M.Salary. Alternative with subquery: SELECT Name FROM Employee E WHERE Salary > (SELECT Salary FROM Employee WHERE Id = E.ManagerId). (LeetCode #181)",
+    "topic": "data-persistence",
+    "id": "sql-lc181-emp-vs-manager"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "dp-sql-fundamentals",
+    "mission": "Find duplicate emails in Person table. Which is the simplest correct approach?",
+    "code": "-- Person: (1, 'a@b.com'), (2, 'c@d.com'), (3, 'a@b.com')\n-- Expected: 'a@b.com'",
+    "choices": [
+      "SELECT Email FROM Person GROUP BY Email HAVING COUNT(*) > 1",
+      "SELECT DISTINCT Email FROM Person WHERE Email IN (SELECT Email FROM Person)",
+      "SELECT Email FROM Person WHERE Id NOT IN (SELECT MIN(Id) FROM Person GROUP BY Email)",
+      "SELECT Email, COUNT(*) FROM Person GROUP BY Email"
+    ],
+    "answer": "SELECT Email FROM Person GROUP BY Email HAVING COUNT(*) > 1",
+    "explain": "GROUP BY Email + HAVING COUNT(*) > 1 is the classic pattern to find duplicates. It groups all emails, then filters to only those appearing more than once. Option B returns ALL emails. Option C returns the duplicate rows (not just the email). Option D returns counts for all emails without filtering. (LeetCode #182)",
+    "topic": "data-persistence",
+    "id": "sql-lc182-duplicate-emails"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "dp-sql-fundamentals",
+    "mission": "Find customers who never placed an order. Which two solutions are equivalent?",
+    "code": "-- Customers: (1,Joe), (2,Henry), (3,Sam), (4,Max)\n-- Orders: (1, CustomerId=3), (2, CustomerId=1)\n-- Expected: Henry, Max (ids 2 and 4 have no orders)",
+    "choices": [
+      "LEFT JOIN + WHERE IS NULL  and  NOT IN subquery",
+      "INNER JOIN  and  NOT EXISTS",
+      "CROSS JOIN  and  LEFT JOIN",
+      "NOT IN  and  HAVING COUNT = 0"
+    ],
+    "answer": "LEFT JOIN + WHERE IS NULL  and  NOT IN subquery",
+    "explain": "Both produce the same result:\n1) SELECT c.Name FROM Customers c LEFT JOIN Orders o ON c.Id = o.CustomerId WHERE o.CustomerId IS NULL;\n2) SELECT Name FROM Customers WHERE Id NOT IN (SELECT CustomerId FROM Orders);\nBoth find customers with no matching order. For large tables, LEFT JOIN + IS NULL or NOT EXISTS often performs better than NOT IN (which can have issues with NULLs). (LeetCode #183)",
+    "topic": "data-persistence",
+    "id": "sql-lc183-never-order"
+  },
+  {
+    "type": "FILL_BLANK",
+    "difficulty": "intermediate",
+    "subtopic": "dp-sql-fundamentals",
+    "mission": "Find employees with the highest salary in each department:",
+    "code": "SELECT d.Name AS Department, e.Name AS Employee, e.Salary\nFROM Employee e\nJOIN Department d ON e.DepartmentId = d.Id\nWHERE (e.DepartmentId, e.Salary) IN (\n  SELECT DepartmentId, _____(Salary)\n  FROM Employee\n  GROUP BY _____\n);",
+    "answer": "MAX, DepartmentId",
+    "explain": "The subquery finds the MAX salary per department. The outer query then finds ALL employees whose (DepartmentId, Salary) matches — this correctly handles ties (multiple employees with the same max salary). Alternative with window function: RANK() OVER (PARTITION BY DepartmentId ORDER BY Salary DESC) = 1. (LeetCode #184)",
+    "topic": "data-persistence",
+    "id": "sql-lc184-dept-highest"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "advanced",
+    "subtopic": "dp-sql-fundamentals",
+    "mission": "Find employees earning the top 3 salaries in each department. Which window function handles ties correctly?",
+    "code": "-- IT dept: Max(90k), Randy(85k), Joe(85k), Will(70k), Janet(69k)\n-- Expected: Max, Randy, Joe, Will (top 3 DISTINCT salaries: 90k, 85k, 70k)\n\nWITH ranked AS (\n  SELECT Name, Salary, DepartmentId,\n    ????() OVER (PARTITION BY DepartmentId ORDER BY Salary DESC) AS rnk\n  FROM Employee\n)\nSELECT ... FROM ranked WHERE rnk <= 3;",
+    "choices": [
+      "ROW_NUMBER — assigns unique numbers 1,2,3,4,5",
+      "RANK — ties share rank, gaps after (1,2,2,4,5)",
+      "DENSE_RANK — ties share rank, no gaps (1,2,2,3,4)",
+      "NTILE(3) — divides into 3 equal groups"
+    ],
+    "answer": "DENSE_RANK — ties share rank, no gaps (1,2,2,3,4)",
+    "explain": "DENSE_RANK is correct because: Randy and Joe both earn 85k → both get rank 2. Will at 70k gets rank 3 (not 4). So rnk <= 3 includes all 4 people (rank 1, 2, 2, 3). ROW_NUMBER would arbitrarily exclude one of Randy/Joe. RANK would give Will rank 4 (gap after tie), excluding him. NTILE doesn't rank by value. (LeetCode #185)",
+    "topic": "data-persistence",
+    "id": "sql-lc185-dept-top-three"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "intermediate",
+    "subtopic": "dp-transactions",
+    "mission": "Delete duplicate emails keeping only the row with smallest Id. Which DELETE statement works?",
+    "code": "-- Person: (1, 'john@ex.com'), (2, 'bob@ex.com'), (3, 'john@ex.com')\n-- After: (1, 'john@ex.com'), (2, 'bob@ex.com') — id=3 deleted",
+    "choices": [
+      "DELETE p1 FROM Person p1 JOIN Person p2 ON p1.Email = p2.Email AND p1.Id > p2.Id",
+      "DELETE FROM Person WHERE Email IN (SELECT Email FROM Person GROUP BY Email HAVING COUNT(*) > 1)",
+      "DELETE FROM Person WHERE Id NOT IN (SELECT MIN(Id) FROM Person GROUP BY Email)",
+      "DELETE FROM Person p1 WHERE EXISTS (SELECT 1 FROM Person p2 WHERE p1.Email = p2.Email AND p1.Id > p2.Id)"
+    ],
+    "answer": "DELETE p1 FROM Person p1 JOIN Person p2 ON p1.Email = p2.Email AND p1.Id > p2.Id",
+    "explain": "Self-join DELETE: for each pair of rows with same email, delete the one with higher Id. This keeps only the smallest Id per email. Option B would delete ALL duplicates (including the one to keep). Option C works in PostgreSQL but not MySQL (can't reference same table in subquery of DELETE). Option D is the PostgreSQL-compatible version of A. (LeetCode #196)",
+    "topic": "data-persistence",
+    "id": "sql-lc196-delete-duplicates"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "intermediate",
+    "subtopic": "dp-sql-fundamentals",
+    "mission": "Salaries: 300, 300, 200, 100. What does each ranking function return?",
+    "code": "SELECT Salary,\n  ROW_NUMBER() OVER (ORDER BY Salary DESC) AS rn,\n  RANK()       OVER (ORDER BY Salary DESC) AS rnk,\n  DENSE_RANK() OVER (ORDER BY Salary DESC) AS drnk\nFROM Employee;\n\n-- Salaries: 300, 300, 200, 100",
+    "choices": [
+      "rn: 1,2,3,4 | rnk: 1,1,3,4 | drnk: 1,1,2,3",
+      "rn: 1,1,2,3 | rnk: 1,1,2,3 | drnk: 1,1,2,3",
+      "rn: 1,2,3,4 | rnk: 1,2,3,4 | drnk: 1,2,3,4",
+      "rn: 1,1,3,4 | rnk: 1,1,3,4 | drnk: 1,1,2,3"
+    ],
+    "answer": "rn: 1,2,3,4 | rnk: 1,1,3,4 | drnk: 1,1,2,3",
+    "explain": "ROW_NUMBER: always unique sequential (1,2,3,4) — ties get arbitrary order. RANK: ties share rank, SKIP next (1,1,→3,4) — gap after ties. DENSE_RANK: ties share rank, NO skip (1,1,→2,3) — no gaps. This is the #1 most-asked SQL window function question in interviews.",
+    "topic": "data-persistence",
+    "id": "sql-lc-ranking-comparison"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "intermediate",
+    "subtopic": "dp-query-optimization",
+    "question": "When should you use a correlated subquery vs a JOIN? Give an example where each is better.",
+    "answer": "**JOIN is better when:** you need columns from both tables, or the subquery would execute once per row (correlated). Example: finding employees with their department name.\n\n**Correlated subquery / EXISTS is better when:** you only need to check existence without retrieving joined data, or when it avoids duplicate rows from 1:N joins. Example: `SELECT * FROM Customer c WHERE EXISTS (SELECT 1 FROM Order o WHERE o.customer_id = c.id AND o.total > 1000)` — no duplicate customers even if they have multiple qualifying orders.\n\n**Key insight:** PostgreSQL's planner often converts IN/EXISTS to joins internally, so performance may be identical. Check EXPLAIN ANALYZE rather than assuming.",
+    "topic": "data-persistence",
+    "id": "sql-lc-subquery-vs-join"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "intermediate",
+    "subtopic": "dp-sql-fundamentals",
+    "question": "What are the advantages of CTEs (WITH clause) over subqueries? When would you NOT use a CTE?",
+    "answer": "**Advantages of CTEs:**\n1. **Readability** — named, sequential steps are easier to understand\n2. **Reusability** — reference the same CTE multiple times (subquery would be duplicated)\n3. **Recursive queries** — only possible with CTEs (tree traversal, hierarchies)\n4. **Debugging** — can run each CTE independently\n\n**When NOT to use CTE:**\n1. **Single-use simple subquery** — overhead of WITH for a trivial filter\n2. **When MATERIALIZED hurts** — PostgreSQL CTE before v12 was always materialized (optimization barrier). Since v12, non-recursive CTEs are inlined by default\n3. **When the planner needs to push predicates** — in older PostgreSQL, CTEs prevented predicate pushdown\n\n**Example where CTE is clearly better:**\n```sql\nWITH monthly_sales AS (\n  SELECT DATE_TRUNC('month', sold_at) AS month, SUM(amount) AS total\n  FROM orders GROUP BY 1\n)\nSELECT month, total,\n  total - LAG(total) OVER (ORDER BY month) AS growth\nFROM monthly_sales;\n```",
+    "topic": "data-persistence",
+    "id": "sql-lc-cte-vs-subquery"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "dp-sql-fundamentals",
+    "mission": "What does COUNT(*) vs COUNT(column) return when NULLs exist?",
+    "code": "-- Employee: (1, 'Alice', 50000), (2, 'Bob', NULL), (3, 'Carol', 60000)\n\nSELECT\n  COUNT(*)        AS count_star,\n  COUNT(Salary)   AS count_salary,\n  AVG(Salary)     AS avg_salary,\n  SUM(Salary)     AS sum_salary\nFROM Employee;",
+    "choices": [
+      "count_star=3, count_salary=2, avg=55000, sum=110000",
+      "count_star=3, count_salary=3, avg=36667, sum=110000",
+      "count_star=2, count_salary=2, avg=55000, sum=110000",
+      "Error: NULL in aggregate function"
+    ],
+    "answer": "count_star=3, count_salary=2, avg=55000, sum=110000",
+    "explain": "COUNT(*) counts ALL rows (including those with NULLs) = 3. COUNT(Salary) counts only non-NULL values = 2. AVG(Salary) = SUM/COUNT(non-null) = 110000/2 = 55000 (NULLs are excluded from both numerator and denominator). SUM ignores NULLs = 50000+60000 = 110000. This is critical: AVG with NULLs can give unexpected results!",
+    "topic": "data-persistence",
+    "id": "sql-lc-null-aggregates"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "dp-jpa-relations",
+    "mission": "Delivery has @OneToMany(fetch = LAZY) stops. What happens here?",
+    "code": "@Transactional\npublic DeliveryDTO findById(Long id) {\n    Delivery d = repo.findById(id).orElseThrow();  // 1 query\n    return new DeliveryDTO(d.getId(), d.getStatus()); // no access to stops\n}\n\n// vs\n\n@Transactional\npublic DeliveryDTO findWithStops(Long id) {\n    Delivery d = repo.findById(id).orElseThrow();  // 1 query\n    int count = d.getStops().size();               // ??? what happens?\n    return new DeliveryDTO(d.getId(), d.getStatus(), count);\n}",
+    "choices": [
+      "Both: 1 query each",
+      "First: 1 query. Second: 2 queries (lazy load triggered)",
+      "Second throws LazyInitializationException",
+      "Both: 2 queries each"
+    ],
+    "answer": "First: 1 query. Second: 2 queries (lazy load triggered)",
+    "explain": "LAZY means stops are NOT loaded until accessed. In findById, stops are never touched → 1 query. In findWithStops, d.getStops().size() triggers a second query to load stops. This works because the method is @Transactional (EntityManager still open). Without @Transactional → LazyInitializationException.",
+    "topic": "data-persistence",
+    "id": "jpa-fetch-types-01"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "senior",
+    "subtopic": "dp-hibernate-performance",
+    "question": "You need to list 100 deliveries with their drivers and stop counts. How do you avoid N+1?",
+    "options": [
+      {
+        "label": "A) JOIN FETCH both driver and stops in one JPQL query",
+        "description": "SELECT d FROM Delivery d JOIN FETCH d.driver JOIN FETCH d.stops"
+      },
+      {
+        "label": "B) JOIN FETCH driver + @BatchSize(25) on stops",
+        "description": "Fetch driver eagerly, load stops in batches of 25."
+      },
+      {
+        "label": "C) DTO projection with subquery for count",
+        "description": "SELECT new DTO(d.id, d.status, dr.name, SIZE(d.stops)) — no entity loading."
+      }
+    ],
+    "bestOption": 2,
+    "explanation": "Option C (DTO projection) is best when you only need specific fields:\n\n```java\n@Query(\"\"\"\n    SELECT new DeliveryListDTO(d.id, d.status, dr.name, SIZE(d.stops))\n    FROM Delivery d\n    LEFT JOIN d.driver dr\n    WHERE d.status = :status\n    \"\"\")\nList<DeliveryListDTO> findListView(@Param(\"status\") DeliveryStatus status);\n```\n\n**Why C wins:**\n• 1 single query (no N+1 possible)\n• No entity management overhead (DTO is detached)\n• Smaller memory footprint (only needed fields)\n• SIZE() is computed by DB, not Java\n\n**Why NOT A:** JOIN FETCH on TWO collections (driver + stops) creates a cartesian product: 100 deliveries × 10 stops = 1000 rows returned from DB. Hibernate deduplicates, but the network transfer is wasteful.\n\n**Why B is acceptable:** Good compromise when you need full entity graphs. @BatchSize reduces 100 queries to 5 (100/25+1). But still loads full entities.\n\n**Rule:** For LIST views (tables, grids) → DTO projection. For EDIT views (forms) → full entity with targeted fetching.",
+    "tags": [
+      "n-plus-1",
+      "dto-projection",
+      "performance"
+    ],
+    "topic": "data-persistence",
+    "id": "jpa-n-1-problem-02"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "dp-jpa-fundamentals",
+    "question": "What are the best practices for JPA entity design?",
+    "modelAnswer": "**Essential rules:**\n\n```java\n@Entity\n@Table(name = \"delivery\", schema = \"logistics\")\npublic class Delivery {\n\n    @Id\n    @GeneratedValue(strategy = SEQUENCE, generator = \"delivery_seq\")\n    @SequenceGenerator(name = \"delivery_seq\",\n        sequenceName = \"logistics.delivery_id_seq\", allocationSize = 1)\n    private Long id;\n\n    @Enumerated(EnumType.STRING)  // NEVER ORDINAL (adding enum value breaks existing data)\n    private DeliveryStatus status;\n\n    @ManyToOne(fetch = LAZY)  // ALWAYS lazy on @ManyToOne\n    @JoinColumn(name = \"driver_id\")\n    private Driver driver;\n\n    @OneToMany(mappedBy = \"delivery\", cascade = ALL, orphanRemoval = true)\n    private List<Stop> stops = new ArrayList<>();  // initialize collection!\n\n    @Version  // optimistic locking\n    private Integer version;\n\n    protected Delivery() {}  // JPA requires no-arg (can be protected)\n}\n```\n\n**Rules:**\n• `@ManyToOne(fetch = LAZY)` — ALWAYS (default is EAGER which is a trap!)\n• `@Enumerated(STRING)` — NEVER ordinal (inserting enum value shifts all ordinals)\n• Initialize collections — prevent NullPointerException\n• Use `@SequenceGenerator(allocationSize = 1)` — matches PostgreSQL sequences\n• `@Version` for optimistic locking on entities with concurrent access\n• Protected no-arg constructor — JPA needs it, but hide from business code",
+    "followUp": "What's the difference between @ManyToOne(fetch=LAZY) and @OneToMany(fetch=LAZY)?",
+    "tags": [
+      "entity",
+      "mapping",
+      "best-practices"
+    ],
+    "topic": "data-persistence",
+    "id": "jpa-entity-mapping-03"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "senior",
+    "subtopic": "dp-jpa-fundamentals",
+    "mission": "What happens in this code? How many queries?",
+    "code": "@Transactional\npublic void updateStatus(Long id) {\n    Delivery d = repo.findById(id).orElseThrow();  // query 1\n    d.setStatus(DeliveryStatus.DISPATCHED);\n    // no repo.save() call!\n}\n// After method exits...",
+    "choices": [
+      "1 query (SELECT only) — status NOT updated (no save)",
+      "2 queries (SELECT + UPDATE) — dirty checking auto-saves",
+      "1 query — throws exception because save not called",
+      "2 queries but UPDATE fails (no explicit flush)"
+    ],
+    "answer": "2 queries (SELECT + UPDATE) — dirty checking auto-saves",
+    "explain": "JPA dirty checking: within a @Transactional method, the EntityManager tracks loaded entities. When the transaction commits (method ends), Hibernate compares current state with original (dirty checking). If any field changed, it auto-generates an UPDATE. You do NOT need to call save() for managed entities. This is a common source of confusion for developers new to JPA.",
+    "topic": "data-persistence",
+    "id": "jpa-persistence-context-04"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "dp-jpa-fundamentals",
+    "question": "Explain cascade types and orphanRemoval. When do they cause problems?",
+    "modelAnswer": "**CascadeType options:**\n```java\n@OneToMany(cascade = CascadeType.ALL)  // persist, merge, remove, refresh, detach\n@OneToMany(cascade = {PERSIST, MERGE}) // only save operations, not delete\n```\n\n**Common cascades:**\n• `ALL` — parent controls child lifecycle completely (strong ownership)\n• `PERSIST, MERGE` — save children with parent, but don't delete\n• `REMOVE` — deleting parent deletes children (careful!)\n\n**orphanRemoval = true:**\n```java\n@OneToMany(mappedBy = \"delivery\", cascade = ALL, orphanRemoval = true)\nprivate List<Stop> stops;\n\n// Removing from collection → DELETE from database\ndelivery.getStops().remove(stop);  // generates DELETE stop WHERE id = ?\n```\n\n**When it causes problems:**\n• `CascadeType.REMOVE` on @ManyToMany → deleting one side deletes shared entities!\n• `orphanRemoval` on entities referenced elsewhere → accidental deletion\n• `CascadeType.ALL` on @ManyToOne → unexpected: persisting a Stop cascades to Delivery\n\n**Safe pattern:**\n```java\n// Strong ownership (Delivery owns Stops — stops don't exist without delivery)\n@OneToMany(mappedBy = \"delivery\", cascade = ALL, orphanRemoval = true)\n\n// Weak reference (Delivery references Driver — driver exists independently)\n@ManyToOne(fetch = LAZY)  // NO cascade! Driver has its own lifecycle\n```",
+    "followUp": "What happens if you call delivery.getStops().clear() with orphanRemoval=true?",
+    "tags": [
+      "cascade",
+      "orphan-removal",
+      "lifecycle"
+    ],
+    "topic": "data-persistence",
+    "id": "jpa-cascade-orphanremoval-05"
+  },
+  {
+    "type": "CODE_REFACTOR",
+    "difficulty": "senior",
+    "subtopic": "dp-query-optimization",
+    "question": "What performance problems exist in this repository method?",
+    "code": "@Query(\"SELECT d FROM Delivery d WHERE d.status = :status\")\nList<Delivery> findByStatus(@Param(\"status\") DeliveryStatus status);\n\n// Called as:\nList<Delivery> deliveries = repo.findByStatus(ACTIVE);  // may return 50,000!\nfor (Delivery d : deliveries) {\n    System.out.println(d.getDriver().getName());  // N+1!\n    System.out.println(d.getStops().size());      // N+1 again!\n}",
+    "tags": [
+      "performance",
+      "pagination",
+      "projection"
+    ],
+    "topic": "data-persistence",
+    "id": "jpa-performance-06",
+    "answer": "**Refactored:**\n```java\n// Solution: paginated DTO projection with JOIN FETCH\n@Query(\"\"\"\n    SELECT new DeliveryListDTO(d.id, d.status, dr.name, SIZE(d.stops))\n    FROM Delivery d\n    LEFT JOIN d.driver dr\n    WHERE d.status = :status\n    ORDER BY d.scheduledAt DESC\n    \"\"\")\nPage<DeliveryListDTO> findByStatus(@Param(\"status\") DeliveryStatus status, Pageable pageable);\n\n// Usage:\nPage<DeliveryListDTO> page = repo.findByStatus(ACTIVE, PageRequest.of(0, 50));\n// 1 query, 50 results max, no N+1, minimal memory\n```\n\n**Problems:** No LIMIT — could load 50,000 entities into memory (OOM risk); N+1 on driver: one query per delivery to load the driver; N+1 on stops: one query per delivery to count stops; Full entity loaded — all fields including large ones; No pagination — client gets everything at once",
+    "refactoredCode": "// Solution: paginated DTO projection with JOIN FETCH\n@Query(\"\"\"\n    SELECT new DeliveryListDTO(d.id, d.status, dr.name, SIZE(d.stops))\n    FROM Delivery d\n    LEFT JOIN d.driver dr\n    WHERE d.status = :status\n    ORDER BY d.scheduledAt DESC\n    \"\"\")\nPage<DeliveryListDTO> findByStatus(@Param(\"status\") DeliveryStatus status, Pageable pageable);\n\n// Usage:\nPage<DeliveryListDTO> page = repo.findByStatus(ACTIVE, PageRequest.of(0, 50));\n// 1 query, 50 results max, no N+1, minimal memory",
+    "problemsToIdentify": [
+      "No LIMIT — could load 50,000 entities into memory (OOM risk)",
+      "N+1 on driver: one query per delivery to load the driver",
+      "N+1 on stops: one query per delivery to count stops",
+      "Full entity loaded — all fields including large ones",
+      "No pagination — client gets everything at once"
+    ]
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "dp-jpa-queries",
+    "question": "How does Spring Data JPA derive queries from method names? What are the limits?",
+    "modelAnswer": "**Spring Data parses the method name into a query:**\n```java\n// Method name → generated query\nList<Delivery> findByStatus(DeliveryStatus status);\n// → WHERE status = ?\n\nList<Delivery> findByStatusAndDriverId(DeliveryStatus s, Long dId);\n// → WHERE status = ? AND driver_id = ?\n\nList<Delivery> findByScheduledAtAfterOrderByScheduledAtAsc(LocalDateTime t);\n// → WHERE scheduled_at > ? ORDER BY scheduled_at ASC\n\nOptional<Delivery> findFirstByDriverIdAndStatus(Long dId, DeliveryStatus s);\n// → WHERE driver_id = ? AND status = ? LIMIT 1\n\nlong countByStatus(DeliveryStatus status);\n// → SELECT COUNT(*) WHERE status = ?\n\nboolean existsByTrackingCode(String code);\n// → SELECT EXISTS(... WHERE tracking_code = ?)\n```\n\n**Keywords:** findBy, countBy, existsBy, deleteBy + And, Or, Between, LessThan, GreaterThan, Like, In, OrderBy, First, Top, Distinct\n\n**Limits (use @Query instead):**\n• Complex joins (need JPQL)\n• Subqueries\n• GROUP BY / HAVING\n• Window functions\n• Method name becomes unreadably long (>3 conditions)\n• Dynamic optional filters (use Criteria or Specification)",
+    "followUp": "What is the Specification pattern in Spring Data?",
+    "tags": [
+      "spring-data",
+      "method-names",
+      "limits"
+    ],
+    "topic": "data-persistence",
+    "id": "jpa-spring-data-methods-07"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "dp-hibernate-performance",
+    "question": "When should you use Hibernate second-level cache?",
+    "modelAnswer": "**L2 cache = shared across sessions/transactions (lives as long as the app):**\n```java\n@Entity\n@Cacheable\n@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)\npublic class Route {\n    // Read often, changes rarely → good cache candidate\n}\n```\n\n**Good candidates (cache):**\n• Reference data: Route templates, vehicle types, regions\n• Configuration: delivery rules, pricing tiers\n• Small, stable: <1000 entities, changes weekly\n\n**Bad candidates (don't cache):**\n• Delivery (changes every minute — cache immediately stale)\n• Events/audit (write-heavy, never re-read)\n• Large collections (memory pressure)\n• Data changed by external systems (cache doesn't know)\n\n**Cache strategies:**\n• `READ_ONLY` — immutable data (enums, config)\n• `READ_WRITE` — read often, write sometimes (routes, templates)\n• `NONSTRICT_READ_WRITE` — tolerates brief staleness\n\n**When cache HURTS:**\n• High write frequency → constant invalidation → worse than no cache\n• Large entities → memory pressure\n• Multi-pod deployment without distributed cache → inconsistency\n\n**Rule:** Start WITHOUT cache. Add only when you MEASURE that a specific query is called frequently with same params and returns same results.",
+    "followUp": "What's the difference between L1 cache (persistence context) and L2 cache?",
+    "tags": [
+      "cache",
+      "l2-cache",
+      "performance"
+    ],
+    "topic": "data-persistence",
+    "id": "jpa-second-level-cache-08"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "dp-jpa-fundamentals",
+    "question": "You have StandardDelivery, ExpressDelivery, and SameDayDelivery with mostly shared fields. How do you map inheritance?",
+    "options": [
+      {
+        "label": "A) Single Table (SINGLE_TABLE) — one table, discriminator column",
+        "description": "All types in one table with a type column. Unused columns are NULL."
+      },
+      {
+        "label": "B) Table per class (TABLE_PER_CLASS) — separate table per type",
+        "description": "Each type has its own table with ALL columns (including shared ones)."
+      },
+      {
+        "label": "C) Joined table (JOINED) — shared fields in parent table, specific in child tables",
+        "description": "Base table + one table per subclass with only additional fields."
+      }
+    ],
+    "bestOption": 0,
+    "explanation": "Single Table (A) is usually the best performance choice:\n\n```java\n@Entity\n@Inheritance(strategy = InheritanceType.SINGLE_TABLE)\n@DiscriminatorColumn(name = \"delivery_type\")\npublic abstract class Delivery {\n    @Id private Long id;\n    private DeliveryStatus status;\n    private LocalDateTime scheduledAt;\n}\n\n@Entity @DiscriminatorValue(\"STANDARD\")\npublic class StandardDelivery extends Delivery { }\n\n@Entity @DiscriminatorValue(\"EXPRESS\")\npublic class ExpressDelivery extends Delivery {\n    private BigDecimal priorityFee;\n}\n\n@Entity @DiscriminatorValue(\"SAME_DAY\")\npublic class SameDayDelivery extends Delivery {\n    private LocalTime deadline;\n}\n```\n\n**Why Single Table wins:**\n• No JOINs needed for polymorphic queries (fast!)\n• Simple schema (one table)\n• `findAll()` is a single table scan\n\n**Trade-off:** columns specific to subtypes are NULL for other types. Acceptable when subtypes are similar.\n\n**Use JOINED when:** subtypes have MANY different columns (would waste too much space with NULLs).",
+    "tags": [
+      "inheritance",
+      "mapping",
+      "strategy"
+    ],
+    "topic": "data-persistence",
+    "id": "jpa-inheritance-mapping-09"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "dp-transactions",
+    "question": "Explain the self-invocation problem with @Transactional in Spring.",
+    "modelAnswer": "**The trap:** Calling a @Transactional method from within the SAME class bypasses the proxy.\n\n```java\n@Service\npublic class DeliveryService {\n\n    @Transactional\n    public void processAll() {\n        List<Delivery> all = repo.findAll();\n        for (Delivery d : all) {\n            processSingle(d);  // ❌ @Transactional IGNORED! Same class = no proxy\n        }\n    }\n\n    @Transactional(propagation = REQUIRES_NEW)\n    public void processSingle(Delivery d) {\n        // Intended: each delivery in its own transaction\n        // Reality: runs in processAll()'s transaction (self-invocation)\n    }\n}\n```\n\n**Why it happens:** Spring @Transactional works via AOP proxy. When you call `this.processSingle()`, you bypass the proxy — calling the raw method directly.\n\n**Fixes:**\n```java\n// Fix 1: Inject self (proxy)\n@Autowired private DeliveryService self;\nself.processSingle(d);  // goes through proxy → new TX\n\n// Fix 2: Separate class\n@Service class DeliveryItemProcessor {\n    @Transactional(propagation = REQUIRES_NEW)\n    public void process(Delivery d) { ... }\n}\n\n// Fix 3: TransactionTemplate (programmatic)\ntransactionTemplate.execute(status -> { process(d); return null; });\n```\n\n**Same problem exists in Java EE** with EJB — calling another @TransactionAttribute method on `this` within the same bean also bypasses the container interceptor.",
+    "followUp": "What other Spring annotations are affected by the self-invocation problem?",
+    "tags": [
+      "transactional",
+      "self-invocation",
+      "proxy"
+    ],
+    "topic": "data-persistence",
+    "id": "jpa-transactions-10"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "dp-query-optimization",
+    "question": "How do you manage database schema changes with Flyway in a team?",
+    "modelAnswer": "**Flyway basics:**\n```\nsrc/main/resources/db/migration/\n├── V1__create_delivery_table.sql\n├── V2__add_driver_fk.sql\n├── V3__add_status_index.sql\n├── V4__create_stop_table.sql\n└── V5__add_tracking_code_column.sql\n```\n\n**Rules:**\n• NEVER modify a migration after it's applied (append-only)\n• Naming: V{number}__{description}.sql (double underscore!)\n• Migrations run IN ORDER on startup (before app serves traffic)\n• Flyway tracks applied migrations in `flyway_schema_history` table\n\n**Team workflow:**\n```\nDev A: creates V5__add_tracking_code.sql on feature branch\nDev B: creates V5__add_priority_field.sql on another branch\n→ CONFLICT when both merge! Fix: renumber to V5 and V6\n```\n\n**Zero-downtime migrations (for rolling deploys):**\n```\nSprint 1: V5 adds new column (nullable, with default)\n         → old code ignores it, new code uses it\nSprint 2: V6 removes old column\n         → old code no longer deployed\n\nNEVER: rename column, change type, add NOT NULL without default\n       (breaks running old-version pods during rolling deploy)\n```\n\n**Spring Boot auto-runs Flyway** on startup. No manual intervention needed.",
+    "followUp": "How do you roll back a Flyway migration that already ran in production?",
+    "tags": [
+      "flyway",
+      "migrations",
+      "team-workflow"
+    ],
+    "topic": "data-persistence",
+    "id": "jpa-migration-11"
+  },
+  {
+    "id": "interview-jpa-01",
+    "type": "ORAL_ANSWER",
+    "topic": "data-persistence",
+    "subtopic": "dp-hibernate-performance",
+    "difficulty": "interview",
+    "question": "What is the N+1 query problem?",
+    "interviewerIntent": "Check awareness of the most common JPA issue",
+    "answer": "The N+1 problem happens when one query loads a list of entities and then additional queries are executed for each item to load related data.\n\nFor example, one query loads one hundred orders and one hundred additional queries load their customers.\n\nThis creates unnecessary database round trips and can severely affect performance.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jpa-02",
+    "type": "ORAL_ANSWER",
+    "topic": "data-persistence",
+    "subtopic": "dp-hibernate-performance",
+    "difficulty": "interview",
+    "question": "How would you solve the N+1 problem?",
+    "interviewerIntent": "Verify practical N+1 resolution strategies",
+    "answer": "The solution depends on the use case.\n\nOptions include fetch joins, entity graphs, DTO projections and batch fetching.\n\nI avoid changing every relationship to eager loading because that can create larger queries and other performance problems.\n\nI first identify the exact access pattern and fetch only the data required by that operation.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jpa-03",
+    "type": "ORAL_ANSWER",
+    "topic": "data-persistence",
+    "subtopic": "dp-jpa-relations",
+    "difficulty": "interview",
+    "question": "What is the difference between lazy and eager loading?",
+    "interviewerIntent": "Check loading strategy understanding",
+    "answer": "Lazy loading delays fetching a relationship until it is accessed.\n\nEager loading fetches it immediately with the parent entity.\n\nLazy loading reduces unnecessary data retrieval, but it can cause N+1 queries or lazy-initialisation errors.\n\nEager loading may simplify access but can load too much data and create expensive joins.\n\nI select fetching strategies based on the specific query rather than using eager loading globally.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jpa-04",
+    "type": "ORAL_ANSWER",
+    "topic": "data-persistence",
+    "subtopic": "dp-hibernate-performance",
+    "difficulty": "interview",
+    "question": "What is the Hibernate first-level cache?",
+    "interviewerIntent": "Verify L1 cache understanding",
+    "answer": "The first-level cache is associated with the Hibernate session or JPA persistence context.\n\nIt is enabled by default.\n\nWithin the same persistence context, loading the same entity by its identifier normally returns the managed instance without executing another database query.\n\nIt also supports dirty checking and identity consistency.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jpa-05",
+    "type": "ORAL_ANSWER",
+    "topic": "data-persistence",
+    "subtopic": "dp-hibernate-performance",
+    "difficulty": "interview",
+    "question": "What is the Hibernate second-level cache?",
+    "interviewerIntent": "Check L2 cache knowledge and pragmatism",
+    "answer": "The second-level cache is shared across sessions or persistence contexts.\n\nIt can cache entity or collection data and reduce database access for frequently read and rarely changed information.\n\nIt is optional and requires a cache provider and an appropriate invalidation strategy.\n\nI use it selectively because caching highly volatile entities may create complexity with little benefit.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jpa-06",
+    "type": "ORAL_ANSWER",
+    "topic": "data-persistence",
+    "subtopic": "dp-hibernate-performance",
+    "difficulty": "interview",
+    "question": "How are Hibernate L1, L2 and Redis different?",
+    "interviewerIntent": "Distinguish cache levels",
+    "answer": "The Hibernate first-level cache belongs to a single persistence context and mainly manages entities during a transaction or request.\n\nThe second-level cache is shared across Hibernate sessions and caches persistence data.\n\nRedis is an external distributed cache that can store application-level data, API responses, sessions, computed results or shared values across application instances.\n\nThey operate at different levels and can coexist, but every cache layer increases invalidation and observability complexity.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
     "id": "dp-mvcc-1",
     "topic": "data-persistence",
     "subtopic": "dp-isolation-mvcc",
@@ -614,6 +1090,44 @@
     "answer": "Lecturas fantasma (Phantom reads)"
   },
   {
+    "id": "dp-mvcc-3",
+    "topic": "data-persistence",
+    "subtopic": "dp-isolation-mvcc",
+    "type": "ORDER_STEPS",
+    "difficulty": "INTERMEDIATE",
+    "question": "Order the isolation levels from LEAST to MOST restrictive:",
+    "steps": [
+      "READ UNCOMMITTED",
+      "READ COMMITTED",
+      "REPEATABLE READ",
+      "SERIALIZABLE"
+    ],
+    "explanation": "Each level prevents more anomalies: READ UNCOMMITTED (allows everything), READ COMMITTED (prevents dirty reads), REPEATABLE READ (prevents non-repeatable reads), SERIALIZABLE (prevents all anomalies including phantoms)."
+  },
+  {
+    "id": "dp-mvcc-4",
+    "topic": "data-persistence",
+    "subtopic": "dp-isolation-mvcc",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "SENIOR",
+    "question": "Transaction A reads account balance (100€). Transaction B updates balance to 150€ and commits. Transaction A reads again. What does A see under READ COMMITTED vs REPEATABLE READ?",
+    "correctOutput": "READ COMMITTED: 150€ (sees committed changes). REPEATABLE READ: 100€ (sees snapshot from start of transaction).",
+    "explain": "READ COMMITTED takes a new snapshot for each statement, so it sees B's committed update. REPEATABLE READ uses the snapshot from the start of the transaction, so it still sees 100€ regardless of B's commit."
+  },
+  {
+    "id": "dp-mvcc-5",
+    "topic": "data-persistence",
+    "subtopic": "dp-isolation-mvcc",
+    "type": "FILL_BLANK",
+    "difficulty": "INTERMEDIATE",
+    "question": "In PostgreSQL, the default isolation level is _____ and it uses _____ to provide consistent reads without blocking.",
+    "blanks": [
+      "READ COMMITTED",
+      "MVCC (snapshots)"
+    ],
+    "explain": "PostgreSQL defaults to READ COMMITTED. Each statement gets a fresh snapshot of committed data. Writers never block readers, readers never block writers — thanks to MVCC keeping old row versions until no transaction needs them."
+  },
+  {
     "id": "dp-storage-1",
     "topic": "data-persistence",
     "subtopic": "dp-storage-engines",
@@ -621,6 +1135,51 @@
     "difficulty": "INTERMEDIATE",
     "question": "Compara los motores de almacenamiento B-Tree y LSM-Tree. ¿Cuándo elegirías cada uno?",
     "answer": "B-Trees (PostgreSQL): estructura de árbol balanceada, excelente para cargas de lectura con consultas puntuales y rangos. LSM-Trees (Cassandra, RocksDB): escrituras en memoria (memtable) que se vuelcan a disco; excelente para alto rendimiento de escritura (logs, series temporales, eventos)."
+  },
+  {
+    "id": "dp-storage-2",
+    "topic": "data-persistence",
+    "subtopic": "dp-storage-engines",
+    "type": "PICK_INVALID",
+    "difficulty": "INTERMEDIATE",
+    "question": "Which is NOT an advantage of LSM-trees over B-trees?",
+    "explain": "LSM-trees excel at writes (sequential append) and space efficiency (compaction removes old versions). But point reads are SLOWER because they may need to check memtable + multiple SSTable levels. B-trees offer O(log n) reads with a single tree traversal.",
+    "choices": [
+      "Higher write throughput",
+      "Better space utilization through compaction",
+      "Faster point reads on primary key",
+      "Sequential I/O for writes"
+    ],
+    "answer": "Faster point reads on primary key"
+  },
+  {
+    "id": "dp-storage-3",
+    "topic": "data-persistence",
+    "subtopic": "dp-storage-engines",
+    "type": "ORDER_STEPS",
+    "difficulty": "INTERMEDIATE",
+    "question": "Order the steps of a write in an LSM-tree storage engine:",
+    "steps": [
+      "Write to WAL (Write-Ahead Log) for durability",
+      "Insert into in-memory memtable (sorted structure)",
+      "When memtable is full, flush to disk as sorted SSTable",
+      "Background compaction merges SSTables and removes duplicates"
+    ],
+    "explanation": "WAL ensures durability even if the process crashes before flushing memtable. The memtable (usually a red-black tree or skip list) keeps data sorted. When full, it's flushed as an immutable SSTable. Compaction runs periodically to merge SSTables, remove deleted keys, and reduce read amplification."
+  },
+  {
+    "id": "dp-storage-4",
+    "topic": "data-persistence",
+    "subtopic": "dp-storage-engines",
+    "type": "FILL_BLANK",
+    "difficulty": "INTERMEDIATE",
+    "question": "PostgreSQL uses a _____ index structure by default, stores data in _____ pages (usually 8KB), and ensures durability through the _____.",
+    "blanks": [
+      "B-tree",
+      "heap",
+      "WAL (Write-Ahead Log)"
+    ],
+    "explain": "PostgreSQL's default index is B-tree. Table data is stored in heap pages (unordered, 8KB blocks). The WAL (pg_wal directory) ensures all changes are durable before confirming a commit — if the server crashes, it replays the WAL to recover."
   },
   {
     "id": "dp-storage-5",

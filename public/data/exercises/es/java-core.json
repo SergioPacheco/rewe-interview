@@ -212,6 +212,58 @@
     "topic": "collections"
   },
   {
+    "id": "core-streams-03",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Streams — Pipeline",
+    "difficulty": "intermediate",
+    "mission": "What does this stream pipeline produce?",
+    "code": "List<Integer> distances = List.of(10, 25, 5, 50, 30, 8);\nlong count = distances.stream()\n    .filter(d -> d > 15)\n    .count();\nSystem.out.println(count);",
+    "choices": [
+      "3",
+      "4",
+      "6",
+      "0"
+    ],
+    "answer": "3",
+    "explain": "filter(d > 15) keeps: 25, 50, 30. count() = 3. Streams are lazy — filter does not create a new list, it just filters during traversal. count() is a terminal operation that triggers processing.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-streams-04",
+    "type": "FILL_BLANK",
+    "subtopic": "Streams — Collectors",
+    "difficulty": "intermediate",
+    "mission": "Group deliveries <strong>by driver</strong> into a Map.",
+    "code": "Map<String, List<Delivery>> byDriver = deliveries.stream()\n    .collect(Collectors._____(Delivery::getDriverName));",
+    "blank": "_____",
+    "choices": [
+      "groupingBy",
+      "partitioningBy",
+      "toMap",
+      "mapping"
+    ],
+    "answer": "groupingBy",
+    "explain": "groupingBy(classifier) creates a Map<Key, List<Element>>. Like SQL GROUP BY — group deliveries by driver name. partitioningBy splits into true/false only. toMap creates Map<Key, Value> (one entry per key).",
+    "topic": "collections"
+  },
+  {
+    "id": "core-streams-05",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Streams — reduce",
+    "difficulty": "intermediate",
+    "mission": "What is the <strong>total distance</strong>?",
+    "code": "List<Integer> legs = List.of(12, 8, 15, 20);\nint total = legs.stream()\n    .reduce(0, Integer::sum);\nSystem.out.println(total);",
+    "choices": [
+      "55",
+      "20",
+      "12",
+      "0"
+    ],
+    "answer": "55",
+    "explain": "reduce(identity, accumulator) combines all elements. Starting from 0, it sums: 0+12=12, 12+8=20, 20+15=35, 35+20=55. This is the functional equivalent of a for loop with an accumulator. You can also use mapToInt().sum() for this case.",
+    "topic": "collections"
+  },
+  {
     "id": "core-streams-06",
     "type": "PICK_INVALID",
     "subtopic": "Streams — Anti-patterns",
@@ -239,6 +291,42 @@
     "topic": "collections"
   },
   {
+    "id": "core-streams-07",
+    "type": "FILL_BLANK",
+    "subtopic": "Optional",
+    "difficulty": "intermediate",
+    "mission": "Safely get the delivery or throw if <strong>not found</strong>.",
+    "code": "Delivery delivery = repository.findById(id)\n    ._____(()-> new NotFoundException(\"Delivery not found: \" + id));",
+    "blank": "_____",
+    "choices": [
+      "orElseThrow",
+      "orElse",
+      "get",
+      "ifPresent"
+    ],
+    "answer": "orElseThrow",
+    "explain": "orElseThrow(supplier) unwraps the Optional or throws if empty. NEVER call .get() without checking — it throws NoSuchElementException. orElse(default) returns a default value. orElseThrow is the standard pattern for \"find or 404\".",
+    "topic": "collections"
+  },
+  {
+    "id": "core-generics-01",
+    "type": "FILL_BLANK",
+    "subtopic": "Generics",
+    "difficulty": "intermediate",
+    "mission": "Complete the generic method that finds an item <strong>by ID in any list</strong>.",
+    "code": "public <T extends Identifiable> Optional<T> findById(List<_____> items, Long id) {\n    return items.stream()\n        .filter(item -> item.getId().equals(id))\n        .findFirst();\n}",
+    "blank": "_____",
+    "choices": [
+      "T",
+      "?",
+      "Object",
+      "Identifiable"
+    ],
+    "answer": "T",
+    "explain": "The type parameter T (declared as <T extends Identifiable>) is used in the parameter list. This means the method works with any List of objects that implement Identifiable — List<Delivery>, List<Driver>, List<Route>. The return type preserves the specific type.",
+    "topic": "collections"
+  },
+  {
     "id": "core-generics-02",
     "type": "PREDICT_OUTPUT",
     "subtopic": "Generics",
@@ -256,6 +344,24 @@
     "topic": "collections"
   },
   {
+    "id": "core-generics-03",
+    "type": "FILL_BLANK",
+    "subtopic": "Generics — Wildcards",
+    "difficulty": "intermediate",
+    "mission": "Complete so this method accepts <strong>any list of Number subtypes</strong> (Integer, Double, Long).",
+    "code": "public double sumAll(List<? _____ Number> numbers) {\n    return numbers.stream()\n        .mapToDouble(Number::doubleValue)\n        .sum();\n}",
+    "blank": "_____",
+    "choices": [
+      "extends",
+      "super",
+      "implements",
+      "=="
+    ],
+    "answer": "extends",
+    "explain": "? extends Number means \"any type that IS-A Number\" (Integer, Double, Long). You can READ from this list (get Number values) but NOT add to it (compiler does not know the actual type). PECS rule: Producer Extends, Consumer Super.",
+    "topic": "collections"
+  },
+  {
     "id": "core-generics-04",
     "type": "ORAL_ANSWER",
     "subtopic": "Generics",
@@ -267,20 +373,109 @@
     "topic": "collections"
   },
   {
-    "id": "core-methods-01",
+    "id": "core-collections-compare-01",
+    "type": "COMPARE_CONCEPTS",
+    "subtopic": "Collections — Choosing",
+    "difficulty": "basic",
+    "mission": "Compare: <strong>List</strong> vs <strong>Set</strong> vs <strong>Map</strong> — when to use each",
+    "conceptA": {
+      "name": "List",
+      "definition": "Ordered, allows duplicates, index-based access. Use when order matters or duplicates are valid. ArrayList (fast random access) or LinkedList (fast insert/remove in middle)."
+    },
+    "conceptB": {
+      "name": "Set / Map",
+      "definition": "Set: unique elements, no duplicates, no index. Map: key→value pairs, unique keys, O(1) lookup. Use Set for uniqueness. Use Map for associations/lookups."
+    },
+    "keyDifference": "List = \"I need ordered items (possibly with duplicates)\". Set = \"I need unique items\". Map = \"I need to look up a value by a key\". Choose based on what QUESTION you ask the collection.",
+    "javaExample": "Delivery stops in order: List<Stop>. Unique driver IDs assigned today: Set<String>. Cache delivery by ID: Map<Long, Delivery>.",
+    "interviewAnswer": "I choose based on the access pattern: List when I need order or index access. Set when uniqueness is the constraint. Map when I need key-based lookup. In logistics, route stops are a List (ordered), assigned drivers are a Set (unique), and delivery cache is a Map (fast lookup by ID).",
+    "topic": "collections",
+    "answer": "**List:** Ordered, allows duplicates, index-based access. Use when order matters or duplicates are valid. ArrayList (fast random access) or LinkedList (fast insert/remove in middle).\n\n**Set / Map:** Set: unique elements, no duplicates, no index. Map: key→value pairs, unique keys, O(1) lookup. Use Set for uniqueness. Use Map for associations/lookups.\n\n\n**Key Difference:** List = \"I need ordered items (possibly with duplicates)\". Set = \"I need unique items\". Map = \"I need to look up a value by a key\". Choose based on what QUESTION you ask the collection."
+  },
+  {
+    "id": "core-types-01",
     "type": "PREDICT_OUTPUT",
-    "subtopic": "Pass by Value",
-    "difficulty": "intermediate",
-    "mission": "¿Qué imprime? Java es **pass by value**, pero ¿qué significa para los objetos?",
-    "code": "public static void changeName(Driver driver) {\n    driver.setName(\"Carlos\");\n}\n\nDriver d = new Driver(\"Maria\");\nchangeName(d);\nSystem.out.println(d.getName());",
+    "subtopic": "Primitives vs References",
+    "difficulty": "basic",
+    "mission": "What prints? Think about <strong>primitive vs reference</strong> behavior.",
+    "code": "int a = 10;\nint b = a;\nb = 20;\nSystem.out.println(a);",
     "choices": [
-      "Maria",
-      "Carlos",
-      "null",
-      "Error de compilación"
+      "10",
+      "20",
+      "0",
+      "Compile Error"
     ],
-    "answer": "Carlos",
-    "explain": "Java pasa la REFERENCIA por valor. El método recibe una copia de la referencia que apunta al mismo objeto en el heap. Modificar el objeto a través de esa copia afecta al original.",
+    "answer": "10",
+    "explain": "Primitives are copied by VALUE. Changing b does not affect a — they are independent copies. References (objects) share the same heap object, so changes through one reference ARE visible to the other.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-types-02",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Primitives vs References",
+    "difficulty": "basic",
+    "mission": "What prints? Now with <strong>object references</strong>.",
+    "code": "int[] arr1 = {1, 2, 3};\nint[] arr2 = arr1;\narr2[0] = 99;\nSystem.out.println(arr1[0]);",
+    "choices": [
+      "1",
+      "99",
+      "0",
+      "ArrayIndexOutOfBoundsException"
+    ],
+    "answer": "99",
+    "explain": "arr2 = arr1 copies the REFERENCE, not the array. Both point to the same array on the heap. Modifying through arr2 is visible through arr1. To get an independent copy: arr2 = arr1.clone() or Arrays.copyOf(arr1, arr1.length).",
+    "topic": "collections"
+  },
+  {
+    "id": "core-types-03",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Casting",
+    "difficulty": "basic",
+    "mission": "Does this <strong>compile</strong>? Think about narrowing conversion.",
+    "code": "int x = 128;\nbyte b = x;\nSystem.out.println(b);",
+    "choices": [
+      "-128",
+      "128",
+      "Compile Error",
+      "0"
+    ],
+    "answer": "Compile Error",
+    "explain": "int → byte is a NARROWING conversion — possible data loss. Requires explicit cast: byte b = (byte) x; Without the cast, the compiler rejects it. With cast: 128 overflows byte (max 127) → wraps to -128.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-types-04",
+    "type": "FILL_BLANK",
+    "subtopic": "Wrapper Classes",
+    "difficulty": "basic",
+    "mission": "Convert a String to an int using the <strong>wrapper class</strong>.",
+    "code": "String input = \"42\";\nint value = _____.parseInt(input);",
+    "blank": "_____",
+    "choices": [
+      "Integer",
+      "Int",
+      "Number",
+      "String"
+    ],
+    "answer": "Integer",
+    "explain": "Integer.parseInt(String) converts text to primitive int. Integer.valueOf(String) returns Integer object (autoboxed). Wrapper classes: Integer, Double, Boolean, Long, etc. Used for: parsing, collections (List<Integer>), null representation.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-types-05",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Variable Scope",
+    "difficulty": "intermediate",
+    "mission": "Does this compile? Think about <strong>variable scope</strong>.",
+    "code": "public void process() {\n    if (true) {\n        int count = 5;\n    }\n    System.out.println(count);\n}",
+    "choices": [
+      "5",
+      "0",
+      "Compile Error: count not found",
+      "null"
+    ],
+    "answer": "Compile Error: count not found",
+    "explain": "count is declared inside the if block — its scope ends with the closing brace. Outside the block, it does not exist. Fix: declare count before the if block. Variable scope = from declaration to the end of the enclosing block {}.",
     "topic": "collections"
   },
   {
@@ -301,6 +496,741 @@
     "topic": "collections"
   },
   {
+    "id": "core-ops-02",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Switch",
+    "difficulty": "basic",
+    "mission": "What prints? Watch for <strong>fall-through</strong>.",
+    "code": "String status = \"DISPATCHED\";\nswitch (status) {\n    case \"PLANNED\": System.out.print(\"P\"); break;\n    case \"DISPATCHED\": System.out.print(\"D\");\n    case \"DELIVERED\": System.out.print(\"V\"); break;\n    case \"CANCELLED\": System.out.print(\"C\");\n}",
+    "choices": [
+      "D",
+      "DV",
+      "DVC",
+      "P"
+    ],
+    "answer": "DV",
+    "explain": "Matches \"DISPATCHED\", prints \"D\". NO break → falls through to \"DELIVERED\", prints \"V\". Then break stops. Fall-through is a common interview trap. Without break, execution continues into the next case regardless of match.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-ops-03",
+    "type": "FILL_BLANK",
+    "subtopic": "Ternary",
+    "difficulty": "basic",
+    "mission": "Rewrite this if/else as a <strong>ternary expression</strong>.",
+    "code": "String label = distance > 100 _____ \"Long haul\" : \"Short trip\";",
+    "blank": "_____",
+    "choices": [
+      "?",
+      "??",
+      ":",
+      "&&"
+    ],
+    "answer": "?",
+    "explain": "Ternary: condition ? valueIfTrue : valueIfFalse. Compact alternative to if/else for simple value assignment. Avoid nesting ternaries — they become unreadable. Use for simple one-line decisions.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-ops-04",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Short-circuit",
+    "difficulty": "intermediate",
+    "mission": "Does <strong>checkDb()</strong> execute? Think about short-circuit evaluation.",
+    "code": "boolean valid = false;\n// checkDb() makes a database call\nif (valid && checkDb()) {\n    System.out.println(\"OK\");\n}\n// Does checkDb() get called?",
+    "choices": [
+      "Yes, checkDb() runs",
+      "No, short-circuit skips it",
+      "Compile Error",
+      "NullPointerException"
+    ],
+    "answer": "No, short-circuit skips it",
+    "explain": "&& is short-circuit: if left side is false, right side is NEVER evaluated. Useful for null checks: if (obj != null && obj.isValid()). The & operator (single) evaluates BOTH sides always. Use && for logic, & only for bitwise.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-arrays-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Arrays",
+    "difficulty": "basic",
+    "mission": "What prints? Think about <strong>array bounds</strong>.",
+    "code": "int[] stops = {\n  10, 20, 30, 40, 50};\nSystem.out.println(stops[stops.length]);",
+    "choices": [
+      "50",
+      "0",
+      "ArrayIndexOutOfBoundsException",
+      "Compile Error"
+    ],
+    "answer": "ArrayIndexOutOfBoundsException",
+    "explain": "Array indices go from 0 to length-1. stops.length = 5, but index 5 does not exist (last valid is 4). This is a RUNTIME exception — compiles fine but crashes. Fix: stops[stops.length - 1] for last element.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-arrays-02",
+    "type": "FILL_BLANK",
+    "subtopic": "Arrays",
+    "difficulty": "basic",
+    "mission": "Declare and initialize an array of <strong>delivery distances</strong>.",
+    "code": "_____ distances = {\n  12, 8, 25, 30, 15};",
+    "blank": "_____",
+    "choices": [
+      "int[]",
+      "int()",
+      "Array<int>",
+      "Integer[]"
+    ],
+    "answer": "int[]",
+    "explain": "int[] is the Java array declaration. Array initializer {} assigns values immediately. Arrays are fixed-size, zero-indexed. For dynamic size, use ArrayList. int[] for primitives, Integer[] for nullable/collections.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-arrays-03",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Enhanced for",
+    "difficulty": "basic",
+    "mission": "What is the <strong>total</strong>?",
+    "code": "int[] weights = {5, 10, 15, 20};\nint total = 0;\nfor (int w : weights) {\n    total += w;\n}\nSystem.out.println(total);",
+    "choices": [
+      "50",
+      "20",
+      "4",
+      "0"
+    ],
+    "answer": "50",
+    "explain": "Enhanced for (for-each) iterates every element. 5+10+15+20 = 50. Use for-each when you need every element and do not need the index. Use traditional for when you need the index or want to skip/modify elements.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-loops-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Loops — break",
+    "difficulty": "basic",
+    "mission": "What prints? Think about <strong>break</strong>.",
+    "code": "for (int i = 0; i < 10; i++) {\n    if (i == 3) break;\n    System.out.print(i + \" \");\n}",
+    "choices": [
+      "0 1 2 ",
+      "0 1 2 3 ",
+      "3 ",
+      "0 1 2 3 4 5 6 7 8 9 "
+    ],
+    "answer": "0 1 2 ",
+    "explain": "break exits the loop immediately when i==3. So it prints 0, 1, 2 then stops. continue would skip just that iteration (print 0 1 2 4 5...). break = stop the loop. continue = skip one iteration.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-loops-02",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Loops — while",
+    "difficulty": "basic",
+    "mission": "How many times does the loop <strong>execute</strong>?",
+    "code": "int deliveries = 5;\nwhile (deliveries > 0) {\n    deliveries--;\n}\nSystem.out.println(deliveries);",
+    "choices": [
+      "0",
+      "5",
+      "-1",
+      "1"
+    ],
+    "answer": "0",
+    "explain": "Starts at 5, decrements each iteration: 5→4→3→2→1→0. When deliveries=0, condition (0>0) is false, loop exits. Prints 0. The loop ran 5 times. while checks BEFORE each iteration; do-while checks AFTER (always runs at least once).",
+    "topic": "collections"
+  },
+  {
+    "id": "core-loops-03",
+    "type": "FILL_BLANK",
+    "subtopic": "Loops — for-each",
+    "difficulty": "basic",
+    "mission": "Complete the enhanced for loop to process <strong>each delivery</strong>.",
+    "code": "for (Delivery d _____ deliveries) {\n    process(d);\n}",
+    "blank": "_____",
+    "choices": [
+      ":",
+      "in",
+      "of",
+      "->"
+    ],
+    "answer": ":",
+    "explain": "Java enhanced for syntax: for (Type var : collection). The colon (:) separates the iteration variable from the iterable. Unlike JavaScript (of) or Python (in), Java uses colon. Available since Java 5 for arrays and Iterable.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-exceptions-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Exceptions — try/catch/finally",
+    "difficulty": "intermediate",
+    "mission": "What prints? Think about <strong>finally</strong> execution.",
+    "code": "try {\n    System.out.print(\"A\");\n    throw new RuntimeException();\n} catch (Exception e) {\n    System.out.print(\"B\");\n} finally {\n    System.out.print(\"C\");\n}",
+    "choices": [
+      "A",
+      "AB",
+      "ABC",
+      "AC"
+    ],
+    "answer": "ABC",
+    "explain": "finally ALWAYS executes — whether exception occurs or not, whether caught or not. Flow: print A → throw → caught by catch → print B → finally → print C. Even if catch re-throws, finally still runs.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-exceptions-02",
+    "type": "PICK_INVALID",
+    "subtopic": "Exceptions — Checked vs Unchecked",
+    "difficulty": "intermediate",
+    "mission": "Which exception is <strong>unchecked</strong> (does NOT require try/catch or throws)?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "IOException\n// Must be caught or declared\n// Extends Exception (checked)",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "NullPointerException\n// Does NOT require try/catch\n// Extends RuntimeException",
+        "valid": false
+      },
+      {
+        "id": "c",
+        "code": "SQLException\n// Must be caught or declared\n// Extends Exception (checked)",
+        "valid": true
+      }
+    ],
+    "answer": "b",
+    "explain": "Unchecked = extends RuntimeException. Compiler does NOT force you to catch them. NullPointerException, ArrayIndexOutOfBoundsException, IllegalArgumentException, ClassCastException — all unchecked. IOException, SQLException — checked (must catch or declare throws).",
+    "topic": "collections"
+  },
+  {
+    "id": "core-exceptions-03",
+    "type": "FILL_BLANK",
+    "subtopic": "Exceptions — Custom",
+    "difficulty": "intermediate",
+    "mission": "Create a <strong>custom unchecked exception</strong> for delivery not found.",
+    "code": "public class DeliveryNotFoundException extends _____ {\n    public DeliveryNotFoundException(String msg) {\n        super(msg);\n    }\n}",
+    "blank": "_____",
+    "choices": [
+      "RuntimeException",
+      "Exception",
+      "Error",
+      "Throwable"
+    ],
+    "answer": "RuntimeException",
+    "explain": "Extending RuntimeException makes it unchecked — callers are not forced to catch it. This is the modern Java convention for business exceptions. Extending Exception (checked) forces every caller to handle it — appropriate for recoverable I/O errors, not for \"not found\" scenarios.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-exceptions-04",
+    "type": "ORDER_EXECUTION",
+    "subtopic": "Exceptions — Catch Order",
+    "difficulty": "basic",
+    "mission": "Arrange catch blocks in <strong>valid order</strong> (most specific first).",
+    "items": [
+      {
+        "id": "nfe",
+        "label": "catch (NumberFormatException e)"
+      },
+      {
+        "id": "iae",
+        "label": "catch (IllegalArgumentException e)"
+      },
+      {
+        "id": "rte",
+        "label": "catch (RuntimeException e)"
+      },
+      {
+        "id": "ex",
+        "label": "catch (Exception e)"
+      }
+    ],
+    "explain": "Most specific → most general. NumberFormatException extends IllegalArgumentException extends RuntimeException extends Exception. Reversing causes \"unreachable catch block\" compile error. The first matching catch handles it.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-strings-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "String Immutability",
+    "difficulty": "basic",
+    "mission": "What prints? Strings are <strong>immutable</strong>.",
+    "code": "String route = \"Warehouse\";\nroute.concat(\" → Store A\");\nSystem.out.println(route);",
+    "choices": [
+      "Warehouse → Store A",
+      "Warehouse",
+      "null",
+      "Compile Error"
+    ],
+    "answer": "Warehouse",
+    "explain": "Strings are IMMUTABLE. concat() returns a NEW string — it does not modify the original. The result is discarded because it is not assigned. Fix: route = route.concat(\" → Store A\"); or use StringBuilder for building strings in loops.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-strings-02",
+    "type": "FILL_BLANK",
+    "subtopic": "StringBuilder",
+    "difficulty": "basic",
+    "mission": "Build a route string <strong>efficiently</strong> in a loop.",
+    "code": "_____ sb = new StringBuilder();\nfor (String stop : stops) {\n    sb.append(stop).append(\" → \");\n}\nString route = sb.toString();",
+    "blank": "_____",
+    "choices": [
+      "StringBuilder",
+      "String",
+      "StringBuffer",
+      "CharSequence"
+    ],
+    "answer": "StringBuilder",
+    "explain": "StringBuilder is mutable — append() modifies in place without creating new objects. In a loop, String concatenation creates N new String objects (O(n²) total characters copied). StringBuilder is O(n). StringBuffer is the same but synchronized (thread-safe, rarely needed).",
+    "topic": "collections"
+  },
+  {
+    "id": "core-strings-03",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "String Pool",
+    "difficulty": "intermediate",
+    "mission": "What prints? Think about the <strong>String pool</strong>.",
+    "code": "String a = \"REWE\";\nString b = \"REWE\";\nString c = new String(\"REWE\");\nSystem.out.println(a == b);\nSystem.out.println(a == c);",
+    "choices": [
+      "true true",
+      "true false",
+      "false false",
+      "false true"
+    ],
+    "answer": "true false",
+    "explain": "String literals are INTERNED (String pool) — same content = same object. a==b is true (same pool reference). new String() creates a NEW object on the heap, bypassing the pool. a==c is false (different objects). Always use .equals() for content comparison.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-datetime-01",
+    "type": "FILL_BLANK",
+    "subtopic": "LocalDateTime",
+    "difficulty": "basic",
+    "mission": "Get the <strong>current date and time</strong> for a delivery timestamp.",
+    "code": "LocalDateTime deliveryTime = LocalDateTime._____();",
+    "blank": "_____",
+    "choices": [
+      "now",
+      "current",
+      "today",
+      "new"
+    ],
+    "answer": "now",
+    "explain": "LocalDateTime.now() returns current date+time. LocalDate.now() for date only. LocalTime.now() for time only. These are immutable — operations like plusDays(1) return NEW instances. Part of java.time package (Java 8+), replacing the problematic Date/Calendar.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-datetime-02",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "LocalDate Immutability",
+    "difficulty": "intermediate",
+    "mission": "What is the <strong>delivery date</strong> after this code?",
+    "code": "LocalDate delivery = LocalDate.of(2026, 7, 19);\ndelivery.plusDays(3);\nSystem.out.println(delivery);",
+    "choices": [
+      "2026-07-22",
+      "2026-07-19",
+      "null",
+      "Exception"
+    ],
+    "answer": "2026-07-19",
+    "explain": "LocalDate is IMMUTABLE — plusDays() returns a NEW object, it does NOT modify the original. The result is discarded. Fix: delivery = delivery.plusDays(3); Same pattern as String — all java.time classes are immutable.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-lambda-01",
+    "type": "FILL_BLANK",
+    "subtopic": "Lambda & Predicate",
+    "difficulty": "intermediate",
+    "mission": "Complete the lambda that filters <strong>late deliveries</strong>.",
+    "code": "Predicate<Delivery> isLate = d _____ d.getActualTime().isAfter(d.getExpectedTime());",
+    "blank": "_____",
+    "choices": [
+      "->",
+      "=>",
+      "::",
+      "?"
+    ],
+    "answer": "->",
+    "explain": "Java lambda syntax: (params) -> expression. Arrow operator (->) separates parameters from body. Single parameter can omit parentheses. :: is method reference (different). => does not exist in Java (that is JavaScript/C#).",
+    "topic": "collections"
+  },
+  {
+    "id": "core-methods-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Pass by Value",
+    "difficulty": "intermediate",
+    "mission": "¿Qué imprime? Java es **pass by value**, pero ¿qué significa para los objetos?",
+    "code": "public static void changeName(Driver driver) {\n    driver.setName(\"Carlos\");\n}\n\nDriver d = new Driver(\"Maria\");\nchangeName(d);\nSystem.out.println(d.getName());",
+    "choices": [
+      "Maria",
+      "Carlos",
+      "null",
+      "Error de compilación"
+    ],
+    "answer": "Carlos",
+    "explain": "Java pasa la REFERENCIA por valor. El método recibe una copia de la referencia que apunta al mismo objeto en el heap. Modificar el objeto a través de esa copia afecta al original.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-methods-02",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Pass by Value — reassignment",
+    "difficulty": "intermediate",
+    "mission": "What prints? Focus on <strong>reference reassignment</strong> inside a method.",
+    "code": "public static void replace(Driver driver) {\n    driver = new Driver(\"Carlos\"); // reassign local ref\n}\n\nDriver d = new Driver(\"Maria\");\nreplace(d);\nSystem.out.println(d.getName());",
+    "choices": [
+      "Maria",
+      "Carlos",
+      "null",
+      "Compile Error"
+    ],
+    "answer": "Maria",
+    "explain": "Reassigning the parameter (driver = new Driver()) only changes the LOCAL copy of the reference. The caller still points to the original object. This proves Java is pass-by-value (of references), not pass-by-reference. Modify through ref = changes original. Reassign ref = only local effect.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-methods-03",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Method Overloading",
+    "difficulty": "basic",
+    "mission": "Which overload is called?",
+    "code": "class Calculator {\n    int add(int a, int b) { return a + b; }\n    double add(double a, double b) { return a + b; }\n}\n\nCalculator c = new Calculator();\nSystem.out.println(c.add(3, 4));",
+    "choices": [
+      "7",
+      "7.0",
+      "Compile Error: ambiguous",
+      "Exception"
+    ],
+    "answer": "7",
+    "explain": "Exact match wins: 3 and 4 are int literals → add(int, int) is called, returns int 7. If you passed 3.0 and 4.0, add(double, double) would be called. Overload resolution is compile-time based on parameter types.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-methods-04",
+    "type": "FILL_BLANK",
+    "subtopic": "Static",
+    "difficulty": "basic",
+    "mission": "A counter shared across ALL instances — must be <strong>static</strong>.",
+    "code": "public class DeliveryTracker {\n    private _____ int totalDeliveries = 0;\n\n    public void trackDelivery() {\n        totalDeliveries++; // shared across all instances\n    }\n}",
+    "blank": "_____",
+    "choices": [
+      "static",
+      "final",
+      "volatile",
+      "transient"
+    ],
+    "answer": "static",
+    "explain": "static = belongs to the CLASS, not instances. One copy shared by all objects. Without static, each DeliveryTracker instance has its own counter. static fields: counters, constants (static final), utility methods, factory methods.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-methods-05",
+    "type": "PICK_INVALID",
+    "subtopic": "Access Modifiers",
+    "difficulty": "intermediate",
+    "mission": "Which access modifier is <strong>most restrictive</strong> while still allowing subclass access in another package?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "private\n// Only same class\n// Subclasses cannot access",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "protected\n// Same package + subclasses\n// Even in different packages",
+        "valid": false
+      },
+      {
+        "id": "c",
+        "code": "public\n// Everyone everywhere\n// No restriction",
+        "valid": true
+      }
+    ],
+    "answer": "b",
+    "explain": "protected is the ANSWER — most restrictive while allowing subclass access across packages. Order from most to least restrictive: private → default (package) → protected → public. Default (no modifier) allows same-package only — subclasses in other packages cannot access.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-methods-06",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Constructors",
+    "difficulty": "intermediate",
+    "mission": "What prints? Think about <strong>constructor chaining</strong>.",
+    "code": "class Route {\n    String name;\n    int stops;\n\n    Route() {\n        this(\"Default\", 0);\n        System.out.print(\"A\");\n    }\n    Route(String name, int stops) {\n        this.name = name;\n        this.stops = stops;\n        System.out.print(\"B\");\n    }\n}\n\nRoute r = new Route();",
+    "choices": [
+      "A",
+      "B",
+      "BA",
+      "AB"
+    ],
+    "answer": "BA",
+    "explain": "this() calls the other constructor FIRST, then continues with the rest of the current constructor. Flow: new Route() → this(\"Default\",0) → prints B → returns → prints A. Constructor chaining with this() must be the FIRST statement.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-methods-07",
+    "type": "FILL_BLANK",
+    "subtopic": "Constructors — Default",
+    "difficulty": "basic",
+    "mission": "When does Java <strong>NOT</strong> provide a default constructor?",
+    "code": "class Delivery {\n    private String id;\n    // Java provides no-arg constructor ONLY if:\n    // _____\n}",
+    "blank": "_____",
+    "choices": [
+      "no constructor is defined",
+      "class is public",
+      "class has fields",
+      "class extends Object"
+    ],
+    "answer": "no constructor is defined",
+    "explain": "Java provides a default no-arg constructor ONLY if you define NO constructors at all. The moment you write any constructor (even with parameters), the default disappears. If you need both: write the parameterized one AND an explicit no-arg constructor.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-inherit-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Inheritance — super",
+    "difficulty": "intermediate",
+    "mission": "What prints? Think about <strong>super()</strong> and constructor order.",
+    "code": "class Vehicle {\n    Vehicle() { System.out.print(\"V\"); }\n}\nclass Truck extends Vehicle {\n    Truck() { System.out.print(\"T\"); }\n}\n\nnew Truck();",
+    "choices": [
+      "T",
+      "V",
+      "VT",
+      "TV"
+    ],
+    "answer": "VT",
+    "explain": "Java always calls the parent constructor FIRST (implicit super() if not explicit). Flow: new Truck() → super() [Vehicle()] → prints V → Truck() body → prints T. Parent is ALWAYS initialized before child. This is fundamental to inheritance.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-inherit-02",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Inheritance — Override",
+    "difficulty": "intermediate",
+    "mission": "What prints? Think about <strong>dynamic dispatch</strong>.",
+    "code": "class Vehicle {\n    String type() { return \"Vehicle\"; }\n}\nclass Truck extends Vehicle {\n    @Override\n    String type() { return \"Truck\"; }\n}\n\nVehicle v = new Truck();\nSystem.out.println(v.type());",
+    "choices": [
+      "Vehicle",
+      "Truck",
+      "Compile Error",
+      "null"
+    ],
+    "answer": "Truck",
+    "explain": "Dynamic dispatch: the ACTUAL object type (Truck) determines which method runs, not the reference type (Vehicle). This is runtime polymorphism. v.type() calls Truck.type() because the object IS a Truck. The reference type only affects which methods are VISIBLE at compile time.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-inherit-03",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Inheritance — Casting",
+    "difficulty": "intermediate",
+    "mission": "What happens at <strong>runtime</strong>?",
+    "code": "Vehicle v = new Vehicle();\nTruck t = (Truck) v;  // Compiles fine!",
+    "choices": [
+      "Works fine",
+      "ClassCastException",
+      "Compile Error",
+      "null"
+    ],
+    "answer": "ClassCastException",
+    "explain": "Downcasting (Vehicle → Truck) compiles because the compiler allows it (v COULD be a Truck). But at runtime, v is actually a Vehicle, not a Truck → ClassCastException. Always check with instanceof before downcasting: if (v instanceof Truck t) { ... }",
+    "topic": "collections"
+  },
+  {
+    "id": "core-inherit-04",
+    "type": "FILL_BLANK",
+    "subtopic": "Abstract classes",
+    "difficulty": "basic",
+    "mission": "A class with at least one abstract method must be declared:",
+    "code": "_____ class DeliveryHandler {\n    abstract void process(Delivery d);\n    \n    void log(String msg) {\n        System.out.println(msg); // concrete method OK\n    }\n}",
+    "blank": "_____",
+    "choices": [
+      "abstract",
+      "interface",
+      "final",
+      "static"
+    ],
+    "answer": "abstract",
+    "explain": "abstract class can have both abstract methods (no body, subclasses must implement) AND concrete methods (with body, inherited as-is). Cannot be instantiated directly. Use when subtypes share state + partial behavior. interface is for pure contract (pre-Java 8) or default methods.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-inherit-05",
+    "type": "PICK_INVALID",
+    "subtopic": "Interface",
+    "difficulty": "intermediate",
+    "mission": "Which is <strong>NOT valid</strong> in a Java 11 interface?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "interface Trackable {\n  void track(); // abstract method\n}",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "interface Trackable {\n  default String status() {\n    return \"UNKNOWN\";\n  }\n}",
+        "valid": true
+      },
+      {
+        "id": "c",
+        "code": "interface Trackable {\n  private int counter = 0;\n  void increment() {\n    counter++;\n  }\n}",
+        "valid": false
+      }
+    ],
+    "answer": "c",
+    "explain": "Interfaces CANNOT have mutable instance fields. Fields in interfaces are implicitly public static final (constants only). Interfaces define behavior contracts, not state. Since Java 9, interfaces can have private methods (helper for default methods), but still no mutable state.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-inherit-06",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Interface — multiple",
+    "difficulty": "intermediate",
+    "mission": "Does this <strong>compile</strong>? A class implementing two interfaces.",
+    "code": "interface Dispatchable { void dispatch(); }\ninterface Trackable { void track(); }\n\nclass Delivery implements Dispatchable, Trackable {\n    public void dispatch() { System.out.print(\"D\"); }\n    public void track() { System.out.print(\"T\"); }\n}\n\nDelivery d = new Delivery();\nd.dispatch();\nd.track();",
+    "choices": [
+      "DT",
+      "Compile Error: multiple interfaces",
+      "D",
+      "Exception"
+    ],
+    "answer": "DT",
+    "explain": "Java supports multiple interface implementation (but single class inheritance). A class can implement any number of interfaces. This is how Java achieves \"multiple inheritance of type\" without the diamond problem of multiple class inheritance.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-arraylist-01",
+    "type": "FILL_BLANK",
+    "subtopic": "ArrayList",
+    "difficulty": "basic",
+    "mission": "Create a <strong>typed ArrayList</strong> of delivery IDs.",
+    "code": "List<Long> deliveryIds = new _____<>();\ndeliveryIds.add(1001L);\ndeliveryIds.add(1002L);",
+    "blank": "_____",
+    "choices": [
+      "ArrayList",
+      "List",
+      "LinkedList",
+      "Array"
+    ],
+    "answer": "ArrayList",
+    "explain": "ArrayList is the standard List implementation — backed by a resizable array. O(1) random access, O(1) amortized add at end, O(n) insert in middle. Declare as List<> (interface) on the left, instantiate as ArrayList<> on the right — program to the interface.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-arraylist-02",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "ArrayList — remove",
+    "difficulty": "intermediate",
+    "mission": "What prints? Be careful with <strong>remove()</strong> overloads.",
+    "code": "List<Integer> list = new ArrayList<>(List.of(10, 20, 30));\nlist.remove(1);  // remove by INDEX, not value!\nSystem.out.println(list);",
+    "choices": [
+      "[10, 30]",
+      "[20, 30]",
+      "[10, 20]",
+      "[10, 20, 30]"
+    ],
+    "answer": "[10, 30]",
+    "explain": "remove(1) removes element at INDEX 1 (which is 20), not the value 1. To remove by value: list.remove(Integer.valueOf(1)). This autoboxing trap is a classic interview question. With List<Integer>, remove(int) = by index, remove(Integer) = by value.",
+    "topic": "collections"
+  },
+  {
+    "id": "core-arraylist-03",
+    "type": "FILL_BLANK",
+    "subtopic": "Lambda — forEach",
+    "difficulty": "basic",
+    "mission": "Print each delivery using a <strong>method reference</strong>.",
+    "code": "deliveries.forEach(System.out_____);",
+    "blank": "_____",
+    "choices": [
+      "::println",
+      ".println",
+      "->println",
+      "::print"
+    ],
+    "answer": "::println",
+    "explain": "System.out::println is a method reference — shorthand for (d) -> System.out.println(d). :: refers to an existing method by name. Types: ClassName::staticMethod, object::instanceMethod, ClassName::new (constructor reference).",
+    "topic": "collections"
+  },
+  {
+    "id": "core-arraylist-04",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Lambda — sort",
+    "difficulty": "intermediate",
+    "mission": "What is the <strong>sorted order</strong>?",
+    "code": "List<String> drivers = new ArrayList<>(List.of(\"Carlos\", \"Ana\", \"Bruno\"));\ndrivers.sort((a, b) -> a.compareTo(b));\nSystem.out.println(drivers);",
+    "choices": [
+      "[Ana, Bruno, Carlos]",
+      "[Carlos, Bruno, Ana]",
+      "[Carlos, Ana, Bruno]",
+      "Exception"
+    ],
+    "answer": "[Ana, Bruno, Carlos]",
+    "explain": "The lambda (a, b) -> a.compareTo(b) is a Comparator — returns negative (a before b), zero (equal), positive (a after b). String.compareTo uses alphabetical order. Shorthand: drivers.sort(Comparator.naturalOrder()) or drivers.sort(String::compareTo).",
+    "topic": "collections"
+  },
+  {
+    "id": "core-arraylist-05",
+    "type": "FILL_BLANK",
+    "subtopic": "Lambda — Predicate",
+    "difficulty": "intermediate",
+    "mission": "Remove all <strong>cancelled deliveries</strong> from the list using removeIf.",
+    "code": "deliveries.removeIf(d -> d.getStatus() == DeliveryStatus._____);",
+    "blank": "_____",
+    "choices": [
+      "CANCELLED",
+      "ACTIVE",
+      "null",
+      "PENDING"
+    ],
+    "answer": "CANCELLED",
+    "explain": "removeIf(Predicate) removes all elements matching the condition. The lambda d -> d.getStatus() == CANCELLED is a Predicate<Delivery> (takes Delivery, returns boolean). This is cleaner than iterating with Iterator and calling remove().",
+    "topic": "collections"
+  },
+  {
+    "id": "core-arraylist-06",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Lambda — Functional Interface",
+    "difficulty": "intermediate",
+    "mission": "What does this <strong>Function</strong> return?",
+    "code": "Function<String, Integer> length = s -> s.length();\nSystem.out.println(length.apply(\"REWE\"));",
+    "choices": [
+      "4",
+      "REWE",
+      "0",
+      "Compile Error"
+    ],
+    "answer": "4",
+    "explain": "Function<T, R> takes T and returns R. Function<String, Integer> takes a String and returns an Integer. length.apply(\"REWE\") returns \"REWE\".length() = 4. Key functional interfaces: Function (T→R), Predicate (T→boolean), Consumer (T→void), Supplier (→T).",
+    "topic": "collections"
+  },
+  {
+    "id": "core-arraylist-07",
+    "type": "COMPARE_CONCEPTS",
+    "subtopic": "Functional Interfaces",
+    "difficulty": "intermediate",
+    "mission": "Compare the 4 core <strong>functional interfaces</strong>.",
+    "conceptA": {
+      "name": "Function & Predicate",
+      "definition": "Function<T,R>: takes T, returns R. Example: Delivery → String (get name). Predicate<T>: takes T, returns boolean. Example: Delivery → is it late?"
+    },
+    "conceptB": {
+      "name": "Consumer & Supplier",
+      "definition": "Consumer<T>: takes T, returns void. Example: Delivery → print it. Supplier<T>: takes nothing, returns T. Example: () → create new Delivery."
+    },
+    "keyDifference": "Function transforms (T→R). Predicate tests (T→boolean). Consumer acts (T→void). Supplier produces (→T). These are the building blocks of the Streams API.",
+    "javaExample": "filter(Predicate), map(Function), forEach(Consumer), orElseGet(Supplier). Every Stream operation uses one of these four.",
+    "interviewAnswer": "The four core functional interfaces cover all lambda signatures: Function transforms data, Predicate filters, Consumer performs side effects, and Supplier provides values lazily. The Streams API is built entirely on these abstractions.",
+    "topic": "collections",
+    "answer": "**Function & Predicate:** Function<T,R>: takes T, returns R. Example: Delivery → String (get name). Predicate<T>: takes T, returns boolean. Example: Delivery → is it late?\n\n**Consumer & Supplier:** Consumer<T>: takes T, returns void. Example: Delivery → print it. Supplier<T>: takes nothing, returns T. Example: () → create new Delivery.\n\n\n**Key Difference:** Function transforms (T→R). Predicate tests (T→boolean). Consumer acts (T→void). Supplier produces (→T). These are the building blocks of the Streams API."
+  },
+  {
+    "id": "oca-ch1-q02",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Java Basics",
+    "difficulty": "intermediate",
+    "mission": "The following class diagram demonstrates the relationship between Gold and Silver, which extend the Metal class. Assume the attributes are all declared public. Which statement about the diagram is not true?",
+    "choices": [
+      "The diagram demonstrates platform independence in Java.",
+      "The diagram demonstrates object-oriented design in Java.",
+      "The Gold and Silver classes inherit weight and color attributes from the Metal class.",
+      "Gold does not inherit the luster attribute."
+    ],
+    "answer": "The diagram demonstrates platform independence in Java.",
+    "explain": "The diagram is an example of object-oriented design in Java, making Option B a true statement. Options C and D are also true, as they follow from the inheritance model in the diagram. Option A is the correct answer, since platform independence has nothing to do with the diagram."
+  },
+  {
     "id": "oca-ch1-q03",
     "type": "FILL_BLANK",
     "topic": "collections",
@@ -314,8 +1244,1450 @@
       ".dll"
     ],
     "answer": ".class",
-    "explain": "La extensión correcta para el bytecode compilado de Java es .class.",
-    "topic": "collections"
+    "explain": "La extensión correcta para el bytecode compilado de Java es .class."
+  },
+  {
+    "id": "oca-ch1-q04",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Java Basics",
+    "difficulty": "intermediate",
+    "mission": "Given that a Date class exists in both the java.util and java.sql packages, what is the result of compiling the following class??",
+    "choices": [
+      "The code does not compile because of lines 1 and 2.",
+      "The code does not compile because of line 4.",
+      "The code does not compile because of line 5.",
+      "The code compiles without issue."
+    ],
+    "answer": "The code does not compile because of line 4.",
+    "explain": "The fact that the Date class exists in both packages does not impact the ability to import both packages, so lines 1 and 2 compile without issue, and Option A is incorrect. Line 4 will not compile because the Date class used is ambiguous, making Option B correct and Option D incorrect. Finally, Opti",
+    "code": "1: import java.util.*;\n2: import java.sql.*;\n3: public class BirthdayManager {\n4: \n5: \n6: } private Date rob = new Date(); private java.util.Date sharon = new java.util.Date();"
+  },
+  {
+    "id": "oca-ch1-q05",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Java Basics",
+    "difficulty": "intermediate",
+    "mission": "Which of the following is not a facet of traditional object-oriented programming languages?",
+    "choices": [
+      "Objects are grouped as procedures, separate from the data they act on.",
+      "An object can take many forms via casting.",
+      "An object can hold data, referred to as attributes.",
+      "An object can perform actions, via methods."
+    ],
+    "answer": "Objects are grouped as procedures, separate from the data they act on.",
+    "explain": "Options B, C, and D are each attributes of traditional object-oriented programming. Option A is incorrect as an object-oriented project tends to group data and the actions related to that data into a single object."
+  },
+  {
+    "id": "oca-ch1-q06",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Java Basics",
+    "difficulty": "intermediate",
+    "mission": "Which variables have a scope limited to a method?",
+    "choices": [
+      "Interface variables",
+      "Class variables",
+      "Instance variables",
+      "Local variables"
+    ],
+    "answer": "Local variables",
+    "explain": "Only local variables have such a small scope, making Option D the correct answer."
+  },
+  {
+    "id": "oca-ch1-q07",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Java Basics",
+    "difficulty": "intermediate",
+    "mission": "Which package is imported into every Java class by default?",
+    "choices": [
+      "java.util",
+      "java.lang",
+      "system.lang",
+      "java.system"
+    ],
+    "answer": "java.lang",
+    "explain": "The package java.lang is imported into every Java class, so Option B is correct. The other options must be explicitly imported. Option A exists but must be explicitly imported. Options C and D do not exist in the standard Java runtime."
+  },
+  {
+    "id": "oca-ch1-q08",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Java Basics",
+    "difficulty": "intermediate",
+    "mission": "Which of the following is not a valid code comment in Java?",
+    "choices": [
+      "// Add 5 to the result",
+      "/*** TODO: Fix bug 12312 ***/",
+      "# Add configuration value",
+      "/* Read file from system ****/"
+    ],
+    "answer": "# Add configuration value",
+    "explain": "Java accepts Options A, B, and D as valid comments. Note that the /* */ syntax can have additional (and uneven) star (*) characters as shown in B and D. Option C is incorrect as hashtag (#) is not a valid comment character in Java."
+  },
+  {
+    "id": "oca-ch1-q09",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Java Basics",
+    "difficulty": "intermediate",
+    "mission": "Which statement about a valid .java file is true?",
+    "choices": [
+      "It can only contain one class declaration.",
+      "It can contain one public class declaration and one public interface definition.",
+      "It must define at least one public class. D. It may define at most one public class."
+    ],
+    "answer": "It can only contain one class declaration.",
+    "explain": "A valid .java file may define any number of classes or interfaces but have at most one public class. It can also not define any public classes. For these reasons, Option A, B, and C are incorrect, leaving Option D as the only correct answer."
+  },
+  {
+    "id": "oca-ch1-q10",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Java Basics",
+    "difficulty": "intermediate",
+    "mission": "Given the following application , fill in the missing values in the table starting from the top and going downward.?",
+    "choices": [
+      "2, 0, 1",
+      "2, 2, 1",
+      "1, 0, 1",
+      "0, 2, 1"
+    ],
+    "answer": "2, 2, 1",
+    "explain": "Notice in this question that main() is not a static method, therefore it can access both class and instance variables. Since there are two class variables and two instance variables defined, Option B is the correct answer.",
+    "code": "package competition;\npublic class Robot {\n  static String weight = \"A lot\"; /* default */ double ageMonths = 5, ageDays = 2;\nprivate static boolean success = true;\npublic void main(String[] args) {\n  final String retries = \"1\"; // P1 }\n}\nVariable Type Number of Variables Accessible at P1 Class _______ Instance _______ Local _______"
+  },
+  {
+    "id": "oca-ch1-q11",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Java Basics",
+    "difficulty": "intermediate",
+    "mission": "Which statement about import statements is true?",
+    "choices": [
+      "The class will not compile if it contains unused import statements.",
+      "Unused import statements can be removed from the class without causing a class to become unable to be compiled.",
+      "The class will not compile if a duplicate import statement is present.",
+      "If a class contains an import statement for a class used in the program that cannot be found, it can still compile."
+    ],
+    "answer": "Unused import statements can be removed from the class without causing a class to become unable to be compiled.",
+    "explain": "A class will compile if it has unused or redundant import statements, making Option A and C incorrect. Option D is also incorrect as the compiler must be able to locate the class of the import statement. The correct answer is Option B. Removing unused import statements does not cause a class to beco"
+  },
+  {
+    "id": "oca-ch2-q02",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Data Types",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following?",
+    "choices": [
+      "metal",
+      "metalmetal",
+      "nullmetal",
+      "The code does not compile."
+    ],
+    "answer": "The code does not compile.",
+    "explain": "The table variable is initialized to \"metal\". However, chair is not initialized. In Java, initialization is per variable and not for all the variables in a single declaration. Therefore, the second line tries to reference an uninitialized local variable and does not compile, which makes Option D cor",
+    "code": "public static void main(String... args) {\n  String chair, table = \"metal\";\nchair = chair + table;\nSystem.out.println(chair);\n}"
+  },
+  {
+    "id": "oca-ch2-q03",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Data Types",
+    "difficulty": "intermediate",
+    "mission": "Which is correct about an instance variable of type String?",
+    "choices": [
+      "It defaults to an empty string.",
+      "It defaults to null.",
+      "It does not have a default value.",
+      "It will not compile without initializing on the declaration line."
+    ],
+    "answer": "It defaults to null.",
+    "explain": "Instance variables have a default value based on the type. For any non-primitive, including String, that type is a reference to null. Therefore Option B is correct. If the variable was a local variable, Option C would be correct."
+  },
+  {
+    "id": "oca-ch2-q04",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Data Types",
+    "difficulty": "intermediate",
+    "mission": "Which of the following is not a valid variable name?",
+    "choices": [
+      "_blue",
+      "2blue",
+      "blue$",
+      "Blue"
+    ],
+    "answer": "2blue",
+    "explain": "An identifier name must begin with a letter, $, or _. Numbers are only permitted for subsequent characters. Therefore, Option B is not a valid variable name."
+  },
+  {
+    "id": "oca-ch2-q05",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Data Types",
+    "difficulty": "intermediate",
+    "mission": "Which of these class names best follows standard Java naming conventions?",
+    "choices": [
+      "fooBar",
+      "FooBar",
+      "FOO_BAR",
+      "F_o_o_B_a_r"
+    ],
+    "answer": "FooBar",
+    "explain": "In Java, class names begin with an uppercase letter by convention. Then they use lowercase with the exception of new words. Option B follows this convention and is correct. Option A follows the convention for variable names. Option C follows the convention for constants. Option D doesn’t follow any "
+  },
+  {
+    "id": "oca-ch2-q06",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Data Types",
+    "difficulty": "intermediate",
+    "mission": "How many of the following method s compile?",
+    "choices": [
+      "None",
+      "One",
+      "Two",
+      "Three"
+    ],
+    "answer": "Two",
+    "explain": "Objects have instance methods while primitives do not. Since int is a primitive, you cannot call instance methods on it. Integer and String are both objects and have instance methods. Therefore, Option C is correct.",
+    "code": "public String convert(int value) {\n  return value.toString();\n}\npublic String convert(Integer value) {\n  return value.toString();\n}\npublic String convert(Object value) {\n  return value.toString();\n}"
+  },
+  {
+    "id": "oca-ch2-q07",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Data Types",
+    "difficulty": "intermediate",
+    "mission": "Which of the following does not compile?",
+    "choices": [
+      "int num = 999;",
+      "int num = 9_9_9;",
+      "int num = _9_99;",
+      "None of the above; they all compile."
+    ],
+    "answer": "int num = _9_99;",
+    "explain": "Underscores are allowed between any two digits in a numeric literal. Underscores are not allowed at the beginning or end of the literal, making Option C the correct answer."
+  },
+  {
+    "id": "oca-ch2-q08",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Data Types",
+    "difficulty": "intermediate",
+    "mission": "Which of the following is a wrapper class?",
+    "choices": [
+      "int",
+      "Int",
+      "Integer",
+      "Object"
+    ],
+    "answer": "Integer",
+    "explain": "Option A is incorrect because int is a primitive. Option B is incorrect because it is not the name of a class in Java. While Option D is a class in Java, it is not a wrapper class because it does not map to a primitive. Therefore, Option C is correct."
+  },
+  {
+    "id": "oca-ch2-q09",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Data Types",
+    "difficulty": "intermediate",
+    "mission": "What is the result of running this code?",
+    "choices": [
+      "4",
+      "5",
+      "The code does not compile.",
+      "The code compiles but throws an exception at runtime."
+    ],
+    "answer": "The code does not compile.",
+    "explain": "There is no class named integer. There is a primitive int and a class Integer. Therefore, the code does not compile, and Option C is correct. If the type was changed to Integer, Option B would be correct.",
+    "code": "public class Values {\n  integer a = Integer.valueOf(\"1\");\npublic static void main(String[] nums) {\n  integer a = Integer.valueOf(\"2\");\ninteger b = Integer.valueOf(\"3\");\nSystem.out.println(a + b);\n}\n}"
+  },
+  {
+    "id": "oca-ch2-q10",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Data Types",
+    "difficulty": "intermediate",
+    "mission": "Which best describes what the new keyword does?",
+    "choices": [
+      "Creates a copy of an existing object and treats it as a new one B. Creates a new primitive",
+      "Instantiates a new object",
+      "Switches an object reference to a new one"
+    ],
+    "answer": "Switches an object reference to a new one",
+    "explain": "The new keyword is used to call the constructor for a class and instantiate an instance of the class. A primitive cannot be created using the new keyword. Dealing with references happens after the object created by new is returned."
+  },
+  {
+    "id": "oca-ch2-q11",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Data Types",
+    "difficulty": "intermediate",
+    "mission": "Which is the first line to trigger a compiler error? double d1 = 5f; double d2 = 5.0; float f1 = 5f; float f2 = 5.0; // p1 // p2 // p3 // p4",
+    "choices": [
+      "p1",
+      "p2",
+      "p3",
+      "p4"
+    ],
+    "answer": "p4",
+    "explain": "Java uses the suffix f to indicate a number is a float. Java automatically widens a type, allowing a float to be assigned to either a float or a double. This makes both lines p1 and p3 compile. Line p2 does compile without a suffix. Line p4 does not compile without a suffix and therefore is the answ"
+  },
+  {
+    "id": "oca-ch3-q02",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Operators & Decisions",
+    "difficulty": "intermediate",
+    "mission": "What is the value of tip after executing the following code snippet?",
+    "choices": [
+      "1",
+      "2",
+      "3",
+      "6"
+    ],
+    "answer": "1",
+    "explain": "Remember that in ternary expressions, only one of the two right-most expressions are evaluated. Since meal>6 is false, ––tip is evaluated and ++tip is skipped. The result is that tip is changed from 2 to 1, making Option A the correct answer. The value of total is 6, since the pre-increment operator",
+    "code": "int meal = 5;\nint tip = 2;\nint total = meal + (meal>6 ? ++tip : tip);"
+  },
+  {
+    "id": "oca-ch3-q03",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Operators & Decisions",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following application?",
+    "choices": [
+      "true true",
+      "true false",
+      "false true",
+      "false false"
+    ],
+    "answer": "false true",
+    "explain": "The first assignment creates a new String \"john\" object. The second line explicitly uses the new keyword, meaning a new String object is created. Since these objects are not the same, the == test on them evaluates to false. The equals() test on them returns true because the values they refer to are ",
+    "code": "package registration;\npublic class NameCheck {\n  public static void main(String... data) {\n  String john = \"john\";\nString jon = new String(john);\nSystem.out.print((john==jon)+\" \"+(john.equals(jon)));\n}\n}"
+  },
+  {
+    "id": "oca-ch3-q04",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Operators & Decisions",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following application?",
+    "choices": [
+      "Plan A B. Plan B",
+      "Plan C",
+      "None of the above"
+    ],
+    "answer": "Plan A B. Plan B",
+    "explain": "This code does not compile because it has two else statements as part of a single ifthen statement. Notice that the second if statement is not connected to the last else statement. For this reason, Option D, none of the above, is the correct answer.",
+    "code": "package planning;\npublic class ThePlan {\n  public static void main(String[] input) {\n  int plan = 1;\nplan = plan++ + --plan;\nif(plan==1) {\n  System.out.print(\"Plan A\");\n}\nelse {\n  if(plan==2) System.out.print(\"Plan B\");\n}\nelse System.out.print(\"Plan C\");\n}\n}"
+  },
+  {
+    "id": "oca-ch3-q05",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Operators & Decisions",
+    "difficulty": "intermediate",
+    "mission": "Which of the following statements about a default branch in a switch statement is correct?",
+    "choices": [
+      "All switch statements must include a default statement.",
+      "The default statement is required to be placed after all case statements.",
+      "Unlike a case statement, the default statement does not take a value.",
+      "A default statement can only be used when at least one case statement is present."
+    ],
+    "answer": "Unlike a case statement, the default statement does not take a value.",
+    "explain": "A default statement inside a switch statement is optional and can be placed in any order within the switch’s case statements, making Options A and B incorrect. Option D is an incorrect statement as a switch statement can be composed of a single default statement and no case statements. Option C is c"
+  },
+  {
+    "id": "oca-ch3-q06",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Operators & Decisions",
+    "difficulty": "intermediate",
+    "mission": "What is the value of thatNumber after the execution of the following code snippet?",
+    "choices": [
+      "3",
+      "4",
+      "5",
+      "The answer cannot be determined until runtime."
+    ],
+    "answer": "4",
+    "explain": "The initial assignment of thatNumber follows the first branch of the ternary expression. Since 5 >= 5 evaluates to true, a value of 3 is assigned to thatNumber. In the next line, the pre-increment operator increments the value of thatNumber to 4 and returns a value of 4 to the expression. Since 4 < ",
+    "code": "long thatNumber = 5 >= 5 ? 1+2 : 1*1;\nif(++thatNumber < 4) thatNumber += 1;"
+  },
+  {
+    "id": "oca-ch3-q07",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Operators & Decisions",
+    "difficulty": "intermediate",
+    "mission": "Which statement immediately exits a switch statement, skipping all remaining case or default branches?",
+    "choices": [
+      "exit",
+      "break",
+      "goto",
+      "continue"
+    ],
+    "answer": "break",
+    "explain": "The break statement exits a switch statement, skipping all remaining branches, making Option B the correct answer. In Option A, exit is not a statement in Java. In Option C, goto is a reserved word but unused in Java. Finally, in Option D, continue is a statement but only used for loops."
+  },
+  {
+    "id": "oca-ch3-q08",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Operators & Decisions",
+    "difficulty": "intermediate",
+    "mission": "Which statement about ternary expressions is true?",
+    "choices": [
+      "In some cases, both expressions to the right of the conditional operator in a ternary expression will be evaluated at runtime.",
+      "Ternary expressions require parentheses for proper evaluation.",
+      "The ternary expressions are a convenient replacement for an if-then-else statement.",
+      "Ternary expressions support int and boolean expressions for the left-most operand."
+    ],
+    "answer": "The ternary expressions are a convenient replacement for an if-then-else statement.",
+    "explain": "Option A is incorrect as only one of the two right-hand expressions is evaluated at runtime. Parentheses are often helpful for reading ternary expressions but are not required, making Option B incorrect. Option C is a correct statement about ternary operators as they are commonly used to replace sho"
+  },
+  {
+    "id": "oca-ch3-q09",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Operators & Decisions",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following application? package voting;?",
+    "choices": [
+      "true",
+      "false",
+      "The code does not compile.",
+      "The code compiles but throws a NullPointerException on line 3 at runtime."
+    ],
+    "answer": "The code does not compile.",
+    "explain": "On line 4, candidateA and candidateB are numbers, but the && operation can only be applied to boolean expressions. Therefore, the code does not compile because of line 4, making C the correct answer. All of the other lines are correct. Note that if line 4 is fixed, line 3 does not produce a NullPoin",
+    "code": "1: public class Election {\n2: public void calculateResult(Integer candidateA, Integer candidateB) {\n3: boolean process = candidateA == null || candidateA.intValue() < 10;\n4: boolean value = candidateA && candidateB;\n5: System.out.print(process || value);\n6: }\n7: public static void main(String[] unused) {\n8: new Election().calculateResult(null,203);\n9: }\n10: }"
+  },
+  {
+    "id": "oca-ch3-q10",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Operators & Decisions",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following application?",
+    "choices": [
+      "2",
+      "3",
+      "4",
+      "The code does not compile."
+    ],
+    "answer": "2",
+    "explain": "The first step is to determine whether or not the if-then statement’s expression is executed. The expression 6 % 3 evaluates to 0, since there is no remainder, and since 0 >= 1 is false, the expression triceratops++ is not called. Notice there are no brackets {} in the if-then statement. Despite the",
+    "code": "package dinosaur;\npublic class Park {\n  public final static void main(String... arguments) {\n  int pterodactyl = 6;\nlong triceratops = 3;\nif(pterodactyl % 3 >= 1) triceratops++;\ntriceratops--;\nSystem.out.print(triceratops);\n}\n}"
+  },
+  {
+    "id": "oca-ch3-q11",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Operators & Decisions",
+    "difficulty": "intermediate",
+    "mission": "Which statement about if-then statements is true?",
+    "choices": [
+      "An if-then statement is required to have an else statement.",
+      "If the boolean test of an if-then statement evaluates to false, then the target clause of the if-then statement will still be evaluated.",
+      "An if-then statement is required to cast an object.",
+      "An if-then statement can execute a single statement or a block {}."
+    ],
+    "answer": "An if-then statement can execute a single statement or a block {}.",
+    "explain": "Option A is incorrect because else statements are entirely optional. Option B is also incorrect. The target of an if-then statement is not evaluated if the boolean test is false. Option C is incorrect. While an if-then statement is often used to test whether an object is of a particular type in orde"
+  },
+  {
+    "id": "oca-ch4-q03",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Arrays",
+    "difficulty": "intermediate",
+    "mission": "Which of the following are primitives? int[] lowercase = new int[0]; Integer[] uppercase = new Integer[0];",
+    "choices": [
+      "Only lowercase",
+      "Only uppercase",
+      "Bother lowercase and uppercase",
+      "Neither lowercase nor uppercase"
+    ],
+    "answer": "Neither lowercase nor uppercase",
+    "explain": "Trick question! While int is a primitive, all arrays are objects. One way to tell is that an array has a public instance variable called length. Another way is that you can assign it a variable of type Object. Therefore, Option D is correct."
+  },
+  {
+    "id": "oca-ch4-q04",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Arrays",
+    "difficulty": "intermediate",
+    "mission": "How many of the following are legal declarations? []double lion; double[] tiger; double bear[];",
+    "choices": [
+      "None",
+      "One",
+      "Two",
+      "Three"
+    ],
+    "answer": "Two",
+    "explain": "The array braces are allowed to appear before or after the variable name, making the tiger and bear declarations correct. The braces are not allowed to appear before the type making the lion declaration incorrect. Therefore, Option C is correct."
+  },
+  {
+    "id": "oca-ch4-q05",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Arrays",
+    "difficulty": "intermediate",
+    "mission": "Given the following two methods, which method call will not compile?",
+    "choices": [
+      "printStormName(\"Arlene\");",
+      "printStormName(new String[] { \"Bret\" });",
+      "printStormNames(\"Cindy\");",
+      "printStormNames(new String[] { \"Don\" });"
+    ],
+    "answer": "printStormNames(\"Cindy\");",
+    "explain": "From within a method, an array or varargs parameter is treated the same. However, there is a difference from the caller’s point of view. A varargs parameter can receive either an array or individual values, making Options A and B compile. However, an array parameter can only take an array, which pre",
+    "code": "public void printStormName(String... names) {\n  System.out.println(Arrays.toString(names));\n}\npublic void printStormNames(String[] names) {\n  System.out.println(Arrays.toString(names));\n}"
+  },
+  {
+    "id": "oca-ch4-q06",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Arrays",
+    "difficulty": "intermediate",
+    "mission": "How do you determine the number of elements in an array?",
+    "choices": [
+      "buses.length",
+      "buses.length()",
+      "buses.size",
+      "buses.size()"
+    ],
+    "answer": "buses.length",
+    "explain": "Arrays use the length variable to determine the number of elements, making Option A correct. For an ArrayList, Option D would have been the answer."
+  },
+  {
+    "id": "oca-ch4-q07",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Arrays",
+    "difficulty": "intermediate",
+    "mission": "Which of the following create an empty two-dimensional array with dimensions 2×2?",
+    "choices": [
+      "int[][] blue = new int[2, 2];",
+      "int[][] blue = new int[2], [2];",
+      "int[][] blue = new int[2][2];",
+      "int[][] blue = new int[2 x 2];"
+    ],
+    "answer": "int[][] blue = new int[2][2];",
+    "explain": "A two-dimensional array is declared by listing both sizes in separate pairs of braces. Option C correctly shows this syntax."
+  },
+  {
+    "id": "oca-ch4-q08",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Arrays",
+    "difficulty": "intermediate",
+    "mission": "How many lines does the following code output?",
+    "choices": [
+      "Six",
+      "Seven",
+      "The code does not compile.",
+      "The code compiles but throws an exception at runtime."
+    ],
+    "answer": "Seven",
+    "explain": "There is nothing wrong with this code. It correctly creates a seven-element array. The loop starts with index 0 and ends with index 6. Each line is correctly output. Therefore, Option B is correct.",
+    "code": "String[] days = new String[] { \"Sunday\", \"Monday\", \"Tuesday\", \"Wednesday\", \"Thursday\", \"Friday\", \"Saturday\" };\nfor (int i = 0;\ni < days.length;\ni++) System.out.println(days[i]);"
+  },
+  {
+    "id": "oca-ch4-q09",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Arrays",
+    "difficulty": "intermediate",
+    "mission": "What are the names of the methods to do searching and sorting respectively on arrays?",
+    "choices": [
+      "Arrays.binarySearch() and Arrays.linearSort()",
+      "Arrays.binarySearch() and Arrays.sort()",
+      "Arrays.search() and Arrays.linearSort()",
+      "Arrays.search() and Arrays.sort()"
+    ],
+    "answer": "Arrays.binarySearch() and Arrays.sort()",
+    "explain": "Sorry. This is just something you have to memorize. The sort() and binarySearch() methods do sorting and searching, respectively."
+  },
+  {
+    "id": "oca-ch4-q10",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Arrays",
+    "difficulty": "intermediate",
+    "mission": "What does this code output?",
+    "choices": [
+      "[1, 9, 10]",
+      "[1, 10, 9]",
+      "[10, 1, 9]",
+      "None of the above"
+    ],
+    "answer": "[1, 10, 9]",
+    "explain": "The elements of the array are of type String rather than int. Therefore, we use alphabetical order when sorting. The character 1 sorts before the character 9, alphabetically making Option A incorrect. Shorter strings sort before longer strings when all the other characters are the same, making Optio",
+    "code": "String[] nums = new String[] { \"1\", \"9\", \"10\" };\nArrays.sort(nums);\nSystem.out.println(Arrays.toString(nums));"
+  },
+  {
+    "id": "oca-ch4-q11",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Arrays",
+    "difficulty": "intermediate",
+    "mission": "Which of the following references the first and last element in a non-empty array?",
+    "choices": [
+      "trains[0] and trains[trains.length]",
+      "trains[0] and trains[trains.length - 1]",
+      "trains[1] and trains[trains.length]",
+      "trains[1] and trains[trains.length - 1]"
+    ],
+    "answer": "trains[0] and trains[trains.length - 1]",
+    "explain": "Array indices start with 0, making Options C and D incorrect. The length attribute refers to the number of elements in an array. It is one past the last valid array index. Therefore, Option B is correct."
+  },
+  {
+    "id": "oca-ch4-q12",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Arrays",
+    "difficulty": "intermediate",
+    "mission": "How many of the following are legal declarations?",
+    "choices": [
+      "None",
+      "One",
+      "Two",
+      "Three"
+    ],
+    "answer": "Two",
+    "explain": "When using an array initializer, you are not allowed to specify the size separately. The size is inferred from the number of elements listed. Therefore, tiger and ohMy are incorrect. When you’re not using an array initializer, the size is required. An empty array initializer is allowed. Option C is ",
+    "code": "String lion [] = new String[] {\n  \"lion\"\n};\nString tiger [] = new String[1] {\n  \"tiger\"\n};\nString bear [] = new String[] {\n};\nString ohMy [] = new String[0] {\n};"
+  },
+  {
+    "id": "oca-ch5-q02",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Loops",
+    "difficulty": "intermediate",
+    "mission": "Which type of loop is best known for using an index or counter?",
+    "choices": [
+      "do-while loop",
+      "for (traditional)",
+      "for-each",
+      "while"
+    ],
+    "answer": "for (traditional)",
+    "explain": "A traditional for loop is best known for having a loop variable counting up or down as the loop progresses. Therefore, Option B is correct. Options A and D are incorrect because do-while and while loops are known for their boolean conditions. Option C is incorrect because the for-each loop iterates "
+  },
+  {
+    "id": "oca-ch5-q03",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Loops",
+    "difficulty": "intermediate",
+    "mission": "Which type of loop is guaranteed to have the body execute at least once?",
+    "choices": [
+      "do-while loop",
+      "for (traditional)",
+      "for-each",
+      "while"
+    ],
+    "answer": "do-while loop",
+    "explain": "A do-while loop checks the loop condition after execution of the loop body. This ensures it always executes at least once, and Option A is correct. Option B is incorrect because there are loops you can write that do not ever enter the loop body, such as for (int i=0;i<1;i++). Similarly, Option D is "
+  },
+  {
+    "id": "oca-ch5-q04",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Loops",
+    "difficulty": "intermediate",
+    "mission": "Which of the following can loop through an array without referring to the elements by index?",
+    "choices": [
+      "do-while loop",
+      "for (traditional)",
+      "for-each",
+      "while"
+    ],
+    "answer": "for-each",
+    "explain": "While a traditional for loop often loops through an array, it uses an index to do so, making Option B incorrect. The for-each loop goes through each element, storing it in a variable. Option C is correct."
+  },
+  {
+    "id": "oca-ch5-q05",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Loops",
+    "difficulty": "intermediate",
+    "mission": "What keyword is used to end the current loop iteration and proceed execution with the next iteration of that loop?",
+    "choices": [
+      "break",
+      "continue",
+      "end",
+      "skip"
+    ],
+    "answer": "continue",
+    "explain": "The continue keyword is used to end the loop iteration immediately and resume execution at the next iteration. Therefore, Option B is correct. Option A is incorrect because the break statement causes execution to proceed after the loop body. Options C and D are incorrect because these are not keywor"
+  },
+  {
+    "id": "oca-ch5-q06",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Loops",
+    "difficulty": "intermediate",
+    "mission": "What keyword is used to proceed with execution immediately after a loop?",
+    "choices": [
+      "break",
+      "continue C. end",
+      "skip"
+    ],
+    "answer": "break",
+    "explain": "The break keyword is used to end the loop iteration immediately, skip any remaining executions of the loop, and resume execution immediately after the loop. Therefore, Option A is correct. Option B is incorrect because execution proceeds at the next execution of the current loop for continue. Option"
+  },
+  {
+    "id": "oca-ch5-q07",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Loops",
+    "difficulty": "intermediate",
+    "mission": "Which type of loop has three segments within parentheses?",
+    "choices": [
+      "do-while loop",
+      "for (traditional)",
+      "for-each",
+      "while"
+    ],
+    "answer": "for (traditional)",
+    "explain": "A traditional for loop is best known for having an initialization statement, condition statement, and update statement. Option B is correct."
+  },
+  {
+    "id": "oca-ch5-q08",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Loops",
+    "difficulty": "intermediate",
+    "mission": "Which of the following statements is/are true? I. A traditional for loop can iterate through an array starting from index 0. II. A traditional for loop can iterate through an array starting from the end.",
+    "choices": [
+      "Only I",
+      "Only II",
+      "Both statements",
+      "Neither statement"
+    ],
+    "answer": "Both statements",
+    "explain": "With a traditional for loop, you control the order in which indexes are visited in code. This means you can loop through an array in ascending or descending order, and Option C is correct."
+  },
+  {
+    "id": "oca-ch5-q09",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Loops",
+    "difficulty": "intermediate",
+    "mission": "Which of the following statements is/are true? I. A for-each loop can iterate through an array starting from index 0. II. A for-each loop can iterate through an array starting from the end.",
+    "choices": [
+      "Only I",
+      "Only II",
+      "Both statements",
+      "Neither statement"
+    ],
+    "answer": "Only I",
+    "explain": "With a for-each loop, the loop order is determined for you. With an array, this means starting with index 0, and Option A is correct. A traditional for loop allows you to control the order and iterate in either order."
+  },
+  {
+    "id": "oca-ch5-q10",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Loops",
+    "difficulty": "intermediate",
+    "mission": "Which type of loop has a boolean condition that is first checked after a single iteration through the loop?",
+    "choices": [
+      "do-while loop",
+      "for (traditional)",
+      "for-each",
+      "while"
+    ],
+    "answer": "do-while loop",
+    "explain": "A do-while loop has a condition that returns a boolean at the end of the loop. Therefore, Option A is correct. Option D is incorrect because a while loop has this condition at the beginning of the loop. A traditional for loop is best known for having a loop variable, making Option B incorrect. Optio"
+  },
+  {
+    "id": "oca-ch5-q11",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Loops",
+    "difficulty": "intermediate",
+    "mission": "What does the following code output?",
+    "choices": [
+      "0 B. The code does not compile.",
+      "The loops complete with no output.",
+      "This is an infinite loop."
+    ],
+    "answer": "The loops complete with no output.",
+    "explain": "A while loop requires a boolean condition. While singer is a variable, it is not a boolean. Therefore, the code does not compile, and Option B is correct.",
+    "code": "int singer = 0;\nwhile (singer) System.out.println(singer++);"
+  },
+  {
+    "id": "oca-ch6-q02",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Methods & Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "What is the command to call one constructor from another constructor in the same class?",
+    "choices": [
+      "super()",
+      "this()",
+      "that()",
+      "construct()"
+    ],
+    "answer": "this()",
+    "explain": "The super() statement is used to call a constructor in a parent class, while the this() statement is used to call a constructor in the same class, making Option B correct and Option A incorrect. Options C and D are incorrect because they are not constructors."
+  },
+  {
+    "id": "oca-ch6-q03",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Methods & Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following application?",
+    "choices": [
+      "5",
+      "6",
+      "8",
+      "The code does not compile."
+    ],
+    "answer": "The code does not compile.",
+    "explain": "The sell() method does not compile because it does not return a value if both of the if-then statements’ conditional expressions evaluate to false. While logically, it is true that price is either less than 10 or greater than or equal to 10, the compiler does not know that. It just knows that if bot",
+    "code": "package stocks;\npublic class Bond {\n  private static int price = 5;\npublic boolean sell() {\n  if(price<10) {\n  price++;\nreturn true;\n}\nelse if(price>=10) {\n  return false;\n}\n}\npublic static void main(String[] cash) {\n  new Bond().sell();\nnew Bond().sell();\nnew Bond().sell();\nSystem.out.print(price);\n}\n}"
+  },
+  {
+    "id": "oca-ch6-q04",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Methods & Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "What is true about the following program?",
+    "choices": [
+      "It compiles successfully and prints 3 at runtime.",
+      "It does not compile because of line g1.",
+      "It does not compile because of line g2.",
+      "It does not compile for some other reason."
+    ],
+    "answer": "It does not compile for some other reason.",
+    "explain": "The three overloaded versions of nested() compile without issue, since each method takes a different set of input arguments, making Options B and C incorrect. The code does not compile, though, due to the first line of the main() method, making Option A incorrect. The no-argument version of the nest",
+    "code": "package figures;\npublic class Dolls {\n  public void nested() {\n  nested(2,true);\n} // g1 public int nested(int level, boolean height) {\n  return nested(level);\n}\npublic int nested(int level) {\n  return level+1;\n}; // g2 public static void main(String[] outOfTheBox) {\n  System.out.print(new Dolls().nested());\n}\n}"
+  },
+  {
+    "id": "oca-ch6-q05",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Methods & Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "Fill in the blank: Java uses ___________ to send data into a method.",
+    "choices": [
+      "pass-by-null",
+      "pass-by-value",
+      "both pass-by-value and pass-by-reference",
+      "pass-by-reference"
+    ],
+    "answer": "pass-by-value",
+    "explain": "Java uses pass-by-value to copy primitives and references of objects into a method. That means changes to the primitive value or reference in the method are not carried to the calling method. That said, the data within an object can change, just not the original reference itself. Therefore, Option B"
+  },
+  {
+    "id": "oca-ch6-q06",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Methods & Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "Which of the following is a valid JavaBean method signature?",
+    "choices": [
+      "public void getArrow()",
+      "public void setBow()",
+      "public void setRange(int range)",
+      "public String addTarget(String target)"
+    ],
+    "answer": "public void setRange(int range)",
+    "explain": "Option A is incorrect because the getter should return a value. Option B is incorrect because the setter should take a value. Option D is incorrect because the setter should start with set and should not return a value. Option C is a correct setter declaration because it takes a value, uses the void"
+  },
+  {
+    "id": "oca-ch6-q07",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Methods & Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "Which of the following statements about calling this() in a constructor is not true?",
+    "choices": [
+      "If this() is used, it must be the first line of the constructor.",
+      "If super() and this() are both used in the same constructor, super() must appear on the line immediately after this().",
+      "If arguments are provided to this(), then there must be a constructor in the class able to take those arguments.",
+      "If the no-argument this() is called, then the class must explicitly implement the no-argument constructor."
+    ],
+    "answer": "If super() and this() are both used in the same constructor, super() must appear on the line immediately after this().",
+    "explain": "Options A, C, and D are true statements about calling this() inside a constructor. Option B is incorrect because a constructor can only call this() or super() on the first line of the constructor, but never both in the same constructor. If both constructors were allowed to be called, there would be "
+  },
+  {
+    "id": "oca-ch6-q08",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Methods & Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "Which of the following can fill in the blank to make the class compile?",
+    "choices": [
+      "Public int B. Long",
+      "void",
+      "private String"
+    ],
+    "answer": "void",
+    "explain": "Option A is incorrect because the public access modifier starts with a lowercase letter. Options C and D are incorrect because the return types, void and String, are incompatible with the method body that returns an integer value of 10. Option B is correct and has package-private access. It also use",
+    "code": "package ai;\npublic class Robot { ____________ compute() {\n  return 10;\n}\n}"
+  },
+  {
+    "id": "oca-ch6-q09",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Methods & Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "Fill in the blank: A ____________variable is always available to all instances of the class.",
+    "choices": [
+      "public",
+      "local",
+      "static",
+      "instance"
+    ],
+    "answer": "static",
+    "explain": "The only variables always available to all instances of the class are those declared static; therefore, Option C is the correct answer. Option A may seem correct, but public variables are only available if a reference to the object is maintained among all instances. Option B is incorrect because the"
+  },
+  {
+    "id": "oca-ch6-q10",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Methods & Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "Which line of code, inserted at line p1, causes the application to print 5?",
+    "choices": [
+      "this(4);",
+      "new Jump(4);",
+      "this(5);",
+      "rope = 4;"
+    ],
+    "answer": "this(4);",
+    "explain": "First off, all of the lines compile but they produce various different results. Remember that the default initialization of a boolean instance variable is false, making outside false at line p1. Therefore, this(4) will cause rope to be set to 5, while this(5) will cause rope to be set to 6. Since 5 ",
+    "code": "package games; public class Jump { private int rope = 1; protected boolean outside; public Jump() { // p1 outside = true; } public Jump(int rope) { this. rope = outside ? rope : rope+1;\n}\npublic static void main(String[] bounce) {\n  System.out.print(new Jump().rope);\n}\n}"
+  },
+  {
+    "id": "oca-ch6-q11",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Methods & Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "Which of the following statements is not true?",
+    "choices": [
+      "An instance of one class may access an instance of another class’s attributes if it has a reference to the instance and the attributes are declared public.",
+      "An instance of one class may access package-private attributes in a parent class, provided the parent class is not in the same package.",
+      "Two instances of the same class may access each other’s private attributes.",
+      "An instance of one class may access an instance of another class’s attributes if both classes are located in the same package and marked protected."
+    ],
+    "answer": "An instance of one class may access package-private attributes in a parent class, provided the parent class is not in the same package.",
+    "explain": "Options A, C, and D are true statements. In particular, Option C allows us to write the equals() methods between two objects that compare private attributes of the class. Option D is true because protected access also provides package-private access. Option B is false. Package-private attributes are"
+  },
+  {
+    "id": "oca-ch7-q02",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "Which modifier can be applied to an abstract interface method?",
+    "choices": [
+      "protected",
+      "static",
+      "final",
+      "public"
+    ],
+    "answer": "public",
+    "explain": "All abstract interface methods are implicitly public, making Option D the correct answer. Option A is incorrect because protected conflicts with the implicit public modifier. Since static methods must have a body and abstract methods cannot have a body, Option B is incorrect. Finally, Option C is in"
+  },
+  {
+    "id": "oca-ch7-q03",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following application?",
+    "choices": [
+      "Play!",
+      "Music!",
+      "The code does not compile.",
+      "The code compiles but the answer cannot be determined until runtime."
+    ],
+    "answer": "The code does not compile.",
+    "explain": "A class cannot contain two methods with the same method signature, even if one is static and the other is not. Therefore, the code does not compile because the two declarations of playMusic() conflict with one another, making Option C the correct answer.",
+    "code": "package radio;\npublic class Song {\n  public void playMusic() {\n  System.out.print(\"Play!\");\n}\nprivate static int playMusic() {\n  System.out.print(\"Music!\");\n}\npublic static void main(String[] tracks) {\n  new Song().playMusic();\n}\n}"
+  },
+  {
+    "id": "oca-ch7-q04",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "Which of the following statements about inheritance is true?",
+    "choices": [
+      "Inheritance allows objects to access commonly used attributes and methods. B. Inheritance always leads to simpler code.",
+      "All primitives and objects inherit a set of methods.",
+      "Inheritance allows you to write methods that reference themselves."
+    ],
+    "answer": "Inheritance allows objects to access commonly used attributes and methods. B. Inheritance always leads to simpler code.",
+    "explain": "Inheritance is often about improving code reusability, by allowing subclasses to inherit commonly used attributes and methods from parent classes, making Option A the correct answer. Option B is incorrect. Inheritance can lead to either simpler or more complex code, depending on how well it is struc"
+  },
+  {
+    "id": "oca-ch7-q05",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "Given the class declaration below , which value cannot be inserted into the blank line that would allow the code to compile?",
+    "choices": [
+      "Class",
+      "Pet",
+      "Canine",
+      "Object"
+    ],
+    "answer": "Class",
+    "explain": "Recall that this refers to an instance of the current class. Therefore, any superclass of Canine can be used as a return type of the method, including Canine itself, making Option C an incorrect answer. Option B is also incorrect because Canine implements the Pet interface. An instance of a class ca",
+    "code": "package mammal;\ninterface Pet {\n  }\npublic class Canine implements Pet {\n  public ___________ getDoggy() {\n  return this;\n}\n}"
+  },
+  {
+    "id": "oca-ch7-q06",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "Imagine you are working with another team to build an application. You are developing code that uses a class that the other team has not finished writing yet. Which element of Java would best facilitate this development, allowing easy integration once the other team’s code is complete?",
+    "choices": [
+      "An abstract class",
+      "An interface",
+      "static methods",
+      "An access modifier"
+    ],
+    "answer": "An interface",
+    "explain": "The key here is understanding which of these features of Java allow one developer to build their application around another developer’s code, even if that code is not ready yet. For this problem, an interface is the best choice. If the two teams agree on a common interface, one developer can write c"
+  },
+  {
+    "id": "oca-ch7-q07",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following application?",
+    "choices": [
+      "Driving vehicle B. Driving electric car",
+      "Driving car",
+      "The code does not compile."
+    ],
+    "answer": "Driving car",
+    "explain": "The drive() method in the Car class does not override the version in the Automobile class since the method is not visible to the Car class. Therefore, the final attribute in the Automobile class does not prevent the Car class from implementing a method with the same signature. The drive() method in ",
+    "code": "package vehicles;\nclass Automobile {\n  private final String drive() {\n  return \"Driving vehicle\";\n}\n}\nclass Car extends Automobile {\n  protected String drive() {\n  return \"Driving car\";\n}\n}\npublic class ElectricCar extends Car {\n  public final String drive() {\n  return \"Driving electric car\";\n}\npublic static void main(String[] wheels) {\n  final Car car = new ElectricCar();\nSystem.out.print(car.drive());\n}\n}"
+  },
+  {
+    "id": "oca-ch7-q08",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "Which of the following statements about inheritance is correct?",
+    "choices": [
+      "Java does not support multiple inheritance.",
+      "Java allows multiple inheritance using abstract classes.",
+      "Java allows multiple inheritance using non-abstract classes.",
+      "Java allows multiple inheritance using interfaces."
+    ],
+    "answer": "Java allows multiple inheritance using interfaces.",
+    "explain": "While Java does not allow a class to extend more than one class, it does allow a class to implement any number of interfaces. Multiple inheritance is, therefore, only allowed via interfaces, making Option D the correct answer."
+  },
+  {
+    "id": "oca-ch7-q09",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "How many changes need to be made to the classes below to properly override the watch() method?",
+    "choices": [
+      "One",
+      "Two",
+      "Three",
+      "None; the code compiles as is."
+    ],
+    "answer": "Three",
+    "explain": "There are three problems with this method override. First, the watch() method is marked final in the Television class. The final modifier would have to be removed from the method definition in the Television class in order for the method to compile in the LCD class. Second, the return types void and",
+    "code": "package entertainment;\nclass Television {\n  protected final void watch() {\n  }\n}\npublic class LCD extends Television {\n  Object watch() {\n  }\n}"
+  },
+  {
+    "id": "oca-ch7-q10",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "Which of the following statements about overriding a method is incorrect?",
+    "choices": [
+      "The return types must be covariant.",
+      "The access modifier of the method in the child class must be the same or broader than the method in the superclass.",
+      "A checked exception thrown by the method in the parent class must be thrown by the method in the child class.",
+      "A checked exception thrown by a method in the child class must be the same or narrower than the exception thrown by the method in the parent class."
+    ],
+    "answer": "A checked exception thrown by the method in the parent class must be thrown by the method in the child class.",
+    "explain": "First off, the return types of an overridden method must be covariant. Next, it is true that the access modifier must be the same or broader in the child method. Using a narrower access modifier in the child class would not allow the code to compile. Overridden methods must not throw any new or broa"
+  },
+  {
+    "id": "oca-ch7-q11",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following application?",
+    "choices": [
+      "5",
+      "3",
+      "The code does not compile.",
+      "The code compiles but throws an exception at runtime."
+    ],
+    "answer": "The code does not compile.",
+    "explain": "The process() method is declared final in the Computer class. The Laptop class then attempts to override this method, resulting in a compilation error, making Option C the correct answer.",
+    "code": "package machines;\nclass Computer {\n  protected final int process() {\n  return 5;\n}\n}\npublic class Laptop extends Computer {\n  public final int process() {\n  return 3;\n}\npublic static void main(String[] chips) {\n  System.out.print(new Laptop().process());\n}\n}"
+  },
+  {
+    "id": "oca-ch8-q02",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Exceptions",
+    "difficulty": "intermediate",
+    "mission": "Choose the answer that lists the keywords in the order that they would be used together.",
+    "choices": [
+      "catch, try, finally",
+      "try, catch, finally",
+      "finally, catch, try",
+      "try, finally, catch"
+    ],
+    "answer": "try, catch, finally",
+    "explain": "The correct order of blocks is try, catch, and finally, making Option B the correct answer."
+  },
+  {
+    "id": "oca-ch8-q04",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Exceptions",
+    "difficulty": "intermediate",
+    "mission": "Which of the following Throwable types is it recommended not to catch in a Java application?",
+    "choices": [
+      "Error",
+      "CheckedException",
+      "Exception",
+      "RuntimeException 5. What is the output of the following application? package game; public class Baseball { public static void main(String... teams) { try { int score = 1; System.out.print(score++); } catch (Throwable t) { System.out.print(score++); } finally { System.out.print(score++); } System.out.print(score++); } }",
+      "123",
+      "124",
+      "12",
+      "None of the above"
+    ],
+    "answer": "Error",
+    "explain": "While Exception and RuntimeException are commonly caught in Java applications, it is recommended Error not be caught. An Error often indicates a failure of the JVM which cannot be recovered from. For this reason, Option A is correct, and Options C and D are incorrect. Option B is not a class defined"
+  },
+  {
+    "id": "oca-ch8-q06",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Exceptions",
+    "difficulty": "intermediate",
+    "mission": "Which of the following is a checked exception?",
+    "choices": [
+      "ClassCastException",
+      "IOException",
+      "ArrayIndexOutOfBoundsException",
+      "IllegalArgumentException"
+    ],
+    "answer": "IOException",
+    "explain": "ClassCastException, ArrayIndexOutOfBoundsException, and IllegalArgumentException are unchecked exceptions and can be thrown at any time. IOException is a checked exception that must be handled or declared when used, making Option B the correct answer."
+  },
+  {
+    "id": "oca-ch8-q07",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Exceptions",
+    "difficulty": "intermediate",
+    "mission": "Fill in the blanks: The ____________keyword is used in method declarations, while the ____________keyword is used to throw an exception to the surrounding process.",
+    "choices": [
+      "throws, throw",
+      "catch, throw",
+      "throw, throws",
+      "throws, catch"
+    ],
+    "answer": "throws, throw",
+    "explain": "The throws keyword is used in method declarations, while the throw keyword is used to throw an exception to the surrounding process, making Option A the correct answer. The catch keyword is used to handle exceptions, not to create them or in the declaration of a method."
+  },
+  {
+    "id": "oca-ch8-q08",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Exceptions",
+    "difficulty": "intermediate",
+    "mission": "If a try statement has catch blocks for both Exception and IOException, then which of the following statements is correct?",
+    "choices": [
+      "The catch block for Exception must appear before the catch block for IOException.",
+      "The catch block for IOException must appear before the catch block for Exception.",
+      "The catch blocks for these two exception types can be declared in any order.",
+      "A try statement cannot be declared with these two catch block types because they are incompatible. 9. What is the output of the following application? package game; public class Football { public static void main(String officials[]) { try { System.out.print('A'); throw new RuntimeException(\"Out of bounds!\"); } catch (ArrayIndexOutOfBoundsException aioobe) { System.out.print('B'); throw t; } finally { System.out.print('C'); } } }",
+      "ABC",
+      "ABC, followed by a stack trace for a RuntimeException",
+      "AC, followed by a stack trace for a RuntimeException",
+      "None of the above"
+    ],
+    "answer": "The catch block for IOException must appear before the catch block for Exception.",
+    "explain": "IOException is a subclass of Exception, so it must appear first in any related catch blocks. If Exception was to appear before IOException, then the IOException block would be considered unreachable code because any thrown IOException is already handled by the Exception catch block. For this reason,"
+  },
+  {
+    "id": "oca-ch8-q10",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Exceptions",
+    "difficulty": "intermediate",
+    "mission": "What is the result of compiling and running the following application?",
+    "choices": [
+      "The code does not compile because of line p1.",
+      "The code does not compile because of line p2.",
+      "The code does not compile because of line p3.",
+      "The code compiles, but a stack trace is printed at runtime."
+    ],
+    "answer": "The code does not compile because of line p3.",
+    "explain": "The application does not compile, so Option D is incorrect. The openDrawbridge() method compiles without issue, so Options A and B are incorrect. The issue here is how the openDrawbridge() method is called from within the main() method on line p3. The openDrawbridge() method declares the checked exc",
+    "code": "package castles;\npublic class Fortress {\n  public void openDrawbridge() throws Exception {\n  try {\n  throw new Exception(\"Circle\");\n}\ncatch (Exception e) {\n  System.out.print(\"Opening!\");\n}\nfinally {\n  System.out.print(\"Walls\"); // p2 }\n}\npublic static void main(String[] moat) {\n  new Fortress().openDrawbridge(); // p3 }\n} // p1"
+  },
+  {
+    "id": "oca-ch8-q11",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Exceptions",
+    "difficulty": "intermediate",
+    "mission": "Which of the following exception types must be handled or declared by the method in which they are thrown?",
+    "choices": [
+      "NullPointerException",
+      "Exception C. RuntimeException",
+      "ArithmeticException"
+    ],
+    "answer": "Exception C. RuntimeException",
+    "explain": "NullPointerException and ArithmeticException both extend RuntimeException, which are unchecked exceptions and not required to be handled or declared in the method in which they are thrown. On the other hand, Exception is a checked exception and must be handled or declared by the method in which it i"
+  },
+  {
+    "id": "oca-ch8-q12",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Exceptions",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following application?",
+    "choices": [
+      "1345",
+      "1235",
+      "The code does not compile.",
+      "The code compiles but throws an exception at runtime."
+    ],
+    "answer": "1345",
+    "explain": "The code compiles and runs without issues, so Options C and D are incorrect. The try block throws a ClassCastException. Since ClassCastException is not a subclass of ArrayIndexOutOfBoundsException, the first catch block is skipped. For the second catch block, ClassCastException is a subclass of Thro",
+    "code": "package game;\npublic class BasketBall {\n  public static void main(String[] dribble) {\n  try {\n  System.out.print(1);\nthrow new ClassCastException();\n}\ncatch (ArrayIndexOutOfBoundsException ex) {\n  System.out.print(2);\n}\ncatch (Throwable ex) {\n  System.out.print(3);\n}\nfinally {\n  System.out.print(4);\n}\nSystem.out.print(5);\n}\n}"
+  },
+  {
+    "id": "oca-ch8-q13",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "Exceptions",
+    "difficulty": "intermediate",
+    "mission": "Which of the following statements about a finally block is true?",
+    "choices": [
+      "Every line of the finally block is guaranteed to be executed.",
+      "The finally block is executed only if the related catch block is also executed.",
+      "The finally statement requires brackets {}.",
+      "The finally block cannot throw an exception."
+    ],
+    "answer": "The finally statement requires brackets {}.",
+    "explain": "A finally block can throw an exception, in which case not every line of the finally block would be executed. For this reason, Options A and D are incorrect. Option B is also incorrect The finally block is called regardless of whether or not the related catch block is executed. Option C is the correc"
+  },
+  {
+    "id": "oca-ch8-q14",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "Exceptions",
+    "difficulty": "intermediate",
+    "mission": "Given that FileNotFoundException is a subclass of IOException, what is the output of the following application?",
+    "choices": [
+      "XY",
+      "ZY",
+      "The code does not compile.",
+      "The code compiles but a stack trace is printed at runtime."
+    ],
+    "answer": "The code does not compile.",
+    "explain": "The code does not compile because the catch blocks are used in the wrong order. Since IOException is a superclass of FileNotFoundException, the FileNotFoundException is considered unreachable code. For this reason, the code does not compile, and Option C is correct.",
+    "code": "package office;\nimport java.io.*;\npublic class Printer {\n  public void print() {\n  try {\n  throw new FileNotFoundException();\n}\ncatch (IOException exception) {\n  System.out.print(\"Z\");\n}\ncatch (FileNotFoundException enfe) {\n  System.out.print(\"X\");\n}\nfinally {\n  System.out.print(\"Y\");\n}\n}\npublic static void main(String... ink) {\n  new Printer().print();\n}\n}"
+  },
+  {
+    "id": "oca-ch9-q02",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "String, Date, Lambda",
+    "difficulty": "intermediate",
+    "mission": "What is not true about a String?",
+    "choices": [
+      "It can be created without coding a call to a constructor.",
+      "It can be reused via the string pool.",
+      "It is final.",
+      "It is mutable."
+    ],
+    "answer": "It is mutable.",
+    "explain": "A String can be created using a literal rather than calling a constructor directly, making Option A incorrect. A string pool exists for String reuse, making Option B incorrect. A String is final and immutable, making Option C incorrect and Option D correct."
+  },
+  {
+    "id": "oca-ch9-q03",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "String, Date, Lambda",
+    "difficulty": "intermediate",
+    "mission": "Which of the following creates a StringBuilder with a different value than the other options?",
+    "choices": [
+      "new StringBuilder().append(\"clown\")",
+      "new StringBuilder(\"clown\")",
+      "new StringBuilder(\"cl\").insert(2, \"own\")",
+      "All of them create the same value."
+    ],
+    "answer": "All of them create the same value.",
+    "explain": "This question is testing whether you understand how method chaining works. Option A creates an empty StringBuilder and then adds the five characters in clown to it. Option B simply creates the clown when calling the constructor. Finally, Option C creates the same value, just in two parts. Therefore,"
+  },
+  {
+    "id": "oca-ch9-q04",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "String, Date, Lambda",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following?",
+    "choices": [
+      "333",
+      "333 806 1601",
+      "The code compiles but outputs something else.",
+      "The code does not compile."
+    ],
+    "answer": "333 806 1601",
+    "explain": "Since StringBuilder is mutable, each call to append adds to the value. When calling print, toString() is automatically called and 333 806 1601 is output. Therefore, Option B is correct.",
+    "code": "StringBuilder teams = new StringBuilder(\"333\");\nteams.append(\" 806\");\nteams.append(\" 1601\");\nSystem.out.print(teams);"
+  },
+  {
+    "id": "oca-ch9-q05",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "String, Date, Lambda",
+    "difficulty": "intermediate",
+    "mission": "How many of the types ArrayList, List, and Object can fill in the blank to produce code that compiles? List frisbees = new",
+    "choices": [
+      "None",
+      "One",
+      "Two",
+      "Three ____________(); 6. What is the output of the following? List<String> tools = new ArrayList<>(); tools.add(\"hammer\"); tools.add(\"nail\"); tools.add(\"hex key\"); System.out.println(tools.get(1));",
+      "hammer",
+      "hex key",
+      "nail",
+      "None of the above"
+    ],
+    "answer": "One",
+    "explain": "List is an interface and not a class. It cannot be instantiated. While Object is a concrete class, it does not implement the List interface so it cannot be assigned to frisbees. Note that if you were to add an explicit cast, it would compile and throw an exception at runtime. Of the three options, o"
+  },
+  {
+    "id": "oca-ch9-q07",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "String, Date, Lambda",
+    "difficulty": "intermediate",
+    "mission": "What is the result of the following code?",
+    "choices": [
+      "radicarobots",
+      "radicalrobots",
+      "The code does not compile.",
+      "The code compiles but throws an exception at runtime."
+    ],
+    "answer": "The code does not compile.",
+    "explain": "Calling the constructor and then insert() is an example of method chaining. However, the sb.length() call is a problem. The sb reference doesn’t exist until after the chained calls complete. Just because it happens to be on a separate line doesn’t change when the reference is created. Since the code",
+    "code": "StringBuilder sb = new StringBuilder(\"radical\") .insert(sb.length(), \"robots\");\nSystem.out.println(sb);"
+  },
+  {
+    "id": "oca-ch9-q08",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "String, Date, Lambda",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following? List<String> museums = new ArrayList<>(1);\nmuseums.add(\"Natural History\");\nmuseums.add(\"Science\");\nmuseums.add(\"Art\");\nmuseums.remove(2);\nSystem.out.println(museums);",
+    "choices": [
+      "[Natural History, Science]",
+      "[Natural History, Art, Science]",
+      "The code does not compile.",
+      "The code compiles but throws an exception at runtime."
+    ],
+    "answer": "[Natural History, Science]",
+    "explain": "While the ArrayList is declared with an initial capacity of one element, it is free to expand as more elements are added. Each of the three calls to the add() method adds an element to the end of the ArrayList. The remove() method call deletes the element at index 2, which is Art. Therefore, Option "
+  },
+  {
+    "id": "oca-ch9-q09",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "String, Date, Lambda",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following?",
+    "choices": [
+      "12",
+      "123 C. 321",
+      "The code does not compile."
+    ],
+    "answer": "The code does not compile.",
+    "explain": "On line 12, the value of the StringBuilder is 12. On line 13, it becomes 123. Since StringBuilder is mutable, storing the result in the same reference is redundant. Then on line 14, the value is reversed, giving us 321 and making Option C correct.",
+    "code": "12: 13: 14: 15: StringBuilder b = new StringBuilder(\"12\");\nb = b.append(\"3\");\nb.reverse();\nSystem.out.println(b.toString());"
+  },
+  {
+    "id": "oca-ch9-q10",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "String, Date, Lambda",
+    "difficulty": "intermediate",
+    "mission": "What is the main benefit of a lambda expression?",
+    "choices": [
+      "It allows you to convert a primitive to a wrapper class.",
+      "It allows you to change the bytecode while the application is running.",
+      "It allows you to inherit from multiple classes.",
+      "It allows you to write code that has the execution deferred."
+    ],
+    "answer": "It allows you to write code that has the execution deferred.",
+    "explain": "Option A is incorrect as it describes autoboxing. Options B and C are not possible in Java. Option D is correct as it describes lambdas. Lambdas use deferred execution and can be run elsewhere in the codebase."
+  },
+  {
+    "id": "oca-ch9-q11",
+    "type": "PREDICT_OUTPUT",
+    "topic": "collections",
+    "subtopic": "String, Date, Lambda",
+    "difficulty": "intermediate",
+    "mission": "What is the output of the following?",
+    "choices": [
+      "false 1",
+      "false 2",
+      "true 1",
+      "true 2"
+    ],
+    "answer": "true 2",
+    "explain": "A StringBuilder is mutable, so the length is two after line 6 completes. The StringBuilder methods return a reference to the same object so you can chain method calls. Therefore, line and anotherLine refer to the same object. This means that line 7 prints true. Then on line 9, both references point ",
+    "code": "5: 6: 7: 8: 9: StringBuilder line = new StringBuilder(\"-\");\nStringBuilder anotherLine = line.append(\"-\");\nSystem.out.print(line == anotherLine);\nSystem.out.print(\" \");\nSystem.out.print(line.length());"
+  },
+  {
+    "id": "oca-ch9-q12",
+    "type": "FILL_BLANK",
+    "topic": "collections",
+    "subtopic": "String, Date, Lambda",
+    "difficulty": "intermediate",
+    "mission": "The author of this method",
+    "choices": [
+      "ArrayList",
+      "ArrayList<String>",
+      "StringBuilder",
+      "None of the above"
+    ],
+    "answer": "None of the above",
+    "explain": "The add() and get() methods are available on ArrayList. However, ArrayList uses size rather than length to get the number of elements. Therefore, Option D is correct. If length was changed to size, Option B would compile if put in the blank. Option A still wouldn’t compile in the blank because a cas",
+    "code": "forgot to include the data type. Which of the following reference types can fill in the blank to complete this method? public static void secret( ____________mystery) {\n  mystery.add(\"metal\");\nString str = mystery.get(0);\nint num = mystery.length();\n}"
   },
   {
     "id": "interview-jvm-01",
@@ -332,6 +2704,92 @@
     ]
   },
   {
+    "id": "interview-jvm-02",
+    "type": "ORAL_ANSWER",
+    "topic": "collections",
+    "subtopic": "Memory Management",
+    "difficulty": "senior",
+    "question": "How would you investigate an OutOfMemoryError?",
+    "interviewerIntent": "Test production troubleshooting skills",
+    "answer": "I would first identify which memory area failed: heap, metaspace, direct buffer or native memory.\n\nI would preserve evidence by capturing the heap dump, GC logs and container metrics. Then I would inspect dominant objects, retention paths and allocation growth using tools such as Eclipse MAT, JFR or a profiler.\n\nIncreasing the heap without understanding the retention pattern would only postpone the incident.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jvm-03",
+    "type": "ORAL_ANSWER",
+    "topic": "collections",
+    "subtopic": "Concurrency",
+    "difficulty": "senior",
+    "question": "What is the difference between volatile and synchronized?",
+    "interviewerIntent": "Check concurrency fundamentals",
+    "answer": "`volatile` guarantees visibility of the latest value and restricts reordering around that variable, but it does not make compound operations atomic.\n\n`synchronized` provides mutual exclusion and visibility. For example, `counter++` is still unsafe with only volatile because it is a read-modify-write operation.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-jvm-04",
+    "type": "ORAL_ANSWER",
+    "topic": "collections",
+    "subtopic": "Virtual Threads",
+    "difficulty": "senior",
+    "question": "When would you use virtual threads?",
+    "interviewerIntent": "Test Java 21 knowledge",
+    "answer": "Virtual threads are useful for applications with many concurrent blocking I/O operations, such as HTTP or database calls.\n\nThey do not make CPU-intensive work faster, and they do not remove external limits such as database connection-pool size. I would also check for thread pinning and avoid introducing them without measuring the workload.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "ej-1",
+    "topic": "collections",
+    "subtopic": "java-methods",
+    "type": "ORAL_ANSWER",
+    "difficulty": "INTERMEDIATE",
+    "question": "What are the advantages of static factory methods over constructors? Give examples from the JDK.",
+    "answer": "1) They have names (valueOf, of, getInstance make intent clear). 2) Not required to create new object each time (Boolean.valueOf caches). 3) Can return subtypes (Collections.unmodifiableList returns hidden impl). 4) Returned type can vary by input (EnumSet returns RegularEnumSet or JumboEnumSet). 5) Returned class need not exist at compile time (service provider pattern). Examples: List.of(), Optional.of(), Integer.valueOf(), Files.newInputStream()."
+  },
+  {
+    "id": "ej-2",
+    "topic": "collections",
+    "subtopic": "java-methods",
+    "type": "PICK_INVALID",
+    "difficulty": "INTERMEDIATE",
+    "question": "Which is NOT a benefit of the Builder pattern over telescoping constructors?",
+    "explain": "Builders are slightly SLOWER (extra object allocation for the builder itself). The benefits are readability, flexibility, and immutability — not raw speed. From Effective Java Item 2.",
+    "choices": [
+      "Named parameters make code readable",
+      "Can enforce invariants in build()",
+      "Faster object creation than constructors",
+      "Immutable objects are easy to create"
+    ],
+    "answer": "Faster object creation than constructors"
+  },
+  {
+    "id": "ej-5",
+    "topic": "collections",
+    "subtopic": "java-methods",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "INTERMEDIATE",
+    "question": "Why does Bloch say 'prefer dependency injection to hardwiring resources'? What's wrong with this code?\n\n```java\npublic class SpellChecker {\n    private final Lexicon dictionary = new EnglishLexicon();\n    public boolean isValid(String word) { ... }\n}\n```",
+    "correctOutput": "The class is untestable (can't substitute a mock dictionary), inflexible (only English), and violates SRP (creating its own dependency). Pass the Lexicon via constructor: `SpellChecker(Lexicon dict)` — allows testing with a test dictionary and supports multiple languages.",
+    "explain": "Effective Java Item 5. This is the foundation of modern DI (Spring, CDI). Static utility classes and singletons that hardwire resources are inappropriate when behavior depends on the underlying resource."
+  },
+  {
+    "id": "ej-7",
+    "topic": "collections",
+    "subtopic": "java-basics",
+    "type": "ORAL_ANSWER",
+    "difficulty": "SENIOR",
+    "question": "What is an 'obsolete object reference' and how does it cause memory leaks in Java? Give an example.",
+    "answer": "An obsolete reference is a reference that will never be dereferenced again but is still held by the program. The GC cannot collect the object or anything reachable from it. Classic example: a Stack implementation that pops by decrementing size but doesn't null out the array slot — the array still references popped objects. Fix: `elements[size] = null`. Common sources: 1) classes managing their own memory (caches, pools), 2) listeners/callbacks not deregistered, 3) inner classes holding outer class reference."
+  },
+  {
     "id": "ej-10",
     "topic": "collections",
     "subtopic": "java-basics",
@@ -339,7 +2797,22 @@
     "difficulty": "INTERMEDIATE",
     "question": "¿Qué sucede si sobrescribes equals() pero NO hashCode()?\n\n```java\nMap<PhoneNumber, String> map = new HashMap<>();\nmap.put(new PhoneNumber(707, 867, 5309), \"Jenny\");\nString result = map.get(new PhoneNumber(707, 867, 5309));\n```",
     "correctOutput": "result es null.",
-    "explain": "Item 11 de Effective Java: DEBES sobrescribir hashCode cuando sobrescribes equals. El contrato dicta que objetos iguales deben tener hash codes iguales. Al no hacerlo, las dos instancias (aunque tengan los mismos números) acaban en buckets diferentes del HashMap y el método get() nunca encuentra la entrada.",
-    "topic": "collections"
+    "explain": "Item 11 de Effective Java: DEBES sobrescribir hashCode cuando sobrescribes equals. El contrato dicta que objetos iguales deben tener hash codes iguales. Al no hacerlo, las dos instancias (aunque tengan los mismos números) acaban en buckets diferentes del HashMap y el método get() nunca encuentra la entrada."
+  },
+  {
+    "id": "ej-17",
+    "topic": "collections",
+    "subtopic": "java-basics",
+    "type": "ORDER_STEPS",
+    "difficulty": "INTERMEDIATE",
+    "question": "Order the rules for making a class immutable (Effective Java Item 17):",
+    "steps": [
+      "Make all fields final",
+      "Make all fields private",
+      "Don't provide setter methods",
+      "Make the class final (or private constructor + factory)",
+      "Make defensive copies of mutable fields in constructor and accessors"
+    ],
+    "explanation": "All 5 rules together guarantee true immutability. Missing any one can break it. Most commonly forgotten: defensive copies (e.g., a Date field that can be mutated externally) and preventing subclassing (subclass could add mutable state)."
   }
 ]

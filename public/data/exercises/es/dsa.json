@@ -26,11 +26,11 @@
     "choices": [
       "O(n)",
       "O(m)",
-      "O(n \u00d7 m)",
+      "O(n × m)",
       "O(n + m)"
     ],
-    "answer": "O(n \u00d7 m)",
-    "explain": "List.contains() es O(m) porque realiza un escaneo lineal. Al ser llamado n veces resulta en O(n \u00d7 m). Solución: convertir 'ids' a un HashSet primero \u2192 contains se vuelve O(1) \u2192 el total pasa a ser O(n + m).",
+    "answer": "O(n × m)",
+    "explain": "List.contains() es O(m) porque realiza un escaneo lineal. Al ser llamado n veces resulta en O(n × m). Solución: convertir 'ids' a un HashSet primero → contains se vuelve O(1) → el total pasa a ser O(n + m).",
     "topic": "dsa"
   },
   {
@@ -100,10 +100,10 @@
     "interviewerIntent": "Prueba la comprensión de tablas hash, resolución de colisiones y características de rendimiento.",
     "keyPoints": [
       "Array de buckets, índice = hash(key) % capacidad",
-      "Colisión \u2192 lista enlazada \u2192 árbol (Java 8+ cuando el bucket > 8)",
+      "Colisión → lista enlazada → árbol (Java 8+ cuando el bucket > 8)",
       "El factor de carga 0.75 dispara el redimensionamiento: duplica capacidad + rehash de todas las entradas",
       "El rehashing es O(n) pero O(1) amortizado sobre todos los 'puts'",
-      "Un buen hashCode distribuye las claves uniformemente \u2192 menos colisiones"
+      "Un buen hashCode distribuye las claves uniformemente → menos colisiones"
     ],
     "topic": "dsa",
     "explain": "HashMap utiliza un array de buckets. El hashCode de la clave determina el índice del bucket. Las colisiones se resuelven con listas enlazadas (o árboles en Java 8+). Al llegar al 75% de capacidad, se duplica y se hace rehash; una operación O(n) infrecuente que da un O(1) amortizado."
@@ -140,7 +140,7 @@
       "El total suele estar dominado por el acceso a la base de datos"
     ],
     "topic": "dsa",
-    "explain": "Un endpoint típico es O(log n) dominado por la consulta indexada a la DB. Pero errores comunes introducen O(n\u00b2) ocultos: contains() en una lista dentro de un bucle, consultas N+1, o cargar todas las entidades para filtrar en Java."
+    "explain": "Un endpoint típico es O(log n) dominado por la consulta indexada a la DB. Pero errores comunes introducen O(n²) ocultos: contains() en una lista dentro de un bucle, consultas N+1, o cargar todas las entidades para filtrar en Java."
   },
   {
     "id": "dsa-order-steps-09",
@@ -153,7 +153,7 @@
       "Calcular índice del bucket: hash % capacidad",
       "Verificar si la clave ya existe en el bucket (usando equals())",
       "Si existe: reemplazar valor. Si no: añadir nueva entrada al bucket",
-      "Verificar si size > capacidad \u00d7 loadFactor",
+      "Verificar si size > capacidad × loadFactor",
       "Si se supera el umbral: redimensionar array y hacer rehash de todas las entradas"
     ],
     "correctOrder": [
@@ -164,7 +164,7 @@
       4,
       5
     ],
-    "explanation": "HashMap.put sigue esta secuencia exacta: hash \u2192 bucket \u2192 buscar/insertar \u2192 verificar carga. El redimensionamiento (paso 6) ocurre solo si se supera el umbral tras la inserción.",
+    "explanation": "HashMap.put sigue esta secuencia exacta: hash → bucket → buscar/insertar → verificar carga. El redimensionamiento (paso 6) ocurre solo si se supera el umbral tras la inserción.",
     "topic": "dsa"
   },
   {
@@ -191,7 +191,7 @@
       5,
       6
     ],
-    "explanation": "La búsqueda binaria reduce el espacio de búsqueda a la mitad en cada iteración \u2192 O(log n). Es el mismo principio usado en búsquedas de índices B-Tree y Collections.binarySearch().",
+    "explanation": "La búsqueda binaria reduce el espacio de búsqueda a la mitad en cada iteración → O(log n). Es el mismo principio usado en búsquedas de índices B-Tree y Collections.binarySearch().",
     "topic": "dsa"
   },
   {
@@ -220,9 +220,9 @@
     "interviewerIntent": "Conecta el conocimiento de estructuras de datos (hashing) con sistemas distribuidos (particionamiento en Kafka).",
     "keyPoints": [
       "DefaultPartitioner: murmur2(key) % numPartitions",
-      "Misma clave \u2192 misma partición \u2192 garantía de orden",
-      "Clave nula \u2192 round-robin (sin orden garantizado)",
-      "Añadir particiones rompe el hash \u2192 las claves existentes pueden ir a particiones diferentes",
+      "Misma clave → misma partición → garantía de orden",
+      "Clave nula → round-robin (sin orden garantizado)",
+      "Añadir particiones rompe el hash → las claves existentes pueden ir a particiones diferentes",
       "El hashing consistente (usado en Kafka Connect) reduce la redistribución"
     ],
     "topic": "dsa",
@@ -257,10 +257,10 @@
       "1",
       "n",
       "log n",
-      "n\u00b2"
+      "n²"
     ],
     "topic": "dsa",
-    "explain": "ArrayList almacena elementos en un array contiguo. El acceso por índice es una operación aritmética simple de punteros: base + índice \u00d7 tamañoElemento = O(1). Por esto se prefiere ArrayList para acceso aleatorio."
+    "explain": "ArrayList almacena elementos en un array contiguo. El acceso por índice es una operación aritmética simple de punteros: base + índice × tamañoElemento = O(1). Por esto se prefiere ArrayList para acceso aleatorio."
   },
   {
     "id": "dsa-oral-spring-cache-15",
@@ -288,7 +288,7 @@
     "choices": [
       "O(n)",
       "O(n log n)",
-      "O(n\u00b2)",
+      "O(n²)",
       "O(log n)"
     ],
     "answer": "O(n log n)",
@@ -308,7 +308,7 @@
       "100"
     ],
     "answer": "30",
-    "explain": "La búsqueda binaria es O(log\u2082 n). log\u2082(1,000,000,000) \u2248 30. Cada comparación reduce el espacio de búsqueda a la mitad. Por esto los índices B-Tree de las bases de datos pueden encontrar cualquier fila con solo 3-4 lecturas de disco incluso con miles de millones de registros.",
+    "explain": "La búsqueda binaria es O(log₂ n). log₂(1,000,000,000) ≈ 30. Cada comparación reduce el espacio de búsqueda a la mitad. Por esto los índices B-Tree de las bases de datos pueden encontrar cualquier fila con solo 3-4 lecturas de disco incluso con miles de millones de registros.",
     "topic": "dsa"
   },
   {
@@ -321,11 +321,11 @@
     "choices": [
       "O(n)",
       "O(n log n)",
-      "O(n\u00b2)",
-      "O(n\u00b3)"
+      "O(n²)",
+      "O(n³)"
     ],
-    "answer": "O(n\u00b2)",
-    "explain": "El bucle interno ejecuta n + (n-1) + ... + 1 = n(n+1)/2 veces. Eso es O(n\u00b2/2) = O(n\u00b2). El hecho de que j comience en i (no en 0) reduce la constante a la mitad pero no cambia el orden de crecimiento.",
+    "answer": "O(n²)",
+    "explain": "El bucle interno ejecuta n + (n-1) + ... + 1 = n(n+1)/2 veces. Eso es O(n²/2) = O(n²). El hecho de que j comience en i (no en 0) reduce la constante a la mitad pero no cambia el orden de crecimiento.",
     "topic": "dsa"
   },
   {
@@ -363,6 +363,23 @@
     "topic": "dsa"
   },
   {
+    "id": "dsa-recursion-dp-06",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "dsa-recursion",
+    "mission": "Without memoization, how many times is fib(3) called when computing fib(6)?",
+    "code": "int fib(int n) {\n    if (n <= 1) return n;\n    return fib(n-1) + fib(n-2);\n}\n// Call: fib(6)",
+    "choices": [
+      "1",
+      "3",
+      "4",
+      "5"
+    ],
+    "answer": "4",
+    "explain": "Without memoization, the recursion tree repeats subproblems exponentially. fib(6) calls fib(5)+fib(4). fib(5) calls fib(4)+fib(3). fib(4) appears 2x, fib(3) appears 3-4x. Total calls grow as O(2^n). With memoization: each fib(k) computed once = O(n).",
+    "topic": "dsa"
+  },
+  {
     "id": "dsa-trees-bst-07",
     "type": "PREDICT_OUTPUT",
     "difficulty": "basic",
@@ -376,6 +393,22 @@
     ],
     "answer": "2",
     "explain": "5 es la raíz. 3 va a la izquierda, 7 a la derecha. Luego 1,4 cuelgan de 3 y 6,8 de 7. La altura es 2 (de la raíz a cualquier hoja hay 2 aristas). Es una inserción balanceada porque el primer elemento es la mediana.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-trees-complexity-08",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "dsa-trees",
+    "mission": "You have a balanced BST with 1 million nodes. What is the maximum number of comparisons to find any key?",
+    "choices": [
+      "1,000,000",
+      "20",
+      "500,000",
+      "1000"
+    ],
+    "answer": "20",
+    "explain": "Balanced BST has height O(log₂ n). log₂(1,000,000) ≈ 20. Each level requires one comparison. This is identical to binary search on a sorted array. Red-Black trees and AVL trees guarantee O(log n) height by self-balancing after insertions.",
     "topic": "dsa"
   },
   {
@@ -395,7 +428,7 @@
       },
       {
         "id": "check",
-        "label": "Si el nodo desencolado es el objetivo \u2192 devolver camino (¡encontrado!)"
+        "label": "Si el nodo desencolado es el objetivo → devolver camino (¡encontrado!)"
       },
       {
         "id": "neighbors",
@@ -414,6 +447,66 @@
     "explain": "BFS explora nivel por nivel. La cola asegura el orden FIFO, procesando primero los nodos más cercanos al inicio. Esto garantiza que la primera vez que alcancemos el objetivo sea por el camino más corto."
   },
   {
+    "id": "dsa-queues-stack-10",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "basic",
+    "subtopic": "dsa-queues",
+    "mission": "What does this code print?",
+    "code": "Deque<String> stack = new ArrayDeque<>();\nstack.push(\"A\");\nstack.push(\"B\");\nstack.push(\"C\");\nSystem.out.println(stack.pop());\nSystem.out.println(stack.pop());",
+    "choices": [
+      "A, B",
+      "C, B",
+      "C, A",
+      "B, C"
+    ],
+    "answer": "C, B",
+    "explain": "Stack is LIFO (Last In, First Out). push() adds to top: [A, B, C] (C on top). pop() removes from top: first pop=C, second pop=B. ArrayDeque is preferred over Stack class in Java (Stack extends Vector which is synchronized — unnecessary overhead).",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-hashing-collision-11",
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "dsa-hashing",
+    "mission": "HashMap capacity=16. Two keys have hashCode() returning 17 and 33. Do they collide?",
+    "choices": [
+      "No — different hash codes mean different buckets",
+      "Yes — both map to bucket index 1 (hash % 16)",
+      "Yes — both map to bucket index 0",
+      "Depends on equals() implementation"
+    ],
+    "answer": "Yes — both map to bucket index 1 (hash % 16)",
+    "explain": "Bucket index = hash & (capacity - 1) = hash % 16 for power-of-2 capacity. 17 % 16 = 1. 33 % 16 = 1. Both go to bucket 1 — collision! They'll be stored as linked list (or tree if >8 entries) in the same bucket. This is why hashCode should distribute values evenly.",
+    "topic": "dsa"
+  },
+  {
+    "id": "dsa-hashing-immutable-12",
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "dsa-hashing",
+    "question": "Why does Java recommend using immutable objects as HashMap keys? What happens if you use a mutable key?",
+    "interviewerIntent": "Tests understanding of hash table invariants and defensive programming",
+    "keyPoints": [
+      "hashCode determines bucket placement at put() time",
+      "If key mutates after put(), hashCode changes but entry stays in OLD bucket",
+      "get() with mutated key looks in WRONG bucket → entry not found (memory leak)",
+      "String, Integer, enum are immutable — safe keys by design",
+      "If custom key needed: make fields final, no setters"
+    ],
+    "followUps": [
+      {
+        "question": "How does this relate to JPA entity identity?",
+        "answerHint": "JPA entities with @GeneratedValue have null ID before persist. If used as Map key before persist, hashCode changes after persist → lost entry. Use business key or UUID assigned at construction."
+      },
+      {
+        "question": "Is it safe to use a record as HashMap key?",
+        "answerHint": "Yes! Java records are immutable by design — all fields are final. Auto-generated hashCode uses all components. Perfect for composite keys."
+      }
+    ],
+    "topic": "dsa",
+    "explain": "HashMap assumes key.hashCode() never changes after insertion. Mutable keys violate this assumption silently — no exception, just entries that can never be found. The entry still exists in memory (leak) but is inaccessible. Always use immutable keys."
+  },
+  {
     "id": "dsa-bigo-amortized-13",
     "type": "ORAL_ANSWER",
     "difficulty": "senior",
@@ -423,7 +516,7 @@
     "keyPoints": [
       "Amortizado = coste promedio sobre una SECUENCIA de operaciones",
       "ArrayList duplica capacidad: el resize cuesta O(n) pero ocurre tras n inserciones",
-      "Coste de n adds: n (normales) + n (copia del resize) = 2n = O(n) total \u2192 O(1) por add",
+      "Coste de n adds: n (normales) + n (copia del resize) = 2n = O(n) total → O(1) por add",
       "Mismo principio: rehash de HashMap o expansión de StringBuilder",
       "NO es lo mismo que el caso promedio (el amortizado es peor caso sobre la secuencia)"
     ],

@@ -95,6 +95,79 @@
     "type": "ORAL_ANSWER"
   },
   {
+    "id": "encap-oral-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Encapsulation",
+    "difficulty": "senior",
+    "question": "What is encapsulation beyond private fields?",
+    "interviewerIntent": "Assess whether the candidate understands encapsulation as protecting business invariants, not just hiding data.",
+    "shortAnswer": "Encapsulation means protecting the valid state of an object by exposing domain operations instead of unrestricted setters. The object controls which state transitions are allowed and prevents invalid combinations from existing.",
+    "modelAnswer": "Context: In our education management system, an enrollment entity could move through statuses like PENDING, CONFIRMED, CANCELLED and COMPLETED.\n\nProblem: Originally, the entity had a public setStatus() method. Any service could set any status at any time, leading to invalid transitions — for example, cancelling an already-completed enrollment.\n\nDecision: I removed the setter and introduced domain methods like confirm(), cancel(reason) and complete(). Each method validated whether the transition was allowed from the current state before changing it.\n\nResult: Invalid state transitions became impossible. Validation was centralized inside the entity rather than scattered across multiple services. Bugs related to inconsistent enrollment states dropped significantly.\n\nTrade-off: The entity became slightly more complex, and some batch operations required additional consideration. But the consistency guarantee was worth it for a domain with strict business rules.",
+    "senaiExample": "In the SGN3 enrollment system, Matricula entities controlled their own status transitions. Instead of allowing any Business class to call setStatus(), the entity exposed confirm() and cancel(reason) methods that validated the transition rules internally.",
+    "reweExample": "A delivery order in a logistics system — an Order entity with methods like dispatch(), markInTransit(), deliver() and returnToWarehouse(), each validating that the current state allows the transition.",
+    "keyPoints": [
+      "Encapsulation protects invariants, not just hides fields",
+      "Domain methods express business operations",
+      "Invalid states should be impossible",
+      "Validation lives close to the state it protects"
+    ],
+    "mistakesToAvoid": [
+      "Saying encapsulation is just making fields private",
+      "Not giving a real example",
+      "Confusing it with data hiding only"
+    ],
+    "followUps": [
+      {
+        "question": "Would you always put validation inside the entity?",
+        "answerHint": "When validation depends only on the entity own state, yes. When it requires external data (DB query, other services), use a domain service or validator."
+      },
+      {
+        "question": "Is this compatible with JPA?",
+        "answerHint": "Yes. JPA uses field access or property access. You can have private fields with no setter and JPA still persists via reflection."
+      },
+      {
+        "question": "How do you test these transitions?",
+        "answerHint": "Unit tests for each valid and invalid transition. No mocks needed — just instantiate, set initial state, call method, assert result or exception."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "business invariant",
+        "meaning": "regra que deve ser sempre verdadeira para o objeto ser válido",
+        "example": "An enrollment cannot be confirmed if it is already cancelled — that is a business invariant."
+      },
+      {
+        "term": "state transition",
+        "meaning": "mudança controlada de um estado para outro",
+        "example": "The confirm() method performs a state transition from PENDING to CONFIRMED."
+      },
+      {
+        "term": "domain operation",
+        "meaning": "operação que expressa uma ação de negócio",
+        "example": "Instead of setStatus(), we use domain operations like confirm() and cancel()."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I explained that encapsulation goes beyond private fields",
+        "weight": 3
+      },
+      {
+        "criterion": "I gave a real example with state transitions",
+        "weight": 3
+      },
+      {
+        "criterion": "I mentioned the benefit (preventing invalid states)",
+        "weight": 2
+      },
+      {
+        "criterion": "I mentioned a trade-off or limitation",
+        "weight": 2
+      }
+    ],
+    "topic": "oop"
+  },
+  {
     "id": "encap-refactor-01",
     "type": "CODE_REFACTOR",
     "subtopic": "Encapsulamiento",
@@ -148,6 +221,148 @@
     "bestOption": "b"
   },
   {
+    "id": "encap-compare-01",
+    "type": "COMPARE_CONCEPTS",
+    "subtopic": "Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "Compare: <strong>Encapsulation</strong> vs <strong>Data Hiding</strong>",
+    "conceptA": {
+      "name": "Encapsulation",
+      "definition": "Protecting object integrity by controlling access to state AND behavior. Exposing meaningful operations instead of raw data manipulation."
+    },
+    "conceptB": {
+      "name": "Data Hiding",
+      "definition": "Making fields private. A necessary technique but not sufficient for true encapsulation."
+    },
+    "keyDifference": "Data hiding is a mechanism (private fields). Encapsulation is a design principle (protecting invariants through domain operations).",
+    "javaExample": "A class with private fields but public getters AND setters for everything is using data hiding but NOT encapsulation. True encapsulation exposes operations like confirm() instead of setStatus().",
+    "interviewAnswer": "Data hiding is making fields private — necessary but not sufficient. Real encapsulation means the object controls which operations are valid and prevents invalid states from existing.",
+    "topic": "oop",
+    "answer": "**Encapsulation:** Protecting object integrity by controlling access to state AND behavior. Exposing meaningful operations instead of raw data manipulation.\n\n**Data Hiding:** Making fields private. A necessary technique but not sufficient for true encapsulation.\n\n\n**Key Difference:** Data hiding is a mechanism (private fields). Encapsulation is a design principle (protecting invariants through domain operations)."
+  },
+  {
+    "id": "encap-followup-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Encapsulation",
+    "difficulty": "senior",
+    "scenario": "The interviewer asks about encapsulation and keeps digging deeper.",
+    "questions": [
+      {
+        "q": "What is encapsulation?",
+        "hint": "Start with protecting invariants, not just private fields."
+      },
+      {
+        "q": "Can you give a real example?",
+        "hint": "Use enrollment/delivery status transitions."
+      },
+      {
+        "q": "What if the validation needs data from the database?",
+        "hint": "Domain service or validator as collaborator. Entity handles what it owns; external checks go outside."
+      },
+      {
+        "q": "Are getters and setters an example of encapsulation?",
+        "hint": "No — they expose raw state. True encapsulation exposes behavior (confirm, cancel) not data (getStatus, setStatus)."
+      },
+      {
+        "q": "How do you handle this with JPA entities?",
+        "hint": "JPA accesses fields via reflection. No setter needed. Domain methods work alongside JPA lifecycle."
+      },
+      {
+        "q": "What about DTOs — should they be encapsulated too?",
+        "hint": "DTOs are data carriers, not domain objects. Getters/setters are fine for DTOs. Encapsulation applies to objects with behavior and invariants."
+      }
+    ],
+    "topic": "oop",
+    "question": "The interviewer asks about encapsulation and keeps digging deeper.",
+    "answer": "**Q: What is encapsulation?**\nStart with protecting invariants, not just private fields.\n\n**Q: Can you give a real example?**\nUse enrollment/delivery status transitions.\n\n**Q: What if the validation needs data from the database?**\nDomain service or validator as collaborator. Entity handles what it owns; external checks go outside.\n\n**Q: Are getters and setters an example of encapsulation?**\nNo — they expose raw state. True encapsulation exposes behavior (confirm, cancel) not data (getStatus, setStatus).\n\n**Q: How do you handle this with JPA entities?**\nJPA accesses fields via reflection. No setter needed. Domain methods work alongside JPA lifecycle.\n\n**Q: What about DTOs — should they be encapsulated too?**\nDTOs are data carriers, not domain objects. Getters/setters are fine for DTOs. Encapsulation applies to objects with behavior and invariants."
+  },
+  {
+    "id": "encap-experience-01",
+    "type": "REAL_EXPERIENCE",
+    "subtopic": "Encapsulation",
+    "difficulty": "senior",
+    "prompt": "Think about a business entity from your experience that had status transitions. How did encapsulation (or lack of it) affect the system?",
+    "guidingQuestions": [
+      "What entity had multiple statuses?",
+      "Who was allowed to change the status?",
+      "What happened when invalid transitions occurred?",
+      "How was it fixed (or how would you fix it)?"
+    ],
+    "exampleStory": "At SENAI, the Matricula (enrollment) entity moved through PENDING → CONFIRMED → ACTIVE → COMPLETED or CANCELLED. Originally any service could call setStatus() directly. A bug allowed cancelling already-completed enrollments, which invalidated issued certificates. The fix was domain methods with precondition checks: cancel() threw an exception if status was COMPLETED. This centralized the rule and made the bug impossible to reproduce.",
+    "buildingBlocks": [
+      "Entity name and domain",
+      "Status values",
+      "Who changed it incorrectly",
+      "What went wrong",
+      "How encapsulation fixed it",
+      "Measurable result"
+    ],
+    "topic": "oop",
+    "answer": "**Guide your answer with:**\n\n- What entity had multiple statuses?\n\n- Who was allowed to change the status?\n\n- What happened when invalid transitions occurred?\n\n- How was it fixed (or how would you fix it)?"
+  },
+  {
+    "id": "encap-predict-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Encapsulation",
+    "difficulty": "basic",
+    "mission": "What happens when this code runs?",
+    "code": "Delivery d = new Delivery(); // status = CREATED\nd.deliver(); // Calling deliver on a CREATED delivery",
+    "choices": [
+      "Status becomes DELIVERED",
+      "IllegalStateException",
+      "NullPointerException",
+      "Compiles but does nothing"
+    ],
+    "answer": "IllegalStateException",
+    "explain": "The deliver() method checks that status is IN_TRANSIT. Since it is CREATED, the precondition fails and an exception is thrown. This IS encapsulation — the object protects itself from invalid transitions.",
+    "topic": "oop"
+  },
+  {
+    "id": "encap-fill-01",
+    "type": "FILL_BLANK",
+    "subtopic": "Encapsulation",
+    "difficulty": "basic",
+    "mission": "Complete the method that <strong>protects the invariant</strong>: an order total cannot be negative.",
+    "code": "public void applyDiscount(BigDecimal discount) {\n    BigDecimal newTotal = this.total.subtract(discount);\n    if (newTotal.compareTo(BigDecimal.ZERO) _____ 0) {\n        throw new IllegalArgumentException(\"Discount exceeds total\");\n    }\n    this.total = newTotal;\n}",
+    "blank": "_____",
+    "choices": [
+      "<",
+      ">",
+      "==",
+      "<="
+    ],
+    "answer": "<",
+    "explain": "If newTotal is less than zero, the invariant is violated. The method PROTECTS the object by rejecting the operation. This is encapsulation — not just hiding the field, but ensuring it always holds a valid value.",
+    "topic": "oop"
+  },
+  {
+    "id": "encap-pick-01",
+    "type": "PICK_INVALID",
+    "subtopic": "Encapsulation",
+    "difficulty": "intermediate",
+    "mission": "Which class has the <strong>weakest encapsulation</strong>?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "class Account {\n  private BigDecimal balance;\n  public void deposit(BigDecimal amt) {\n    if (amt.signum() <= 0) throw ...;\n    balance = balance.add(amt);\n  }\n}",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "class Account {\n  private BigDecimal balance;\n  public BigDecimal getBalance() { return balance; }\n  public void setBalance(BigDecimal b) { this.balance = b; }\n}",
+        "valid": false
+      },
+      {
+        "id": "c",
+        "code": "class Account {\n  private BigDecimal balance = BigDecimal.ZERO;\n  public void withdraw(BigDecimal amt) {\n    if (amt.compareTo(balance) > 0) throw ...;\n    balance = balance.subtract(amt);\n  }\n}",
+        "valid": true
+      }
+    ],
+    "answer": "b",
+    "explain": "Option B has a public setBalance() — any caller can set any value, including negative. The field is private but the encapsulation is meaningless. Options A and C protect their invariants through domain operations.",
+    "topic": "oop"
+  },
+  {
     "id": "encap-oral-02",
     "type": "ORAL_ANSWER",
     "subtopic": "Encapsulamiento",
@@ -156,6 +371,80 @@
     "interviewerIntent": "Probar si el candidato distingue la ocultación mecánica de datos del encapsulamiento significativo.",
     "shortAnswer": "Los getters y setters por sí solos no son encapsulamiento; solo añaden una capa de método sobre un campo público. El verdadero encapsulamiento significa que el objeto expone operaciones de dominio que refuerzan las reglas de negocio, no acceso bruto a su estado.",
     "modelAnswer": "Distingo entre DTOs (donde el get/set es correcto para transportar datos) y entidades de dominio (donde importan el comportamiento y los invariantes). Para objetos de dominio, expongo operaciones como enroll() o cancel() en lugar de setStatus(). Esto hace que los objetos de dominio sean autovalidados.",
+    "topic": "oop"
+  },
+  {
+    "id": "abstract-oral-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Abstraction",
+    "difficulty": "senior",
+    "question": "What is abstraction in a real application?",
+    "interviewerIntent": "Assess whether the candidate sees abstraction as hiding implementation details behind contracts, not just using interfaces everywhere.",
+    "shortAnswer": "Abstraction allows business logic to depend on a contract instead of implementation details. A service uses a Repository interface without knowing if data comes from JPA, an external API, or an in-memory map for testing.",
+    "modelAnswer": "Context: In our enterprise system, business services needed to persist enrollments, send notifications and call external systems.\n\nProblem: If the enrollment service directly instantiated EntityManager, changing the persistence strategy (e.g., moving to a different DB or adding caching) required modifying business code. Testing required a real database.\n\nDecision: I introduced a Repository interface that defined what operations were available (findById, save, findByStatus) without revealing how they were implemented. The business layer depended only on this contract.\n\nResult: Unit tests used an in-memory implementation. The JPA implementation could be optimized (add caching, batch queries) without touching the business service. When we needed to read from a legacy system during migration, we added a new implementation behind the same interface.\n\nTrade-off: Not every class needs an interface. I introduce abstractions only at meaningful boundaries — between business and infrastructure, between modules, or where multiple implementations are realistic.",
+    "senaiExample": "SGN3 Repositories define findById/save contracts. Business classes depend on the interface. Tests can mock them. Changing from native SQL to JPQL required no changes in the Business layer.",
+    "reweExample": "A DeliveryTrackingService depending on a LocationProvider interface — could be GPS hardware, mobile app location, or warehouse scanner without changing the tracking logic.",
+    "keyPoints": [
+      "Abstraction hides HOW, exposes WHAT",
+      "Creates boundaries between layers",
+      "Enables independent testing and evolution",
+      "Not every class needs an interface",
+      "Premature abstraction adds complexity without value"
+    ],
+    "mistakesToAvoid": [
+      "Confusing abstraction with abstract classes",
+      "Creating an interface for every class automatically",
+      "Not explaining when abstraction is unnecessary"
+    ],
+    "followUps": [
+      {
+        "question": "When is an interface unnecessary?",
+        "answerHint": "When there will never be another implementation AND testing does not require it. Internal utility classes, simple mappers, stateless converters."
+      },
+      {
+        "question": "What is a leaky abstraction?",
+        "answerHint": "When the client must know implementation details to use the interface correctly. Example: a Repository interface that exposes flush() or session-specific operations."
+      },
+      {
+        "question": "How do you avoid overengineering?",
+        "answerHint": "Create interfaces at infrastructure boundaries (DB, messaging, external APIs). For internal business classes calling each other, often unnecessary."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "contract",
+        "meaning": "acordo formal sobre o que um componente faz sem dizer como",
+        "example": "The interface defines a contract — clients depend on what it promises, not how it works internally."
+      },
+      {
+        "term": "boundary",
+        "meaning": "limite entre camadas ou módulos do sistema",
+        "example": "We place abstractions at boundaries — between business logic and database, between our system and external APIs."
+      },
+      {
+        "term": "leaky abstraction",
+        "meaning": "abstração que expõe detalhes de implementação",
+        "example": "A leaky abstraction forces the caller to understand internal details to use it correctly."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I explained abstraction as hiding implementation, not just using interfaces",
+        "weight": 3
+      },
+      {
+        "criterion": "I gave a real example with clear boundary",
+        "weight": 3
+      },
+      {
+        "criterion": "I mentioned when NOT to abstract",
+        "weight": 2
+      },
+      {
+        "criterion": "I mentioned testability as a benefit",
+        "weight": 2
+      }
+    ],
     "topic": "oop"
   },
   {
@@ -168,6 +457,469 @@
     "shortAnswer": "No. Introduzco interfaces en límites significativos: entre el negocio y la infraestructura, donde existen múltiples implementaciones reales, o donde el aislamiento para pruebas lo requiere. Para clases internas con una sola implementación que difícilmente cambiará, una interfaz solo añade ruido.",
     "modelAnswer": "Uso interfaces cuando representan un límite real: interfaces de Repositorio, Notificadores (email, SMS) o clientes de sistemas externos. Para llamadas internas de negocio a negocio, inyecto la clase concreta directamente. Esto evita el patrón de 'clase e interfaz espejo' (EnrollmentService / EnrollmentServiceImpl) que no aporta una abstracción real.",
     "topic": "oop"
+  },
+  {
+    "id": "abstract-refactor-01",
+    "type": "CODE_REFACTOR",
+    "subtopic": "Abstraction",
+    "difficulty": "intermediate",
+    "mission": "This <strong>Repository interface</strong> leaks implementation details. Identify the problem and fix it.",
+    "code": "public interface OrderRepository {\n    Optional<Order> findById(Long id);\n    void save(Order order);\n    void flush();                          // JPA-specific!\n    void detach(Order order);              // JPA-specific!\n    Session getSession();                  // Hibernate-specific!\n    void setFlushMode(FlushModeType mode); // JPA-specific!\n}",
+    "problemsToIdentify": [
+      "flush() is a JPA persistence context operation — not a domain concept",
+      "detach() exposes JPA lifecycle management",
+      "getSession() leaks Hibernate directly into the interface",
+      "setFlushMode() is infrastructure configuration, not business",
+      "Any non-JPA implementation cannot meaningfully implement these methods"
+    ],
+    "refactoredCode": "public interface OrderRepository {\n    Optional<Order> findById(Long id);\n    List<Order> findByStatus(OrderStatus status);\n    void save(Order order);\n    void delete(Order order);\n    boolean exists(Long id);\n}\n\n// JPA implementation handles flush/session internally:\n@ApplicationScoped\npublic class JpaOrderRepository implements OrderRepository {\n    @PersistenceContext private EntityManager em;\n\n    public void save(Order order) {\n        em.persist(order);\n        em.flush(); // Implementation detail, hidden from callers\n    }\n}",
+    "explain": "The interface should express WHAT the repository does in business terms (find, save, delete). HOW it persists (flush, session, detach) belongs in the implementation. Callers should not need to know about JPA to use the repository.",
+    "topic": "oop"
+  },
+  {
+    "id": "abstract-design-01",
+    "type": "DESIGN_DECISION",
+    "subtopic": "Abstraction",
+    "difficulty": "senior",
+    "mission": "Your service calls an <strong>external pricing API</strong>. The API might change provider. Should you abstract it?",
+    "options": [
+      {
+        "id": "a",
+        "label": "Call the API directly from business code",
+        "desc": "Use the HTTP client inline where pricing is needed."
+      },
+      {
+        "id": "b",
+        "label": "Interface + current implementation",
+        "desc": "PricingService interface with ExternalPricingClient as implementation."
+      },
+      {
+        "id": "c",
+        "label": "Interface + adapter + anti-corruption layer",
+        "desc": "PricingPort interface, PricingAdapter that translates external DTOs to domain objects."
+      }
+    ],
+    "explanation": {
+      "a": {
+        "pros": [
+          "Fewer files",
+          "Direct and obvious"
+        ],
+        "cons": [
+          "Business logic coupled to HTTP details",
+          "Cannot test without calling real API",
+          "Provider change affects business code"
+        ],
+        "verdict": "Dangerous for external dependencies. Changes in the API format or provider propagate into business logic."
+      },
+      "b": {
+        "pros": [
+          "Business decoupled from implementation",
+          "Testable with mock",
+          "Can swap provider"
+        ],
+        "cons": [
+          "If the interface uses external DTOs, it still leaks"
+        ],
+        "verdict": "Good, but watch for leaking external data structures into the interface."
+      },
+      "c": {
+        "pros": [
+          "Complete isolation",
+          "External format changes contained in adapter",
+          "Domain uses its own language",
+          "Clean test boundary"
+        ],
+        "cons": [
+          "More classes",
+          "Translation overhead"
+        ],
+        "verdict": "Best for external systems that may change. The adapter translates between external and domain models."
+      }
+    },
+    "nuance": "For an internal helper utility, Option A is fine. For an external system you do not control, Option C protects you from format changes and provider switches. The anti-corruption layer is particularly valuable when the external model uses different terminology than your domain.",
+    "topic": "oop",
+    "bestOption": "c"
+  },
+  {
+    "id": "abstract-compare-01",
+    "type": "COMPARE_CONCEPTS",
+    "subtopic": "Abstraction",
+    "difficulty": "intermediate",
+    "mission": "Compare: <strong>Abstraction</strong> vs <strong>Encapsulation</strong>",
+    "conceptA": {
+      "name": "Abstraction",
+      "definition": "Hiding complexity by exposing only relevant operations through a contract. Defines WHAT an object does without revealing HOW."
+    },
+    "conceptB": {
+      "name": "Encapsulation",
+      "definition": "Protecting internal state by restricting access and controlling modifications through domain methods. Ensures VALID state."
+    },
+    "keyDifference": "Abstraction is about what you expose (contract). Encapsulation is about what you protect (state). Abstraction operates at component boundaries. Encapsulation operates within a single component.",
+    "javaExample": "Repository interface = abstraction (hides JPA details). Enrollment entity with confirm()/cancel() = encapsulation (protects state transitions).",
+    "interviewAnswer": "Abstraction defines a contract that hides how something is implemented — like a Repository interface. Encapsulation protects an object's internal state and ensures only valid modifications happen — like an entity with domain methods instead of setters. They complement each other but solve different problems.",
+    "topic": "oop",
+    "answer": "**Abstraction:** Hiding complexity by exposing only relevant operations through a contract. Defines WHAT an object does without revealing HOW.\n\n**Encapsulation:** Protecting internal state by restricting access and controlling modifications through domain methods. Ensures VALID state.\n\n\n**Key Difference:** Abstraction is about what you expose (contract). Encapsulation is about what you protect (state). Abstraction operates at component boundaries. Encapsulation operates within a single component."
+  },
+  {
+    "id": "abstract-followup-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Abstraction",
+    "difficulty": "senior",
+    "scenario": "The interviewer probes your judgment about abstractions.",
+    "questions": [
+      {
+        "q": "Can you have too much abstraction?",
+        "hint": "Yes — premature abstraction. If you abstract before understanding the domain, you get wrong boundaries. Refactoring wrong abstractions is harder than refactoring concrete code."
+      },
+      {
+        "q": "What is a leaky abstraction?",
+        "hint": "When the client must understand the implementation to use it correctly. Example: a \"generic\" repository where you need to call flush() in specific scenarios."
+      },
+      {
+        "q": "How do you decide where to draw the boundary?",
+        "hint": "Where implementation details are likely to change, where different teams own different sides, where you need test isolation, where the external model differs from yours."
+      },
+      {
+        "q": "Have you ever removed an abstraction?",
+        "hint": "Yes — interfaces with only one implementation that added no value. Removed the interface, used the concrete class directly. Code became simpler to navigate."
+      },
+      {
+        "q": "Is abstract class abstraction?",
+        "hint": "Partially. An abstract class provides partial implementation (template method). An interface provides pure contract. Choose based on whether you need shared state/behavior or just a contract."
+      }
+    ],
+    "topic": "oop",
+    "question": "The interviewer probes your judgment about abstractions.",
+    "answer": "**Q: Can you have too much abstraction?**\nYes — premature abstraction. If you abstract before understanding the domain, you get wrong boundaries. Refactoring wrong abstractions is harder than refactoring concrete code.\n\n**Q: What is a leaky abstraction?**\nWhen the client must understand the implementation to use it correctly. Example: a \"generic\" repository where you need to call flush() in specific scenarios.\n\n**Q: How do you decide where to draw the boundary?**\nWhere implementation details are likely to change, where different teams own different sides, where you need test isolation, where the external model differs from yours.\n\n**Q: Have you ever removed an abstraction?**\nYes — interfaces with only one implementation that added no value. Removed the interface, used the concrete class directly. Code became simpler to navigate.\n\n**Q: Is abstract class abstraction?**\nPartially. An abstract class provides partial implementation (template method). An interface provides pure contract. Choose based on whether you need shared state/behavior or just a contract."
+  },
+  {
+    "id": "abstract-experience-01",
+    "type": "REAL_EXPERIENCE",
+    "subtopic": "Abstraction",
+    "difficulty": "intermediate",
+    "prompt": "Think about a repository or data access layer from your experience. How did abstraction (or its absence) help or hurt?",
+    "guidingQuestions": [
+      "Did business code depend directly on EntityManager or on an interface?",
+      "How were unit tests written — did they need a real database?",
+      "Did you ever need to change the data source (different query, different system)?",
+      "Was there a leaky abstraction you had to fix?"
+    ],
+    "exampleStory": "In SGN3, Repository classes implement interfaces that define findById, save, and domain-specific queries. Business classes inject the interface. This allowed us to mock repositories in unit tests and optimize queries (switching from JPQL to native SQL) without modifying business logic. When we needed to read enrollments from both the main database and a legacy system during migration, we created a CompositeEnrollmentRepository behind the same interface.",
+    "buildingBlocks": [
+      "What layer depended on what",
+      "How testing worked",
+      "A time you changed implementation without affecting callers",
+      "A leaky abstraction you encountered"
+    ],
+    "topic": "oop",
+    "answer": "**Guide your answer with:**\n\n- Did business code depend directly on EntityManager or on an interface?\n\n- How were unit tests written — did they need a real database?\n\n- Did you ever need to change the data source (different query, different system)?\n\n- Was there a leaky abstraction you had to fix?"
+  },
+  {
+    "id": "abstract-fill-01",
+    "type": "FILL_BLANK",
+    "subtopic": "Abstraction",
+    "difficulty": "basic",
+    "mission": "Complete the interface that <strong>abstracts</strong> the notification mechanism.",
+    "code": "public _____ NotificationSender {\n    void send(Notification notification);\n}",
+    "blank": "_____",
+    "choices": [
+      "interface",
+      "abstract class",
+      "class",
+      "enum"
+    ],
+    "answer": "interface",
+    "explain": "An interface defines a pure contract — WHAT can be done without HOW. Implementations (EmailSender, SmsSender, PushSender) provide the how. The business service depends only on the interface.",
+    "topic": "oop"
+  },
+  {
+    "id": "abstract-pick-01",
+    "type": "PICK_INVALID",
+    "subtopic": "Abstraction",
+    "difficulty": "intermediate",
+    "mission": "Which is an example of <strong>premature or unnecessary abstraction</strong>?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "interface PaymentGateway {\n  PaymentResult charge(Money amount);\n}\n// Has 3 implementations:\n// StripeGateway, PayPalGateway, MockGateway",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "interface StringUtils {\n  String trim(String s);\n  String upper(String s);\n}\nclass StringUtilsImpl implements StringUtils {\n  // Only implementation ever\n}",
+        "valid": false
+      },
+      {
+        "id": "c",
+        "code": "interface MessageBroker {\n  void publish(Event event);\n}\n// Implementations: KafkaBroker, JmsBroker, InMemoryBroker (tests)",
+        "valid": true
+      }
+    ],
+    "answer": "b",
+    "explain": "StringUtils with an interface is premature abstraction — there will never be another implementation. It adds a file and indirection with zero benefit. PaymentGateway and MessageBroker have real multiple implementations and test boundaries.",
+    "topic": "oop"
+  },
+  {
+    "id": "abstract-predict-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Abstraction",
+    "difficulty": "basic",
+    "mission": "What does this print? The <strong>interface</strong> hides which implementation runs.",
+    "code": "interface Greeter { String greet(); }\nclass Formal implements Greeter {\n    public String greet() { return \"Good morning\"; }\n}\nclass Casual implements Greeter {\n    public String greet() { return \"Hey\"; }\n}\n\nGreeter g = new Casual();\nSystem.out.println(g.greet());",
+    "choices": [
+      "Good morning",
+      "Hey",
+      "Compile Error",
+      "null"
+    ],
+    "answer": "Hey",
+    "explain": "The reference type is Greeter (abstraction), but the runtime object is Casual. The JVM calls Casual.greet(). This is the power of abstraction — the caller code works with ANY Greeter implementation without knowing which one it got.",
+    "topic": "oop"
+  },
+  {
+    "id": "inherit-oral-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Inheritance",
+    "difficulty": "senior",
+    "question": "When is inheritance appropriate?",
+    "interviewerIntent": "Test if the candidate has nuanced judgment — inheritance is not always wrong, but requires specific conditions.",
+    "shortAnswer": "Inheritance is appropriate when there is a genuine and stable is-a relationship, when the subclass can fully substitute the parent (Liskov), and when shared behavior truly belongs together — not just for code reuse.",
+    "modelAnswer": "Context: Many enterprise codebases overuse inheritance — creating deep hierarchies for code sharing rather than genuine type relationships.\n\nProblem: I have seen BaseService, BaseRepository, BaseEntity patterns where 40+ classes extend a single base class that accumulates unrelated utilities. Any change to the base ripples through everything.\n\nDecision: I now apply strict criteria: inheritance only when (1) the subtype IS-A parent in the domain, (2) the subtype can fully replace the parent anywhere without surprises, and (3) the shared behavior is semantically cohesive, not just convenient reuse.\n\nResult: Valid examples in our systems: Exception hierarchies (BusinessException extends RuntimeException), Document types (Certificate, Declaration extend Document with shared number/date), JPA mapped superclasses for auditing fields.\n\nTrade-off: Sometimes inheritance is the simplest solution for 2-3 stable types with shared state. Forcing composition in those cases adds unnecessary indirection. The key is stability — if the hierarchy changes frequently, composition is safer.",
+    "senaiExample": "SGN3 uses inheritance correctly for SenaiEntity (base with ID/audit) and exception hierarchy (SenaiException, BusinessException). It was used incorrectly in some BaseBusinessService patterns that were later refactored to composition.",
+    "reweExample": "Exception hierarchies (DeliveryException, RoutingException extending LogisticsException), or a Vehicle base class (Truck, Van, Bike) with shared capacity/location — if the hierarchy is stable.",
+    "keyPoints": [
+      "Must be genuine is-a, not just code reuse",
+      "Subtype must be safely substitutable (Liskov)",
+      "Hierarchy should be stable over time",
+      "Shallow hierarchies (1-2 levels) are usually fine",
+      "Deep hierarchies become fragile"
+    ],
+    "mistakesToAvoid": [
+      "Saying inheritance is always bad",
+      "Not giving criteria for when it IS appropriate",
+      "Using Animal/Dog/Cat as main example"
+    ],
+    "followUps": [
+      {
+        "question": "What is the fragile base class problem?",
+        "answerHint": "Changes to a base class can silently break subclasses. Subclass behavior depends on implementation details of the parent that may change."
+      },
+      {
+        "question": "Can you give an example where you removed inheritance?",
+        "answerHint": "BaseBusinessService with protected EntityManager, NotificationService — refactored to inject only needed dependencies."
+      },
+      {
+        "question": "Is JPA entity inheritance appropriate?",
+        "answerHint": "MappedSuperclass for shared audit fields = fine. TABLE_PER_CLASS/JOINED for polymorphic queries = use with care, can hurt performance."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "fragile base class",
+        "meaning": "classe-base onde mudanças quebram silenciosamente subclasses",
+        "example": "The fragile base class problem means that modifying the parent can break all 40 subclasses in ways you cannot predict."
+      },
+      {
+        "term": "Liskov substitution",
+        "meaning": "subtipo deve poder substituir o tipo-base sem surpresas",
+        "example": "If Square extends Rectangle but setWidth() changes height too, it violates Liskov — clients of Rectangle get unexpected behavior."
+      },
+      {
+        "term": "shallow hierarchy",
+        "meaning": "hierarquia com apenas 1-2 níveis de profundidade",
+        "example": "A shallow hierarchy like Document → Certificate is manageable. A 5-level hierarchy is a maintenance nightmare."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I gave specific criteria for when inheritance is appropriate",
+        "weight": 3
+      },
+      {
+        "criterion": "I gave a real example of correct AND incorrect inheritance use",
+        "weight": 3
+      },
+      {
+        "criterion": "I mentioned Liskov substitution as a test",
+        "weight": 2
+      },
+      {
+        "criterion": "I acknowledged inheritance is not always wrong",
+        "weight": 2
+      }
+    ],
+    "topic": "oop"
+  },
+  {
+    "id": "inherit-oral-02",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Inheritance",
+    "difficulty": "senior",
+    "question": "What is the fragile base class problem?",
+    "interviewerIntent": "Assess practical understanding of inheritance risks beyond theoretical knowledge.",
+    "shortAnswer": "When a base class changes its implementation, subclasses that depend on those internal details can break silently. The more subclasses extend a base, the riskier any modification becomes.",
+    "modelAnswer": "Context: In a large system, we had a BaseBusinessService with a save() method that called validate(), then persist(), then notifyUser() in sequence.\n\nProblem: A subclass overrode validate() to add custom logic. Later, someone modified the base class to call validate() twice (once before and once after persist for integrity check). The subclass validation now ran twice, sending duplicate notifications. The base class author did not know subclasses relied on validate() being called once.\n\nDecision: We stopped using template method patterns in base classes for critical flows. We moved to composition — each service owns its full flow explicitly. Shared behavior became injected components, not inherited methods.\n\nResult: Each service was self-contained. Changes to shared components required explicit version updates, not silent inheritance propagation.\n\nTrade-off: More explicit code, less \"magic\" reuse. But explicitness is a feature when maintaining a large codebase with multiple developers.",
+    "senaiExample": "SGN3 had BaseService patterns where changing the audit logging in the base class affected 30+ services unexpectedly. The solution was extracting AuditService as an injected component.",
+    "reweExample": "A BaseShipmentProcessor with hooks for preProcess/postProcess — adding a retry mechanism in the base could trigger side effects in all subclass hooks unexpectedly.",
+    "keyPoints": [
+      "Base class changes can silently break subclasses",
+      "Subclasses depend on implementation details they cannot control",
+      "More subclasses = riskier changes to base",
+      "Solution: prefer composition or keep hierarchies shallow and stable"
+    ],
+    "mistakesToAvoid": [
+      "Only giving the theoretical definition without a real example",
+      "Not explaining why this makes inheritance risky in practice"
+    ],
+    "followUps": [
+      {
+        "question": "How do you prevent this?",
+        "answerHint": "Keep hierarchies shallow (1-2 levels). Document which methods are meant to be overridden. Prefer composition for variable behavior."
+      },
+      {
+        "question": "Are final methods a solution?",
+        "answerHint": "Partially. Making base methods final prevents override, but then you cannot customize. It is a signal that the method should not be changed."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "template method",
+        "meaning": "padrão onde a classe-base define o esqueleto e subclasses implementam passos",
+        "example": "Template Method in a base class means subclasses fill in the blanks — but they depend on the skeleton not changing."
+      },
+      {
+        "term": "implicit coupling",
+        "meaning": "acoplamento não óbvio que só aparece quando algo muda",
+        "example": "Inheritance creates implicit coupling — the subclass depends on base class internals without an explicit import or reference."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I explained the problem with a concrete scenario",
+        "weight": 3
+      },
+      {
+        "criterion": "I showed how a base change broke subclasses",
+        "weight": 3
+      },
+      {
+        "criterion": "I offered a solution (composition)",
+        "weight": 2
+      },
+      {
+        "criterion": "I mentioned it as a reason to prefer composition",
+        "weight": 2
+      }
+    ],
+    "topic": "oop"
+  },
+  {
+    "id": "inherit-refactor-01",
+    "type": "CODE_REFACTOR",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "This <strong>base class</strong> is used for code reuse, not a real is-a relationship. Identify problems.",
+    "code": "public abstract class BaseBusinessService {\n    @Inject protected EntityManager em;\n    @Inject protected NotificationService notifier;\n    @Inject protected AuditService audit;\n    @Inject protected CacheService cache;\n    @Inject protected Logger logger;\n\n    protected <T> T find(Class<T> type, Long id) {\n        return em.find(type, id);\n    }\n    protected void notify(String msg) { notifier.send(msg); }\n    protected void auditLog(String action) { audit.log(action); }\n    protected void invalidateCache(String key) { cache.evict(key); }\n}\n\npublic class EnrollmentService extends BaseBusinessService {\n    // Inherits 5 dependencies it may not all need\n    public void enroll(Long studentId) {\n        Student s = find(Student.class, studentId);\n        notify(\"Enrolled: \" + s.getName());\n    }\n}",
+    "problemsToIdentify": [
+      "Inheritance used solely for convenience, not is-a relationship",
+      "All subclasses get ALL dependencies even if unused",
+      "Protected state means subclasses can access internals",
+      "Changes to base affect 40+ subclasses",
+      "Testing requires setting up all 5 dependencies",
+      "Single-class God-object that attracts utilities"
+    ],
+    "refactoredCode": "@ApplicationScoped\npublic class EnrollmentService {\n    @Inject private StudentRepository students;\n    @Inject private NotificationService notifier;\n    // Only declares what it ACTUALLY needs\n\n    public void enroll(Long studentId) {\n        Student s = students.findById(studentId)\n            .orElseThrow(() -> new NotFoundException(\"Student not found\"));\n        // enrollment logic\n        notifier.send(\"Enrolled: \" + s.getName());\n    }\n}",
+    "explain": "Each service declares only its real dependencies. No base class. Testing requires mocking only 2 things instead of 5. Adding a new service does not inherit unwanted baggage.",
+    "topic": "oop"
+  },
+  {
+    "id": "inherit-refactor-02",
+    "type": "CODE_REFACTOR",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "This hierarchy uses inheritance to <strong>share unrelated behaviors</strong>. What is wrong?",
+    "code": "public abstract class BaseEntity {\n    private Long id;\n    private LocalDateTime createdAt;\n    private String createdBy;\n    // Audit fields — OK so far\n\n    // But then...\n    public abstract void validate();        // Validation mixed in\n    public void sendNotification() { ... }  // Notification in entity?!\n    public byte[] toPdf() { ... }           // PDF generation in entity?!\n}\n\npublic class Invoice extends BaseEntity {\n    private BigDecimal total;\n    public void validate() { /* invoice rules */ }\n    // Gets sendNotification() and toPdf() for free\n}",
+    "problemsToIdentify": [
+      "Entity has validation, notification AND PDF generation — three responsibilities",
+      "Invoice gets behaviors it should not own (notification)",
+      "Adding a new entity type inherits all methods even if irrelevant",
+      "Testing validate() requires the entire BaseEntity setup"
+    ],
+    "refactoredCode": "// Base only for SHARED IDENTITY (legitimate use of @MappedSuperclass)\n@MappedSuperclass\npublic abstract class AuditableEntity {\n    @Id private Long id;\n    private LocalDateTime createdAt;\n    private String createdBy;\n}\n\n// Separate responsibilities into their own components:\npublic class Invoice extends AuditableEntity {\n    private BigDecimal total;\n}\n\n@ApplicationScoped\npublic class InvoiceValidator { void validate(Invoice i) {...} }\n@ApplicationScoped\npublic class InvoicePdfGenerator { byte[] generate(Invoice i) {...} }\n@ApplicationScoped\npublic class InvoiceNotifier { void notify(Invoice i) {...} }",
+    "explain": "The base class should only contain what ALL entities genuinely share (ID, audit fields). Behaviors like validation, PDF and notification belong in separate focused components. Inheritance for identity; composition for behavior.",
+    "topic": "oop"
+  },
+  {
+    "id": "inherit-design-01",
+    "type": "DESIGN_DECISION",
+    "subtopic": "Inheritance",
+    "difficulty": "senior",
+    "mission": "You have <strong>5 document types</strong> that share number, date and owner but have different content. How to model in JPA?",
+    "options": [
+      {
+        "id": "a",
+        "label": "@MappedSuperclass",
+        "desc": "Base class with shared fields. Each type has its own table. No polymorphic queries."
+      },
+      {
+        "id": "b",
+        "label": "SINGLE_TABLE inheritance",
+        "desc": "All types in one table with discriminator column. NULL columns for type-specific fields."
+      },
+      {
+        "id": "c",
+        "label": "Composition with document_type column",
+        "desc": "One Document entity with type field. Type-specific data in separate tables joined by FK."
+      }
+    ],
+    "explanation": {
+      "a": {
+        "pros": [
+          "Clean tables",
+          "No NULL columns",
+          "No discriminator logic",
+          "Simple queries per type",
+          "Best performance for type-specific queries"
+        ],
+        "cons": [
+          "Cannot query all documents polymorphically",
+          "Shared behavior needs utility methods or common interface"
+        ],
+        "verdict": "Best when you rarely need to query \"all documents regardless of type\" and each type has very different fields."
+      },
+      "b": {
+        "pros": [
+          "Polymorphic queries work",
+          "Single table = fast joins",
+          "JPA handles discriminator"
+        ],
+        "cons": [
+          "Many NULL columns",
+          "Table grows wide",
+          "All types coupled in one table",
+          "Index on nullable columns less effective"
+        ],
+        "verdict": "Good for 2-3 types with mostly similar fields. Problematic for 5+ types with very different columns."
+      },
+      "c": {
+        "pros": [
+          "Flexible",
+          "No inheritance needed",
+          "Type-specific data isolated",
+          "Easy to add new types"
+        ],
+        "cons": [
+          "Joins needed for complete data",
+          "No JPA polymorphism support",
+          "Manual mapping"
+        ],
+        "verdict": "Good when types share very few fields and you want maximum flexibility. Trades JPA convenience for schema control."
+      }
+    },
+    "nuance": "In practice: @MappedSuperclass for shared audit/identity fields is almost always correct. SINGLE_TABLE works for small, stable hierarchies (2-3 types). For 5+ diverse types, consider composition or separate entities with a shared interface at the Java level.",
+    "topic": "oop",
+    "bestOption": "a"
   },
   {
     "id": "inherit-compare-01",
@@ -188,6 +940,1338 @@
     "answer": "**Clase Abstracta:** Puede tener estado (campos), constructores y métodos concretos. Representa una relación 'es-un' con implementación compartida.\n\n**Interfaz:** Contrato puro. Puede tener métodos por defecto (default) desde Java 8. Representa una capacidad ('puede-hacer')."
   },
   {
+    "id": "inherit-followup-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Inheritance",
+    "difficulty": "senior",
+    "scenario": "The interviewer asks about inheritance decisions in large systems.",
+    "questions": [
+      {
+        "q": "Have you ever removed inheritance from a system?",
+        "hint": "BaseBusinessService pattern — extracted to composed dependencies. Reduced implicit coupling."
+      },
+      {
+        "q": "How many levels deep should a hierarchy go?",
+        "hint": "1-2 levels is manageable. 3+ becomes hard to reason about. If you need 4+, the design probably needs rethinking."
+      },
+      {
+        "q": "What about utility methods — should they be in a base class?",
+        "hint": "No. Static utility class or injected helper service. Inheriting utility methods couples all subclasses to them."
+      },
+      {
+        "q": "Is extends always inheritance?",
+        "hint": "In Java, yes (class inheritance). But extending an abstract class that defines only a contract (no state) is closer to implementing an interface in spirit."
+      },
+      {
+        "q": "How does inheritance affect testing?",
+        "hint": "Tests of a subclass implicitly test the base. Changes to base require re-testing all subclasses. Composition allows testing each component in isolation."
+      }
+    ],
+    "topic": "oop",
+    "question": "The interviewer asks about inheritance decisions in large systems.",
+    "answer": "**Q: Have you ever removed inheritance from a system?**\nBaseBusinessService pattern — extracted to composed dependencies. Reduced implicit coupling.\n\n**Q: How many levels deep should a hierarchy go?**\n1-2 levels is manageable. 3+ becomes hard to reason about. If you need 4+, the design probably needs rethinking.\n\n**Q: What about utility methods — should they be in a base class?**\nNo. Static utility class or injected helper service. Inheriting utility methods couples all subclasses to them.\n\n**Q: Is extends always inheritance?**\nIn Java, yes (class inheritance). But extending an abstract class that defines only a contract (no state) is closer to implementing an interface in spirit.\n\n**Q: How does inheritance affect testing?**\nTests of a subclass implicitly test the base. Changes to base require re-testing all subclasses. Composition allows testing each component in isolation."
+  },
+  {
+    "id": "inherit-experience-01",
+    "type": "REAL_EXPERIENCE",
+    "subtopic": "Inheritance",
+    "difficulty": "senior",
+    "prompt": "Think about a class hierarchy from your experience that became difficult to maintain. What went wrong and how would you redesign it?",
+    "guidingQuestions": [
+      "What was the base class? How many subclasses?",
+      "Was it truly is-a or just code reuse?",
+      "What happened when the base class needed to change?",
+      "Did all subclasses actually need all inherited behavior?",
+      "How would composition solve the problem?"
+    ],
+    "exampleStory": "In SGN3, a BaseBusinessService accumulated protected fields (EntityManager, NotificationService, AuditService, CacheService, Logger). Over 40 services extended it. When we needed to add transaction management logic to the base, it affected services that did not need it. Some subclasses only used 1 of the 5 inherited dependencies. The refactoring removed the base class entirely — each service now injects only what it needs. Testing became trivial because you mock only real dependencies.",
+    "buildingBlocks": [
+      "Base class name and purpose",
+      "Number of subclasses",
+      "What triggered the problem",
+      "Impact on testing",
+      "How you fixed or would fix it"
+    ],
+    "topic": "oop",
+    "answer": "**Guide your answer with:**\n\n- What was the base class? How many subclasses?\n\n- Was it truly is-a or just code reuse?\n\n- What happened when the base class needed to change?\n\n- Did all subclasses actually need all inherited behavior?\n\n- How would composition solve the problem?"
+  },
+  {
+    "id": "inherit-predict-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Inheritance",
+    "difficulty": "basic",
+    "mission": "What does this print? Focus on <strong>method resolution</strong> in inheritance.",
+    "code": "class Base {\n    String name() { return \"Base\"; }\n    void print() { System.out.println(name()); }\n}\nclass Child extends Base {\n    String name() { return \"Child\"; }\n}\n\nBase obj = new Child();\nobj.print();",
+    "choices": [
+      "Base",
+      "Child",
+      "Compile Error",
+      "null"
+    ],
+    "answer": "Child",
+    "explain": "print() calls name(). Since obj is actually a Child instance, Java uses dynamic dispatch — Child.name() is called, not Base.name(). This is runtime polymorphism through inheritance. The reference type (Base) does not determine which override runs.",
+    "topic": "oop"
+  },
+  {
+    "id": "inherit-fill-01",
+    "type": "FILL_BLANK",
+    "subtopic": "Inheritance",
+    "difficulty": "basic",
+    "mission": "What access modifier allows a <strong>subclass in a different package</strong> to access this field?",
+    "code": "public class Document {\n    _____ String documentNumber;\n}",
+    "blank": "_____",
+    "choices": [
+      "protected",
+      "private",
+      "(default)",
+      "public"
+    ],
+    "answer": "protected",
+    "explain": "protected = accessible by subclasses (even in different packages) and same-package classes. private = only the class itself. default = same package only. In inheritance, protected allows controlled sharing with subtypes.",
+    "topic": "oop"
+  },
+  {
+    "id": "inherit-pick-01",
+    "type": "PICK_INVALID",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "Which class <strong>violates Liskov Substitution</strong> Principle?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "class Bird { void fly() {...} }\nclass Eagle extends Bird {\n  void fly() { /* soars high */ }\n}",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "class Bird { void fly() {...} }\nclass Penguin extends Bird {\n  void fly() {\n    throw new UnsupportedOperationException();\n  }\n}",
+        "valid": false
+      },
+      {
+        "id": "c",
+        "code": "class Shape { double area() {...} }\nclass Circle extends Shape {\n  double area() { return PI*r*r; }\n}",
+        "valid": true
+      }
+    ],
+    "answer": "b",
+    "explain": "Penguin cannot fly — throwing UnsupportedOperationException violates the parent contract. Code expecting Bird.fly() will break. This is classic LSP violation: the subtype cannot safely replace the parent. Solution: restructure so not all Birds promise fly().",
+    "topic": "oop"
+  },
+  {
+    "id": "inherit-design-02",
+    "type": "DESIGN_DECISION",
+    "subtopic": "Inheritance",
+    "difficulty": "intermediate",
+    "mission": "Multiple entities need <strong>audit fields</strong> (createdAt, createdBy, updatedAt). Best approach?",
+    "options": [
+      {
+        "id": "a",
+        "label": "Abstract class with @MappedSuperclass",
+        "desc": "AuditableEntity base class with audit fields. All entities extend it."
+      },
+      {
+        "id": "b",
+        "label": "Interface with default methods",
+        "desc": "Auditable interface. Cannot hold state, so fields still in each entity."
+      },
+      {
+        "id": "c",
+        "label": "Embeddable component",
+        "desc": "@Embeddable AuditInfo class. Each entity has @Embedded AuditInfo auditInfo."
+      }
+    ],
+    "explanation": {
+      "a": {
+        "pros": [
+          "JPA handles columns automatically",
+          "Clean — no repetition",
+          "Entity listeners for auto-population",
+          "Well-established JPA pattern"
+        ],
+        "cons": [
+          "Single inheritance consumed",
+          "All entities must extend it",
+          "Cannot add a second base"
+        ],
+        "verdict": "The standard JPA approach. Works well because audit IS genuinely shared state that all entities need."
+      },
+      "b": {
+        "pros": [
+          "Multiple inheritance of type",
+          "Flexible"
+        ],
+        "cons": [
+          "Cannot hold state in interface",
+          "Fields duplicated in each entity",
+          "No JPA support for interface mapping"
+        ],
+        "verdict": "Does not solve the problem — you still need the fields somewhere. Interfaces cannot hold entity state."
+      },
+      "c": {
+        "pros": [
+          "Composition over inheritance",
+          "Reusable without hierarchy",
+          "Entity can have multiple embeddables"
+        ],
+        "cons": [
+          "Slightly more verbose",
+          "Nested access (entity.getAuditInfo().getCreatedAt())",
+          "JPA column naming needs configuration"
+        ],
+        "verdict": "Valid alternative. Better when some entities need different audit models or when you want to avoid the hierarchy tax."
+      }
+    },
+    "nuance": "For standard audit fields that every entity needs identically, @MappedSuperclass is the pragmatic Java/JPA choice. If different entities need different audit configurations, @Embeddable gives more flexibility without consuming the single inheritance slot.",
+    "topic": "oop",
+    "bestOption": "a"
+  },
+  {
+    "id": "poly-oral-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Polymorphism",
+    "difficulty": "senior",
+    "question": "Where did you use polymorphism in a real project?",
+    "interviewerIntent": "Evaluate whether the candidate can connect polymorphism to an actual design decision with measurable benefit.",
+    "shortAnswer": "I used polymorphism in a document generation flow where certificates, declarations and attendance reports each implemented a common DocumentGenerator interface. The business service selected the correct implementation at runtime without conditional logic.",
+    "modelAnswer": "Context: Our education system generated several types of documents — certificates, declarations, attendance reports and transcripts. Each had different content, layout and validation rules.\n\nProblem: The original implementation was a single method with a growing if/else chain based on document type. Adding a new document type meant modifying this method, risking regressions in existing types.\n\nDecision: I introduced a DocumentGenerator interface with a supportedType() method and a generate() method. Each document type got its own implementation. The orchestrating service collected all implementations via CDI injection and selected the correct one at runtime.\n\nResult: New document types could be added by creating a single class implementing the interface — no modification to the main flow. Each implementation was tested independently. The if/else chain of 300+ lines disappeared.\n\nTrade-off: More classes and understanding the service-locator pattern. For a system with only two document types, a switch might be simpler. With 6+ types and growing, polymorphism was clearly justified.",
+    "senaiExample": "SGN3 generates certificates, declarations, attendance and grade reports. Each document type implements DocumentGenerator with its own data-fetching, layout and validation. Adding diploma generation required only one new class.",
+    "reweExample": "Notification channels (email, SMS, push, webhook), shipment processing strategies (standard, express, same-day), or invoice generation for different delivery types — each strategy behind a common interface.",
+    "keyPoints": [
+      "Start with the problem (growing conditional)",
+      "Explain the common contract",
+      "Show how new types are added without changing existing code",
+      "Mention extensibility and testability",
+      "Acknowledge when simpler solutions would suffice"
+    ],
+    "mistakesToAvoid": [
+      "Only defining polymorphism",
+      "Using Animal/Dog/Cat as main example",
+      "Claiming if/else is always wrong",
+      "Not mentioning a concrete result"
+    ],
+    "followUps": [
+      {
+        "question": "How did the service select the correct implementation?",
+        "answerHint": "CDI injected a List. Service built a Map<Type, Generator> at startup. O(1) lookup by type."
+      },
+      {
+        "question": "What if a type had no implementation?",
+        "answerHint": "Throw clear UnsupportedOperationException. Or a fallback/default implementation."
+      },
+      {
+        "question": "Would a switch expression be simpler?",
+        "answerHint": "For 2-3 stable types with trivial logic, yes. For 6+ types with complex independent logic, separate classes are cleaner."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "runtime dispatch",
+        "meaning": "JVM decide qual implementação chamar em tempo de execução",
+        "example": "The JVM performs runtime dispatch — the actual object type determines which method runs."
+      },
+      {
+        "term": "extensibility",
+        "meaning": "capacidade de adicionar comportamento com impacto limitado",
+        "example": "Polymorphism gives extensibility — add a new type without changing existing code."
+      },
+      {
+        "term": "strategy pattern",
+        "meaning": "encapsular algoritmos intercambiáveis atrás de uma interface",
+        "example": "Each pricing strategy implements the same interface — the context selects one at runtime."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I described a real problem that polymorphism solved",
+        "weight": 3
+      },
+      {
+        "criterion": "I explained the common contract and how implementations are selected",
+        "weight": 3
+      },
+      {
+        "criterion": "I mentioned extensibility or testability as benefit",
+        "weight": 2
+      },
+      {
+        "criterion": "I acknowledged when simpler solutions suffice",
+        "weight": 2
+      }
+    ],
+    "topic": "oop"
+  },
+  {
+    "id": "poly-oral-02",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Polymorphism",
+    "difficulty": "intermediate",
+    "question": "What is the difference between overriding and overloading?",
+    "interviewerIntent": "Test precise understanding of compile-time vs runtime polymorphism.",
+    "shortAnswer": "Overriding is runtime polymorphism — a subclass provides a new implementation for an inherited method with the same signature. Overloading is compile-time — same class has multiple methods with the same name but different parameters.",
+    "modelAnswer": "Overriding: The subclass redefines a method inherited from the parent. Same name, same parameters, same return type (or covariant). The JVM decides at runtime which version to call based on the actual object type. This is runtime polymorphism.\n\nOverloading: Multiple methods in the same class with the same name but different parameter types or counts. The compiler decides at compile-time which version to call based on the declared parameter types. This is compile-time polymorphism.\n\nPractical distinction: Overriding is the mechanism behind polymorphism in interfaces and abstract classes — different implementations of the same contract. Overloading is convenience — same operation name for different input types (like valueOf(int), valueOf(String)).\n\nKey rule: Overriding happens in the type hierarchy (parent → child). Overloading happens within the same class or between inherited methods with different signatures.",
+    "senaiExample": "DocumentGenerator.generate() is overridden by each implementation. Repository might overload findByStatus(Status) and findByStatus(Status, Pageable) for convenience.",
+    "reweExample": "ShipmentHandler.process() overridden per shipment type (runtime). A calculateCost(Weight) and calculateCost(Weight, Distance) overloaded in the same class (compile-time).",
+    "keyPoints": [
+      "Override = runtime polymorphism (which object)",
+      "Overload = compile-time (which parameter types)",
+      "Override requires same signature",
+      "Overload requires different parameters",
+      "@Override annotation helps catch errors"
+    ],
+    "mistakesToAvoid": [
+      "Confusing the two",
+      "Not mentioning when each is resolved (compile vs runtime)",
+      "Giving only definitions without practical context"
+    ],
+    "followUps": [
+      {
+        "question": "Can you override a static method?",
+        "answerHint": "No. Static methods belong to the class, not the instance. They can be hidden (same name in subclass) but not overridden — no dynamic dispatch."
+      },
+      {
+        "question": "What is covariant return type?",
+        "answerHint": "An override can return a more specific type. Parent returns Object, child can return String. Added in Java 5."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "dynamic dispatch",
+        "meaning": "JVM seleciona método com base no tipo real do objeto em runtime",
+        "example": "Dynamic dispatch means the JVM checks the actual object type, not the reference type, to call the correct override."
+      },
+      {
+        "term": "method signature",
+        "meaning": "nome do método + tipos dos parâmetros (sem return type)",
+        "example": "Two methods with the same signature in parent and child = override. Same name, different params = overload."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I clearly distinguished compile-time from runtime resolution",
+        "weight": 3
+      },
+      {
+        "criterion": "I gave practical examples of each",
+        "weight": 3
+      },
+      {
+        "criterion": "I mentioned @Override annotation",
+        "weight": 1
+      },
+      {
+        "criterion": "I avoided confusing the two",
+        "weight": 3
+      }
+    ],
+    "topic": "oop"
+  },
+  {
+    "id": "poly-refactor-01",
+    "type": "CODE_REFACTOR",
+    "subtopic": "Polymorphism",
+    "difficulty": "intermediate",
+    "mission": "This <strong>growing conditional</strong> handles different delivery pricing. Refactor using polymorphism.",
+    "code": "public class PricingService {\n    public BigDecimal calculateDeliveryPrice(Order order) {\n        if (order.getDeliveryType() == DeliveryType.STANDARD) {\n            return order.getWeight().multiply(new BigDecimal(\"0.50\"));\n        } else if (order.getDeliveryType() == DeliveryType.EXPRESS) {\n            BigDecimal base = order.getWeight().multiply(new BigDecimal(\"1.20\"));\n            if (order.getDistance() > 50) base = base.add(new BigDecimal(\"5.00\"));\n            return base;\n        } else if (order.getDeliveryType() == DeliveryType.SAME_DAY) {\n            BigDecimal base = order.getWeight().multiply(new BigDecimal(\"2.50\"));\n            base = base.add(order.getDistance().multiply(new BigDecimal(\"0.30\")));\n            if (isWeekend()) base = base.multiply(new BigDecimal(\"1.5\"));\n            return base;\n        }\n        throw new IllegalArgumentException(\"Unknown type\");\n    }\n}",
+    "problemsToIdentify": [
+      "Each delivery type has different, complex logic — hard to read together",
+      "Adding a new type requires modifying this method (OCP violation)",
+      "Cannot test one pricing strategy without the others",
+      "Pricing rules for same-day are much more complex — buried in else-if"
+    ],
+    "refactoredCode": "public interface DeliveryPricingStrategy {\n    DeliveryType supportedType();\n    BigDecimal calculate(Order order);\n}\n\n@ApplicationScoped\npublic class StandardPricing implements DeliveryPricingStrategy {\n    public DeliveryType supportedType() { return DeliveryType.STANDARD; }\n    public BigDecimal calculate(Order order) {\n        return order.getWeight().multiply(new BigDecimal(\"0.50\"));\n    }\n}\n\n@ApplicationScoped\npublic class SameDayPricing implements DeliveryPricingStrategy {\n    public DeliveryType supportedType() { return DeliveryType.SAME_DAY; }\n    public BigDecimal calculate(Order order) {\n        BigDecimal base = order.getWeight().multiply(new BigDecimal(\"2.50\"));\n        base = base.add(order.getDistance().multiply(new BigDecimal(\"0.30\")));\n        if (isWeekend()) base = base.multiply(new BigDecimal(\"1.5\"));\n        return base;\n    }\n}\n\n@ApplicationScoped\npublic class PricingService {\n    private final Map<DeliveryType, DeliveryPricingStrategy> strategies;\n\n    @Inject\n    public PricingService(List<DeliveryPricingStrategy> all) {\n        this.strategies = all.stream()\n            .collect(Collectors.toMap(DeliveryPricingStrategy::supportedType, Function.identity()));\n    }\n\n    public BigDecimal calculateDeliveryPrice(Order order) {\n        return strategies.get(order.getDeliveryType()).calculate(order);\n    }\n}",
+    "explain": "Each strategy is isolated, testable and can evolve independently. Adding \"drone delivery\" pricing means creating one new class — zero changes to existing code. The service selects by type and delegates.",
+    "topic": "oop"
+  },
+  {
+    "id": "poly-refactor-02",
+    "type": "CODE_REFACTOR",
+    "subtopic": "Polymorphism",
+    "difficulty": "intermediate",
+    "mission": "Refactor this <strong>notification dispatcher</strong> that keeps growing with each new channel.",
+    "code": "public void sendNotification(User user, String message, Channel channel) {\n    switch (channel) {\n        case EMAIL:\n            emailClient.send(user.getEmail(), \"Subject\", message);\n            break;\n        case SMS:\n            smsGateway.sendSms(user.getPhone(), message.substring(0, 160));\n            break;\n        case PUSH:\n            firebaseClient.pushNotification(user.getDeviceToken(), \"Alert\", message);\n            break;\n        case SLACK:\n            slackWebhook.post(user.getSlackId(), message);\n            break;\n        // TODO: add WhatsApp, Telegram...\n    }\n}",
+    "problemsToIdentify": [
+      "Every new channel requires modifying this switch",
+      "Each channel has different dependencies (email client, SMS gateway, Firebase)",
+      "Testing requires mocking ALL clients even when testing one channel",
+      "Channel-specific logic (substring for SMS) mixed together"
+    ],
+    "refactoredCode": "public interface NotificationChannel {\n    Channel type();\n    boolean supports(User user);  // user has this channel configured?\n    void send(User user, String message);\n}\n\n@ApplicationScoped\npublic class SmsChannel implements NotificationChannel {\n    @Inject private SmsGateway gateway;\n    public Channel type() { return Channel.SMS; }\n    public boolean supports(User user) { return user.getPhone() != null; }\n    public void send(User user, String message) {\n        gateway.sendSms(user.getPhone(), message.substring(0, Math.min(160, message.length())));\n    }\n}\n\n@ApplicationScoped\npublic class NotificationDispatcher {\n    @Inject private List<NotificationChannel> channels;\n\n    public void send(User user, String message, Channel preferred) {\n        channels.stream()\n            .filter(c -> c.type() == preferred)\n            .filter(c -> c.supports(user))\n            .findFirst()\n            .ifPresent(c -> c.send(user, message));\n    }\n}",
+    "explain": "Each channel owns its dependency and channel-specific logic. Adding WhatsApp means one new class implementing NotificationChannel. The dispatcher is stable — never modified when channels change.",
+    "topic": "oop"
+  },
+  {
+    "id": "poly-design-01",
+    "type": "DESIGN_DECISION",
+    "subtopic": "Polymorphism",
+    "difficulty": "senior",
+    "mission": "You have a <strong>simple status label</strong> that maps status to display text. Polymorphism or switch?",
+    "options": [
+      {
+        "id": "a",
+        "label": "Switch/map expression",
+        "desc": "A simple switch or Map<Status, String> that returns display text for each status."
+      },
+      {
+        "id": "b",
+        "label": "Polymorphic Status with display()",
+        "desc": "Each Status value is an object with its own display() method."
+      },
+      {
+        "id": "c",
+        "label": "Enum with abstract method",
+        "desc": "Status enum where each constant implements abstract String displayText()."
+      }
+    ],
+    "explanation": {
+      "a": {
+        "pros": [
+          "Simple, readable",
+          "All mappings visible in one place",
+          "No extra classes for trivial logic",
+          "Easy to change"
+        ],
+        "cons": [
+          "Must update when new status added",
+          "But adding a status is rare and this IS the place to update"
+        ],
+        "verdict": "Best for simple mapping/formatting with no complex logic per case."
+      },
+      "b": {
+        "pros": [
+          "Each status self-contained"
+        ],
+        "cons": [
+          "Massive overkill for returning a string",
+          "Many files for trivial behavior",
+          "Harder to see all statuses at once"
+        ],
+        "verdict": "Overengineered. Use polymorphism for complex behavior, not simple data mapping."
+      },
+      "c": {
+        "pros": [
+          "Self-documenting",
+          "Compile error if new constant forgets to implement"
+        ],
+        "cons": [
+          "Slightly verbose for one-liner",
+          "Good for 2-3 methods, heavy for many"
+        ],
+        "verdict": "Good middle ground IF the enum already has behavior. For just a label, Map or switch is clearer."
+      }
+    },
+    "nuance": "Polymorphism solves \"complex behavior that varies by type.\" A simple status-to-label mapping is DATA, not behavior. A Map<Status, String> or switch expression is the right tool. Do not use a cannon to kill a mosquito.",
+    "topic": "oop",
+    "bestOption": "a"
+  },
+  {
+    "id": "poly-design-02",
+    "type": "DESIGN_DECISION",
+    "subtopic": "Polymorphism",
+    "difficulty": "senior",
+    "mission": "You need to <strong>select the correct payment processor</strong> at runtime (Stripe, PayPal, or BankTransfer). How?",
+    "options": [
+      {
+        "id": "a",
+        "label": "If/else on payment method",
+        "desc": "Check paymentMethod field and call the appropriate service directly."
+      },
+      {
+        "id": "b",
+        "label": "CDI @Inject Instance<PaymentProcessor>",
+        "desc": "Inject all implementations via CDI Instance, iterate to find the matching one."
+      },
+      {
+        "id": "c",
+        "label": "Map<PaymentMethod, PaymentProcessor> at startup",
+        "desc": "Build a lookup map from all implementations during initialization."
+      }
+    ],
+    "explanation": {
+      "a": {
+        "pros": [
+          "Explicit and simple"
+        ],
+        "cons": [
+          "Must modify for every new processor",
+          "Calling service has knowledge of all processors",
+          "Violates OCP"
+        ],
+        "verdict": "Acceptable for 2 stable options. Problematic as processors grow."
+      },
+      "b": {
+        "pros": [
+          "CDI handles discovery",
+          "No explicit registration",
+          "New processors auto-discovered"
+        ],
+        "cons": [
+          "Linear search each call (O(n))",
+          "Less explicit — harder to debug",
+          "Instance iteration pattern less readable"
+        ],
+        "verdict": "Works but the iteration pattern is less clean than a pre-built map."
+      },
+      "c": {
+        "pros": [
+          "O(1) lookup",
+          "Clear initialization",
+          "New processors auto-registered via CDI list",
+          "Easy to detect duplicates",
+          "Single point to debug"
+        ],
+        "cons": [
+          "Slightly more setup code",
+          "Must handle missing processor"
+        ],
+        "verdict": "Best balance: CDI injects the list, you build the map once, lookup is instant and clear. Used extensively in production."
+      }
+    },
+    "nuance": "Option C is the pattern we used in production at SENAI for document generators, notification channels and validation strategies. CDI provides all implementations; we organize them into a map for O(1) dispatch.",
+    "topic": "oop",
+    "bestOption": "c"
+  },
+  {
+    "id": "poly-compare-01",
+    "type": "COMPARE_CONCEPTS",
+    "subtopic": "Polymorphism",
+    "difficulty": "basic",
+    "mission": "Compare: <strong>Overriding</strong> vs <strong>Overloading</strong>",
+    "conceptA": {
+      "name": "Overriding",
+      "definition": "Subclass redefines an inherited method with SAME signature. Resolved at RUNTIME based on actual object type. @Override annotation."
+    },
+    "conceptB": {
+      "name": "Overloading",
+      "definition": "Same class has methods with SAME name but DIFFERENT parameters. Resolved at COMPILE-TIME based on declared parameter types."
+    },
+    "keyDifference": "Override = runtime, same signature, in subclass. Overload = compile-time, different parameters, same class. Override enables polymorphism; overload is syntactic convenience.",
+    "javaExample": "Override: CertificateGenerator.generate() redefines DocumentGenerator.generate(). Overload: logger.log(String), logger.log(String, Throwable) — same name, different params.",
+    "interviewAnswer": "Overriding is runtime polymorphism — the JVM picks the method based on actual object type. Overloading is compile-time convenience — the compiler picks based on parameter types. They serve different purposes: overriding for polymorphic behavior, overloading for method signature variations.",
+    "topic": "oop",
+    "answer": "**Overriding:** Subclass redefines an inherited method with SAME signature. Resolved at RUNTIME based on actual object type. @Override annotation.\n\n**Overloading:** Same class has methods with SAME name but DIFFERENT parameters. Resolved at COMPILE-TIME based on declared parameter types.\n\n\n**Key Difference:** Override = runtime, same signature, in subclass. Overload = compile-time, different parameters, same class. Override enables polymorphism; overload is syntactic convenience."
+  },
+  {
+    "id": "poly-followup-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Polymorphism",
+    "difficulty": "senior",
+    "scenario": "The interviewer probes deeper after you mention using polymorphism.",
+    "questions": [
+      {
+        "q": "How did CDI inject multiple implementations?",
+        "hint": "@Inject Instance<T> or @Inject List<T>. CDI discovers all beans implementing the interface. You iterate or build a map."
+      },
+      {
+        "q": "How did you detect duplicate implementations for the same type?",
+        "hint": "At map-building time: if toMap() throws on duplicate key, or check size of list vs map. Fail fast at startup."
+      },
+      {
+        "q": "What about testing — how did you test the dispatcher?",
+        "hint": "Unit test: mock individual generators. Integration test: inject real implementations, verify correct one is called per type."
+      },
+      {
+        "q": "What would you do if there were only 2 types?",
+        "hint": "A switch or if/else is fine for 2 simple stable types. Polymorphism pays off at 3+ types with complex independent logic."
+      },
+      {
+        "q": "Can polymorphism make code harder to understand?",
+        "hint": "Yes — you cannot see the full flow in one place. Debugging requires knowing which implementation runs. Mitigate with clear naming and logging."
+      },
+      {
+        "q": "Is this the Strategy pattern?",
+        "hint": "Yes, essentially. Strategy = encapsulate a family of algorithms behind a common interface, select one at runtime."
+      }
+    ],
+    "topic": "oop",
+    "question": "The interviewer probes deeper after you mention using polymorphism.",
+    "answer": "**Q: How did CDI inject multiple implementations?**\n@Inject Instance<T> or @Inject List<T>. CDI discovers all beans implementing the interface. You iterate or build a map.\n\n**Q: How did you detect duplicate implementations for the same type?**\nAt map-building time: if toMap() throws on duplicate key, or check size of list vs map. Fail fast at startup.\n\n**Q: What about testing — how did you test the dispatcher?**\nUnit test: mock individual generators. Integration test: inject real implementations, verify correct one is called per type.\n\n**Q: What would you do if there were only 2 types?**\nA switch or if/else is fine for 2 simple stable types. Polymorphism pays off at 3+ types with complex independent logic.\n\n**Q: Can polymorphism make code harder to understand?**\nYes — you cannot see the full flow in one place. Debugging requires knowing which implementation runs. Mitigate with clear naming and logging.\n\n**Q: Is this the Strategy pattern?**\nYes, essentially. Strategy = encapsulate a family of algorithms behind a common interface, select one at runtime."
+  },
+  {
+    "id": "poly-followup-02",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Polymorphism",
+    "difficulty": "senior",
+    "scenario": "The interviewer challenges: \"When is a switch statement acceptable?\"",
+    "questions": [
+      {
+        "q": "Is a switch statement always a code smell?",
+        "hint": "No. It is appropriate for simple mappings, formatting, and stable enums with trivial logic."
+      },
+      {
+        "q": "When would you NOT refactor to polymorphism?",
+        "hint": "When logic per case is 1-2 lines, when the set of cases is stable and small, when the mapping is data (not behavior)."
+      },
+      {
+        "q": "What about Java 17+ switch expressions with pattern matching?",
+        "hint": "They make switch more powerful and type-safe. sealed classes + switch = compiler guarantees exhaustiveness. Can reduce need for polymorphism in some cases."
+      },
+      {
+        "q": "What is the cost of premature polymorphism?",
+        "hint": "More classes, harder navigation, abstraction that does not carry its weight. 5 classes for 2 simple cases = overengineering."
+      }
+    ],
+    "topic": "oop",
+    "question": "The interviewer challenges: \"When is a switch statement acceptable?\"",
+    "answer": "**Q: Is a switch statement always a code smell?**\nNo. It is appropriate for simple mappings, formatting, and stable enums with trivial logic.\n\n**Q: When would you NOT refactor to polymorphism?**\nWhen logic per case is 1-2 lines, when the set of cases is stable and small, when the mapping is data (not behavior).\n\n**Q: What about Java 17+ switch expressions with pattern matching?**\nThey make switch more powerful and type-safe. sealed classes + switch = compiler guarantees exhaustiveness. Can reduce need for polymorphism in some cases.\n\n**Q: What is the cost of premature polymorphism?**\nMore classes, harder navigation, abstraction that does not carry its weight. 5 classes for 2 simple cases = overengineering."
+  },
+  {
+    "id": "poly-experience-01",
+    "type": "REAL_EXPERIENCE",
+    "subtopic": "Polymorphism",
+    "difficulty": "senior",
+    "prompt": "Describe a time you replaced a conditional structure with polymorphism. What was the before, the after, and the trade-off?",
+    "guidingQuestions": [
+      "What was the business domain?",
+      "What was the conditional checking (document type, status, role)?",
+      "How many cases existed and were growing?",
+      "What interface/contract did you introduce?",
+      "How were implementations selected at runtime?",
+      "What was the measurable improvement?",
+      "Was there any downside?"
+    ],
+    "exampleStory": "In the document generation module at SENAI, a 300-line if/else chain handled 6 document types (certificate, declaration, attendance, grade report, transcript, diploma). Each type had 40-50 lines of specific logic. Adding diploma generation required understanding all 300 lines to find the right insertion point. After refactoring to DocumentGenerator interface with CDI injection, each type was an isolated 50-line class. Adding a new type took 30 minutes instead of a full day. Testing went from \"test everything together\" to \"test one generator in isolation.\" The main service method went from 300 lines to 5 lines of delegation.",
+    "buildingBlocks": [
+      "Domain and entity types",
+      "Original conditional structure",
+      "Interface introduced",
+      "How runtime selection works",
+      "Before vs after metrics",
+      "Trade-off acknowledged"
+    ],
+    "topic": "oop",
+    "answer": "**Guide your answer with:**\n\n- What was the business domain?\n\n- What was the conditional checking (document type, status, role)?\n\n- How many cases existed and were growing?\n\n- What interface/contract did you introduce?\n\n- How were implementations selected at runtime?\n\n- What was the measurable improvement?\n\n- Was there any downside?"
+  },
+  {
+    "id": "poly-predict-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Polymorphism",
+    "difficulty": "basic",
+    "mission": "What does this print? Think about <strong>runtime dispatch</strong>.",
+    "code": "interface Processor { String process(); }\nclass Fast implements Processor { public String process() { return \"FAST\"; } }\nclass Slow implements Processor { public String process() { return \"SLOW\"; } }\n\nProcessor p = new Fast();\nSystem.out.println(p.process());",
+    "choices": [
+      "FAST",
+      "SLOW",
+      "Compile Error",
+      "null"
+    ],
+    "answer": "FAST",
+    "explain": "The reference type is Processor but the actual object is Fast. The JVM calls Fast.process(). This is runtime polymorphism — the interface hides which implementation runs, but the actual object determines behavior.",
+    "topic": "oop"
+  },
+  {
+    "id": "poly-predict-02",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Polymorphism",
+    "difficulty": "intermediate",
+    "mission": "Which overload is called? Think about <strong>compile-time resolution</strong>.",
+    "code": "class Logger {\n    void log(Object o)  { System.out.println(\"Object: \" + o); }\n    void log(String s)  { System.out.println(\"String: \" + s); }\n}\n\nObject message = \"Hello\";\nnew Logger().log(message);",
+    "choices": [
+      "String: Hello",
+      "Object: Hello",
+      "Compile Error",
+      "Both"
+    ],
+    "answer": "Object: Hello",
+    "explain": "Overloading is resolved at COMPILE-TIME based on the DECLARED type of the argument. The variable is declared as Object, so log(Object) is selected — even though the actual runtime value is a String. This is the key difference from overriding (which uses runtime type).",
+    "topic": "oop"
+  },
+  {
+    "id": "poly-fill-01",
+    "type": "FILL_BLANK",
+    "subtopic": "Polymorphism",
+    "difficulty": "basic",
+    "mission": "Complete the class so it can be used <strong>polymorphically</strong> as a ShipmentHandler.",
+    "code": "public class ExpressShipmentHandler _____ ShipmentHandler {\n    @Override\n    public void handle(Shipment s) { /* express logic */ }\n}",
+    "blank": "_____",
+    "choices": [
+      "implements",
+      "extends",
+      "overrides",
+      "uses"
+    ],
+    "answer": "implements",
+    "explain": "implements connects a class to an interface contract. The class promises to provide the behavior defined by ShipmentHandler. Now ExpressShipmentHandler can be used wherever ShipmentHandler is expected — that is polymorphism.",
+    "topic": "oop"
+  },
+  {
+    "id": "poly-pick-01",
+    "type": "PICK_INVALID",
+    "subtopic": "Polymorphism",
+    "difficulty": "intermediate",
+    "mission": "Which design does <strong>NOT</strong> use polymorphism effectively?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "interface Validator { void validate(Order o); }\nclass SizeValidator implements Validator {...}\nclass WeightValidator implements Validator {...}\n// All validators called via List<Validator>",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "interface Exporter { void export(Data d); }\nclass CsvExporter implements Exporter {...}\nclass PdfExporter implements Exporter {...}\n// Selected by user preference",
+        "valid": true
+      },
+      {
+        "id": "c",
+        "code": "interface Processor { void process(); }\nclass TheProcessor implements Processor {\n  void process() {\n    if (type == A) handleA();\n    else if (type == B) handleB();\n  }\n}",
+        "valid": false
+      }
+    ],
+    "answer": "c",
+    "explain": "Option C has an interface with ONE implementation that still uses if/else internally — the polymorphism is fake. The conditional should be REPLACED by multiple implementations, not hidden behind a single class. Options A and B use genuine polymorphism with multiple independent implementations.",
+    "topic": "oop"
+  },
+  {
+    "id": "poly-oral-03",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Polymorphism",
+    "difficulty": "senior",
+    "question": "Can polymorphism make a design more complex? When is it not worth it?",
+    "interviewerIntent": "Test maturity — can the candidate recognize overengineering, not just advocate for patterns blindly.",
+    "shortAnswer": "Yes. Polymorphism adds indirection — you cannot see the full flow in one place. For 2-3 simple stable cases, a switch is clearer. Polymorphism pays off when types have complex independent logic, grow over time, or need independent testing.",
+    "modelAnswer": "Context: Polymorphism is powerful but has real costs that must be weighed against benefits.\n\nProblem: I have seen codebases where a simple two-case formatting logic was split into an interface, a factory, two implementation classes and a configuration class — 5 files for what could be a 3-line switch.\n\nDecision: I apply polymorphism when: (1) each case has complex independent logic (>10 lines), (2) the set of cases is growing, (3) cases need different dependencies, or (4) cases need independent testing. I use switch/map when: logic per case is trivial, the set is small and stable, and a new developer can understand it in 30 seconds.\n\nResult: This selective approach keeps simple things simple while allowing complex areas to scale cleanly.\n\nTrade-off: Sometimes you misjudge — you use a switch and later need to refactor to polymorphism when complexity grows. That is acceptable. Starting simple and evolving is better than overengineering from day one.",
+    "senaiExample": "Simple status-to-label mappings use enums or Maps. Complex document generation with 6+ types and different dependencies uses polymorphic generators. The boundary is: \"does each case need its own class to be readable?\"",
+    "reweExample": "Delivery status display text = switch (trivial). Delivery pricing with zone calculations, weekend surcharges and weight tiers = polymorphic strategies (complex, independent, growing).",
+    "keyPoints": [
+      "Polymorphism adds indirection (cost)",
+      "Simple cases: switch is clearer",
+      "Complex/growing cases: polymorphism scales",
+      "Judge by complexity per case and growth rate",
+      "Starting simple and refactoring later is valid"
+    ],
+    "mistakesToAvoid": [
+      "Saying polymorphism is always better",
+      "Not acknowledging the navigation/debugging cost",
+      "Giving no criteria for the decision"
+    ],
+    "followUps": [
+      {
+        "question": "How do you decide the threshold?",
+        "answerHint": "When each case exceeds 10-15 lines, has its own dependencies, or when the set of cases grew twice in the last quarter — time to extract."
+      },
+      {
+        "question": "What about debugging polymorphic code?",
+        "answerHint": "Harder to trace. Mitigate with clear logging at dispatch point, good class names, and IDE \"find implementations\" support."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "indirection",
+        "meaning": "camada adicional entre chamador e implementação",
+        "example": "Polymorphism adds indirection — you must know which implementation is active to understand the flow."
+      },
+      {
+        "term": "overengineering",
+        "meaning": "solução mais complexa do que o problema justifica",
+        "example": "Five classes for a two-case formatting is overengineering — a switch would be clearer."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I acknowledged that polymorphism has costs",
+        "weight": 3
+      },
+      {
+        "criterion": "I gave criteria for when to use vs not use it",
+        "weight": 3
+      },
+      {
+        "criterion": "I showed a mature balance (not always for/against)",
+        "weight": 2
+      },
+      {
+        "criterion": "I mentioned navigation/debugging difficulty",
+        "weight": 2
+      }
+    ],
+    "topic": "oop"
+  },
+  {
+    "id": "comp-oral-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Composition",
+    "difficulty": "senior",
+    "question": "Why would you prefer composition over inheritance?",
+    "interviewerIntent": "Assess whether the candidate understands coupling trade-offs and can justify design choices in a service-oriented architecture.",
+    "shortAnswer": "Composition assembles behavior from independent components injected as dependencies. It avoids tight coupling of inheritance, allows replacing implementations independently, and makes each component testable in isolation. In Spring Boot, constructor injection makes this natural.",
+    "modelAnswer": "Context: In enterprise systems, business services typically need validation, persistence, event publishing and notification capabilities.\n\nProblem: An earlier design used a BaseBusinessService with protected fields for EntityManager, NotificationService and AuditService. Every service extended this base class. Changes to the base affected all 40+ subclasses. Testing required complex setup because of inherited dependencies.\n\nDecision: I refactored services to receive dependencies through injection instead of inheriting them. Each service declared only what it actually needed. In Spring Boot, this maps naturally to constructor injection — each @Service receives only its real collaborators.\n\nResult: Services became focused. Unit testing became straightforward — mock only what you need. New capabilities could be added without modifying a base class.\n\nTrade-off: More classes and constructor parameters. The flow passes through more objects. But explicitness is a feature in team codebases — any developer can see exactly what a service depends on by reading its constructor.",
+    "senaiExample": "SGN3 Business layer injects Repository, Validator and JMS dependencies via CDI rather than inheriting from a base class. Each Business is composed of exactly the components it needs.",
+    "reweExample": "A DeliveryPlanningService composes DeliveryRepository, RouteValidator, LogisticsEventPublisher and DriverNotificationService — each independently injectable, testable and replaceable.",
+    "keyPoints": [
+      "Inheritance creates tight coupling between base and subclasses",
+      "Composition allows independent replacement of components",
+      "Constructor injection makes dependencies explicit",
+      "Each component is testable in isolation",
+      "Inheritance is not always wrong — valid for stable is-a relationships"
+    ],
+    "mistakesToAvoid": [
+      "Saying inheritance is always bad",
+      "Confusing composition with simply having fields",
+      "Not mentioning valid use cases for inheritance",
+      "Not connecting to Spring Boot constructor injection"
+    ],
+    "followUps": [
+      {
+        "question": "Is dependency injection the same as composition?",
+        "answerHint": "DI is a mechanism to PROVIDE dependencies. Composition is a design principle — assembling behavior from parts. DI enables composition but they are different concepts."
+      },
+      {
+        "question": "How would you avoid a service with too many dependencies?",
+        "answerHint": "If constructor has 7+ params, the service probably has too many responsibilities. Extract a sub-orchestrator or split into focused services."
+      },
+      {
+        "question": "Why constructor injection over field injection?",
+        "answerHint": "Immutable (final fields), clear dependencies visible in constructor, works without reflection, and fails fast at startup if dependency missing."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "delegation",
+        "meaning": "delegar trabalho para outro objeto em vez de herdar capacidade",
+        "example": "The service delegates validation to a composed RouteValidator rather than inheriting validation logic."
+      },
+      {
+        "term": "constructor injection",
+        "meaning": "dependências fornecidas via construtor, tornando-as explícitas e imutáveis",
+        "example": "Spring Boot favors constructor injection — dependencies declared as final fields, provided at instantiation."
+      },
+      {
+        "term": "independently replaceable",
+        "meaning": "componente que pode ser trocado sem afetar outros",
+        "example": "Swapping KafkaEventPublisher for an InMemoryPublisher in tests requires zero changes to the business service."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I explained the problem inheritance caused",
+        "weight": 3
+      },
+      {
+        "criterion": "I showed how composition solved it",
+        "weight": 3
+      },
+      {
+        "criterion": "I connected to Spring Boot constructor injection",
+        "weight": 2
+      },
+      {
+        "criterion": "I acknowledged valid uses of inheritance",
+        "weight": 2
+      }
+    ],
+    "topic": "oop"
+  },
+  {
+    "id": "comp-oral-02",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Composition",
+    "difficulty": "intermediate",
+    "question": "How does dependency injection support composition?",
+    "interviewerIntent": "Verify the candidate understands the relationship between DI as mechanism and composition as design principle.",
+    "shortAnswer": "Dependency injection provides the collaborators that a composed service needs. Without DI, you would instantiate dependencies manually. With DI (CDI or Spring), the container assembles the object graph — each service receives exactly the components it needs.",
+    "modelAnswer": "Context: Composition means assembling behavior from independent parts. But those parts need to be provided somehow.\n\nProblem: Without DI, a DeliveryPlanningService would need to instantiate its own DeliveryRepository, RouteValidator, EventPublisher. This couples it to concrete implementations and makes testing impossible without real infrastructure.\n\nDecision: DI (whether CDI in Java EE or Spring in Spring Boot) provides the implementations. The service declares what it needs via constructor parameters. The container resolves and provides them at runtime.\n\nResult: The service is composed of abstractions. In tests, you provide mocks. In production, Spring provides real implementations. The service itself never changes.\n\nConnection to REWE stack: In Spring Boot, constructor injection is the standard. Kotlin makes it even more concise with primary constructors. CDI @Inject in my current environment serves the same purpose — the principle transfers directly.",
+    "senaiExample": "CDI @Inject in SGN3 provides Repository and Business dependencies. The service never creates its own collaborators — the container assembles them.",
+    "reweExample": "Spring Boot auto-wires DeliveryRepository (Spring Data), KafkaLogisticsEventPublisher (@Component), DriverNotificationService (@Service) into the planning service via constructor.",
+    "keyPoints": [
+      "DI is the mechanism, composition is the design",
+      "Constructor declares what the service needs",
+      "Container provides implementations",
+      "Tests provide mocks",
+      "Same principle in CDI and Spring"
+    ],
+    "mistakesToAvoid": [
+      "Confusing DI with composition",
+      "Not mentioning testability",
+      "Not connecting CDI experience to Spring"
+    ],
+    "followUps": [
+      {
+        "question": "What is the difference between DI and DIP?",
+        "answerHint": "DI = technique (how dependencies are provided). DIP = principle (high-level depends on abstraction, not concrete). DI enables DIP."
+      },
+      {
+        "question": "Can you have composition without DI?",
+        "answerHint": "Yes — manual instantiation in main() or factory. But DI makes it declarative and container-managed. Without DI, you wire everything by hand."
+      }
+    ],
+    "vocabulary": [
+      {
+        "term": "object graph",
+        "meaning": "rede de objetos conectados por dependências",
+        "example": "The DI container builds the entire object graph at startup — connecting services to repositories to publishers."
+      },
+      {
+        "term": "wiring",
+        "meaning": "conectar dependências a quem precisa delas",
+        "example": "Spring handles wiring — it finds the right implementation for each interface and injects it."
+      }
+    ],
+    "selfEvaluation": [
+      {
+        "criterion": "I distinguished DI (mechanism) from composition (design)",
+        "weight": 3
+      },
+      {
+        "criterion": "I explained how testing benefits",
+        "weight": 3
+      },
+      {
+        "criterion": "I connected CDI experience to Spring",
+        "weight": 2
+      },
+      {
+        "criterion": "I mentioned constructor injection specifically",
+        "weight": 2
+      }
+    ],
+    "topic": "oop"
+  },
+  {
+    "id": "comp-refactor-01",
+    "type": "CODE_REFACTOR",
+    "subtopic": "Composition",
+    "difficulty": "intermediate",
+    "mission": "Refactor this <strong>inherited base service</strong> pattern to Spring Boot composition.",
+    "code": "public abstract class BaseLogisticsService {\n    @Autowired protected DeliveryRepository deliveryRepo;\n    @Autowired protected KafkaTemplate<String, Object> kafka;\n    @Autowired protected NotificationService notifier;\n    @Autowired protected MetricsService metrics;\n    @Autowired protected AuditLogger audit;\n\n    protected void publishEvent(String topic, Object event) {\n        kafka.send(topic, event);\n        metrics.increment(\"events.published\");\n    }\n    protected void logAudit(String action) { audit.log(action); }\n}\n\n@Service\npublic class DeliveryService extends BaseLogisticsService {\n    public void planDelivery(DeliveryRequest req) {\n        Delivery d = Delivery.from(req);\n        deliveryRepo.save(d);\n        publishEvent(\"delivery-planned\", d);\n        notifier.notifyDriver(d);\n    }\n}",
+    "problemsToIdentify": [
+      "Field injection (@Autowired on fields) — harder to test, no immutability",
+      "All services inherit 5 dependencies even if they use only 2",
+      "Protected state exposes internals to all subclasses",
+      "Base class becomes a God object attracting utilities",
+      "Cannot easily test DeliveryService without all 5 dependencies"
+    ],
+    "refactoredCode": "@Service\npublic class DeliveryService {\n\n    private final DeliveryRepository deliveryRepo;\n    private final LogisticsEventPublisher eventPublisher;\n    private final DriverNotificationService notifier;\n\n    public DeliveryService(\n            DeliveryRepository deliveryRepo,\n            LogisticsEventPublisher eventPublisher,\n            DriverNotificationService notifier) {\n        this.deliveryRepo = deliveryRepo;\n        this.eventPublisher = eventPublisher;\n        this.notifier = notifier;\n    }\n\n    public void planDelivery(DeliveryRequest req) {\n        Delivery d = Delivery.from(req);\n        deliveryRepo.save(d);\n        eventPublisher.publishDeliveryPlanned(d);\n        notifier.notifyDriver(d);\n    }\n}",
+    "explain": "Constructor injection makes dependencies explicit and final. The service declares ONLY what it needs. No base class. Testing requires mocking only 3 things. The LogisticsEventPublisher hides Kafka details behind an abstraction.",
+    "topic": "oop"
+  },
+  {
+    "id": "comp-refactor-02",
+    "type": "CODE_REFACTOR",
+    "subtopic": "Composition",
+    "difficulty": "senior",
+    "mission": "This <strong>monolithic delivery handler</strong> does everything. Decompose into composed components.",
+    "code": "@Service\npublic class DeliveryHandler {\n    public DeliveryResult process(DeliveryRequest req) {\n        // Validate route\n        if (req.getStops().isEmpty()) throw new ValidationException(\"No stops\");\n        if (req.getDistance() > 500) throw new ValidationException(\"Too far\");\n\n        // Calculate pricing\n        BigDecimal price = req.getWeight().multiply(RATE_PER_KG);\n        if (req.isExpress()) price = price.multiply(EXPRESS_MULTIPLIER);\n\n        // Persist\n        Delivery d = new Delivery(req, price);\n        entityManager.persist(d);\n\n        // Publish event to Kafka\n        kafkaTemplate.send(\"deliveries\", d.getId().toString(), new DeliveryEvent(d));\n\n        // Notify driver\n        pushService.send(req.getDriverId(), \"New delivery assigned\");\n\n        // Update analytics\n        analyticsClient.track(\"delivery_created\", Map.of(\"type\", req.getType()));\n\n        return new DeliveryResult(d.getId(), price);\n    }\n}",
+    "problemsToIdentify": [
+      "Six responsibilities in one method (validation, pricing, persistence, events, notification, analytics)",
+      "Each responsibility changes for different reasons",
+      "Cannot test pricing without persistence and Kafka",
+      "Adding new notification channels requires modifying this class",
+      "Kafka details leaked into business logic"
+    ],
+    "refactoredCode": "// Each responsibility in its own focused component:\n@Component public class RouteValidator { void validate(DeliveryRequest req) {...} }\n@Component public class DeliveryPricingCalculator { BigDecimal calculate(DeliveryRequest req) {...} }\n@Repository public class DeliveryRepository { Delivery save(Delivery d) {...} }\n@Component public class LogisticsEventPublisher { void publishDeliveryCreated(Delivery d) {...} }\n@Component public class DriverNotifier { void notifyNewDelivery(Delivery d) {...} }\n@Component public class DeliveryAnalytics { void trackCreated(Delivery d) {...} }\n\n// Orchestrator — thin, delegates everything:\n@Service\npublic class DeliveryHandler {\n    private final RouteValidator validator;\n    private final DeliveryPricingCalculator pricing;\n    private final DeliveryRepository repository;\n    private final LogisticsEventPublisher events;\n    private final DriverNotifier notifier;\n    private final DeliveryAnalytics analytics;\n\n    // constructor injection...\n\n    public DeliveryResult process(DeliveryRequest req) {\n        validator.validate(req);\n        BigDecimal price = pricing.calculate(req);\n        Delivery d = repository.save(Delivery.create(req, price));\n        events.publishDeliveryCreated(d);\n        notifier.notifyNewDelivery(d);\n        analytics.trackCreated(d);\n        return new DeliveryResult(d.getId(), price);\n    }\n}",
+    "explain": "The orchestrator is now 6 lines of delegation. Each component is independently testable, replaceable and maintainable. Pricing rules change? Only DeliveryPricingCalculator changes. New notification channel? Only DriverNotifier changes.",
+    "topic": "oop"
+  },
+  {
+    "id": "comp-design-01",
+    "type": "DESIGN_DECISION",
+    "subtopic": "Composition",
+    "difficulty": "senior",
+    "mission": "Your service has <strong>8 constructor parameters</strong>. What do you do?",
+    "options": [
+      {
+        "id": "a",
+        "label": "Keep all 8 — each is needed",
+        "desc": "The service genuinely needs all these collaborators for its flow."
+      },
+      {
+        "id": "b",
+        "label": "Extract a sub-orchestrator",
+        "desc": "Group related dependencies into a focused sub-service (e.g., DeliveryNotificationOrchestrator wraps notifier + analytics + event publisher)."
+      },
+      {
+        "id": "c",
+        "label": "Use a parameter object / facade",
+        "desc": "Create DeliveryDependencies class holding all 8 and inject that single object."
+      }
+    ],
+    "explanation": {
+      "a": {
+        "pros": [
+          "Honest — dependencies are real",
+          "Explicit"
+        ],
+        "cons": [
+          "8 params = signal the class does too much",
+          "Hard to read constructor",
+          "Testing requires 8 mocks"
+        ],
+        "verdict": "If genuinely needed and the service is still cohesive, acceptable temporarily. But usually signals SRP violation."
+      },
+      "b": {
+        "pros": [
+          "Reduces visible complexity",
+          "Groups related concerns",
+          "Sub-orchestrator independently testable",
+          "Main service reads cleaner"
+        ],
+        "cons": [
+          "One more class",
+          "Must group correctly (related, not arbitrary)"
+        ],
+        "verdict": "Best approach — extract a cohesive sub-group. E.g., event+notification+analytics = \"post-action side effects\" orchestrator."
+      },
+      "c": {
+        "pros": [
+          "Fewer constructor params visually"
+        ],
+        "cons": [
+          "Hides the problem — still 8 real dependencies",
+          "Bag of unrelated objects",
+          "Does not reduce complexity, just relocates it"
+        ],
+        "verdict": "Anti-pattern. A \"dependencies bag\" class is just hiding complexity without solving it."
+      }
+    },
+    "nuance": "8 dependencies usually means the service has multiple responsibilities. Before grouping, ask: can this service be split into two services with distinct purposes? If not, group related dependencies into a focused collaborator.",
+    "topic": "oop",
+    "bestOption": "b"
+  },
+  {
+    "id": "comp-design-02",
+    "type": "DESIGN_DECISION",
+    "subtopic": "Composition",
+    "difficulty": "senior",
+    "mission": "DeliveryService saves to DB then publishes to Kafka. <strong>What if save succeeds but publish fails?</strong>",
+    "options": [
+      {
+        "id": "a",
+        "label": "Accept inconsistency — log and retry later",
+        "desc": "Save to DB, try to publish. If publish fails, log error and rely on a reconciliation job."
+      },
+      {
+        "id": "b",
+        "label": "Transactional outbox pattern",
+        "desc": "Save delivery + outbox event in same DB transaction. Separate publisher reads outbox and sends to Kafka."
+      },
+      {
+        "id": "c",
+        "label": "Kafka transaction spanning DB",
+        "desc": "Use distributed transaction (XA) to commit DB and Kafka atomically."
+      }
+    ],
+    "explanation": {
+      "a": {
+        "pros": [
+          "Simple implementation",
+          "Works most of the time"
+        ],
+        "cons": [
+          "Window of inconsistency",
+          "Reconciliation job adds complexity",
+          "Events can be lost if pod crashes between save and publish"
+        ],
+        "verdict": "Acceptable for non-critical events (analytics). Risky for business-critical flows (driver assignment)."
+      },
+      "b": {
+        "pros": [
+          "Atomic local transaction (DB only)",
+          "Event guaranteed to be published eventually",
+          "No distributed transaction needed",
+          "Idempotent publisher handles duplicates"
+        ],
+        "cons": [
+          "Extra table and publisher component",
+          "Slight delay in event delivery",
+          "Must handle idempotency on consumer side"
+        ],
+        "verdict": "Industry standard for reliable event publishing. Used extensively in logistics and financial systems."
+      },
+      "c": {
+        "pros": [
+          "True atomicity"
+        ],
+        "cons": [
+          "XA transactions are slow and brittle",
+          "Kafka XA support has limitations",
+          "Operational complexity is very high",
+          "Not recommended by Kafka community"
+        ],
+        "verdict": "Almost never the right choice. Distributed transactions create more problems than they solve in microservices."
+      }
+    },
+    "nuance": "The transactional outbox is the standard pattern at companies like REWE for reliable event-driven systems. My JMS experience at SENAI included similar patterns — ensuring database state and message publication remain consistent without distributed transactions.",
+    "topic": "oop",
+    "bestOption": "b"
+  },
+  {
+    "id": "comp-compare-01",
+    "type": "COMPARE_CONCEPTS",
+    "subtopic": "Composition",
+    "difficulty": "intermediate",
+    "mission": "Compare: <strong>Inheritance</strong> vs <strong>Composition</strong> for code reuse",
+    "conceptA": {
+      "name": "Inheritance",
+      "definition": "Subclass acquires behavior from parent. Compile-time rigid hierarchy. Strong coupling. Single inheritance in Java."
+    },
+    "conceptB": {
+      "name": "Composition",
+      "definition": "Class contains references to collaborators and delegates behavior. Runtime-flexible. Loose coupling. Multiple components possible."
+    },
+    "keyDifference": "Inheritance = \"I am a (type of)\". Composition = \"I have a (capability from)\". Inheritance couples to one hierarchy; composition assembles from many independent parts.",
+    "javaExample": "Inheritance: DeliveryService extends BaseLogisticsService (gets everything). Composition: DeliveryService injects only RouteValidator and EventPublisher (gets exactly what it needs).",
+    "interviewAnswer": "I prefer composition because dependencies are explicit, components are independently replaceable, and testing requires mocking only real collaborators. I use inheritance only for stable is-a relationships — like exception hierarchies or JPA MappedSuperclass for audit fields.",
+    "topic": "oop",
+    "answer": "**Inheritance:** Subclass acquires behavior from parent. Compile-time rigid hierarchy. Strong coupling. Single inheritance in Java.\n\n**Composition:** Class contains references to collaborators and delegates behavior. Runtime-flexible. Loose coupling. Multiple components possible.\n\n\n**Key Difference:** Inheritance = \"I am a (type of)\". Composition = \"I have a (capability from)\". Inheritance couples to one hierarchy; composition assembles from many independent parts."
+  },
+  {
+    "id": "comp-followup-01",
+    "type": "ORAL_ANSWER",
+    "subtopic": "Composition",
+    "difficulty": "senior",
+    "scenario": "The interviewer probes how composition works in Spring Boot vs your Java EE experience.",
+    "questions": [
+      {
+        "q": "How does Spring Boot handle composition differently from CDI?",
+        "hint": "Spring: constructor injection by default, auto-configuration, @ConditionalOnMissingBean. CDI: @Inject, @Alternative, @Priority. Same principle, different conventions."
+      },
+      {
+        "q": "What happens if the Kafka publisher fails — does the save roll back?",
+        "hint": "With composition + outbox pattern: no. Save and outbox entry in same TX. Publisher is separate. With direct publish: depends on TX boundary design."
+      },
+      {
+        "q": "How many dependencies is too many?",
+        "hint": "5-6 is normal for an orchestrator. 8+ is a smell. Ask: does this class have one clear purpose? If not, split."
+      },
+      {
+        "q": "How do you decide what to extract into its own component?",
+        "hint": "When it has its own reason to change, its own dependencies, can be tested independently, or is reused elsewhere."
+      },
+      {
+        "q": "Can composition lead to over-fragmentation?",
+        "hint": "Yes. 50 tiny classes with 1 method each is worse than a few cohesive services. The goal is cohesive components, not maximum granularity."
+      }
+    ],
+    "topic": "oop",
+    "question": "The interviewer probes how composition works in Spring Boot vs your Java EE experience.",
+    "answer": "**Q: How does Spring Boot handle composition differently from CDI?**\nSpring: constructor injection by default, auto-configuration, @ConditionalOnMissingBean. CDI: @Inject, @Alternative, @Priority. Same principle, different conventions.\n\n**Q: What happens if the Kafka publisher fails — does the save roll back?**\nWith composition + outbox pattern: no. Save and outbox entry in same TX. Publisher is separate. With direct publish: depends on TX boundary design.\n\n**Q: How many dependencies is too many?**\n5-6 is normal for an orchestrator. 8+ is a smell. Ask: does this class have one clear purpose? If not, split.\n\n**Q: How do you decide what to extract into its own component?**\nWhen it has its own reason to change, its own dependencies, can be tested independently, or is reused elsewhere.\n\n**Q: Can composition lead to over-fragmentation?**\nYes. 50 tiny classes with 1 method each is worse than a few cohesive services. The goal is cohesive components, not maximum granularity."
+  },
+  {
+    "id": "comp-experience-01",
+    "type": "REAL_EXPERIENCE",
+    "subtopic": "Composition",
+    "difficulty": "senior",
+    "prompt": "Describe a service from your experience that demonstrates composition. What components does it depend on and why are they separate?",
+    "guidingQuestions": [
+      "What is the service's main responsibility?",
+      "What components does it delegate to (repository, validator, notifier, publisher)?",
+      "Why are they separate classes instead of inline logic?",
+      "How does this help testing?",
+      "How would this translate to Spring Boot?"
+    ],
+    "exampleStory": "The EnrollmentBusiness in SGN3 composes: EnrollmentValidator (checks business rules), EnrollmentRepository (persistence), NotificationService (email/JMS), and AuditService (logging). Each is injected via CDI. Testing the enrollment flow mocks only the repository and notifier — no real database or email server needed. In Spring Boot + REWE context, this maps to: RouteValidator, DeliveryRepository (Spring Data), LogisticsEventPublisher (Kafka), DriverNotificationService. Same architecture, different frameworks.",
+    "buildingBlocks": [
+      "Service name and purpose",
+      "List of composed dependencies",
+      "Why each is separate",
+      "How testing benefits",
+      "Spring Boot equivalent"
+    ],
+    "topic": "oop",
+    "answer": "**Guide your answer with:**\n\n- What is the service's main responsibility?\n\n- What components does it delegate to (repository, validator, notifier, publisher)?\n\n- Why are they separate classes instead of inline logic?\n\n- How does this help testing?\n\n- How would this translate to Spring Boot?"
+  },
+  {
+    "id": "comp-predict-01",
+    "type": "PREDICT_OUTPUT",
+    "subtopic": "Composition",
+    "difficulty": "basic",
+    "mission": "Spring Boot starts. What happens if <strong>RouteValidator bean is missing</strong>?",
+    "code": "@Service\npublic class DeliveryService {\n    private final RouteValidator validator; // No bean found!\n\n    public DeliveryService(RouteValidator validator) {\n        this.validator = validator;\n    }\n}\n// No @Component class implements or provides RouteValidator",
+    "choices": [
+      "Application starts normally",
+      "UnsatisfiedDependencyException at startup",
+      "NullPointerException at first use",
+      "Silently injects null"
+    ],
+    "answer": "UnsatisfiedDependencyException at startup",
+    "explain": "Spring Boot fails FAST at startup if a required dependency cannot be resolved. This is a feature of constructor injection — problems are detected immediately, not at runtime when the method is first called. Field injection with @Autowired(required=false) would inject null and fail later.",
+    "topic": "oop"
+  },
+  {
+    "id": "comp-fill-01",
+    "type": "FILL_BLANK",
+    "subtopic": "Composition",
+    "difficulty": "basic",
+    "mission": "Complete the Spring Boot service using <strong>constructor injection</strong> for composition.",
+    "code": "@Service\npublic class DeliveryService {\n    private final DeliveryRepository repo;\n    private final EventPublisher events;\n\n    public DeliveryService(DeliveryRepository repo, _____ events) {\n        this.repo = repo;\n        this.events = events;\n    }\n}",
+    "blank": "_____",
+    "choices": [
+      "EventPublisher",
+      "@Autowired",
+      "new EventPublisher()",
+      "final"
+    ],
+    "answer": "EventPublisher",
+    "explain": "In Spring Boot, if a class has one constructor, Spring auto-injects all parameters. No @Autowired needed. The parameter type (EventPublisher) tells Spring what to inject. This is composition — the service is composed from its declared dependencies.",
+    "topic": "oop"
+  },
+  {
+    "id": "comp-pick-01",
+    "type": "PICK_INVALID",
+    "subtopic": "Composition",
+    "difficulty": "intermediate",
+    "mission": "Which example shows a <strong>composition anti-pattern</strong>?",
+    "snippets": [
+      {
+        "id": "a",
+        "code": "@Service\nclass DeliveryService {\n  private final RouteValidator validator;\n  private final DeliveryRepo repo;\n  DeliveryService(RouteValidator v, DeliveryRepo r)\n  { this.validator=v; this.repo=r; }\n}",
+        "valid": true
+      },
+      {
+        "id": "b",
+        "code": "@Service\nclass DeliveryService {\n  @Autowired RouteValidator validator;\n  @Autowired DeliveryRepo repo;\n  @Autowired EventPublisher events;\n  @Autowired NotifService notif;\n  @Autowired Analytics analytics;\n  @Autowired Cache cache;\n  @Autowired Metrics metrics;\n  @Autowired AuditLog audit;\n}",
+        "valid": false
+      },
+      {
+        "id": "c",
+        "code": "@Service\nclass DeliveryOrchestrator {\n  private final DeliveryService delivery;\n  private final PostActionHandler postActions;\n  DeliveryOrchestrator(DeliveryService d, PostActionHandler p)\n  { ... }\n}",
+        "valid": true
+      }
+    ],
+    "answer": "b",
+    "explain": "Option B has 8 field-injected dependencies — a God class smell. Field injection hides dependencies (not visible without reading all fields), prevents immutability, and the class clearly has too many responsibilities. Option C shows proper decomposition — grouping related concerns into a sub-orchestrator.",
+    "topic": "oop"
+  },
+  {
+    "id": "interview-oop-01",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "OOP Fundamentals",
+    "difficulty": "interview",
+    "question": "What are the four main principles of object-oriented programming?",
+    "interviewerIntent": "Check foundational OOP knowledge",
+    "answer": "The four main principles are encapsulation, abstraction, inheritance and polymorphism.\n\nEncapsulation protects the internal state of an object.\n\nAbstraction exposes only the relevant behaviour.\n\nInheritance allows a class to reuse and specialise behaviour from another class.\n\nPolymorphism allows different implementations to be used through the same contract.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-02",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Encapsulation",
+    "difficulty": "interview",
+    "question": "What is encapsulation?",
+    "interviewerIntent": "Verify understanding beyond just 'private fields'",
+    "answer": "Encapsulation means keeping data and behaviour together inside an object and protecting its internal state.\n\nInstead of exposing fields directly, the object provides methods that preserve its business rules and invariants.\n\nThis reduces coupling and prevents other parts of the application from putting the object into an invalid state.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-03",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Abstraction",
+    "difficulty": "interview",
+    "question": "What is abstraction?",
+    "interviewerIntent": "Check practical understanding of abstraction",
+    "answer": "Abstraction means exposing what an object does without exposing every implementation detail.\n\nFor example, a payment service may expose a `processPayment` method without requiring the caller to understand how the payment provider communicates with external systems.\n\nAbstraction reduces complexity and allows implementations to change without affecting their clients.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-04",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Polymorphism",
+    "difficulty": "interview",
+    "question": "What is polymorphism?",
+    "interviewerIntent": "Verify practical polymorphism usage",
+    "answer": "Polymorphism allows code to work with an interface or base type while different implementations provide different behaviour.\n\nFor example, a `DocumentGenerator` interface may have PDF, certificate and declaration implementations.\n\nThe caller uses the same interface without needing to know the concrete implementation.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-05",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Polymorphism",
+    "difficulty": "interview",
+    "question": "What is the difference between method overloading and method overriding?",
+    "interviewerIntent": "Distinguish compile-time vs runtime polymorphism",
+    "answer": "Method overloading happens when methods have the same name but different parameter lists. It is resolved at compile time.\n\nMethod overriding happens when a subclass provides a new implementation of a method inherited from a parent class or interface. It is resolved at runtime.\n\nOverloading is often described as compile-time polymorphism, while overriding is runtime polymorphism.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-06",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Abstraction",
+    "difficulty": "interview",
+    "question": "What is the difference between an interface and an abstract class?",
+    "interviewerIntent": "Check design decision reasoning",
+    "answer": "An interface defines a contract and is useful when different classes need to provide the same capability.\n\nAn abstract class is useful when related subclasses share state, behaviour or part of an algorithm.\n\nI prefer interfaces when I need flexible contracts and multiple implementations.\n\nI use abstract classes when there is a genuine inheritance relationship and meaningful shared implementation.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-07",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Inheritance",
+    "difficulty": "interview",
+    "question": "When would you use inheritance?",
+    "interviewerIntent": "Assess inheritance vs composition judgment",
+    "answer": "I use inheritance when there is a clear \"is-a\" relationship and the subclasses genuinely respect the behaviour promised by the parent type.\n\nInheritance can be useful when related classes share stable behaviour.\n\nHowever, I avoid using inheritance only for code reuse. In many cases, composition is more flexible and creates less coupling.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-08",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Inheritance",
+    "difficulty": "interview",
+    "question": "What are the trade-offs of inheritance?",
+    "interviewerIntent": "Check awareness of inheritance pitfalls",
+    "answer": "Inheritance can reduce duplication and enable polymorphism.\n\nHowever, it also creates strong coupling between parent and child classes.\n\nChanges in the base class may affect every subclass, which can create the fragile base class problem.\n\nDeep inheritance hierarchies are also difficult to understand and test.\n\nFor that reason, I prefer composition unless inheritance models a genuine and stable relationship.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-09",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Composition",
+    "difficulty": "interview",
+    "question": "Why is composition often preferred over inheritance?",
+    "interviewerIntent": "Verify design maturity",
+    "answer": "Composition allows behaviour to be assembled using smaller collaborating objects.\n\nIt is more flexible because behaviour can be replaced without changing the class hierarchy.\n\nIt also avoids deep inheritance structures and reduces coupling between classes.\n\nI normally choose composition when behaviours vary independently.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-oop-10",
+    "type": "ORAL_ANSWER",
+    "topic": "oop",
+    "subtopic": "Polymorphism",
+    "difficulty": "interview",
+    "question": "Explain the Liskov Substitution Principle.",
+    "interviewerIntent": "Test LSP understanding with practical implications",
+    "answer": "The Liskov Substitution Principle means that a subtype must be usable wherever its parent type is expected without breaking the program.\n\nThe subtype must respect the contract and expected behaviour of the parent.\n\nIf consumers need type checks or special conditions for a subtype, the abstraction may be incorrect.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
     "id": "interview-oop-11",
     "type": "ORAL_ANSWER",
     "topic": "oop",
@@ -200,5 +2284,14 @@
       "preparación de entrevista",
       "nivel senior"
     ]
+  },
+  {
+    "id": "ej-18",
+    "topic": "oop",
+    "subtopic": "oop-composition",
+    "type": "ORAL_ANSWER",
+    "difficulty": "INTERMEDIATE",
+    "question": "Why does Effective Java say 'favor composition over inheritance'? When IS inheritance appropriate?",
+    "answer": "Inheritance violates encapsulation: subclass depends on superclass implementation details. If superclass changes internal behavior, subclass breaks silently (fragile base class problem). Example: InstrumentedHashSet extends HashSet, overrides add() and addAll() to count — but addAll() internally calls add(), causing double-counting. Composition (wrapper/decorator) avoids this by delegating to an instance rather than inheriting implementation. Inheritance is appropriate ONLY for genuine 'is-a' relationships where you control both classes (same package/module) and the superclass is designed for extension."
   }
 ]

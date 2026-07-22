@@ -80,6 +80,17 @@
     "modelAnswer": "Kotlin divide cada tipo en anulable (String?) y no-anulable (String). El compilador se niega a llamar a métodos en tipos anulables sin gestionar el nulo primero, ya sea mediante llamadas seguras, el operador Elvis o smart casts tras comprobaciones. Al consumir APIs de Java, Kotlin ve 'tipos de plataforma' donde la nulabilidad es incierta. El enfoque seguro es declarar explícitamente el tipo esperado en Kotlin o anotar el código Java con @Nullable/@NonNull. Evito el uso de !! en código de producción, ya que anula el propósito del null safety."
   },
   {
+    "id": "kt-null-2",
+    "type": "PREDICT_OUTPUT",
+    "topic": "kotlin",
+    "subtopic": "kt-null",
+    "difficulty": "medium",
+    "question": "What does this code print?",
+    "code": "val name: String? = null\nval length = name?.length ?: -1\nval upper = name?.uppercase() ?: \"UNKNOWN\"\nprintln(\"$length $upper\")",
+    "answer": "-1 UNKNOWN",
+    "explain": "name is null. name?.length returns null, Elvis (?:) provides -1. name?.uppercase() returns null, Elvis provides \"UNKNOWN\"."
+  },
+  {
     "id": "kt-null-3",
     "type": "ORAL_ANSWER",
     "topic": "kotlin",
@@ -109,6 +120,17 @@
       "Azúcar sintáctica: sin coste en tiempo de ejecución"
     ],
     "modelAnswer": "Las funciones de extensión se compilan como métodos estáticos donde el receptor se convierte en el primer parámetro. Esto significa que se resuelven en tiempo de compilación basándose en el tipo declarado, no en el tipo de ejecución (no hay polimorfismo). No pueden acceder a miembros privados de la clase ni sobrescribir métodos existentes. Su poder reside en la descubribilidad y legibilidad: escribes list.secondOrNull() en lugar de ListUtils.secondOrNull(list)."
+  },
+  {
+    "id": "kt-extensions-2",
+    "type": "PREDICT_OUTPUT",
+    "topic": "kotlin",
+    "subtopic": "kt-extensions",
+    "difficulty": "hard",
+    "question": "What does this code print? Why?",
+    "code": "open class Shape\nclass Circle : Shape()\n\nfun Shape.name() = \"Shape\"\nfun Circle.name() = \"Circle\"\n\nfun printName(shape: Shape) {\n    println(shape.name())\n}\n\nprintName(Circle())",
+    "answer": "Shape",
+    "explain": "Extension functions are resolved statically based on the declared type of the variable, not the runtime type. The parameter is declared as Shape, so Shape.name() is called even though the actual object is a Circle. This is because extensions compile to static methods — there is no virtual dispatch."
   },
   {
     "id": "kt-functional-1",
@@ -209,6 +231,17 @@
     ]
   },
   {
+    "id": "kt-sealed-2",
+    "type": "PREDICT_OUTPUT",
+    "topic": "kotlin",
+    "subtopic": "kt-sealed",
+    "difficulty": "medium",
+    "question": "What does this code print?",
+    "code": "sealed class Result<out T>\ndata class Success<T>(val value: T) : Result<T>()\ndata class Failure(val error: String) : Result<Nothing>()\n\nfun describe(r: Result<Int>): String = when (r) {\n    is Success -> \"Got ${r.value}\"\n    is Failure -> \"Error: ${r.error}\"\n}\n\nprintln(describe(Success(42)))\nprintln(describe(Failure(\"timeout\")))",
+    "answer": "Got 42\nError: timeout",
+    "explain": "The when expression is exhaustive because it covers all sealed subclasses. Smart casts inside each branch give access to the specific properties. Success(42) matches `is Success`, printing 'Got 42'. Failure(\"timeout\") matches `is Failure`, printing 'Error: timeout'."
+  },
+  {
     "id": "kt-objects-1",
     "type": "ORAL_ANSWER",
     "topic": "kotlin",
@@ -221,6 +254,22 @@
       "companion object: reemplaza a static; puede implementar interfaces",
       "object expression: objeto anónimo, creado inline, puede capturar estado local"
     ]
+  },
+  {
+    "id": "kt-objects-2",
+    "type": "PICK_INVALID",
+    "topic": "kotlin",
+    "subtopic": "kt-objects",
+    "difficulty": "medium",
+    "question": "Which statement about Kotlin object declarations is FALSE?",
+    "choices": [
+      "An object declaration is initialized lazily the first time it is accessed.",
+      "Object declarations can implement interfaces.",
+      "Object declarations can have primary constructors.",
+      "Companion objects can hold extension functions."
+    ],
+    "answer": "Object declarations can have primary constructors.",
+    "explain": "Object declarations cannot have constructors — they are singletons created by the runtime and require no instantiation. All other statements are true: objects are lazily initialized, can implement interfaces, and companion objects can define extension functions (though the scope of those extensions is limited)."
   },
   {
     "id": "kt-collections-1",
@@ -238,6 +287,17 @@
     ]
   },
   {
+    "id": "kt-collections-2",
+    "type": "PREDICT_OUTPUT",
+    "topic": "kotlin",
+    "subtopic": "kt-collections",
+    "difficulty": "medium",
+    "question": "What does this code print?",
+    "code": "val nums = listOf(1, 2, 3, 4, 5)\n\nval result = nums\n    .filter { it % 2 == 0 }\n    .map { it * 10 }\n    .firstOrNull { it > 25 }\n\nprintln(result)",
+    "answer": "40",
+    "explain": "filter keeps [2, 4], map transforms to [20, 40]. firstOrNull returns the first element greater than 25, which is 40. If none matched, it would return null."
+  },
+  {
     "id": "kt-generics-1",
     "type": "ORAL_ANSWER",
     "topic": "kotlin",
@@ -250,6 +310,57 @@
       "in T (contravariante): la clase solo consume T",
       "reified: las funciones inline pueden verificar T en runtime (superando el type erasure)"
     ]
+  },
+  {
+    "id": "kt-generics-2",
+    "type": "PICK_INVALID",
+    "topic": "kotlin",
+    "subtopic": "kt-generics",
+    "difficulty": "hard",
+    "question": "Which statement about Kotlin generics is FALSE?",
+    "choices": [
+      "A class declared with 'out T' can return T from functions but cannot accept T as a parameter.",
+      "reified type parameters allow instanceof checks on generic types at runtime.",
+      "Kotlin erases generic types at runtime just like Java.",
+      "A List<String> can be passed where List<Any> is expected without any annotation."
+    ],
+    "answer": "A List<String> can be passed where List<Any> is expected without any annotation.",
+    "explain": "Without variance annotation, List<String> is NOT a subtype of List<Any> in a generic context — that would be unsafe for mutable lists. Kotlin's List interface is declared as List<out E> (covariant), which is why this *does* work for the standard library List. But for a custom generic class without 'out', passing Class<String> as Class<Any> is a compile error. The other statements are all true."
+  },
+  {
+    "id": "kt-delegation-1",
+    "type": "ORAL_ANSWER",
+    "topic": "kotlin",
+    "subtopic": "kt-delegation",
+    "difficulty": "senior",
+    "question": "What is property delegation in Kotlin? Explain lazy, by map, and how you would write a custom delegate.",
+    "interviewerIntent": "Tests whether the candidate understands the delegation pattern beyond just knowing 'lazy exists'.",
+    "answer": "Property delegation extracts the get/set logic of a property into a separate object. The 'by' keyword wires a property to a delegate that implements getValue (and setValue for var). The standard library ships several: lazy {} defers initialization until first access and is thread-safe by default; by map reads/writes from a Map using the property name as key (useful for JSON-like dynamic objects); observable notifies a callback on each change; vetoable lets you reject assignments. A custom delegate is any class implementing ReadOnlyProperty or ReadWriteProperty. Useful for: logging property access, caching computed properties that depend on external state, and mapping config keys.",
+    "keyPoints": [
+      "by keyword wires a property to a delegate object",
+      "Delegate must implement getValue (and setValue for var)",
+      "lazy: thread-safe, initialized once on first access",
+      "by map: property reads from/writes to a Map keyed by property name",
+      "observable/vetoable: change notifications and rejections",
+      "class delegation (by interface): forwards interface calls to a wrapped object"
+    ],
+    "followUps": [
+      {
+        "question": "How does class delegation ('class Foo(val bar: Bar) : BarInterface by bar') differ from property delegation?",
+        "answerHint": "Class delegation forwards interface method calls to a wrapped object, not just a property. It reduces boilerplate for decorator/wrapper patterns."
+      }
+    ]
+  },
+  {
+    "id": "kt-delegation-2",
+    "type": "PREDICT_OUTPUT",
+    "topic": "kotlin",
+    "subtopic": "kt-delegation",
+    "difficulty": "medium",
+    "question": "What does this code print?",
+    "code": "import kotlin.properties.Delegates\n\nvar name: String by Delegates.observable(\"initial\") { _, old, new ->\n    println(\"Changed: $old -> $new\")\n}\n\nname = \"Alice\"\nname = \"Alice\"\nname = \"Bob\"\nprintln(name)",
+    "answer": "Changed: initial -> Alice\nChanged: Alice -> Alice\nChanged: Alice -> Bob\nBob",
+    "explain": "Delegates.observable fires the callback on every assignment, regardless of whether the value actually changed. So assigning 'Alice' twice produces two change events. The final println prints the current value 'Bob'."
   },
   {
     "id": "kt-flow-1",
@@ -267,6 +378,91 @@
     ]
   },
   {
+    "id": "kt-flow-2",
+    "type": "PREDICT_OUTPUT",
+    "topic": "kotlin",
+    "subtopic": "kt-flow",
+    "difficulty": "hard",
+    "question": "What does this code emit?",
+    "code": "import kotlinx.coroutines.*\nimport kotlinx.coroutines.flow.*\n\nrunBlocking {\n    val flow = flow {\n        emit(1)\n        emit(2)\n        emit(3)\n    }\n\n    flow\n        .map { it * 2 }\n        .filter { it > 2 }\n        .collect { println(it) }\n}",
+    "answer": "4\n6",
+    "explain": "map transforms [1,2,3] to [2,4,6]. filter keeps values > 2, so [4,6]. Flow is cold and sequential: 1 mapped to 2, filtered out. 2 mapped to 4, passes filter, printed. 3 mapped to 6, passes filter, printed."
+  },
+  {
+    "id": "kt-dsl-1",
+    "type": "ORAL_ANSWER",
+    "topic": "kotlin",
+    "subtopic": "kt-dsl",
+    "difficulty": "senior",
+    "question": "How do function literals with receivers enable DSL construction in Kotlin? What language features make this possible?",
+    "interviewerIntent": "Tests ability to design APIs and understand the mechanics behind builders like Gradle Kotlin DSL, Ktor routing, and Exposed.",
+    "answer": "A lambda with receiver is a lambda where 'this' refers to a specific receiver object. Combined with extension function syntax, this allows calling methods on an implicit receiver without naming it, creating a builder-like scope. Key features: (1) lambda with receiver type (Builder.() -> Unit), (2) apply/run scope functions use the same mechanism, (3) @DslMarker prevents accidentally calling outer builder methods inside nested builders. The result feels like a configuration language — html { head { title { } } } — while being fully type-checked at compile time. No special runtime is needed.",
+    "keyPoints": [
+      "Lambda with receiver: Builder.() -> Unit — 'this' inside lambda = the Builder instance",
+      "@DslMarker prevents unintended scope leakage between nested builders",
+      "apply/with use the same mechanism internally",
+      "No special syntax needed — regular classes and extension functions",
+      "Type safety: the compiler still checks all method calls at compile time"
+    ],
+    "followUps": [
+      {
+        "question": "What problem does @DslMarker solve?",
+        "answerHint": "Without it, inside a nested builder you could call methods from the outer builder's scope, leading to confusing or invalid configurations."
+      }
+    ]
+  },
+  {
+    "id": "kt-dsl-2",
+    "type": "PICK_INVALID",
+    "topic": "kotlin",
+    "subtopic": "kt-dsl",
+    "difficulty": "medium",
+    "question": "Which statement about Kotlin DSL construction is FALSE?",
+    "choices": [
+      "A lambda with receiver allows calling the receiver's methods without explicit qualification.",
+      "@DslMarker restricts which implicit receivers are accessible in nested lambdas.",
+      "DSLs built with lambdas with receivers are checked at runtime for type safety.",
+      "The apply scope function is itself implemented using a lambda with receiver."
+    ],
+    "answer": "DSLs built with lambdas with receivers are checked at runtime for type safety.",
+    "explain": "Kotlin DSLs using lambdas with receivers are fully type-checked at compile time, not runtime. The compiler resolves all method calls against the declared receiver type. Mistakes are caught before the program runs — a major advantage over string-based or reflection-based DSLs."
+  },
+  {
+    "id": "kt-interop-1",
+    "type": "ORAL_ANSWER",
+    "topic": "kotlin",
+    "subtopic": "kt-interop",
+    "difficulty": "senior",
+    "question": "What are platform types in Kotlin, and what risks do they introduce? How do you mitigate them?",
+    "interviewerIntent": "Tests awareness of the null safety boundary when consuming Java APIs — a common source of production NPEs in mixed codebases.",
+    "answer": "When Kotlin calls a Java method without nullability annotations, it cannot determine if the value can be null. It treats this as a platform type (String!), deferring the null check to runtime. This is a practical compromise for Java interop, but it defeats null safety at that boundary. Risks: a null from Java reaches Kotlin code typed as non-nullable, causing an NPE at the point of use rather than a compile error. Mitigation: (1) annotate Java APIs with @Nullable/@NonNull, (2) on the Kotlin side explicitly type the variable as String? to force null handling, (3) validate at the boundary with requireNotNull or checkNotNull. Never use !! on a platform type.",
+    "keyPoints": [
+      "Platform type (String!): nullability unknown — Kotlin accepts without compile-time checks",
+      "NPEs move from compile-time to runtime when platform types are used as non-nullable",
+      "Mitigation 1: annotate Java with @Nullable / @NonNull",
+      "Mitigation 2: declare explicit nullable type on the Kotlin variable",
+      "Mitigation 3: validate at the boundary (requireNotNull, checkNotNull)",
+      "Never use !! on a platform type — it is equivalent to ignoring the problem"
+    ],
+    "followUps": [
+      {
+        "question": "How do Kotlin data classes behave when deserialized by Jackson from JSON with missing fields?",
+        "answerHint": "Jackson uses reflection and bypasses Kotlin constructors, setting fields to null even if typed non-nullable. Same platform type problem via a different path — use kotlin-jackson module."
+      }
+    ]
+  },
+  {
+    "id": "kt-interop-2",
+    "type": "PREDICT_OUTPUT",
+    "topic": "kotlin",
+    "subtopic": "kt-interop",
+    "difficulty": "medium",
+    "question": "Given this Java class and Kotlin usage, what happens at runtime?",
+    "code": "// Java\npublic class UserService {\n    public String findName(Long id) {\n        return null; // simulating not found\n    }\n}\n\n// Kotlin\nval service = UserService()\nval name: String = service.findName(1L)  // declared non-nullable\nprintln(name.length)",
+    "answer": "NullPointerException at runtime",
+    "explain": "findName returns a platform type (String!). Kotlin allows assigning it to a non-nullable String without a compile error. At runtime the null value is stored in 'name'. The Kotlin compiler inserts a null-check intrinsic after the assignment, so an NPE is thrown at the assignment line. Compile-time null safety is bypassed entirely by the platform type."
+  },
+  {
     "id": "kt-spring-1",
     "type": "ORAL_ANSWER",
     "topic": "kotlin",
@@ -280,6 +476,57 @@
       "No usar data class para entidades JPA",
       "Corrutinas en WebFlux: usar funciones suspend en los controladores"
     ]
+  },
+  {
+    "id": "kt-spring-2",
+    "type": "PICK_INVALID",
+    "topic": "kotlin",
+    "subtopic": "kt-spring",
+    "difficulty": "medium",
+    "question": "Which statement about using Kotlin with Spring Boot is FALSE?",
+    "choices": [
+      "The kotlin-spring Gradle plugin automatically opens classes annotated with @Service.",
+      "Kotlin data classes work perfectly as JPA entities because they auto-generate equals and hashCode.",
+      "The jackson-module-kotlin module is needed to deserialize JSON into Kotlin data classes.",
+      "Spring WebFlux controller methods can use the suspend keyword to return results from coroutines."
+    ],
+    "answer": "Kotlin data classes work perfectly as JPA entities because they auto-generate equals and hashCode.",
+    "explain": "This is FALSE — data classes are problematic as JPA entities. The auto-generated equals/hashCode uses all constructor properties, but JPA entity identity is based solely on the database ID. Before an entity is persisted, its ID is null, making two new instances appear equal when they should not be. Additionally, data classes are final by default, preventing JPA proxy generation unless the kotlin-jpa plugin is used."
+  },
+  {
+    "id": "kt-jpa-1",
+    "type": "ORAL_ANSWER",
+    "topic": "kotlin",
+    "subtopic": "kt-jpa",
+    "difficulty": "senior",
+    "question": "How do you correctly model a JPA entity in Kotlin? What are the rules for equals, hashCode, and the no-arg constructor?",
+    "interviewerIntent": "Tests whether the candidate has hit the real pain points of Kotlin + JPA in production.",
+    "answer": "A JPA entity in Kotlin must be an open class (not data class), with a no-arg constructor (provided by the kotlin-jpa plugin or written explicitly), and carefully implemented equals/hashCode based solely on the business key or ID. The no-arg constructor is required by JPA proxying and reflection. Equals/hashCode based on the ID must handle the case where ID is null before persistence: either return false for null IDs (two unsaved entities are never equal) or use a natural business key. Lazy-loaded associations must be val with open getters or var — Hibernate's proxy needs to override getters. I avoid data classes for entities entirely and use regular classes with explicit implementations.",
+    "keyPoints": [
+      "JPA entity must be open class (kotlin-jpa plugin handles this for @Entity)",
+      "No-arg constructor required: kotlin-jpa plugin adds it; or declare explicit constructor",
+      "Never use data class for entity: equals/hashCode based on all fields breaks identity",
+      "equals/hashCode: based on ID only; handle null ID case (unpersisted entities)",
+      "Lazy associations: must be var or open val for Hibernate proxy to intercept",
+      "Prefer Long? for ID (nullable) to represent unpersisted state"
+    ],
+    "followUps": [
+      {
+        "question": "What happens if you put a Kotlin entity in a HashSet before persisting it?",
+        "answerHint": "If equals/hashCode uses the null ID, two different unpersisted entities may hash to the same bucket. After persist the ID is set but the bucket does not change — the entity is lost in the set."
+      }
+    ]
+  },
+  {
+    "id": "kt-jpa-2",
+    "type": "PREDICT_OUTPUT",
+    "topic": "kotlin",
+    "subtopic": "kt-jpa",
+    "difficulty": "hard",
+    "question": "This Kotlin entity is used with Spring Data JPA. What problem occurs?",
+    "code": "// Entity\n@Entity\ndata class Product(\n    @Id @GeneratedValue\n    val id: Long? = null,\n    val name: String,\n    val price: Double\n)\n\n// Usage\nval p1 = Product(name = \"Widget\", price = 9.99)\nval p2 = Product(name = \"Widget\", price = 9.99)\nval set = mutableSetOf(p1)\nprintln(set.contains(p2))   // before persist\nrepository.save(p1)\nprintln(set.contains(p1))   // after persist",
+    "answer": "true\nfalse",
+    "explain": "Before persist: p1 and p2 have id=null. data class generates equals/hashCode from all fields (id, name, price). Since all fields match, they are equal — set.contains(p2) is true. After persist: p1.id is now set (e.g. 1). But the HashSet computed p1's hash when id=null. Now the hash is different, so the set looks in the wrong bucket and cannot find p1 — contains returns false. This is the 'lost in a set' bug caused by mutable state in equals/hashCode."
   },
   {
     "id": "kt-performance-1",
@@ -296,6 +543,22 @@
     ]
   },
   {
+    "id": "kt-performance-2",
+    "type": "PICK_INVALID",
+    "topic": "kotlin",
+    "subtopic": "kt-performance",
+    "difficulty": "medium",
+    "question": "Which statement about Kotlin performance is FALSE?",
+    "choices": [
+      "Inline functions eliminate lambda object allocation at call sites.",
+      "Using Sequence instead of List operations always improves performance.",
+      "Coroutines have significantly lower memory overhead than threads.",
+      "IntArray avoids boxing compared to List<Int>."
+    ],
+    "answer": "Using Sequence instead of List operations always improves performance.",
+    "explain": "Sequences are NOT always faster. For small collections (typically under 100 elements) with few operations, the overhead of creating a Sequence and its lazy chain can be higher than the intermediate allocations of eager operations. Sequences benefit: large collections, multiple chained operations, or early termination. Using asSequence() on every collection is a common over-optimization that can hurt performance on small inputs."
+  },
+  {
     "id": "kt-pitfalls-1",
     "type": "ORAL_ANSWER",
     "topic": "kotlin",
@@ -307,6 +570,73 @@
       "!! es un NPE explícito; usar safe calls y Elvis",
       "Bloquear en Dispatchers.Default bloquea todo el pool",
       "GlobalScope causa fugas de memoria y procesos huérfanos"
+    ]
+  },
+  {
+    "id": "kt-pitfalls-2",
+    "type": "PREDICT_OUTPUT",
+    "topic": "kotlin",
+    "subtopic": "kt-pitfalls",
+    "difficulty": "hard",
+    "question": "What does this code print, and what is the pitfall?",
+    "code": "val list = mutableListOf(1, 2, 3)\nval readOnly: List<Int> = list\n\nprintln(readOnly.size)   // (A)\n\nlist.add(4)\nprintln(readOnly.size)   // (B)\n\n(readOnly as MutableList<Int>).add(5)\nprintln(readOnly.size)   // (C)",
+    "answer": "3\n4\n5",
+    "explain": "readOnly is a List<Int> reference pointing to the same MutableList object. (A) prints 3. After list.add(4), the underlying object changes; readOnly sees the change — (B) prints 4. The cast to MutableList succeeds at runtime because the object IS a MutableList — (C) prints 5. The pitfall: List<Int> in Kotlin is a read-only VIEW, not an immutable object. The cast is unchecked and defeats the API contract. This is why returning List from APIs is a convention, not a hard guarantee."
+  },
+  {
+    "id": "kt-interview-1",
+    "type": "ORAL_ANSWER",
+    "topic": "kotlin",
+    "subtopic": "kt-interview",
+    "difficulty": "staff",
+    "question": "A senior engineer asks: 'Kotlin promises null safety, yet we still get NullPointerExceptions in production. Explain the three ways this can happen and how to prevent them.'",
+    "interviewerIntent": "Tests depth of null safety understanding — distinguishes engineers who have hit production NPEs from those who only know the theory.",
+    "answer": "Three common paths: (1) Platform types from Java — calling a Java API without @Nullable annotation returns String! which Kotlin accepts as non-nullable without a compile error. The NPE surfaces at runtime. Fix: annotate Java APIs or explicitly type the Kotlin variable as String?. (2) Jackson deserialization — Jackson uses reflection to set fields, bypassing Kotlin constructors and null checks. A non-nullable field can end up null if the JSON omits the field. Fix: use jackson-module-kotlin and declare optional JSON fields as nullable. (3) The !! operator — it is an explicit NPE instruction. Every !! is a developer saying 'I promise this is not null'. Fix: ban !! via code review or Detekt rule, replace with requireNotNull with meaningful messages. The common theme: null safety works at compile time within Kotlin-to-Kotlin boundaries. Every external system crossing (Java API, JSON, database) is a potential bypass that requires explicit handling.",
+    "keyPoints": [
+      "Platform types (Java interop): String! bypasses null checks — annotate Java APIs",
+      "Deserialization bypass: Jackson/reflection sets null on non-nullable fields",
+      "!! operator: explicit NPE — every !! is a code smell",
+      "Three fixes: annotate, use nullable types at boundaries, replace !! with requireNotNull",
+      "Null safety is a compile-time guarantee — external boundaries are runtime risks",
+      "Detekt rule: ForbiddenComment or custom rule to ban !!"
+    ],
+    "followUps": [
+      {
+        "question": "How would you enforce no-!! as a team standard beyond code review?",
+        "answerHint": "Detekt with ForbiddenCode rule matching `!!`. Or a custom Detekt rule. CI fails on violation."
+      },
+      {
+        "question": "Is it ever acceptable to use !!?",
+        "answerHint": "Rarely — test code where a null would indicate a test setup bug (asserting the test assumption), or code immediately after a null check that the compiler cannot smart-cast (e.g., val changed between check and use in a different thread)."
+      }
+    ]
+  },
+  {
+    "id": "kt-interview-2",
+    "type": "ORAL_ANSWER",
+    "topic": "kotlin",
+    "subtopic": "kt-interview",
+    "difficulty": "staff",
+    "question": "Design a type-safe HTTP result handler in Kotlin that avoids exceptions for 404/500 and forces callers to handle all outcomes. Walk through your design choices.",
+    "interviewerIntent": "Tests ability to apply sealed classes, generics, and Kotlin idioms to a real design problem — not just recite language features.",
+    "answer": "I would model the result as a sealed class with three variants: Success<T>(val body: T), NotFound, and Error(val code: Int, val message: String). The HTTP client returns ApiResult<T> instead of throwing. Callers use a when expression — the compiler enforces all branches are handled. For chaining calls I add map and flatMap extension functions on ApiResult, making it monadic. This removes try/catch from all call sites, makes the error paths visible in the type signature, and allows composing multiple API calls cleanly. The sealed interface variant allows Success to be a data class (for copy()) while other variants are objects. I would also add an onSuccess/onError pair for side-effect-oriented code.",
+    "keyPoints": [
+      "sealed class ApiResult<out T>: Success(body), NotFound, Error(code, message)",
+      "Compiler-enforced exhaustiveness: callers cannot ignore outcomes",
+      "map/flatMap extensions enable monadic composition without nesting when-blocks",
+      "Type parameter T is covariant (out T) to allow ApiResult<Dog> where ApiResult<Animal> expected",
+      "onSuccess/onError for imperative callers who prefer callbacks over expression chains",
+      "Avoids exceptions for expected outcomes — exceptions reserved for programmer errors"
+    ],
+    "followUps": [
+      {
+        "question": "How would you handle the case where the HTTP call itself throws (network down, timeout)?",
+        "answerHint": "Add a NetworkError(val cause: Throwable) variant to the sealed class, or wrap the call in a try/catch at the boundary and convert to ApiResult.NetworkError."
+      },
+      {
+        "question": "How is this different from Arrow's Either or Result?",
+        "answerHint": "Either<L,R> is binary (left=error, right=success). Our sealed class has richer variants. Arrow adds more functional operators. For most teams a custom sealed class is simpler and avoids the Arrow dependency."
+      }
     ]
   }
 ]

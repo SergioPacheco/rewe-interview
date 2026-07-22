@@ -10,7 +10,7 @@
         "description": "Un método con condiciones por tipo, que se actualiza cuando llegan nuevos tipos."
       },
       {
-        "label": "B) Patrón Strategy \u2014 interfaz PricingStrategy con implementaciones por tipo",
+        "label": "B) Patrón Strategy — interfaz PricingStrategy con implementaciones por tipo",
         "description": "Cada modelo de precios es una clase. Nuevo modelo = nueva clase, sin modificar lo existente."
       },
       {
@@ -86,7 +86,7 @@
     "difficulty": "senior",
     "subtopic": "Observer Pattern",
     "question": "Compara Spring @EventListener, CDI Events (@Observes) y eventos de Kafka. ¿Cuándo usas cada uno?",
-    "modelAnswer": "**Spring @EventListener (dentro del proceso, síncrono por defecto):**\nSe usa para desacoplar componentes dentro del mismo servicio o unidad de despliegue. Puede ser asíncrono usando @Async.\n\n**CDI @Observes (equivalente en Java EE):**\nMismo concepto, diferente anotación. Ambos ocurren dentro de la misma JVM.\n\n**Kafka (entre servicios, persistente, repetible):**\nSe usa para comunicación entre microservicios, dominios de fallo independientes y cuando se necesita la capacidad de volver a procesar eventos (replay).\n\n**Matriz de decisión:**\n| Necesidad | Evento Spring | Kafka |\n|------|:---:|:---:|\n| Mismo servicio | \u2705 | \u274c excesivo |\n| Entre servicios | \u274c | \u2705 |\n| Replay/Auditoría | \u274c | \u2705 |\n| No debe perderse | \u274c (en memoria) | \u2705 (persistente) |\n| Transaccional | \u2705 (misma TX) | \u274c (TX separada) |",
+    "modelAnswer": "**Spring @EventListener (dentro del proceso, síncrono por defecto):**\nSe usa para desacoplar componentes dentro del mismo servicio o unidad de despliegue. Puede ser asíncrono usando @Async.\n\n**CDI @Observes (equivalente en Java EE):**\nMismo concepto, diferente anotación. Ambos ocurren dentro de la misma JVM.\n\n**Kafka (entre servicios, persistente, repetible):**\nSe usa para comunicación entre microservicios, dominios de fallo independientes y cuando se necesita la capacidad de volver a procesar eventos (replay).\n\n**Matriz de decisión:**\n| Necesidad | Evento Spring | Kafka |\n|------|:---:|:---:|\n| Mismo servicio | ✅ | ❌ excesivo |\n| Entre servicios | ❌ | ✅ |\n| Replay/Auditoría | ❌ | ✅ |\n| No debe perderse | ❌ (en memoria) | ✅ (persistente) |\n| Transaccional | ✅ (misma TX) | ❌ (TX separada) |",
     "tags": [
       "observer",
       "events",
@@ -99,7 +99,7 @@
     "type": "DESIGN_DECISION",
     "difficulty": "senior",
     "subtopic": "Template Method",
-    "question": "Múltiples tipos de entrega (Estándar, Exprés, Congelados) comparten el mismo flujo: validar \u2192 asignar conductor \u2192 optimizar ruta \u2192 despachar. Pero cada tipo tiene reglas de validación y restricciones de ruta distintas. ¿Cómo diseñas esto?",
+    "question": "Múltiples tipos de entrega (Estándar, Exprés, Congelados) comparten el mismo flujo: validar → asignar conductor → optimizar ruta → despachar. Pero cada tipo tiene reglas de validación y restricciones de ruta distintas. ¿Cómo diseñas esto?",
     "options": [
       {
         "label": "A) Template Method: clase base abstracta que define el flujo y subclases que sobrescriben pasos",
@@ -111,7 +111,7 @@
       },
       {
         "label": "C) Chain of Responsibility: cada paso es un manejador en una cadena",
-        "description": "Un pipeline de ValidateHandler \u2192 AssignHandler \u2192 RouteHandler."
+        "description": "Un pipeline de ValidateHandler → AssignHandler → RouteHandler."
       }
     ],
     "bestOption": 1,
@@ -149,7 +149,7 @@
         "description": "Patrón tradicional con acceso sincronizado a una instancia única."
       },
       {
-        "label": "B) Spring @Service/@Component \u2014 singleton por defecto",
+        "label": "B) Spring @Service/@Component — singleton por defecto",
         "description": "Spring gestiona el ciclo de vida, crea una instancia y la inyecta donde se necesite."
       },
       {
@@ -196,6 +196,35 @@
     "id": "patterns-repository-pattern-10"
   },
   {
+    "type": "DESIGN_DECISION",
+    "difficulty": "senior",
+    "subtopic": "Chain of Responsibility",
+    "question": "Delivery validation has 8 rules: check driver availability, check vehicle capacity, check route feasibility, check time window, check customer blacklist, check payment, check regulatory compliance, check weather. How do you organize these?",
+    "options": [
+      {
+        "label": "A) One validate() method with 8 if-checks sequentially",
+        "description": "Single method, returns first error found."
+      },
+      {
+        "label": "B) Chain of Responsibility — each rule is a Validator, executed in sequence",
+        "description": "List of validators, each can pass or reject. Collect all errors."
+      },
+      {
+        "label": "C) Specification pattern — compose boolean predicates",
+        "description": "Each rule is a Specification, combined with and/or, evaluated as one."
+      }
+    ],
+    "bestOption": 1,
+    "explanation": "Chain of Responsibility (B) scales best for 8+ independent rules:\n\n```java\npublic interface DeliveryValidator {\n    ValidationResult validate(Delivery delivery);\n    int order(); // execution priority\n}\n\n@Component class DriverAvailabilityValidator implements DeliveryValidator { ... }\n@Component class VehicleCapacityValidator implements DeliveryValidator { ... }\n@Component class RouteValidator implements DeliveryValidator { ... }\n// ... one class per rule\n\n@Service\npublic class DeliveryValidationChain {\n    private final List<DeliveryValidator> validators;\n\n    public DeliveryValidationChain(List<DeliveryValidator> validators) {\n        this.validators = validators.stream()\n            .sorted(Comparator.comparingInt(DeliveryValidator::order))\n            .toList();\n    }\n\n    public ValidationResult validateAll(Delivery delivery) {\n        return validators.stream()\n            .map(v -> v.validate(delivery))\n            .filter(ValidationResult::hasErrors)\n            .findFirst()  // fail-fast\n            .orElse(ValidationResult.ok());\n    }\n}\n```\n\nAdding rule #9 = one new class. Each rule independently testable. Order configurable.",
+    "tags": [
+      "chain-of-responsibility",
+      "validation",
+      "scalability"
+    ],
+    "topic": "patterns",
+    "id": "patterns-chain-of-responsibility-11"
+  },
+  {
     "type": "ORAL_ANSWER",
     "difficulty": "inter",
     "subtopic": "Adapter Pattern",
@@ -222,6 +251,94 @@
     ],
     "topic": "patterns",
     "id": "patterns-cqrs-light-13"
+  },
+  {
+    "type": "PREDICT_OUTPUT",
+    "difficulty": "inter",
+    "subtopic": "Strategy with Spring DI",
+    "mission": "What does this code print when called with <code>type = \"EXPRESS\"</code>?",
+    "code": "interface PricingStrategy {\n    BigDecimal calculate(int distanceKm);\n    String type();\n}\n\n@Component class StandardPricing implements PricingStrategy {\n    public BigDecimal calculate(int km) { return new BigDecimal(\"5.00\"); }\n    public String type() { return \"STANDARD\"; }\n}\n\n@Component class ExpressPricing implements PricingStrategy {\n    public BigDecimal calculate(int km) { return new BigDecimal(\"5.00\").add(BigDecimal.valueOf(km * 0.5)); }\n    public String type() { return \"EXPRESS\"; }\n}\n\n@Service class PricingService {\n    private final Map<String, PricingStrategy> map;\n    PricingService(List<PricingStrategy> all) {\n        this.map = all.stream().collect(Collectors.toMap(PricingStrategy::type, s -> s));\n    }\n    public void printPrice(String type, int km) {\n        System.out.println(map.get(type).calculate(km));\n    }\n}\n\n// Called with:\npricingService.printPrice(\"EXPRESS\", 20);",
+    "choices": [
+      "5.00",
+      "15.00",
+      "15.0",
+      "10.00"
+    ],
+    "answer": "15.0",
+    "explain": "ExpressPricing: 5.00 + (20 × 0.5) = 5.00 + 10.0 = 15.0. BigDecimal.valueOf(km * 0.5) creates BigDecimal(\"10.0\") (one decimal place from double). add() produces 15.0. BigDecimal.toString() preserves scale.",
+    "topic": "patterns",
+    "id": "patterns-strategy-with-spring-di-14"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "State Machine",
+    "question": "A delivery has states: PLANNED → DISPATCHED → IN_TRANSIT → DELIVERED (or FAILED from any active state). How do you implement the state machine to prevent invalid transitions?",
+    "modelAnswer": "**Simple state machine in the entity (no framework needed):**\n\n```java\npublic enum DeliveryStatus {\n    PLANNED, DISPATCHED, IN_TRANSIT, DELIVERED, FAILED;\n\n    private static final Map<DeliveryStatus, Set<DeliveryStatus>> TRANSITIONS = Map.of(\n        PLANNED, Set.of(DISPATCHED, FAILED),\n        DISPATCHED, Set.of(IN_TRANSIT, FAILED),\n        IN_TRANSIT, Set.of(DELIVERED, FAILED),\n        DELIVERED, Set.of(),  // terminal\n        FAILED, Set.of()     // terminal\n    );\n\n    public boolean canTransitionTo(DeliveryStatus target) {\n        return TRANSITIONS.getOrDefault(this, Set.of()).contains(target);\n    }\n}\n\n@Entity\npublic class Delivery {\n    @Enumerated(EnumType.STRING)\n    private DeliveryStatus status = DeliveryStatus.PLANNED;\n\n    public void transitionTo(DeliveryStatus newStatus) {\n        if (!status.canTransitionTo(newStatus)) {\n            throw new IllegalStateException(\n                \"Cannot transition from \" + status + \" to \" + newStatus);\n        }\n        this.status = newStatus;\n    }\n\n    public void dispatch() { transitionTo(DeliveryStatus.DISPATCHED); }\n    public void complete() { transitionTo(DeliveryStatus.DELIVERED); }\n    public void fail(String reason) { transitionTo(DeliveryStatus.FAILED); }\n}\n```\n\n**For more complex state machines** (10+ states, conditions, actions):\nConsider Spring State Machine framework. For 5 states like delivery → keep it simple in the entity.",
+    "tags": [
+      "state-machine",
+      "domain-model",
+      "valid-transitions"
+    ],
+    "topic": "patterns",
+    "id": "patterns-state-machine-15"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "senior",
+    "subtopic": "Patterns Summary",
+    "question": "If you could only use 5 design patterns for the rest of your career in microservices, which would you choose?",
+    "modelAnswer": "My top 5 for microservices (daily use):\n\n**1. Strategy** — swappable algorithms, polymorphic dispatch. Used in every service with multiple implementations of an interface (pricing, notifications, validation).\n\n**2. Builder** — complex object construction. Used for DTOs, test data, configuration objects. Lombok @Builder makes it zero-cost.\n\n**3. Repository** — data access abstraction. Spring Data gives it for free. Clean boundary between domain and persistence.\n\n**4. Adapter** — external integration isolation. Every third-party API gets wrapped in an adapter. Internal code never touches external types.\n\n**5. Observer/Event** — decoupled reactions. Spring @EventListener for in-process, Kafka for cross-service. Core pattern of event-driven architecture.\n\n**Honorable mentions:**\n- Factory (simple static factories, not Abstract Factory)\n- Decorator (cross-cutting concerns, rarely hand-coded with AOP available)\n- Chain of Responsibility (validation pipelines)\n\n**What I almost NEVER use in microservices:**\n- Singleton (Spring handles this)\n- Abstract Factory (too complex for simple services)\n- Visitor (almost never appropriate)\n- Prototype (rarely needed with DI)",
+    "tags": [
+      "summary",
+      "pragmatism",
+      "microservices"
+    ],
+    "topic": "patterns",
+    "id": "patterns-patterns-summary-16"
+  },
+  {
+    "type": "DESIGN_DECISION",
+    "difficulty": "inter",
+    "subtopic": "Builder vs Record",
+    "question": "For a delivery creation request DTO with 6 required fields and 3 optional fields, what approach do you use in modern Java?",
+    "options": [
+      {
+        "label": "A) Java Record with all fields in constructor",
+        "description": "record CreateDeliveryRequest(String driverId, String routeId, ...) {}"
+      },
+      {
+        "label": "B) Class with Builder pattern (Lombok @Builder)",
+        "description": "Class with private constructor + builder for clarity on optional vs required."
+      },
+      {
+        "label": "C) Record + @JsonCreator for optional defaults",
+        "description": "Record with Jackson defaults for optional fields."
+      }
+    ],
+    "bestOption": 2,
+    "explanation": "Option C — Record with defaults is the modern Java approach for DTOs:\n\n```java\npublic record CreateDeliveryRequest(\n    @NotBlank String driverId,\n    @NotNull String routeId,\n    @NotNull @Future LocalDateTime scheduledAt,\n    @NotNull DeliveryType type,\n    @Size(min = 1) List<StopRequest> stops,\n    @NotBlank String customerId,\n    // Optional with defaults\n    Priority priority,     // nullable = not required\n    String notes,          // nullable\n    Integer maxRetries     // nullable\n) {\n    public CreateDeliveryRequest {\n        if (priority == null) priority = Priority.NORMAL;\n        if (maxRetries == null) maxRetries = 3;\n        if (notes == null) notes = \"\";\n    }\n}\n```\n\n**Why Record over Builder for DTOs:**\n- Immutable by default (thread-safe)\n- Less code (no getters/setters/equals/hashCode)\n- Jackson deserializes directly\n- Bean Validation works on constructor params\n\n**Use Builder when:** 15+ fields, complex construction logic, test data factories.",
+    "tags": [
+      "builder",
+      "records",
+      "modern-java"
+    ],
+    "topic": "patterns",
+    "id": "patterns-builder-vs-record-17"
+  },
+  {
+    "type": "ORAL_ANSWER",
+    "difficulty": "inter",
+    "subtopic": "Facade Pattern",
+    "question": "The delivery dispatch flow involves 5 services: validation, driver assignment, route optimization, notification, and event publishing. How do you simplify this for the controller?",
+    "modelAnswer": "Facade pattern — one entry point orchestrates multiple subsystems:\n\n```java\n// The Facade — simple interface for the controller\n@Service\npublic class DeliveryDispatchFacade {\n\n    private final DeliveryValidator validator;\n    private final DriverAssignmentService driverService;\n    private final RouteOptimizer routeOptimizer;\n    private final NotificationService notifier;\n    private final EventPublisher events;\n\n    @Transactional\n    public DispatchResult dispatch(DispatchRequest request) {\n        // Orchestrates 5 services behind one method\n        validator.validateForDispatch(request);\n        Driver driver = driverService.assignBestAvailable(request);\n        Route route = routeOptimizer.optimize(request.getStops(), driver.getVehicle());\n        Delivery delivery = createAndPersist(request, driver, route);\n        notifier.notifyDriver(driver, delivery);\n        events.publish(new DeliveryDispatched(delivery));\n        return DispatchResult.success(delivery);\n    }\n}\n\n// Controller stays thin\n@PostMapping(\"/{id}/dispatch\")\npublic ResponseEntity<DispatchResult> dispatch(@PathVariable Long id) {\n    return ResponseEntity.ok(dispatchFacade.dispatch(new DispatchRequest(id)));\n}\n```\n\n**Facade vs Service:**\nIn practice, most @Service classes in Spring ARE facades — they orchestrate lower-level components. The pattern name just makes the intent explicit.",
+    "tags": [
+      "facade",
+      "orchestration",
+      "clean-code"
+    ],
+    "topic": "patterns",
+    "id": "patterns-facade-pattern-18"
   },
   {
     "id": "interview-patterns-01",
@@ -252,6 +369,20 @@
     ]
   },
   {
+    "id": "interview-patterns-03",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Pattern Selection",
+    "difficulty": "interview",
+    "question": "What is the difference between Template Method and Strategy?",
+    "interviewerIntent": "Distinguish related patterns",
+    "answer": "Template Method uses inheritance. A base class defines the workflow and subclasses customise specific steps.\n\nStrategy uses composition. A class delegates a variable behaviour to an interchangeable object.\n\nI use Template Method when the overall algorithm is stable and only some steps vary.\n\nI use Strategy when complete behaviours need to be changed independently at runtime or without inheritance.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
     "id": "interview-patterns-04",
     "type": "ORAL_ANSWER",
     "topic": "patterns",
@@ -263,6 +394,34 @@
     "tags": [
       "preparación de entrevista",
       "nivel senior"
+    ]
+  },
+  {
+    "id": "interview-patterns-05",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Factory",
+    "difficulty": "interview",
+    "question": "Explain the Factory pattern.",
+    "interviewerIntent": "Check Factory usage",
+    "answer": "Factory centralises object creation.\n\nIt is useful when the caller should not know the details required to instantiate a concrete implementation.\n\nFor example, a document-generator factory may return the correct generator based on the requested document type.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
+    ]
+  },
+  {
+    "id": "interview-patterns-06",
+    "type": "ORAL_ANSWER",
+    "topic": "patterns",
+    "subtopic": "Builder",
+    "difficulty": "interview",
+    "question": "Explain the Builder pattern.",
+    "interviewerIntent": "Verify Builder understanding",
+    "answer": "Builder helps create complex objects step by step.\n\nIt is useful when an object has many optional fields or when construction should be readable and controlled.\n\nIt can also help create immutable objects.",
+    "tags": [
+      "interview-prep",
+      "senior-level"
     ]
   }
 ]

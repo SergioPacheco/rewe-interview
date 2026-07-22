@@ -3,141 +3,141 @@
     "id": "interview-portfolio-1",
     "topic": "portfolio",
     "subtopic": "portfolio-overview",
-    "difficulty": "PRINCIPIANTE",
-    "question": "¿Qué problema resuelve SinapiPRO y por qué lo construiste?",
-    "shortAnswer": "SinapiPRO es un ERP de gestión de construcción personal y de código abierto para áreas como presupuestos, mediciones, contratos, adquisiciones, cronogramas, costes y proveedores. Lo construí tanto para modelar un dominio que conozco por mi experiencia en la construcción como para aplicar un stack full-stack moderno: Spring Boot y PostgreSQL en el backend, con Angular, TypeScript y PrimeNG en el frontend.",
-    "detailedAnswer": "El proyecto tiene dos objetivos. El objetivo de producto es integrar flujos de trabajo de construcción relacionados en un sistema coherente, en lugar de un conjunto de pantallas CRUD aisladas. El objetivo de ingeniería es practicar el desarrollo moderno de backend en Java y la integración con Angular en un dominio con vocabulario de negocio real y procesos conectados.\n\nEl backend expone APIs REST sobre módulos de negocio respaldados por PostgreSQL. El frontend contiene pantallas de negocio enrutadas, formularios, flujos CRUD y servicios reutilizables usando Angular, TypeScript y PrimeNG. El proyecto también es un espacio para explorar límites modulares, autenticación y autorización, entornos basados en Docker y la separación entre las preocupaciones de dominio, aplicación e infraestructura.\n\nLo presento como un proyecto personal en curso. Esto lo convierte en evidencia práctica válida, pero no en evidencia de haber operado el mismo stack a escala de producción corporativa. Evito citar recuentos de módulos, cobertura de pruebas, usuarios o rendimiento a menos que el repositorio actual pueda demostrarlos.",
+    "difficulty": "BEGINNER",
+    "question": "What problem does SinapiPRO address, and why did you build it?",
+    "shortAnswer": "SinapiPRO is a personal, open-source construction-management ERP for areas such as budgets, measurements, contracts, procurement, schedules, costs and suppliers. I built it both to model a domain I know from construction work and to apply a modern full-stack stack: Spring Boot and PostgreSQL on the backend, with Angular, TypeScript and PrimeNG on the frontend.",
+    "detailedAnswer": "The project has two goals. The product goal is to bring related construction workflows into a coherent system rather than a set of isolated CRUD screens. The engineering goal is to practice modern Java backend and Angular integration in a domain with real business vocabulary and connected processes.\n\nThe backend exposes REST APIs over PostgreSQL-backed business modules. The frontend contains routed business screens, forms, CRUD flows and reusable services using Angular, TypeScript and PrimeNG. The project is also a place to explore modular boundaries, authentication and authorization, Docker-based environments and separation between domain, application and infrastructure concerns.\n\nI present it as an ongoing personal project. That makes it valid hands-on evidence, but not evidence that I have operated the same stack at company production scale. I avoid quoting module counts, test coverage, users or throughput unless the current repository can demonstrate them.",
     "keyPoints": [
-      "Explica el dominio de negocio antes que el stack tecnológico",
-      "Conecta el dominio con la experiencia previa en construcción",
-      "Nombra responsabilidades verificadas de backend y frontend",
-      "Presenta el proyecto como algo en curso y de código abierto",
-      "No convierte el trabajo de proyecto en afirmaciones de escala de producción"
+      "Explains the business domain before the stack",
+      "Connects the domain to prior construction experience",
+      "Names verified backend and frontend responsibilities",
+      "Presents the project as ongoing and open source",
+      "Does not convert project work into production-scale claims"
     ],
     "redFlags": [
-      "Describe el proyecto solo como un escaparate tecnológico",
-      "Afirma tener usuarios, escala o completitud sin evidencia",
-      "Llama a cada área CRUD un contexto delimitado (bounded context) separado",
-      "Presenta la exploración como robustecimiento (hardening) de producción"
+      "Describes the project only as a technology showcase",
+      "Claims users, scale or completeness without evidence",
+      "Calls every CRUD area a separate bounded context",
+      "Presents exploration as production hardening"
     ],
     "followUps": [
       {
-        "question": "¿Qué flujo de trabajo de negocio demuestra mejor que esto es más que simples pantallas CRUD no relacionadas?"
+        "question": "Which business workflow best demonstrates that this is more than unrelated CRUD screens?"
       },
       {
-        "question": "¿Qué parte es la más madura y cuál es todavía exploratoria?"
+        "question": "Which part is most mature and which is still exploratory?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "Proyecto personal de código abierto SinapiPRO",
-      "description": "Diseñé y desarrollé un ERP de gestión de construcción para aplicar Spring Boot, PostgreSQL, Angular, TypeScript y PrimeNG en un dominio con flujos de trabajo de negocio conectados."
+      "title": "SinapiPRO personal open-source project",
+      "description": "Designed and developed a construction-management ERP to apply Spring Boot, PostgreSQL, Angular, TypeScript and PrimeNG in a domain with connected business workflows."
     }
   },
   {
     "id": "interview-portfolio-2",
     "topic": "portfolio",
     "subtopic": "portfolio-backend",
-    "difficulty": "INTERMEDIO",
-    "question": "¿Cómo estructuras el backend de SinapiPRO y cómo evitas que los módulos de negocio se acoplen estrechamente?",
-    "shortAnswer": "SinapiPRO es una aplicación modular de Spring Boot organizada en 'rebanadas' (slices) de negocio como presupuesto, medición, cronograma, adquisiciones y finanzas. Cada rebanada separa las preocupaciones de API, aplicación y dominio, mientras que los paquetes compartidos contienen capacidades transversales como seguridad y observabilidad. Los adaptadores REST y la persistencia en PostgreSQL se sitúan en los límites. Las pruebas de ArchUnit proporcionan evidencia ejecutable de las dependencias; los nombres de las carpetas por sí solos no probarían la modularidad.",
-    "detailedAnswer": "El repositorio expone rebanadas verticales de negocio en lugar de paquetes horizontales que contengan todos los controladores o repositorios. Para un recorrido por la arquitectura, selecciono una rebanada implementada —por ejemplo, medición— y rastro una solicitud desde su endpoint REST a través del caso de uso de la aplicación y la regla de dominio hasta la persistencia. Luego muestro una dependencia real de una capacidad compartida o de otra rebanada y explico por qué esa dirección está permitida.\n\nEl proyecto es una aplicación modular, no una colección de microservicios. Esto mantiene el desarrollo local, las transacciones y el despliegue más sencillos, permitiendo al mismo tiempo practicar la definición de límites. El repositorio incluye pruebas de ArchUnit, que son mejor evidencia que el simple nombramiento de paquetes, pero sus reglas exactas y cualquier excepción deben mostrarse desde la compilación actual. El acceso entre rebanadas debe usar un contrato intencional en lugar de un acceso arbitrario al repositorio.\n\nDado que el proyecto está en curso, reconocería una violación de límite real si existiera y nombraría la siguiente mejora. La respuesta más sólida demuestra un camino en el código y una regla forzada en lugar de describir un diagrama de arquitectura ideal.",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you structure the SinapiPRO backend, and how do you keep business modules from becoming tightly coupled?",
+    "shortAnswer": "SinapiPRO is one modular Spring Boot application organized in business slices such as budget, measurement, schedule, procurement and finance. Each slice separates API, application and domain concerns, while shared packages hold cross-cutting capabilities such as security and observability. REST adapters and PostgreSQL persistence sit at the boundaries. ArchUnit tests provide executable dependency evidence; folder names alone would not prove modularity.",
+    "detailedAnswer": "The repository exposes vertical business slices rather than horizontal packages containing every controller or repository. For an architecture walkthrough, I select one implemented slice—for example measurement—and trace a request from its REST endpoint through the application use case and domain rule to persistence. I then show an actual dependency on a shared capability or another slice and explain why that direction is allowed.\n\nThe project is a modular application, not a collection of microservices. That keeps local development, transactions and deployment simpler while still allowing boundaries to be practiced. The repository includes ArchUnit tests, which are better evidence than package naming, but their exact rules and any exceptions should be shown from the current build. Cross-slice access should use an intentional contract rather than arbitrary repository access.\n\nBecause the project is ongoing, I would acknowledge a real boundary violation if one exists and name the next improvement. The strongest answer demonstrates one path in code and one enforced rule instead of describing an ideal architecture diagram.",
     "keyPoints": [
-      "Se organiza en torno a capacidades de negocio",
-      "Explica una ruta de solicitud de extremo a extremo",
-      "Utiliza contratos explícitos a través de los límites de los módulos",
-      "Justifica una aplicación modular en lugar de microservicios",
-      "Distingue la arquitectura pretendida de la evidencia actual en el código"
+      "Organizes around business capabilities",
+      "Explains one end-to-end request path",
+      "Uses explicit contracts across module boundaries",
+      "Justifies a modular application instead of microservices",
+      "Distinguishes intended architecture from current code evidence"
     ],
     "redFlags": [
-      "Afirma tener arquitectura limpia basándose solo en los nombres de las carpetas",
-      "Llama microservicios a los módulos a pesar de tener un único despliegue",
-      "No puede rastrear una solicitud desde la API hasta la persistencia",
-      "Oculta violaciones actuales de los límites"
+      "Claims clean architecture based only on folder names",
+      "Calls the modules microservices despite one deployment",
+      "Cannot trace a request from API to persistence",
+      "Hides current boundary violations"
     ],
     "followUps": [
       {
-        "question": "Muestra una dependencia entre módulos y explica por qué apunta en esa dirección.",
+        "question": "Show one cross-module dependency and explain why it points in that direction."
       },
       {
-        "question": "¿Qué transacción abarca actualmente más de una capacidad de negocio?",
+        "question": "Which transaction currently spans more than one business capability?"
       },
       {
-        "question": "¿Qué evidencia justificaría extraer un servicio más adelante?",
+        "question": "What evidence would justify extracting a service later?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
     "id": "interview-portfolio-3",
     "topic": "portfolio",
     "subtopic": "portfolio-frontend",
-    "difficulty": "INTERMEDIO",
-    "question": "¿Cómo está organizado el frontend en Angular y dónde ubicas el estado y las reglas de negocio?",
-    "shortAnswer": "El repositorio utiliza páginas independientes (standalone) de Angular 19 organizadas en torno a características de negocio enrutadas, con un área central para guardas, interceptores y servicios. PrimeNG maneja la composición de la interfaz de usuario (UI), los Signals soportan el estado de la vista consumido de forma síncrona y los servicios tipados gestionan las llamadas a la API. Mantengo la autorización y los invariantes de negocio en el backend, mientras que el comportamiento de los formularios y la presentación permanece cerca de la característica. Angular 19 en sí mismo es ahora una deuda de actualización.",
-    "detailedAnswer": "Explico el frontend a través de una página implementada: activación de la ruta, carga de datos a través de un servicio, estado local o de la característica, validación de formularios, envío a la API, mapeo de errores del servidor y feedback al usuario. La estructura del repositorio proporciona evidencia concreta de componentes standalone, páginas enrutadas, guardas/interceptores/servicios centrales, Signals, PrimeNG y Cypress; abriría un flujo en lugar de simplemente listar esas tecnologías.\n\nNo todas las reglas pertenecen al mismo lugar. La validación en el cliente da un feedback rápido, pero la autorización y los invariantes de negocio siguen siendo aplicados por el backend. Los tipos de transferencia de datos deben coincidir deliberadamente con los contratos de la API, y el mapeo es útil cuando el modelo de vista difiere de la forma de transporte. Una guarda de ruta mejora el comportamiento de navegación, pero no puede proteger un recurso del servidor.\n\nPara el estado, elijo según el alcance y el comportamiento: estado del componente para la interacción local, un servicio de característica para el estado compartido dentro de un flujo de trabajo, RxJS para la composición de eventos asíncronos y Signals para el estado de la UI consumido de forma síncrona. La versión actual de Angular 19 está fuera del soporte oficial, por lo que un recorrido honesto incluye el plan de actualización y las pruebas de regresión.",
+    "difficulty": "INTERMEDIATE",
+    "question": "How is the Angular frontend organized, and where do you place state and business rules?",
+    "shortAnswer": "The repository uses standalone Angular 19 pages organized around routed business features, with a core area for guards, interceptors and services. PrimeNG handles UI composition, Signals support synchronously consumed view state, and typed services own API calls. I keep authorization and business invariants on the backend, while form and presentation behavior stays near the feature. Angular 19 itself is now upgrade debt.",
+    "detailedAnswer": "I explain the frontend through one implemented page: route activation, data loading through a service, local or feature state, form validation, API submission, server-error mapping and user feedback. The repository structure provides concrete evidence for standalone components, routed pages, core guards/interceptors/services, Signals, PrimeNG and Cypress; I would open one flow rather than simply list those technologies.\n\nNot every rule belongs in the same place. Client validation gives fast feedback, but authorization and business invariants remain enforced by the backend. Data-transfer types should match API contracts deliberately, and mapping is useful when the view model differs from the transport shape. A route guard improves navigation behavior but cannot protect a server resource.\n\nFor state, I choose based on scope and behavior: component state for local interaction, a feature service for state shared within a workflow, RxJS for asynchronous event composition, and Signals for synchronously consumed UI state. The current Angular 19 version is outside official support, so an honest walkthrough includes the upgrade and regression-testing plan.",
     "keyPoints": [
-      "Realiza un recorrido por una característica enrutada real",
-      "Mantiene la autoridad del servidor sobre la seguridad y los invariantes de negocio",
-      "Utiliza servicios tipados en el límite de la API",
-      "Mantiene la propiedad del estado de forma estrecha y explícita",
-      "Elige Signals y RxJS por comportamiento, no por moda"
+      "Walks through a real routed feature",
+      "Keeps server authority over security and business invariants",
+      "Uses typed services at the API boundary",
+      "Keeps state ownership narrow and explicit",
+      "Chooses Signals and RxJS by behavior, not fashion"
     ],
     "redFlags": [
-      "Mueve la autorización de negocio a las guardas de ruta o comprobaciones de UI",
-      "Utiliza un store global para cada fragmento de estado",
-      "No puede explicar los estados de carga, error y vacío",
-      "Trata los componentes de PrimeNG como la arquitectura de la aplicación"
+      "Moves business authorization into route guards or UI checks",
+      "Uses a global store for every piece of state",
+      "Cannot explain loading, error and empty states",
+      "Treats PrimeNG components as the application architecture"
     ],
     "followUps": [
       {
-        "question": "Muestra cómo un error de validación del servidor llega al control de formulario correcto."
+        "question": "Show how one server validation error reaches the correct form control."
       },
       {
-        "question": "¿Qué estado sobrevive a la navegación y por qué?"
+        "question": "Which state survives navigation, and why?"
       },
       {
-        "question": "¿Dónde trazarías el límite entre un componente compartido y un componente de característica?"
+        "question": "Where would you draw the boundary between a shared component and a feature component?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
     "id": "interview-portfolio-4",
     "topic": "portfolio",
     "subtopic": "portfolio-infra",
-    "difficulty": "INTERMEDIO",
-    "question": "¿Cómo ejecutas y empaquetas SinapiPRO, y qué se requeriría todavía antes de un despliegue en producción?",
-    "shortAnswer": "El repositorio proporciona entornos de Docker Compose, una construcción de imagen con Jib, manifiestos de Kubernetes, un chart de Helm y flujos de trabajo de CI. Esos son artefactos reales de empaquetado y despliegue, pero no prueban la operación en producción. Antes de un lanzamiento a producción, verificaría los secretos, las migraciones, el respaldo y la restauración, TLS, el mínimo privilegio, la salud y los recursos, la observabilidad, el escaneo, el despliegue y la reversión (rollout/rollback), la retención de datos y un modelo de soporte con responsables.",
-    "detailedAnswer": "Puedo demostrar los artefactos actuales del repositorio: Compose inicia la aplicación y sus dependencias de desarrollo; Jib construye la imagen del backend; los directorios de Helm y Kubernetes describen un despliegue objetivo; y GitHub Actions contiene la automatización. Ejecutaría la construcción documentada, inspeccionaría las versiones fijas y mostraría cómo la configuración permanece fuera de la imagen. Un artefacto que nunca ha sobrevivido a un despliegue real sigue siendo evidencia de diseño, no de operación.\n\nPara la preparación para producción, revisaría la identidad y autorización, la entrega y rotación de secretos, la migración de la base de datos y el comportamiento del rollback, las pruebas de respaldo y restauración, la exposición de red, TLS, el escaneo de dependencias e imágenes, los logs, las métricas, las trazas y la propiedad de las alertas. Los health checks deben representar la disponibilidad real; las solicitudes y límites de recursos necesitan medición; y el apagado debe probarse con trabajo en curso.\n\nMi clasificación es, por tanto, mixta: el trabajo práctico con Docker, Compose, Jib, manifiestos y Helm es experiencia transferible, mientras que no se afirma la operación de SinapiPRO en Kubernetes. El historial del repositorio prueba que los artefactos existen; se requeriría historial de despliegue y evidencia operativa para afirmar el uso en producción.",
+    "difficulty": "INTERMEDIATE",
+    "question": "How do you run and package SinapiPRO, and what would still be required before a production deployment?",
+    "shortAnswer": "The repository provides Docker Compose environments, a Jib image build, Kubernetes manifests, a Helm chart and CI workflows. Those are real packaging and deployment artifacts, but they do not prove production operation. Before a production launch I would verify secrets, migrations, backup and restore, TLS, least privilege, health and resources, observability, scanning, rollout and rollback, data retention and an owned support model.",
+    "detailedAnswer": "I can demonstrate the repository's current artifacts: Compose starts the application and its development dependencies; Jib builds the backend image; Helm and Kubernetes directories describe a target deployment; and GitHub Actions contains automation. I would run the documented build, inspect pinned versions and show how configuration stays outside the image. An artifact that has never survived a real rollout remains design evidence, not operational evidence.\n\nFor production readiness, I would review identity and authorization, secret delivery and rotation, database migration and rollback behavior, backup and restore tests, network exposure, TLS, dependency and image scanning, logs, metrics, traces and alert ownership. Health checks need to represent real readiness; resource requests and limits need measurement; and shutdown must be tested with in-flight work.\n\nMy classification is therefore mixed: hands-on Docker, Compose, Jib, manifest and Helm work is transferable experience, while operating SinapiPRO on Kubernetes is not claimed. Repository history proves that the artifacts exist; deployment history and operational evidence would be required to claim production use.",
     "keyPoints": [
-      "Explica lo que Docker demuestra actualmente",
-      "Separa el empaquetado de las operaciones de producción",
-      "Incluye la recuperación de datos, seguridad y observabilidad",
-      "Verifica las versiones y manifiestos antes de citarlos",
-      "No afirma la operación en Kubernetes sin evidencia"
+      "Explains what Docker currently proves",
+      "Separates packaging from production operations",
+      "Includes data recovery, security and observability",
+      "Verifies versions and manifests before quoting them",
+      "Does not claim Kubernetes operation without evidence"
     ],
     "redFlags": [
-      "Dice que estar contenedorizado significa estar listo para producción",
-      "Ignora las pruebas de migración y restauración de la base de datos",
-      "Reclama conocimiento de Kubernetes porque existe un manifiesto o tutorial",
-      "Tiene health checks pero ninguna definición de disponibilidad (readiness)"
+      "Says containerized means production-ready",
+      "Ignores database migration and restore testing",
+      "Claims Kubernetes because a manifest or tutorial exists",
+      "Has health checks but no definition of readiness"
     ],
     "followUps": [
       {
-        "question": "¿Cómo probarías que una restauración de base de datos realmente funciona?"
+        "question": "How would you test that a database restore actually works?"
       },
       {
-        "question": "¿Qué señales determinarían si un despliegue debe continuar?"
+        "question": "Which signals would determine whether a rollout should continue?"
       },
       {
-        "question": "¿Qué estado debe sobrevivir al reemplazo de un contenedor?"
+        "question": "What state must survive container replacement?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "Artefactos de contenedor y despliegue en SinapiPRO",
-      "description": "El repositorio contiene entornos de Compose, una construcción con Jib, manifiestos de Kubernetes, un chart de Helm y flujos de trabajo de CI. Esto es evidencia práctica de proyecto, no de operación del sistema en producción."
+      "title": "Container and deployment artifacts in SinapiPRO",
+      "description": "The repository contains Compose environments, a Jib build, Kubernetes manifests, a Helm chart and CI workflows. This is hands-on project evidence, not evidence of operating the system in production."
     }
   },
   {
@@ -145,103 +145,103 @@
     "topic": "portfolio",
     "subtopic": "portfolio-quality",
     "difficulty": "SENIOR",
-    "question": "¿Qué evidencia en el repositorio demuestra la calidad de SinapiPRO y qué es lo que todavía no prueba?",
-    "shortAnswer": "El repositorio contiene pruebas JUnit, pruebas de integración de PostgreSQL con Testcontainers, reglas de ArchUnit, pruebas de extremo a extremo de Cypress y flujos de trabajo de GitHub Actions. Ejecutaría el commit actual y mostraría un ejemplo significativo en cada límite de riesgo en lugar de citar un recuento obsoleto. Estos artefactos prueban la intención ejecutable y la repetibilidad; no prueban la confiabilidad en producción, la cobertura adecuada de cada flujo de trabajo o una compilación actualmente exitosa a menos que muestre la ejecución.",
-    "detailedAnswer": "La evidencia es inspeccionable. Las pruebas del backend pueden ejercitar las reglas de negocio, el comportamiento de la API, la autorización y la persistencia específica de PostgreSQL a través de Testcontainers y las migraciones de producción. Las reglas de ArchUnit comprueban los límites de dependencia seleccionados. El lado de Angular incluye flujos de Cypress, mientras que GitHub Actions hace que la construcción y las comprobaciones sean repetibles. En una entrevista, abriría una prueba de negocio, una de integración, una regla de arquitectura y un resultado de flujo de trabajo del commit exacto que se esté discutiendo.\n\nCada artefacto tiene límites. Una base de datos contenedorizada mejora la fidelidad, pero no garantiza el volumen o la concurrencia representativos. Una prueba de arquitectura forzaría solo las reglas codificadas en ella. Una suite de extremo a extremo puede pasar por alto rutas importantes y volverse inestable (flaky). Un archivo de flujo de trabajo no es evidencia de una ejecución exitosa, y un porcentaje de cobertura no es un modelo de riesgo.\n\nLa conclusión honesta nombra la brecha actual más grande y la siguiente prueba que la reduciría. Verificaría el resultado de CI en vivo antes de la entrevista, evitaría recuentos de pruebas obsoletos y distinguiría la evidencia de calidad del proyecto de la evidencia de SLO o incidentes de producción que SinapiPRO no tiene.",
+    "question": "What repository evidence demonstrates SinapiPRO's quality, and what does it still not prove?",
+    "shortAnswer": "The repository contains JUnit tests, PostgreSQL integration tests with Testcontainers, ArchUnit rules, Cypress end-to-end tests and GitHub Actions workflows. I would run the current commit and show one meaningful example at each risk boundary rather than quote a stale count. These artifacts prove executable intent and repeatability; they do not prove production reliability, adequate coverage of every workflow or a currently green build unless I show the run.",
+    "detailedAnswer": "The evidence is inspectable. Backend tests can exercise business rules, API behavior, authorization and PostgreSQL-specific persistence through Testcontainers and production migrations. ArchUnit rules check selected dependency boundaries. The Angular side includes Cypress flows, while GitHub Actions makes the build and checks repeatable. In an interview I would open one business test, one integration test, one architecture rule and one workflow result from the exact commit being discussed.\n\nEach artifact has limits. A containerized database improves fidelity but does not guarantee representative volume or concurrency. An architecture test enforces only the rules encoded in it. An end-to-end suite can miss important paths and become flaky. A workflow file is not evidence of a passing run, and a coverage percentage is not a risk model.\n\nThe honest conclusion names the largest current gap and the next test that would reduce it. I would verify the live CI result before the interview, avoid stale test counts, and distinguish project quality evidence from production SLO or incident evidence that SinapiPRO does not have.",
     "keyPoints": [
-      "Nombra artefactos de Testcontainers, ArchUnit, Cypress y CI que pueden inspeccionarse",
-      "Alinea el tipo de prueba con el riesgo",
-      "Utiliza PostgreSQL para el comportamiento específico de la base de datos",
-      "Prueba el comportamiento del frontend visible para el usuario",
-      "Nombra las brechas actuales y evita métricas no respaldadas"
+      "Names Testcontainers, ArchUnit, Cypress and CI artifacts that can be inspected",
+      "Matches test type to risk",
+      "Uses PostgreSQL for database-specific behavior",
+      "Tests user-visible frontend behavior",
+      "Names current gaps and avoids unsupported metrics"
     ],
     "redFlags": [
-      "Cita una cobertura de pruebas que no se puede reproducir",
-      "Utiliza solo pruebas de repositorio con mocks para el comportamiento SQL",
-      "Cuenta las pruebas en lugar de explicar el riesgo cubierto",
-      "Afirma tener una compilación o escaneo exitoso sin mostrar un resultado actual"
+      "Quotes test coverage that cannot be reproduced",
+      "Uses only mocked repository tests for SQL behavior",
+      "Counts tests instead of explaining covered risk",
+      "Claims a green build or scan without showing a current result"
     ],
     "followUps": [
       {
-        "question": "¿Qué fallo no probado es actualmente el mayor riesgo del proyecto?"
+        "question": "Which untested failure is currently the greatest project risk?"
       },
       {
-        "question": "¿Qué prueba requiere una instancia real de PostgreSQL y por qué?"
+        "question": "Which test requires a real PostgreSQL instance, and why?"
       },
       {
-        "question": "Muestra una prueba que haya prevenido o que prevendría una regresión significativa."
+        "question": "Show one test that prevented or would prevent a meaningful regression."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
-      "title": "Artefactos de calidad ejecutables en SinapiPRO",
-      "description": "El repositorio público contiene pruebas de backend e integración, Testcontainers, ArchUnit, Cypress y GitHub Actions. Aún debe mostrarse una ejecución exitosa actual antes de citar el estado o recuentos de la compilación."
+      "title": "Executable quality artifacts in SinapiPRO",
+      "description": "The public repository contains backend and integration tests, Testcontainers, ArchUnit, Cypress and GitHub Actions. A current successful run still needs to be shown before quoting build status or counts."
     }
   },
   {
     "id": "interview-portfolio-6",
     "topic": "portfolio",
     "subtopic": "portfolio-pitch",
-    "difficulty": "PRINCIPIANTE",
-    "question": "Dame una descripción general de SinapiPRO de 60 a 90 segundos.",
-    "context": "Usa esto como una presentación hablada del proyecto, para luego ofrecer un análisis profundo del backend, frontend o arquitectura.",
-    "shortAnswer": "SinapiPRO es mi ERP de gestión de construcción de código abierto en curso. Elegí el dominio porque tengo experiencia práctica en construcción y quería un proyecto con flujos de trabajo conectados como presupuestos, mediciones, contratos, adquisiciones, cronogramas, costes y proveedores, no una aplicación de tutorial. Construí el backend con Spring Boot y PostgreSQL y el frontend con Angular, TypeScript y PrimeNG, incluyendo pantallas enrutadas, formularios, flujos CRUD y servicios reutilizables. Arquitectónicamente, lo uso para practicar límites modulares, contratos REST, preocupaciones de seguridad, entornos basados en Docker y la separación entre dominio, aplicación e infraestructura. El proyecto demuestra un aprendizaje práctico de full-stack moderno, mientras mantengo claro el límite: es un proyecto personal, no una afirmación de operar este stack a escala de producción empresarial.",
-    "detailedAnswer": "La presentación debe durar unos 60–90 segundos y responder a cuatro preguntas: qué es el producto, por qué el dominio es significativo, qué construiste personalmente y qué criterio de ingeniería demuestra. Detente antes de enumerar cada módulo o librería.\n\nDespués de la presentación, invita al entrevistador a elegir un tema profundo: un límite del backend, un flujo de trabajo de Angular, una decisión de seguridad, un modelo de datos o el entorno Docker. Mantén el repositorio listo para que las afirmaciones puedan demostrarse.\n\nActualiza la presentación cada vez que cambie la implementación. Los números de versión, recuentos de módulos, recuentos de pruebas y afirmaciones sobre infraestructura deben provenir del repositorio actual, no de una descripción antigua del proyecto.",
+    "difficulty": "BEGINNER",
+    "question": "Give me a 60–90 second overview of SinapiPRO.",
+    "context": "Use this as a spoken project pitch, then offer a backend, frontend or architecture deep dive.",
+    "shortAnswer": "SinapiPRO is my ongoing open-source construction-management ERP. I chose the domain because I have practical construction experience and wanted a project with connected workflows such as budgets, measurements, contracts, procurement, schedules, costs and suppliers—not a tutorial application. I built the backend with Spring Boot and PostgreSQL and the frontend with Angular, TypeScript and PrimeNG, including routed screens, forms, CRUD flows and reusable services. Architecturally, I use it to practice modular boundaries, REST contracts, security concerns, Docker-based environments and separation between domain, application and infrastructure. The project demonstrates hands-on modern full-stack learning, while I keep the boundary clear: it is a personal project, not a claim of operating this stack at enterprise production scale.",
+    "detailedAnswer": "The pitch should take about 60–90 seconds and answer four questions: what the product is, why the domain is meaningful, what you personally built and what engineering judgment it demonstrates. Stop before enumerating every module or library.\n\nAfter the pitch, invite the interviewer to choose a deep dive: one backend boundary, one Angular workflow, a security decision, a data model or the Docker environment. Keep the repository ready so claims can be demonstrated.\n\nUpdate the pitch whenever the implementation changes. Version numbers, module counts, test counts and infrastructure claims should come from the current repository, not from an old project description.",
     "keyPoints": [
-      "Se ajusta a una entrega natural de 60 a 90 segundos",
-      "Comienza con el valor del producto y el dominio",
-      "Indica el trabajo de implementación individual",
-      "Ofrece un análisis profundo concreto",
-      "Etiqueta la experiencia del proyecto con honestidad"
+      "Fits a natural 60–90 second delivery",
+      "Starts with product and domain value",
+      "States individual implementation work",
+      "Offers a concrete deep dive",
+      "Labels the project experience honestly"
     ],
     "redFlags": [
-      "Convierte la presentación en una lista de dependencias",
-      "Habla durante varios minutos sin ofrecer una pausa",
-      "Cita versiones o recuentos de memoria",
-      "Evita mostrar evidencia real del repositorio"
+      "Turns the pitch into a dependency list",
+      "Speaks for several minutes without offering a pause",
+      "Claims versions or counts from memory",
+      "Avoids showing actual repository evidence"
     ],
     "followUps": [
       {
-        "question": "¿Qué parte elegirías para un análisis técnico profundo de cinco minutos?"
+        "question": "Which part would you choose for a five-minute technical deep dive?"
       },
       {
-        "question": "¿Qué decisión arquitectónica cambió a medida que el proyecto crecía?"
+        "question": "What architectural decision changed as the project grew?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
     "id": "interview-portfolio-7",
     "topic": "portfolio",
     "subtopic": "portfolio-parallels",
     "difficulty": "SENIOR",
-    "question": "¿Qué lecciones de SinapiPRO son relevantes para un equipo de logística de transporte y qué paralelismos serían equívocos?",
-    "shortAnswer": "Los paralelismos útiles son las preocupaciones de ingeniería: modelar flujos de trabajo conectados, mantener los contratos de API explícitos, ubicar las reglas de negocio en el servidor, manejar la validación y los fallos a través de un límite full-stack, y diseñar módulos en torno a la propiedad (ownership). Los paralelismos equívocos serían afirmar una escala de producción, criticidad operativa, volumen de eventos o conocimiento de los internos de TRAB y NEO comparables.",
-    "detailedAnswer": "SinapiPRO demuestra que puedo llevar un dominio de negocio desde su vocabulario y flujos de trabajo hasta un backend en Spring Boot/PostgreSQL y un frontend en Angular. Eso es relevante para cualquier equipo full-stack que trabaje con reglas operativas, porque requiere diseño de API, persistencia, validación, estado de UI y límites de módulos mantenibles. Mi trabajo previo en producción añade evidencia en diagnóstico de rendimiento, integraciones externas y procesamiento asíncrono.\n\nLos dominios no son equivalentes. La presupuestación de construcción no prueba conocimiento de la ejecución de transporte, y un despliegue personal no demuestra las demandas de disponibilidad, rendimiento o soporte de los sistemas de REWE. Usaría SinapiPRO para mostrar la velocidad de aprendizaje y la fluidez con el stack actual, para luego preguntar al equipo sobre sus flujos de trabajo reales y restricciones operativas.\n\nDe igual manera, el diseño modular en SinapiPRO no revela cómo funciona el modelo plug-and-play de NEO. Me da un vocabulario para discutir contratos y acoplamiento una vez que el equipo suministre los hechos.",
+    "question": "Which lessons from SinapiPRO are relevant to a transport-logistics team, and which parallels would be misleading?",
+    "shortAnswer": "The useful parallels are engineering concerns: modeling connected workflows, keeping API contracts explicit, placing business rules on the server, handling validation and failures across a full-stack boundary, and designing modules around ownership. The misleading parallels would be claiming comparable production scale, operational criticality, event volume or knowledge of TRAB and NEO internals.",
+    "detailedAnswer": "SinapiPRO demonstrates that I can take a business domain from vocabulary and workflows into a Spring Boot/PostgreSQL backend and an Angular frontend. That is relevant to any full-stack team working with operational rules, because it requires API design, persistence, validation, UI state and maintainable module boundaries. My previous production work adds evidence in performance diagnosis, external integrations and asynchronous processing.\n\nThe domains are not equivalent. Construction budgeting does not prove knowledge of transport execution, and a personal deployment does not demonstrate the availability, throughput or support demands of REWE systems. I would use SinapiPRO to show learning speed and current-stack fluency, then ask the team about its actual workflows and operational constraints.\n\nSimilarly, modular design in SinapiPRO does not reveal how NEO's plug-and-play model works. It gives me a vocabulary for discussing contracts and coupling after the team supplies the facts.",
     "keyPoints": [
-      "Conecta capacidades, no una equivalencia de negocio imaginada",
-      "Utiliza el proyecto como evidencia de aprendizaje full-stack",
-      "Utiliza el historial de producción por separado para la evidencia operativa",
-      "No afirma tener una escala comparable",
-      "No infiere la arquitectura de NEO a partir de un proyecto personal"
+      "Connects capabilities, not imagined business equivalence",
+      "Uses the project as evidence of full-stack learning",
+      "Uses production history separately for operational evidence",
+      "Does not claim comparable scale",
+      "Does not infer NEO architecture from a personal project"
     ],
     "redFlags": [
-      "Dice que SinapiPRO reproduce el dominio de TRAB",
-      "Afirma que la carga de un proyecto personal demuestra escala empresarial",
-      "Presenta la modularidad como prueba de arquitectura plug-and-play",
-      "Evita nombrar diferencias importantes"
+      "Says SinapiPRO reproduces TRAB's domain",
+      "Claims personal-project load demonstrates enterprise scale",
+      "Presents modularity as proof of plug-and-play architecture",
+      "Avoids naming important differences"
     ],
     "followUps": [
       {
-        "question": "¿Qué habilidad del proyecto acortaría más tu periodo de adaptación (ramp-up)?"
+        "question": "Which project skill would shorten your ramp-up most?"
       },
       {
-        "question": "¿Qué concepto específico de logística necesitarías aprender primero?"
+        "question": "Which logistics-specific concept would you need to learn first?"
       },
       {
-        "question": "¿Qué preocupación de producción no se ejercita hoy en SinapiPRO?"
+        "question": "What production concern is not exercised by SinapiPRO today?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   }
 ]

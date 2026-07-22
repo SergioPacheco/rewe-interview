@@ -11,6 +11,7 @@ import { topicResolver } from './core/guards/topic.resolver';
  * - Route parameters (:topicId)
  * - CanActivateFn guard (functional, not class-based)
  * - ResolveFn for data pre-loading
+ * - Parent/child routes with redirects
  * - Wildcard redirect
  */
 export const routes: Routes = [
@@ -27,11 +28,63 @@ export const routes: Routes = [
       .then(m => m.QuizComponent),
     title: 'Practice'
   },
+  // Legacy redirect: /resume → /profile/resume
   {
     path: 'resume',
-    loadComponent: () => import('./features/resume/resume.component')
-      .then(m => m.ResumeComponent),
-    title: 'Resume'
+    redirectTo: 'profile/resume',
+    pathMatch: 'full'
+  },
+  // Legacy redirect: /topic/stories → /profile/case-studies
+  {
+    path: 'topic/stories',
+    redirectTo: 'profile/case-studies',
+    pathMatch: 'full'
+  },
+  // Profile section with child routes
+  {
+    path: 'profile',
+    loadComponent: () => import('./features/profile/profile.component')
+      .then(m => m.ProfileComponent),
+    title: 'Profile',
+    children: [
+      { path: '', redirectTo: 'about-me', pathMatch: 'full' },
+      {
+        path: 'about-me',
+        loadComponent: () => import('./features/profile/about-me.component')
+          .then(m => m.AboutMeComponent),
+        title: 'About Me'
+      },
+      {
+        path: 'resume',
+        loadComponent: () => import('./features/resume/resume.component')
+          .then(m => m.ResumeComponent),
+        title: 'Resume'
+      },
+      {
+        path: 'case-studies',
+        loadComponent: () => import('./features/profile/case-studies.component')
+          .then(m => m.CaseStudiesComponent),
+        title: 'Case Studies'
+      },
+      {
+        path: 'engineering-journey',
+        loadComponent: () => import('./features/profile/engineering-journey.component')
+          .then(m => m.EngineeringJourneyComponent),
+        title: 'Engineering Journey'
+      },
+      {
+        path: 'cover-letter',
+        loadComponent: () => import('./features/profile/cover-letter.component')
+          .then(m => m.CoverLetterComponent),
+        title: 'Cover Letter'
+      },
+      {
+        path: 'contact',
+        loadComponent: () => import('./features/profile/contact.component')
+          .then(m => m.ContactComponent),
+        title: 'Contact'
+      }
+    ]
   },
   {
     path: 'portfolio',

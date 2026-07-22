@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, effect, OnDestroy, signal, Pipe, PipeTransform } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { InterviewService } from '../../core/services/interview.service';
 import { I18nService } from '../../core/services/i18n.service';
 import { TopicService } from '../../core/services/topic.service';
@@ -31,7 +32,7 @@ export class ReplacePipe implements PipeTransform {
 @Component({
   selector: 'app-interview',
   standalone: true,
-  imports: [MarkdownPipe, TranslatePipe, ReplacePipe, CodeBlockComponent],
+  imports: [MarkdownPipe, TranslatePipe, ReplacePipe, CodeBlockComponent, RouterLink],
   templateUrl: './interview.component.html',
   styleUrl: './interview.component.scss'
 })
@@ -54,6 +55,21 @@ export class InterviewComponent implements OnDestroy {
 
   // Expose service signals
   readonly loading = this.interviewService.loading;
+
+  /** Topic → Case Study mapping */
+  private static readonly CASE_STUDY_MAP: Record<string, { subtopicId: string; title: string }> = {
+    'behavioral': { subtopicId: 'story-incident', title: 'Production Incident Management' },
+    'kafka': { subtopicId: 'story-performance', title: 'PostgreSQL Performance Optimization' },
+    'software-architecture': { subtopicId: 'story-legacy', title: 'Legacy Code Modernization' },
+    'system-design': { subtopicId: 'story-logistics', title: 'Transportation Pricing System' },
+    'spring': { subtopicId: 'story-n1', title: 'N+1 Query Detection and Resolution' },
+  };
+
+  /** Related case study for this topic (or null) */
+  readonly relatedCaseStudy = computed(() => {
+    const mapping = InterviewComponent.CASE_STUDY_MAP[this.topicId()];
+    return mapping ?? null;
+  });
 
   /** All valid questions for the topic (no filter) */
   readonly allQuestions = computed(() => {

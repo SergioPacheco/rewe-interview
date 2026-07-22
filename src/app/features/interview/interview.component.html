@@ -336,3 +336,16 @@
     }
   }
 </div>
+
+<!-- Related Case Study -->
+@if (relatedCaseStudy()) {
+  <div class="related-case-study">
+    <span class="related-case-study__icon">📊</span>
+    <span class="related-case-study__text">Related Case Study:</span>
+    <a class="related-case-study__link"
+       [routerLink]="['/profile/case-studies']"
+       [fragment]="relatedCaseStudy()!.subtopicId">
+      {{ relatedCaseStudy()!.title }}
+    </a>
+  </div>
+}

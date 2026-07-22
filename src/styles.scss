@@ -319,6 +319,7 @@ img, svg {
 @media print {
   .rewe-header,
   .sidebar,
+  .profile-sidebar,
   .breadcrumb,
   .no-print {
     display: none !important;
@@ -332,6 +333,15 @@ img, svg {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
+  }
+
+  .profile-layout {
+    display: block !important;
+  }
+
+  .profile-content {
+    padding: 0 !important;
+    background: white !important;
   }
 
   body {
@@ -365,11 +375,17 @@ img, svg {
   }
 }
 
-/* Remove browser default header/footer (date, title, URL) when printing.
-   Using explicit margin values suppresses default chrome in most browsers
-   while providing proper spacing between pages. */
+/* Remove browser default header/footer (date, title, URL) when printing,
+   but keep page numbers. Margins preserved for spacing. */
 @page {
   margin: 12mm 10mm;
+
+  @top-left { content: ''; }
+  @top-center { content: ''; }
+  @top-right { content: ''; }
+  @bottom-left { content: ''; }
+  @bottom-center { content: counter(page); }
+  @bottom-right { content: ''; }
 }
 
 @media print {

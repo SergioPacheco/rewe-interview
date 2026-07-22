@@ -1,0 +1,374 @@
+[
+  {
+    "id": "theory-dp-explain-analyze-guide",
+    "topic": "data-persistence",
+    "subtopic": "dp-pg-query-tuning",
+    "title": "EXPLAIN ANALYZE Guide — Reading Execution Plans Like a Performance Engineer",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>EXPLAIN ANALYZE is PostgreSQL's most important performance investigation tool. It executes the query, measures every execution plan operator and reports exactly how the database reached the final result.</p><blockquote>Never guess why a query is slow. Read the execution plan first.</blockquote>"
+      },
+      {
+        "heading": "A Typical Execution Plan",
+        "content": "<pre><code>Nested Loop\n  -> Index Scan\n  -> Bitmap Heap Scan\nExecution Time: 52.431 ms</code></pre><p>Read the execution plan from the bottom upwards. Leaf nodes produce rows, parent nodes consume them and the root node returns the final result.</p>"
+      },
+      {
+        "heading": "Step 1 — Read the Execution Time",
+        "content": "<pre><code>Execution Time: 842 ms</code></pre><p>Start with the total execution time to understand the overall impact before investigating individual operators.</p>"
+      },
+      {
+        "heading": "Step 2 — Find the Most Expensive Operator",
+        "content": "<p>Look for the operator consuming most of the execution time.</p><pre><code>Hash Join\nactual time=5.4..760.8</code></pre><p>Do not waste time optimizing operators responsible for only a few milliseconds.</p>"
+      },
+      {
+        "heading": "Step 3 — Compare Estimated and Actual Rows",
+        "content": "<pre><code>rows=120\nactual rows=184000</code></pre><p>Large differences indicate poor cardinality estimation and often explain why PostgreSQL selected an inefficient execution strategy.</p>"
+      },
+      {
+        "heading": "Step 4 — Check Loops",
+        "content": "<pre><code>loops=85000</code></pre><p>An operator taking only a fraction of a millisecond can still dominate execution time if executed tens of thousands of times.</p>"
+      },
+      {
+        "heading": "Step 5 — Inspect Buffer Usage",
+        "content": "<pre><code>Buffers:\nshared hit=18240\nshared read=24</code></pre><p>High shared hits indicate memory access. High shared reads indicate physical I/O.</p>"
+      },
+      {
+        "heading": "Step 6 — Check Temporary Files",
+        "content": "<pre><code>Sort Method: External Merge\nDisk: 420 MB</code></pre><p>External sorts indicate that work_mem was insufficient and PostgreSQL spilled data to disk.</p>"
+      },
+      {
+        "heading": "Step 7 — Check Heap Fetches",
+        "content": "<pre><code>Heap Fetches: 154200</code></pre><p>Large Heap Fetch values reduce the benefit of Index Only Scan and often indicate that the Visibility Map is incomplete.</p>"
+      },
+      {
+        "heading": "Step 8 — Check Hash Batches",
+        "content": "<pre><code>Batches: 16</code></pre><p>Multiple batches indicate that the hash table no longer fit into memory and PostgreSQL had to spill data to disk.</p>"
+      },
+      {
+        "heading": "Step 9 — Identify the Root Cause",
+        "content": "<pre><code>Slow Query\n     │\n     ▼\nPlanner?\nStatistics?\nIndexes?\nMemory?\nI/O?\nApplication?</code></pre><p>The slowest operator is not always the root cause. Often the real problem occurred much earlier in the execution plan.</p>"
+      },
+      {
+        "heading": "Step 10 — Measure Again",
+        "content": "<p>After every optimization, execute EXPLAIN ANALYZE again.</p><pre><code>Before\nExecution Time: 842 ms\n\nAfter\nExecution Time: 41 ms</code></pre><p>Performance tuning is complete only after improvements have been measured and validated.</p>"
+      },
+      {
+        "heading": "Quick Investigation Checklist",
+        "content": "<pre><code>□ Total Execution Time\n□ Dominant Operator\n□ Estimated vs Actual Rows\n□ Loops\n□ Buffers\n□ Heap Fetches\n□ Temporary Files\n□ Hash Batches\n□ Root Cause\n□ Measure Again</code></pre>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Senior engineers do not memorize execution plan operators. They follow the same systematic investigation process every time, allowing them to diagnose production problems consistently regardless of query complexity.</p>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>Large retail platforms execute thousands of business-critical queries every minute. Engineers capable of interpreting EXPLAIN ANALYZE systematically can distinguish planner problems, I/O bottlenecks and application design issues, reducing incident resolution time and preventing unnecessary infrastructure scaling.</p>"
+      }
+    ]
+  },
+  {
+    "id": "theory-dp-index-selection",
+    "topic": "data-persistence",
+    "subtopic": "dp-pg-query-tuning",
+    "title": "How PostgreSQL Chooses an Index — Understanding Index Selection",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>Creating an index does not guarantee PostgreSQL will use it. The Query Planner evaluates multiple access paths and chooses the one with the lowest estimated cost.</p><blockquote>An unused index is not necessarily a bad index. It may simply not be the cheapest option.</blockquote>"
+      },
+      {
+        "heading": "How PostgreSQL Chooses an Access Path",
+        "content": "<pre><code>SQL Query\n     │\n     ▼\nPlanner\n     │\n     ▼\nEstimate Cost\n     │\n     ▼\nChoose Cheapest Path\n     │\n     ├── Sequential Scan\n     ├── Index Scan\n     ├── Bitmap Index Scan\n     └── Index Only Scan</code></pre><p>The planner compares all viable alternatives before selecting one.</p>"
+      },
+      {
+        "heading": "Sequential Scan",
+        "content": "<p>A Sequential Scan reads every page in the table. It is often the fastest choice when a query returns a large percentage of rows.</p><pre><code>Rows Returned: 92%</code></pre><p>Scanning the entire table once may cost less than performing millions of random index lookups.</p>"
+      },
+      {
+        "heading": "Index Scan",
+        "content": "<p>An Index Scan first searches the index and then fetches matching rows from the heap.</p><pre><code>Index\n │\n ▼\nHeap Fetch\n │\n ▼\nResult</code></pre><p>This strategy performs well when relatively few rows match the predicate.</p>"
+      },
+      {
+        "heading": "Bitmap Index Scan",
+        "content": "<p>Bitmap Index Scan collects matching row locations before accessing heap pages in page order.</p><pre><code>Index\n │\n ▼\nBitmap\n │\n ▼\nHeap</code></pre><p>This minimizes random I/O when many rows satisfy the condition.</p>"
+      },
+      {
+        "heading": "Index Only Scan",
+        "content": "<p>If all required columns exist in the index and heap visibility can be verified through the Visibility Map, PostgreSQL can avoid reading the table.</p><pre><code>Index\n │\n ▼\nResult</code></pre><p>This is generally the most efficient access method.</p>"
+      },
+      {
+        "heading": "Why PostgreSQL Ignores an Index",
+        "content": "<ul><li>The query returns too many rows.</li><li>Statistics indicate low selectivity.</li><li>Sequential Scan is cheaper.</li><li>Functions prevent index usage.</li><li>Outdated statistics mislead the planner.</li><li>The predicate is not SARGable.</li></ul>"
+      },
+      {
+        "heading": "Selectivity Determines Everything",
+        "content": "<pre><code>Predicate\n     │\n     ▼\nSelectivity\n     │\n     ▼\nPlanner Decision</code></pre><p>Highly selective predicates generally favour indexes, while low selectivity often favours sequential access.</p>"
+      },
+      {
+        "heading": "Correlation and Physical Order",
+        "content": "<p>PostgreSQL stores correlation statistics that describe how closely index order matches physical table order.</p><pre><code>High Correlation\n │\n ▼\nFewer Random Reads</code></pre><p>Highly correlated tables reduce random disk access during Index Scans.</p>"
+      },
+      {
+        "heading": "Multiple Predicates",
+        "content": "<pre><code>country='ES'\nAND\nstatus='ACTIVE'</code></pre><p>The planner estimates combined selectivity before deciding whether one index, multiple indexes or a Sequential Scan is cheaper.</p>"
+      },
+      {
+        "heading": "Common Reasons for Bad Index Usage",
+        "content": "<table><tr><th>Problem</th><th>Impact</th></tr><tr><td>Outdated statistics</td><td>Wrong cardinality estimates.</td></tr><tr><td>Functions on indexed columns</td><td>Index becomes unusable.</td></tr><tr><td>Implicit type conversions</td><td>Planner may avoid the index.</td></tr><tr><td>Low selectivity</td><td>Sequential Scan becomes cheaper.</td></tr><tr><td>Poor query design</td><td>Planner cannot exploit available indexes.</td></tr></table>"
+      },
+      {
+        "heading": "Investigation Workflow",
+        "content": "<pre><code>Index Not Used\n      │\n      ▼\nCheck Selectivity\n      │\n      ▼\nCheck Statistics\n      │\n      ▼\nCheck Predicate\n      │\n      ▼\nCheck Data Distribution\n      │\n      ▼\nMeasure Again</code></pre><p>Never assume PostgreSQL ignored an index by mistake. Investigate the planner's reasoning first.</p>"
+      },
+      {
+        "heading": "Common Myths",
+        "content": "<table><tr><th>Myth</th><th>Reality</th></tr><tr><td>Every query should use an index.</td><td>No. Sequential Scan is often optimal.</td></tr><tr><td>More indexes always improve performance.</td><td>Indexes increase write cost and maintenance.</td></tr><tr><td>If an index exists, PostgreSQL must use it.</td><td>The planner chooses the cheapest estimated path.</td></tr></table>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Senior engineers rarely ask 'Why wasn't my index used?'. Instead, they ask 'Why did the planner believe another access path was cheaper?' This mindset leads to more accurate diagnoses and avoids unnecessary index creation.</p>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>Retail systems execute millions of searches across products, customers, orders and logistics records. Efficient index selection reduces latency while avoiding excessive index maintenance costs, which directly impacts write throughput and operational scalability.</p>"
+      }
+    ]
+  },
+  {
+    "id": "theory-dp-performance-playbook",
+    "topic": "data-persistence",
+    "subtopic": "dp-pg-query-tuning",
+    "title": "PostgreSQL Performance Playbook — A Practical Investigation Guide",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>Performance tuning is an engineering process rather than trial and error. Experienced PostgreSQL engineers do not immediately create indexes or rewrite SQL. They first collect evidence, understand the execution plan, identify the real bottleneck and only then decide whether a change is justified.</p><pre><code>Slow Query\n     │\n     ▼\nCollect Evidence\n     │\n     ▼\nRead Execution Plan\n     │\n     ▼\nIdentify Root Cause\n     │\n     ▼\nRefactor\n     │\n     ▼\nMeasure Again</code></pre><blockquote>Never optimize based on intuition. Optimize based on evidence.</blockquote>"
+      },
+      {
+        "heading": "How to Read Any Execution Plan",
+        "content": "<pre><code>1. Read the plan from the bottom up.\n2. Identify the operator consuming most time.\n3. Compare Estimated Rows with Actual Rows.\n4. Determine whether the bottleneck is CPU, Memory or I/O.\n5. Understand why the planner selected this plan.\n6. Decide whether SQL, indexes or statistics should change.\n7. Measure the new execution plan.</code></pre><p>Execution plans are trees. Leaf nodes produce rows that flow upward until the root node returns the final result.</p>"
+      },
+      {
+        "heading": "Performance Investigation Decision Tree",
+        "content": "<pre><code>Slow Query\n     │\n     ▼\nEXPLAIN ANALYZE\n     │\n     ▼\nEstimated ≈ Actual ?\n     │\n ┌───┴────┐\n │        │\nNo       Yes\n │        │\n ▼        ▼\nStatistics  Resource Bottleneck\n            │\n            ├── CPU\n            ├── I/O\n            ├── Memory\n            ├── Locks\n            └── Parallelism</code></pre><p>Cardinality errors usually indicate statistics problems. Accurate estimates shift the investigation toward resource utilization.</p>"
+      },
+      {
+        "heading": "Performance Investigation Checklist",
+        "content": "<pre><code>□ Run EXPLAIN ANALYZE\n□ Enable BUFFERS\n□ Compare Estimated vs Actual Rows\n□ Identify dominant operator\n□ Check Loops\n□ Check Heap Fetches\n□ Check Temporary Files\n□ Check Hash Batches\n□ Check Buffer Hits vs Reads\n□ Verify ANALYZE statistics\n□ Verify indexes\n□ Measure again after every change</code></pre><p>Never modify more than one variable at a time. Otherwise the true cause of the improvement becomes impossible to identify.</p>"
+      },
+      {
+        "heading": "Common Performance Myths",
+        "content": "<table><tr><th>Myth</th><th>Reality</th></tr><tr><td>Sequential Scan is always bad.</td><td>Large result sets are often faster with Sequential Scan.</td></tr><tr><td>Index Scan is always faster.</td><td>Random heap access may cost more than sequential reads.</td></tr><tr><td>Cost equals milliseconds.</td><td>Planner cost is an abstract estimation unit.</td></tr><tr><td>More indexes always improve performance.</td><td>Indexes increase storage, maintenance and write overhead.</td></tr><tr><td>EXPLAIN ANALYZE is harmless.</td><td>It executes the statement.</td></tr></table>"
+      },
+      {
+        "heading": "Essential SQL Refactoring Principles",
+        "content": "<ul><li>Return only required columns.</li><li>Push filters as early as possible.</li><li>Write SARGable predicates.</li><li>Avoid unnecessary functions on indexed columns.</li><li>Prefer Keyset Pagination over large OFFSET values.</li><li>Eliminate N+1 queries using batch loading or joins.</li><li>Reduce intermediate result sets before expensive joins.</li><li>Always compare execution plans before and after refactoring.</li></ul><blockquote>The best optimization is the one supported by measurable evidence.</blockquote>"
+      },
+      {
+        "heading": "Performance Glossary",
+        "content": "<table><tr><th>Term</th><th>Description</th></tr><tr><td>Cardinality</td><td>Estimated number of rows produced by an operator.</td></tr><tr><td>Selectivity</td><td>Percentage of rows satisfying a predicate.</td></tr><tr><td>Heap Fetch</td><td>Reading table rows after locating them through an index.</td></tr><tr><td>Buffer Hit</td><td>Page already available in shared_buffers.</td></tr><tr><td>Buffer Read</td><td>Page loaded from storage.</td></tr><tr><td>Loop</td><td>Number of executions of an operator.</td></tr><tr><td>Spill</td><td>Temporary data written to disk because memory was exhausted.</td></tr><tr><td>Bitmap</td><td>Intermediate structure grouping tuple locations by page.</td></tr></table>"
+      },
+      {
+        "heading": "Investigation Workflow Summary",
+        "content": "<pre><code>Slow Query\n     │\n     ▼\nMeasure\n     │\n     ▼\nEXPLAIN ANALYZE\n     │\n     ▼\nRead Plan\n     │\n     ▼\nCompare Estimates\n     │\n     ▼\nFind Dominant Operator\n     │\n     ▼\nIdentify Root Cause\n     │\n     ▼\nRefactor\n     │\n     ▼\nMeasure Again\n     │\n     ▼\nDeploy Safely</code></pre><p>This workflow should be followed for every production investigation. Consistency is more valuable than clever guesses.</p>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Junior developers often optimize SQL by experimenting with indexes or rewriting queries until performance improves. Senior engineers first explain <strong>why</strong> the planner selected the current execution strategy. Understanding planner decisions allows optimizations to remain correct as data volumes grow.</p>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>Enterprise retail systems continuously execute thousands of concurrent queries involving orders, inventory, logistics and pricing. Consistently applying a structured investigation workflow enables engineering teams to diagnose performance issues quickly, distinguish planner problems from infrastructure bottlenecks and deliver predictable improvements without introducing regressions.</p>"
+      }
+    ]
+  },
+  {
+    "id": "theory-dp-planner-mistakes",
+    "topic": "data-persistence",
+    "subtopic": "dp-pg-query-tuning",
+    "title": "Why PostgreSQL Chooses the Wrong Plan — Understanding Planner Mistakes",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>PostgreSQL almost never chooses a poor execution plan randomly. Every decision is based on the information available to the Query Planner. When the chosen plan performs badly, the underlying cause is usually incorrect assumptions rather than a faulty optimizer.</p><blockquote>Do not ask 'Why did PostgreSQL choose this plan?'. Ask 'What information convinced PostgreSQL this was the cheapest plan?'</blockquote>"
+      },
+      {
+        "heading": "How the Planner Makes Decisions",
+        "content": "<pre><code>Statistics\n      │\n      ▼\nCardinality\n      │\n      ▼\nCost Model\n      │\n      ▼\nExecution Plan</code></pre><p>If statistics or cardinality estimates are inaccurate, every subsequent planner decision may also become inaccurate.</p>"
+      },
+      {
+        "heading": "Mistake 1 — Incorrect Cardinality",
+        "content": "<pre><code>Estimated Rows : 25\nActual Rows    : 2,500,000</code></pre><p>This is the most common reason for poor execution plans. Incorrect row estimates frequently cause PostgreSQL to choose Nested Loop joins when Hash Join would be significantly more efficient.</p>"
+      },
+      {
+        "heading": "Mistake 2 — Outdated Statistics",
+        "content": "<p>Large INSERT, UPDATE and DELETE workloads gradually invalidate planner statistics.</p><pre><code>ANALYZE orders;</code></pre><p>Without recent statistics the planner no longer understands the real data distribution.</p>"
+      },
+      {
+        "heading": "Mistake 3 — Data Skew",
+        "content": "<pre><code>status\nACTIVE   99%\nBLOCKED   1%</code></pre><p>Highly skewed data often causes incorrect selectivity estimates if statistics are insufficient.</p>"
+      },
+      {
+        "heading": "Mistake 4 — Correlated Columns",
+        "content": "<pre><code>country = 'ES'\ncity = 'Madrid'</code></pre><p>The planner frequently assumes predicates are independent. When columns are strongly correlated, cardinality estimation may become dramatically inaccurate.</p>"
+      },
+      {
+        "heading": "Mistake 5 — Missing Extended Statistics",
+        "content": "<pre><code>CREATE STATISTICS\nON country, city\nFROM customers;</code></pre><p>Extended Statistics allow PostgreSQL to model relationships between columns and improve selectivity estimation.</p>"
+      },
+      {
+        "heading": "Mistake 6 — Parameter Sensitivity",
+        "content": "<p>The same prepared statement may execute with completely different parameter values.</p><pre><code>customer_id = 1\ncustomer_id = 950000</code></pre><p>A plan that is optimal for one parameter may be inefficient for another.</p>"
+      },
+      {
+        "heading": "Mistake 7 — Wrong Cost Parameters",
+        "content": "<pre><code>random_page_cost\nseq_page_cost</code></pre><p>Planner cost parameters influence access path selection. Incorrect values may bias PostgreSQL toward Sequential Scans or Index Scans.</p>"
+      },
+      {
+        "heading": "Mistake 8 — Stale Visibility Information",
+        "content": "<p>An Index Only Scan depends on the Visibility Map.</p><pre><code>Heap Fetches: 250000</code></pre><p>If pages are not marked All Visible, PostgreSQL must repeatedly access heap pages, reducing the benefit of Index Only Scan.</p>"
+      },
+      {
+        "heading": "How to Investigate Planner Mistakes",
+        "content": "<pre><code>Execution Plan\n      │\n      ▼\nEstimated vs Actual\n      │\n      ▼\nStatistics\n      │\n      ▼\nPlanner Assumptions\n      │\n      ▼\nCorrect Root Cause</code></pre><p>Focus on understanding the planner's assumptions before attempting any optimization.</p>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Experienced engineers rarely force PostgreSQL into a specific execution plan. Instead, they improve statistics, indexes or query structure so the optimizer naturally selects a better strategy.</p>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>Enterprise logistics systems execute thousands of parameterized queries every second. Understanding why the planner selected an inefficient execution plan enables engineers to resolve production incidents without relying on trial-and-error tuning.</p>"
+      }
+    ]
+  },
+  {
+    "id": "theory-dp-statistics-deep-dive",
+    "topic": "data-persistence",
+    "subtopic": "dp-pg-query-tuning",
+    "title": "PostgreSQL Statistics — How the Query Planner Estimates Rows",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>The PostgreSQL Query Planner does not inspect every row before executing a query. Instead, it relies on statistics collected by ANALYZE to estimate how much data each operation will process.</p><blockquote>The quality of an execution plan depends directly on the quality of its statistics.</blockquote>"
+      },
+      {
+        "heading": "Why Statistics Matter",
+        "content": "<pre><code>Table\n   │\n   ▼\nANALYZE\n   │\n   ▼\nStatistics\n   │\n   ▼\nCardinality Estimation\n   │\n   ▼\nExecution Plan</code></pre><p>If statistics are inaccurate, PostgreSQL may choose an execution plan that appears inexpensive but performs poorly in production.</p>"
+      },
+      {
+        "heading": "How ANALYZE Works",
+        "content": "<p>ANALYZE does not scan every row. It samples table pages and builds statistical information about column values.</p><pre><code>ANALYZE customers;</code></pre><p>This process is lightweight compared with a full table scan and is designed to run regularly.</p>"
+      },
+      {
+        "heading": "Statistics Stored by PostgreSQL",
+        "content": "<table><tr><th>Statistic</th><th>Purpose</th></tr><tr><td>Null Fraction</td><td>Percentage of NULL values.</td></tr><tr><td>Distinct Values</td><td>Estimated number of unique values.</td></tr><tr><td>Most Common Values (MCV)</td><td>Frequently occurring values.</td></tr><tr><td>Histogram</td><td>Distribution of remaining values.</td></tr><tr><td>Correlation</td><td>Relationship between logical and physical row order.</td></tr></table>"
+      },
+      {
+        "heading": "Most Common Values (MCV)",
+        "content": "<pre><code>Status\nACTIVE   94%\nPENDING   4%\nBLOCKED   2%</code></pre><p>Frequently occurring values are stored explicitly because they strongly influence selectivity estimation.</p>"
+      },
+      {
+        "heading": "Histograms",
+        "content": "<p>Values not included in the Most Common Values list are represented using histograms.</p><pre><code>0 ──10──20──30──40──50</code></pre><p>Histograms allow PostgreSQL to estimate range predicates such as BETWEEN, &lt; and &gt;.</p>"
+      },
+      {
+        "heading": "Selectivity",
+        "content": "<p>Selectivity is the percentage of rows expected to satisfy a predicate.</p><pre><code>Rows: 1,000,000\nEstimated Result: 2,000\nSelectivity = 0.2%</code></pre><p>Highly selective predicates usually favour index access.</p>"
+      },
+      {
+        "heading": "Cardinality Estimation",
+        "content": "<pre><code>Estimated Rows: 150\nActual Rows: 162</code></pre><p>Small differences are expected. Large differences often indicate outdated statistics, skewed data or correlated columns.</p>"
+      },
+      {
+        "heading": "Extended Statistics",
+        "content": "<pre><code>CREATE STATISTICS customer_location\nON country, city\nFROM customers;</code></pre><p>Extended Statistics allow PostgreSQL to model relationships between columns instead of assuming they are independent.</p>"
+      },
+      {
+        "heading": "When Statistics Become Incorrect",
+        "content": "<ul><li>Large INSERT operations.</li><li>Mass UPDATE statements.</li><li>Bulk DELETE operations.</li><li>Significant changes in data distribution.</li></ul><p>As data changes, planner estimates gradually become less accurate until ANALYZE refreshes the statistics.</p>"
+      },
+      {
+        "heading": "Autovacuum and ANALYZE",
+        "content": "<pre><code>INSERT\nUPDATE\nDELETE\n      │\n      ▼\nAutovacuum\n      │\n      ▼\nAutomatic ANALYZE</code></pre><p>Autovacuum automatically updates statistics after enough table modifications have occurred.</p>"
+      },
+      {
+        "heading": "Inspecting Statistics",
+        "content": "<pre><code>SELECT *\nFROM pg_stats\nWHERE tablename = 'customers';</code></pre><p>The pg_stats view exposes the statistical information used by the Query Planner.</p>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Reality</th></tr><tr><td>ANALYZE improves performance directly.</td><td>It improves planner decisions.</td></tr><tr><td>Statistics are always exact.</td><td>They are statistical estimates.</td></tr><tr><td>ANALYZE scans every row.</td><td>It uses sampling.</td></tr></table>"
+      },
+      {
+        "heading": "Investigation Workflow",
+        "content": "<pre><code>Wrong Plan\n      │\n      ▼\nEstimated ≠ Actual\n      │\n      ▼\nCheck Statistics\n      │\n      ▼\nRun ANALYZE\n      │\n      ▼\nMeasure Again</code></pre><p>Whenever planner estimates differ significantly from reality, statistics should be one of the first investigation points.</p>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Experienced engineers recognise that many execution plan problems originate from inaccurate statistics rather than missing indexes. Improving planner knowledge is often more effective than forcing a different execution strategy.</p>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>Retail platforms continuously change product catalogues, inventory and customer orders. Accurate statistics allow PostgreSQL to adapt execution plans automatically as data volumes and distributions evolve, maintaining predictable performance without constant manual tuning.</p>"
+      }
+    ]
+  },
+  {
+    "id": "theory-dp-sql-refactoring-patterns",
+    "topic": "data-persistence",
+    "subtopic": "dp-pg-query-tuning",
+    "title": "SQL Refactoring Patterns — The 8 Optimizations You Must Know",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>Once a slow query's root cause is identified through EXPLAIN ANALYZE, the next step is selecting the right refactoring strategy. These 8 patterns cover the vast majority of real-world performance issues.</p><blockquote>Every pattern solves a specific problem. Never apply them blindly — measure before and after.</blockquote>"
+      },
+      {
+        "heading": "Pattern 1 — OR to UNION ALL",
+        "content": "<h4>Problem</h4><pre><code>SELECT * FROM orders\nWHERE customer_id = 10\n   OR salesperson_id = 10;</code></pre><p>OR predicates prevent efficient index usage — PostgreSQL must evaluate two independent conditions.</p><h4>Refactoring</h4><pre><code>SELECT * FROM orders WHERE customer_id = 10\nUNION ALL\nSELECT * FROM orders WHERE salesperson_id = 10;</code></pre><p>Each branch now uses its own index independently. Use UNION (not ALL) only when duplicates must be removed.</p>"
+      },
+      {
+        "heading": "Pattern 2 — OFFSET Pagination → Keyset Pagination",
+        "content": "<h4>Problem</h4><pre><code>SELECT * FROM orders\nORDER BY id\nLIMIT 20 OFFSET 500000;</code></pre><p>PostgreSQL reads and discards 500,000 rows before returning 20. Execution time grows linearly with OFFSET.</p><h4>Refactoring</h4><pre><code>SELECT * FROM orders\nWHERE id > :lastSeenId\nORDER BY id\nLIMIT 20;</code></pre><p>Keyset pagination has constant execution time regardless of position in the result set.</p>"
+      },
+      {
+        "heading": "Pattern 3 — Functions on Indexed Columns (SARGability)",
+        "content": "<h4>Problem</h4><pre><code>WHERE LOWER(email) = 'john@test.com'\nWHERE YEAR(order_date) = 2025</code></pre><p>Wrapping an indexed column in a function prevents index usage — the planner cannot match the expression.</p><h4>Refactoring</h4><pre><code>-- Option A: Expression index\nCREATE INDEX idx_email_lower ON users(LOWER(email));\n\n-- Option B: Range predicate\nWHERE order_date >= '2025-01-01' AND order_date < '2026-01-01'</code></pre><p>Keep predicates SARGable: the indexed column should appear unmodified on one side of the comparison.</p>"
+      },
+      {
+        "heading": "Pattern 4 — N+1 Queries → Batch Loading",
+        "content": "<h4>Problem</h4><pre><code>for each customer:\n  SELECT * FROM orders WHERE customer_id = ?\n\n-- 1000 customers = 1001 queries</code></pre><p>Each query has connection overhead, network latency, and prevents the database from optimizing as a whole.</p><h4>Refactoring</h4><pre><code>SELECT * FROM customers c\nLEFT JOIN orders o ON o.customer_id = c.id\nWHERE c.id IN (:ids)</code></pre><p>Or two queries: one for customers, one for all their orders with IN clause. Reduces 1001 queries to 1-2.</p>"
+      },
+      {
+        "heading": "Pattern 5 — Composite Index Design",
+        "content": "<h4>Problem</h4><pre><code>-- Two separate indexes\nCREATE INDEX idx_cust ON orders(customer_id);\nCREATE INDEX idx_status ON orders(status);\n\n-- Query filters both\nWHERE customer_id = ? AND status = 'OPEN'</code></pre><p>PostgreSQL may use BitmapAnd (expensive) or choose only one index.</p><h4>Refactoring</h4><pre><code>CREATE INDEX idx_orders_cust_status\nON orders(customer_id, status);</code></pre><p><strong>Leftmost prefix rule:</strong> the index supports queries filtering customer_id alone or customer_id + status, but NOT status alone.</p>"
+      },
+      {
+        "heading": "Pattern 6 — EXISTS Instead of COUNT/IN/JOIN",
+        "content": "<h4>Three anti-patterns solved by EXISTS:</h4><pre><code>-- Anti-pattern 1: COUNT to check existence\nSELECT COUNT(*) FROM orders WHERE customer_id = 10;\nIF count > 0 THEN ...\n\n-- Anti-pattern 2: NOT IN with NULLs\nWHERE id NOT IN (SELECT nullable_col FROM ...)\n\n-- Anti-pattern 3: JOIN + DISTINCT for existence\nSELECT DISTINCT c.* FROM customers c\nJOIN orders o ON o.customer_id = c.id;</code></pre><h4>Refactoring</h4><pre><code>-- Existence check (stops at first match)\nSELECT EXISTS(SELECT 1 FROM orders WHERE customer_id = 10);\n\n-- Anti-join (NULL-safe)\nWHERE NOT EXISTS(SELECT 1 FROM other WHERE other.id = main.id);\n\n-- Semi-join (no duplicates)\nSELECT * FROM customers c\nWHERE EXISTS(SELECT 1 FROM orders o WHERE o.customer_id = c.id);</code></pre>"
+      },
+      {
+        "heading": "Pattern 7 — Partial and Covering Indexes",
+        "content": "<h4>Partial Index — index only relevant rows</h4><pre><code>-- Only 3% of orders are PENDING\nCREATE INDEX idx_pending\nON orders(id) WHERE status = 'PENDING';</code></pre><p>Smaller index → faster lookups, less maintenance, better cache hit ratio.</p><h4>Covering Index — avoid heap access</h4><pre><code>CREATE INDEX idx_orders_cover\nON orders(customer_id)\nINCLUDE (total_amount, order_date);</code></pre><p>If all required columns are in the index, PostgreSQL uses Index Only Scan — zero heap page reads.</p>"
+      },
+      {
+        "heading": "Pattern 8 — Eliminate Unnecessary DISTINCT and Sorting",
+        "content": "<h4>DISTINCT hiding a bug</h4><p>If your query needs DISTINCT to return correct results, the join logic is likely wrong. Fix the join, don't mask duplicates.</p><h4>Unnecessary ORDER BY</h4><pre><code>-- Sorting inside a subquery that will be re-sorted\nSELECT * FROM (\n  SELECT * FROM orders ORDER BY date  -- useless sort\n) sub\nORDER BY customer_id;</code></pre><h4>Sort elimination via index</h4><pre><code>-- If an index matches ORDER BY, PostgreSQL skips sorting\nCREATE INDEX idx_created ON orders(created_at DESC);</code></pre>"
+      },
+      {
+        "heading": "Decision Flowchart",
+        "content": "<pre><code>Slow Query Identified\n        │\n        ▼\n  EXPLAIN ANALYZE\n        │\n   ┌────┴────┐\n   │         │\nSeq Scan   Nested Loop\n(large %)  (high loops)\n   │         │\n   ▼         ▼\nIndex?    N+1?\nSARGable? Batch load?\nPartial?  Composite idx?\n        │\n        ▼\n  Measure Again</code></pre><blockquote>The best optimization is the one supported by measurable evidence.</blockquote>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Senior engineers understand that indexes are not free — every index increases write latency, storage consumption, and VACUUM work. The goal is designing the smallest set of indexes that supports the workload, not maximizing the number of indexes.</p>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>Retail platforms combine high-volume transactional writes (orders, inventory) with complex analytical reads (logistics, pricing). Engineers who can apply the right refactoring pattern for each scenario reduce latency without sacrificing write throughput — a critical balance in systems processing thousands of concurrent operations.</p>"
+      }
+    ]
+  }
+]

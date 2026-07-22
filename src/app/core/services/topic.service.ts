@@ -168,6 +168,7 @@ export class TopicService {
       'theory-kafka.json',
       'theory-rest.json',
       'theory-data-persistence.json',
+      'theory-dp-pg-query-tuning.json',
       'theory-solid.json',
       'theory-concurrency.json',
       'theory-patterns.json',

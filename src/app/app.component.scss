@@ -420,9 +420,9 @@
   &__item {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0;
     width: 100%;
-    padding: 6px 8px;
+    padding: 0;
     border-radius: 6px;
     color: #333;
     font-size: 13px;
@@ -434,6 +434,34 @@
     transition: background 160ms ease;
     &:hover { background: #f5f5f5; }
     &--expanded { background: #f5f5f5; color: #cc071e; font-weight: 700; }
+  }
+
+  &__item-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    padding: 6px 0 6px 8px;
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+    &:hover { text-decoration: none; }
+  }
+
+  &__chevron-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: none;
+    border-radius: 4px;
+    cursor: pointer;
+    &:hover { background: #e8e8e8; }
   }
 
   &__icon { font-size: 1rem; width: 1.25rem; text-align: center; flex-shrink: 0; }

@@ -168,6 +168,11 @@ export class AppComponent implements OnInit {
     }
   }
 
+  navigateToTopic(topicId: string): void {
+    this.expandedTopic.set(topicId);
+    this.closeSidebarOnMobile();
+  }
+
   toggleTopic(topicId: string): void {
     this.expandedTopic.set(
       this.expandedTopic() === topicId ? null : topicId

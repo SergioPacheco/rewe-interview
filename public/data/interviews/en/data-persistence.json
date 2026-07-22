@@ -5,8 +5,8 @@
     "subtopic": "dp-indexing",
     "difficulty": "INTERMEDIATE",
     "question": "How do you decide whether a query needs an index, and what should that index contain?",
-    "shortAnswer": "I start from a measured query and its access pattern, not from a rule such as \u2018index every WHERE column\u2019. I inspect the plan, row counts, selectivity, joins and ordering, then design the smallest index that supports the important predicates. I also account for write cost, storage and duplicate indexes, and verify the result with representative data.",
-    "detailedAnswer": "A useful index is shaped by a workload:\n\n1. Identify an important query: frequency, latency objective and rows returned.\n2. Inspect `EXPLAIN`; use `EXPLAIN (ANALYZE, BUFFERS)` only where executing the statement is safe.\n3. Match the index to equality/range predicates, join keys and any ordering that can avoid a sort.\n4. For a composite B-tree, constraints on leading columns are normally the most efficient way to limit the scanned range, but later-column predicates can still be applied. Current PostgreSQL can choose skip scan for some non-leading predicates when its cost model expects that to help. Verify the actual version and plan; \u2018most selective first\u2019 is not a universal rule.\n5. Consider a covering index with `INCLUDE`, a partial index for a stable subset, or an expression index when the query uses the same expression.\n6. Measure reads and writes after the change and remove redundant indexes.\n\nA sequential scan is not proof of a missing index. PostgreSQL can correctly prefer it for a small table, a query returning a large fraction of the table, or when random heap reads would cost more. An index is justified by the observed plan and workload, not by the node name alone.",
+    "shortAnswer": "I start from a measured query and its access pattern, not from a rule such as ‘index every WHERE column’. I inspect the plan, row counts, selectivity, joins and ordering, then design the smallest index that supports the important predicates. I also account for write cost, storage and duplicate indexes, and verify the result with representative data.",
+    "detailedAnswer": "A useful index is shaped by a workload:\n\n1. Identify an important query: frequency, latency objective and rows returned.\n2. Inspect `EXPLAIN`; use `EXPLAIN (ANALYZE, BUFFERS)` only where executing the statement is safe.\n3. Match the index to equality/range predicates, join keys and any ordering that can avoid a sort.\n4. For a composite B-tree, constraints on leading columns are normally the most efficient way to limit the scanned range, but later-column predicates can still be applied. Current PostgreSQL can choose skip scan for some non-leading predicates when its cost model expects that to help. Verify the actual version and plan; ‘most selective first’ is not a universal rule.\n5. Consider a covering index with `INCLUDE`, a partial index for a stable subset, or an expression index when the query uses the same expression.\n6. Measure reads and writes after the change and remove redundant indexes.\n\nA sequential scan is not proof of a missing index. PostgreSQL can correctly prefer it for a small table, a query returning a large fraction of the table, or when random heap reads would cost more. An index is justified by the observed plan and workload, not by the node name alone.",
     "keyPoints": [
       "Design indexes from measured query patterns",
       "Leading columns usually matter most, but planner features and the actual plan decide usage",
@@ -85,7 +85,7 @@
       "Can the statement be executed safely on a replica or staging copy?"
     ],
     "shortAnswer": "I trace the request first to separate one slow query from N+1 calls or lock waits. For a candidate statement I inspect `EXPLAIN`, and, in a safe environment, `EXPLAIN (ANALYZE, BUFFERS)`. I compare estimates with actual rows, loops, I/O and sort behavior, change one thing at a time, and verify both latency and workload impact before and after deployment.",
-    "detailedAnswer": "A disciplined investigation is broader than looking for a sequential scan:\n\n1. Use APM and database statistics to locate time: query duration, query count, connection-pool wait, locks and remote calls.\n2. Capture the actual SQL and representative bind values. Parameter distribution can change the best plan.\n3. Read `EXPLAIN` first. `EXPLAIN ANALYZE` actually executes the statement; use it cautiously on production, especially for DML, expensive functions or locks. A replica or production-like dataset is safer.\n4. Inspect total time, actual versus estimated rows, `loops`, buffers, sorts spilling to disk and time spent waiting. A nested loop or sequential scan is not inherently wrong.\n5. A large estimate mismatch can come from stale statistics, skew, correlated columns or parameter-sensitive plans\u2014not only stale statistics.\n6. Fix the root cause: remove N+1 access, fetch fewer columns/rows, rewrite the query, update statistics, add a targeted index or shorten lock scope.\n7. Compare before/after plans and monitor throughput, writes and tail latency after release.\n\nFor reversible DML, a transaction followed by rollback can protect database state, but it does not neutralize every external side effect a function or trigger might cause.",
+    "detailedAnswer": "A disciplined investigation is broader than looking for a sequential scan:\n\n1. Use APM and database statistics to locate time: query duration, query count, connection-pool wait, locks and remote calls.\n2. Capture the actual SQL and representative bind values. Parameter distribution can change the best plan.\n3. Read `EXPLAIN` first. `EXPLAIN ANALYZE` actually executes the statement; use it cautiously on production, especially for DML, expensive functions or locks. A replica or production-like dataset is safer.\n4. Inspect total time, actual versus estimated rows, `loops`, buffers, sorts spilling to disk and time spent waiting. A nested loop or sequential scan is not inherently wrong.\n5. A large estimate mismatch can come from stale statistics, skew, correlated columns or parameter-sensitive plans—not only stale statistics.\n6. Fix the root cause: remove N+1 access, fetch fewer columns/rows, rewrite the query, update statistics, add a targeted index or shorten lock scope.\n7. Compare before/after plans and monitor throughput, writes and tail latency after release.\n\nFor reversible DML, a transaction followed by rollback can protect database state, but it does not neutralize every external side effect a function or trigger might cause.",
     "keyPoints": [
       "Trace the whole request before blaming one query",
       "EXPLAIN ANALYZE executes the statement",
@@ -185,7 +185,7 @@
     "subtopic": "dp-jpa-fundamentals",
     "difficulty": "INTERMEDIATE",
     "question": "Explain the JPA entity lifecycle and the mistakes developers make around `merge` and transaction boundaries.",
-    "shortAnswer": "An entity can be new, managed, detached or removed relative to a persistence context. Managed changes are detected and synchronized on flush; detached changes are not. `persist` makes a new entity managed, while `merge` copies state into a managed instance and returns that instance\u2014the object passed to `merge` does not become managed. Transaction and persistence-context scope determine when detachment occurs.",
+    "shortAnswer": "An entity can be new, managed, detached or removed relative to a persistence context. Managed changes are detected and synchronized on flush; detached changes are not. `persist` makes a new entity managed, while `merge` copies state into a managed instance and returns that instance—the object passed to `merge` does not become managed. Transaction and persistence-context scope determine when detachment occurs.",
     "detailedAnswer": "The states are relative to an `EntityManager`/persistence context:\n\n- **New**: not managed and without a persistent database representation.\n- **Managed**: associated with the context. Dirty checking can synchronize changes at flush, which may happen before commit.\n- **Detached**: has persistent identity but is no longer managed by that context; ordinary field changes are not tracked.\n- **Removed**: managed and scheduled for deletion at flush.\n\nImportant transitions:\n- `persist(newEntity)` associates a new entity; SQL may be issued immediately or at flush depending on mapping/provider behavior.\n- `detach`, `clear` or closing the persistence context detaches entities. A transaction-scoped context normally ends with the transaction, while an extended context has a different lifecycle.\n- `merge(detached)` copies state into an existing or newly loaded/created managed instance and returns the managed reference. Continue with the returned reference; the original remains detached.\n- `remove(managed)` marks it for deletion.\n\nLazy-loading failures are usually a boundary/design signal: map required data inside the transaction or fetch a purpose-built DTO instead of keeping a session open across presentation work.",
     "keyPoints": [
       "Lifecycle state is relative to a persistence context",
@@ -232,7 +232,7 @@
       "What query count, row count and latency does the trace show?"
     ],
     "shortAnswer": "N+1 appears when one query loads parents and later relationship access triggers repeated queries. I confirm it with per-request SQL counts, then choose a fetch plan for that use case: fetch join or entity graph for bounded relationships, batch fetching or a two-query pattern for collections, and DTO projection for read models. I verify result-row growth because joining multiple to-many relationships can be worse than N+1.",
-    "detailedAnswer": "The issue is not simply \u2018lazy is bad\u2019. It is an access pattern whose fetch plan does not match the use case. Detection comes from an APM trace, Hibernate statistics or controlled SQL logging that shows many structurally similar statements for one operation.\n\nPossible remedies:\n\n1. **Fetch join / entity graph** for a relationship that is needed now. This is often effective for to-one associations and bounded collections.\n2. **Batch fetching** for lazy relationships when many parents need the same association type; it reduces round trips without building one huge row set.\n3. **Two-step query**: page parent IDs/entities first, then fetch required children with `WHERE parent_id IN (...)`. This preserves pagination and avoids a multi-collection cross product.\n4. **DTO projection** for a read use case that needs a known set of fields, avoiding entity graph and dirty-checking overhead.\n\nTrade-offs matter. A to-many fetch join duplicates parent columns and can make pagination incorrect or force in-memory work depending on provider/query. Fetching two independent to-many collections multiplies rows. `EAGER` on the mapping is a global default, not a per-use-case cure. Measure query count, returned rows, memory and latency together.",
+    "detailedAnswer": "The issue is not simply ‘lazy is bad’. It is an access pattern whose fetch plan does not match the use case. Detection comes from an APM trace, Hibernate statistics or controlled SQL logging that shows many structurally similar statements for one operation.\n\nPossible remedies:\n\n1. **Fetch join / entity graph** for a relationship that is needed now. This is often effective for to-one associations and bounded collections.\n2. **Batch fetching** for lazy relationships when many parents need the same association type; it reduces round trips without building one huge row set.\n3. **Two-step query**: page parent IDs/entities first, then fetch required children with `WHERE parent_id IN (...)`. This preserves pagination and avoids a multi-collection cross product.\n4. **DTO projection** for a read use case that needs a known set of fields, avoiding entity graph and dirty-checking overhead.\n\nTrade-offs matter. A to-many fetch join duplicates parent columns and can make pagination incorrect or force in-memory work depending on provider/query. Fetching two independent to-many collections multiplies rows. `EAGER` on the mapping is a global default, not a per-use-case cure. Measure query count, returned rows, memory and latency together.",
     "keyPoints": [
       "Confirm N+1 through query counts for one operation",
       "Choose fetch plans per use case instead of making everything eager",
@@ -268,7 +268,7 @@
     "subtopic": "dp-jpa-queries",
     "difficulty": "INTERMEDIATE",
     "question": "When would you choose JPQL, Criteria or native SQL, and how do you keep each option safe?",
-    "shortAnswer": "I use JPQL when the query is naturally expressed over entities and relationships, Criteria when dynamic composition or metamodel-based typing offsets its verbosity, and native SQL for database features or query shapes the provider cannot express well. The choice is per query. All three still require bound parameters for untrusted values\u2014concatenating input into JPQL is injection-prone too.",
+    "shortAnswer": "I use JPQL when the query is naturally expressed over entities and relationships, Criteria when dynamic composition or metamodel-based typing offsets its verbosity, and native SQL for database features or query shapes the provider cannot express well. The choice is per query. All three still require bound parameters for untrusted values—concatenating input into JPQL is injection-prone too.",
     "detailedAnswer": "**JPQL** is concise for stable queries over the entity model, supports entity/DTO results and keeps most provider portability. It is string-based, so refactoring and complex dynamic predicates need care.\n\n**Criteria API** builds the same persistence query model programmatically. It is verbose but useful for optional filters and reusable predicates; generated static metamodels can improve type checking. It is not automatically faster than equivalent JPQL.\n\n**Native SQL** is appropriate when the deployed database and provider version require features such as PostgreSQL `LATERAL`, `DISTINCT ON`, JSON operators or a specialized aggregation/query shape. It gives direct control over submitted SQL, but the database still chooses the execution plan. Mapping, portability and integration-test cost increase. Native results can be scalars, DTO-oriented mappings or entities; returning `Tuple` is an option, not a universal rule.\n\nSecurity is independent of the choice:\n```java\n// Vulnerable: input changes JPQL syntax\n\"select p from Person p where p.name = '\" + input + \"'\"\n\n// Safe value binding\nquery.setParameter(\"name\", input);\n```\n\nDynamic identifiers or sort fields cannot generally be value parameters, so map them from an allow-list. Test native SQL against the real database engine and inspect the generated SQL for performance-sensitive JPQL/Criteria queries.",
     "keyPoints": [
       "JPQL fits stable entity-oriented queries",
@@ -352,11 +352,11 @@
     "keyPoints": [
       "JOINs, GROUP BY, window functions, CTEs, transactions are core SQL skills",
       "ORM for CRUD (80%), raw SQL for complex queries and performance (20%)",
-      "Always know when your ORM generates suboptimal SQL \u2014 use EXPLAIN ANALYZE"
+      "Always know when your ORM generates suboptimal SQL — use EXPLAIN ANALYZE"
     ],
     "redFlags": [
       "Cannot explain the difference between INNER and LEFT JOIN",
-      "Never uses raw SQL \u2014 blindly trusts ORM for all queries"
+      "Never uses raw SQL — blindly trusts ORM for all queries"
     ]
   },
   {
@@ -365,12 +365,12 @@
     "subtopic": "dp-isolation-mvcc",
     "difficulty": "SENIOR",
     "question": "Explain how PostgreSQL implements Snapshot Isolation (MVCC) and what anomalies it doesn't prevent.",
-    "shortAnswer": "PostgreSQL uses Multi-Version Concurrency Control: each row has created_by and deleted_by transaction IDs. Readers see a consistent snapshot (never block writers). Snapshot isolation prevents dirty reads and non-repeatable reads but does NOT prevent write skew or phantoms \u2014 those require SERIALIZABLE (SSI in PostgreSQL).",
-    "detailedAnswer": "**MVCC mechanics:**\n- Each transaction gets a unique txid\n- UPDATE = mark old row deleted + insert new row with new txid\n- Visibility rules: only see rows committed before my snapshot\n- Readers never block writers, writers never block readers\n\n**What REPEATABLE READ (snapshot) doesn't prevent:**\n- Write skew: two transactions read overlapping data, make decisions, write different rows \u2192 invariant violated\n- Example: two doctors both check 'am I the only one on call?' \u2192 both leave \u2192 nobody on call\n\n**PostgreSQL SERIALIZABLE (SSI):**\n- Optimistic: transactions run without blocking\n- At commit: detect conflicts, abort one\n- Application MUST retry aborted transactions",
+    "shortAnswer": "PostgreSQL uses Multi-Version Concurrency Control: each row has created_by and deleted_by transaction IDs. Readers see a consistent snapshot (never block writers). Snapshot isolation prevents dirty reads and non-repeatable reads but does NOT prevent write skew or phantoms — those require SERIALIZABLE (SSI in PostgreSQL).",
+    "detailedAnswer": "**MVCC mechanics:**\n- Each transaction gets a unique txid\n- UPDATE = mark old row deleted + insert new row with new txid\n- Visibility rules: only see rows committed before my snapshot\n- Readers never block writers, writers never block readers\n\n**What REPEATABLE READ (snapshot) doesn't prevent:**\n- Write skew: two transactions read overlapping data, make decisions, write different rows → invariant violated\n- Example: two doctors both check 'am I the only one on call?' → both leave → nobody on call\n\n**PostgreSQL SERIALIZABLE (SSI):**\n- Optimistic: transactions run without blocking\n- At commit: detect conflicts, abort one\n- Application MUST retry aborted transactions",
     "followUps": [
       {
         "question": "How does write skew manifest in a real e-commerce system?",
-        "hint": "Double-booking: two users check stock=1, both place order \u2192 stock goes negative. Or: two withdrawals both check balance=100, both withdraw 80 \u2192 overdraft."
+        "hint": "Double-booking: two users check stock=1, both place order → stock goes negative. Or: two withdrawals both check balance=100, both withdraw 80 → overdraft."
       },
       {
         "question": "When would you choose SERIALIZABLE over SELECT FOR UPDATE?",
@@ -381,7 +381,7 @@
     "keyPoints": [
       "MVCC: readers never block writers via row versioning (created_by/deleted_by txid)",
       "Snapshot isolation prevents dirty reads but NOT write skew or phantoms",
-      "PostgreSQL SERIALIZABLE uses SSI (optimistic) \u2014 application must retry aborted transactions"
+      "PostgreSQL SERIALIZABLE uses SSI (optimistic) — application must retry aborted transactions"
     ],
     "redFlags": [
       "Confuses isolation levels or thinks REPEATABLE READ prevents all anomalies",
@@ -395,7 +395,7 @@
     "difficulty": "INTERMEDIATE",
     "question": "What are the top 3 Hibernate performance problems you've encountered, and how did you solve them?",
     "shortAnswer": "1) N+1 queries: solved with JOIN FETCH, @EntityGraph, or @BatchSize. 2) Loading too much data: solved with DTO projections and lazy fetching. 3) Long transactions holding connections: solved by separating read and write phases, or using read-only transactions for queries.",
-    "detailedAnswer": "**#1 N+1 Problem:**\n- Symptom: 101 queries for 100 entities with a relationship\n- Detection: SQL logging, Hibernate Statistics, APM\n- Fix: JOIN FETCH in JPQL, @EntityGraph, @BatchSize(size=25)\n\n**#2 Over-fetching:**\n- Symptom: SELECT * loading 30 columns when UI shows 5\n- Fix: DTO projections (SELECT new DTO(...)), interface-based projections, Tuple queries\n\n**#3 Connection hogging:**\n- Symptom: connection pool exhaustion under load\n- Fix: @Transactional(readOnly=true) for queries, separate read replicas, keep transactions short\n\n**#4 Bonus \u2014 Dirty checking overhead:**\n- 10k entities in persistence context = 10k dirty checks at flush\n- Fix: stateless session for bulk operations, clear() between batches",
+    "detailedAnswer": "**#1 N+1 Problem:**\n- Symptom: 101 queries for 100 entities with a relationship\n- Detection: SQL logging, Hibernate Statistics, APM\n- Fix: JOIN FETCH in JPQL, @EntityGraph, @BatchSize(size=25)\n\n**#2 Over-fetching:**\n- Symptom: SELECT * loading 30 columns when UI shows 5\n- Fix: DTO projections (SELECT new DTO(...)), interface-based projections, Tuple queries\n\n**#3 Connection hogging:**\n- Symptom: connection pool exhaustion under load\n- Fix: @Transactional(readOnly=true) for queries, separate read replicas, keep transactions short\n\n**#4 Bonus — Dirty checking overhead:**\n- 10k entities in persistence context = 10k dirty checks at flush\n- Fix: stateless session for bulk operations, clear() between batches",
     "followUps": [
       {
         "question": "How do you batch INSERT/UPDATE 10,000 rows with Hibernate without running out of memory?",
@@ -408,9 +408,9 @@
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "keyPoints": [
-      "N+1 is #1 problem \u2014 fix with JOIN FETCH, @EntityGraph, or @BatchSize",
+      "N+1 is #1 problem — fix with JOIN FETCH, @EntityGraph, or @BatchSize",
       "DTO projections for read-only queries avoid loading unnecessary columns",
-      "Keep transactions short \u2014 separate read phase from write phase"
+      "Keep transactions short — separate read phase from write phase"
     ],
     "redFlags": [
       "Cannot explain what N+1 is or how to detect it",
@@ -423,8 +423,8 @@
     "subtopic": "dp-storage-engines",
     "difficulty": "SENIOR",
     "question": "Compare B-Tree and LSM-Tree storage engines. When would you choose each for a delivery tracking system?",
-    "shortAnswer": "B-Trees (PostgreSQL): optimized for reads, predictable latency, strong transactions \u2014 use for the main OLTP database (orders, drivers). LSM-Trees (Cassandra, RocksDB): optimized for writes, sequential I/O, better compression \u2014 use for event streams (GPS pings, delivery events, telemetry).",
-    "detailedAnswer": "**B-Tree (PostgreSQL, MySQL InnoDB):**\n- Fixed-size pages, in-place updates\n- O(log n) reads, good range scans\n- Write amplification (WAL + page write)\n- Predictable latency\n\n**LSM-Tree (Cassandra, RocksDB, LevelDB):**\n- Append-only memtable \u2192 flush to sorted SSTables\n- Sequential writes only (10-100x faster writes)\n- Reads check multiple SSTables (slower)\n- Background compaction can spike latency\n\n**For REWE delivery system:**\n- Orders/routes/drivers: PostgreSQL (B-Tree) \u2014 strong consistency, complex queries\n- GPS telemetry: Cassandra (LSM) \u2014 millions of writes/sec, eventual consistency OK\n- Search: Elasticsearch (inverted index + LSM segments)",
+    "shortAnswer": "B-Trees (PostgreSQL): optimized for reads, predictable latency, strong transactions — use for the main OLTP database (orders, drivers). LSM-Trees (Cassandra, RocksDB): optimized for writes, sequential I/O, better compression — use for event streams (GPS pings, delivery events, telemetry).",
+    "detailedAnswer": "**B-Tree (PostgreSQL, MySQL InnoDB):**\n- Fixed-size pages, in-place updates\n- O(log n) reads, good range scans\n- Write amplification (WAL + page write)\n- Predictable latency\n\n**LSM-Tree (Cassandra, RocksDB, LevelDB):**\n- Append-only memtable → flush to sorted SSTables\n- Sequential writes only (10-100x faster writes)\n- Reads check multiple SSTables (slower)\n- Background compaction can spike latency\n\n**For REWE delivery system:**\n- Orders/routes/drivers: PostgreSQL (B-Tree) — strong consistency, complex queries\n- GPS telemetry: Cassandra (LSM) — millions of writes/sec, eventual consistency OK\n- Search: Elasticsearch (inverted index + LSM segments)",
     "followUps": [
       {
         "question": "What is write amplification and why does it matter for SSDs?",
@@ -439,7 +439,7 @@
     "keyPoints": [
       "B-Trees: read-optimized, predictable latency, in-place updates (PostgreSQL)",
       "LSM-Trees: write-optimized, sequential I/O, compaction (Cassandra, RocksDB)",
-      "Choice depends on read/write ratio \u2014 most systems use both for different data"
+      "Choice depends on read/write ratio — most systems use both for different data"
     ],
     "redFlags": [
       "Cannot articulate any difference between storage engine types",
@@ -453,7 +453,7 @@
     "difficulty": "INTERMEDIATE",
     "question": "Explain leader-follower replication and the three consistency problems caused by replication lag.",
     "shortAnswer": "Leader accepts writes, followers receive replication stream. Three problems: 1) Read-your-own-writes: user writes then reads from stale follower. 2) Monotonic reads: user sees data then sees OLDER data (different follower). 3) Consistent prefix: causal order violated. Solutions: route user reads to leader for own data, session affinity, or causal consistency protocols.",
-    "detailedAnswer": "**Leader-follower replication (PostgreSQL streaming):**\n- Only leader handles writes\n- Followers apply WAL records (typically ms-seconds delay)\n- Reads can go to any replica\n\n**Problem 1 \u2014 Read-your-writes:**\n- User updates profile (leader), refreshes page (reads from follower) \u2192 sees old data\n- Fix: read user's own data from leader, or track write timestamp\n\n**Problem 2 \u2014 Monotonic reads:**\n- User reads from follower A (up to date), then follower B (behind) \u2192 appears to go back in time\n- Fix: session affinity (pin user to one replica)\n\n**Problem 3 \u2014 Consistent prefix:**\n- Causally related writes applied in wrong order on follower\n- Fix: write causally dependent data to same partition\n\n**Key insight:** these problems are inherent to async replication. Application must be designed to tolerate them.",
+    "detailedAnswer": "**Leader-follower replication (PostgreSQL streaming):**\n- Only leader handles writes\n- Followers apply WAL records (typically ms-seconds delay)\n- Reads can go to any replica\n\n**Problem 1 — Read-your-writes:**\n- User updates profile (leader), refreshes page (reads from follower) → sees old data\n- Fix: read user's own data from leader, or track write timestamp\n\n**Problem 2 — Monotonic reads:**\n- User reads from follower A (up to date), then follower B (behind) → appears to go back in time\n- Fix: session affinity (pin user to one replica)\n\n**Problem 3 — Consistent prefix:**\n- Causally related writes applied in wrong order on follower\n- Fix: write causally dependent data to same partition\n\n**Key insight:** these problems are inherent to async replication. Application must be designed to tolerate them.",
     "followUps": [
       {
         "question": "How would you set up read replicas for a service handling 10x more reads than writes?",
@@ -482,7 +482,7 @@
     "difficulty": "INTERMEDIATE",
     "question": "When and how would you partition a database table? What are the trade-offs?",
     "shortAnswer": "Partition when: table exceeds hundreds of GB, queries always filter by partition key (date, region), or you need to efficiently drop old data. PostgreSQL supports range and list partitioning declaratively. Trade-offs: simpler queries per partition but cross-partition queries are expensive, and unique constraints must include the partition key.",
-    "detailedAnswer": "**When to partition:**\n- Table > 100GB and growing\n- Queries naturally filter by time/region/tenant\n- Need to efficiently archive old data (DROP PARTITION vs DELETE)\n- Want parallel query execution across partitions\n\n**PostgreSQL declarative partitioning:**\n```sql\nCREATE TABLE events (...) PARTITION BY RANGE (event_time);\nCREATE TABLE events_2026_q3 PARTITION OF events\n  FOR VALUES FROM ('2026-07-01') TO ('2026-10-01');\n```\n\n**Trade-offs:**\n- \u2705 Partition pruning (only scan relevant partitions)\n- \u2705 Easy archival (detach/drop old partitions)\n- \u274c Cross-partition queries (scatter-gather)\n- \u274c UNIQUE constraints must include partition key\n- \u274c Foreign keys to partitioned tables are limited\n\n**For delivery system:** partition delivery_events by month (queries always have date range).",
+    "detailedAnswer": "**When to partition:**\n- Table > 100GB and growing\n- Queries naturally filter by time/region/tenant\n- Need to efficiently archive old data (DROP PARTITION vs DELETE)\n- Want parallel query execution across partitions\n\n**PostgreSQL declarative partitioning:**\n```sql\nCREATE TABLE events (...) PARTITION BY RANGE (event_time);\nCREATE TABLE events_2026_q3 PARTITION OF events\n  FOR VALUES FROM ('2026-07-01') TO ('2026-10-01');\n```\n\n**Trade-offs:**\n- ✅ Partition pruning (only scan relevant partitions)\n- ✅ Easy archival (detach/drop old partitions)\n- ❌ Cross-partition queries (scatter-gather)\n- ❌ UNIQUE constraints must include partition key\n- ❌ Foreign keys to partitioned tables are limited\n\n**For delivery system:** partition delivery_events by month (queries always have date range).",
     "followUps": [
       {
         "question": "What's the difference between partitioning and sharding?",
@@ -490,7 +490,7 @@
       },
       {
         "question": "How do you handle a hot partition (one partition receiving disproportionate traffic)?",
-        "hint": "Prefix the partition key with a salt/hash to spread writes. Or split the hot partition further. For time-series: today's partition is always hot \u2014 ensure it fits in memory and has appropriate indexes."
+        "hint": "Prefix the partition key with a salt/hash to spread writes. Or split the hot partition further. For time-series: today's partition is always hot — ensure it fits in memory and has appropriate indexes."
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE",
@@ -503,5 +503,180 @@
       "Confuses partitioning (single DB) with sharding (multiple nodes)",
       "Cannot name a concrete scenario where partitioning helps"
     ]
+  },
+  {
+    "id": "interview-dp-pg-tuning-1",
+    "topic": "data-persistence",
+    "subtopic": "dp-pg-query-tuning",
+    "difficulty": "INTERMEDIATE",
+    "question": "A query that was fast yesterday is now taking 30 seconds. Nothing in the code changed. Walk me through how you would diagnose this.",
+    "shortAnswer": "Run EXPLAIN (ANALYZE, BUFFERS) to get the actual execution plan. Compare estimated vs actual rows — a large discrepancy usually points to outdated statistics. Check if ANALYZE has run recently, if data distribution changed significantly, or if a concurrent heavy write invalidated the visibility map. Also check for lock contention and whether the table bloated beyond what autovacuum handles.",
+    "detailedAnswer": "Start by running EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT) on the slow query. Read from bottom up: identify the operator consuming most time. Compare estimated rows vs actual rows at each node — if they diverge by 100x or more, the planner made decisions based on wrong assumptions.\n\nCommon root causes for sudden degradation without code changes:\n1. Statistics became stale after a large data load (ANALYZE hasn't run yet)\n2. Data distribution shifted (a formerly selective predicate now matches 80% of rows)\n3. Table bloat increased sequential scan cost (dead tuples from heavy UPDATE/DELETE)\n4. The visibility map was invalidated, turning Index Only Scans into expensive Index Scans with heap fetches\n5. Lock contention from a concurrent long-running transaction\n6. Parameter sensitivity — same prepared statement, different parameter value\n\nAfter identifying the root cause, the fix might be: running ANALYZE, adjusting statistics targets, adding/modifying indexes, or changing application queries. Always measure again after the fix.",
+    "keyPoints": [
+      "EXPLAIN (ANALYZE, BUFFERS) is always the first step",
+      "Estimated vs actual row discrepancy reveals statistics problems",
+      "No code change doesn't mean no data change",
+      "Autovacuum delays can cause sudden degradation",
+      "Always measure after applying a fix"
+    ],
+    "followUps": [
+      {
+        "question": "What if estimated and actual rows match perfectly but the query is still slow?",
+        "answerHint": "The issue is likely resource-bound: check buffers (shared read vs hit), temp files (work_mem spill), or lock waits. The planner chose the correct strategy but the hardware or configuration can't keep up."
+      },
+      {
+        "question": "How would you handle this in production without impacting users?",
+        "answerHint": "Use EXPLAIN without ANALYZE on production (just estimates). Get the actual plan from pg_stat_statements or auto_explain. Never run EXPLAIN ANALYZE on destructive statements (UPDATE/DELETE) in production."
+      },
+      {
+        "question": "When would you NOT trust EXPLAIN ANALYZE results?",
+        "answerHint": "When the server is under different load than production, when caches are cold vs warm, when the statement uses parameters that differ from typical production usage."
+      }
+    ],
+    "redFlags": [
+      "Immediately adding indexes without reading the execution plan",
+      "Blaming the database without checking statistics freshness",
+      "Running EXPLAIN ANALYZE on UPDATE/DELETE in production",
+      "Not measuring after applying a fix"
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-dp-pg-tuning-2",
+    "topic": "data-persistence",
+    "subtopic": "dp-pg-query-tuning",
+    "difficulty": "SENIOR",
+    "question": "You have a query with WHERE customer_id = ? OR salesperson_id = ?. It's doing a sequential scan on a 50M row table despite indexes on both columns. Why, and how do you fix it?",
+    "shortAnswer": "OR prevents PostgreSQL from using a single index efficiently. The planner may choose BitmapOr (combining two bitmap index scans) or fall back to sequential scan if the combined selectivity is too low. The classic fix is UNION ALL — split into two queries, each using its own index independently.",
+    "detailedAnswer": "When PostgreSQL encounters an OR across different columns, it cannot use a single B-Tree index scan because the index is ordered by one column only. The planner has three options:\n\n1. Sequential Scan — cheapest if combined selectivity is high\n2. BitmapOr — create bitmaps from both indexes, OR them together, then fetch heap pages\n3. Two separate index scans combined\n\nIf the combined result returns a large percentage of rows, sequential scan wins because random I/O from index lookups becomes more expensive than reading the table sequentially.\n\nThe UNION ALL refactoring splits the query into two independent queries, each matching a single-column predicate that is highly selective. Each branch uses its own index efficiently.\n\nImportant: use UNION ALL (not UNION) unless you specifically need to remove duplicates — rows where the person is both customer and salesperson. If duplicates are possible and must be removed, add a NOT EXISTS filter to the second branch instead of paying the UNION dedup cost.",
+    "keyPoints": [
+      "OR across different columns prevents single-index usage",
+      "BitmapOr is PostgreSQL's compromise but still requires heap access",
+      "UNION ALL allows each branch to use its optimal index",
+      "UNION (without ALL) adds expensive deduplication",
+      "Sequential scan wins when combined selectivity is too broad"
+    ],
+    "followUps": [
+      {
+        "question": "What if the OR is on the same column — WHERE status = 'A' OR status = 'B'?",
+        "answerHint": "Same column OR is fine — PostgreSQL rewrites it to IN('A','B') which uses the index normally. The problem is cross-column OR."
+      },
+      {
+        "question": "Could a composite index help here?",
+        "answerHint": "No — a composite index (customer_id, salesperson_id) only helps queries that filter customer_id first (leftmost prefix). It cannot help 'give me rows where EITHER matches'."
+      },
+      {
+        "question": "How would you handle this in JPA/Hibernate?",
+        "answerHint": "Use native query with UNION ALL, or restructure into two repository calls merged in the service layer. JPQL doesn't support UNION."
+      }
+    ],
+    "redFlags": [
+      "Suggesting a composite index on both columns",
+      "Not knowing the difference between UNION and UNION ALL",
+      "Ignoring selectivity — UNION ALL is wasteful if both conditions match 50% of rows each"
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-dp-pg-tuning-3",
+    "topic": "data-persistence",
+    "subtopic": "dp-pg-query-tuning",
+    "difficulty": "SENIOR",
+    "question": "Explain why PostgreSQL might choose a sequential scan even when a perfectly good index exists. When is this actually the correct decision?",
+    "shortAnswer": "PostgreSQL compares estimated costs of all access paths. Sequential scan wins when the query returns a large percentage of rows (low selectivity), because sequential I/O is much cheaper than random I/O from index lookups. It's also preferred when statistics indicate the table is small enough to fit in memory, or when correlation between index order and physical order is low.",
+    "detailedAnswer": "The query planner compares costs based on several factors:\n\n1. **Selectivity**: If the predicate matches >5-15% of rows, random heap fetches from an index scan become more expensive than reading the entire table sequentially. The exact threshold depends on random_page_cost vs seq_page_cost settings.\n\n2. **Table size**: Small tables (a few pages) are faster to scan sequentially than to navigate through an index tree.\n\n3. **Correlation**: If the physical row order doesn't match the index order (low correlation), each index lookup may hit a different page — maximizing random I/O.\n\n4. **Statistics accuracy**: If pg_stats shows high n_distinct or low most_common_freqs for the filtered value, the planner estimates many matching rows.\n\n5. **Cost parameters**: If random_page_cost is set too high relative to actual hardware (e.g., SSDs where random ≈ sequential), the planner over-penalizes index scans.\n\nThe sequential scan IS correct when: returning a large result set, the table is small, data is uncorrelated with the index, or the working set fits in shared_buffers making sequential reads essentially free.",
+    "keyPoints": [
+      "Cost-based optimizer compares ALL access paths",
+      "Sequential I/O is 10-100x cheaper than random I/O on spinning disks",
+      "Low selectivity (many matching rows) favors sequential scan",
+      "Correlation affects random I/O cost of index scans",
+      "On SSDs the threshold shifts but the principle remains"
+    ],
+    "followUps": [
+      {
+        "question": "How would you force PostgreSQL to use the index if you believe the planner is wrong?",
+        "answerHint": "First verify statistics are current (ANALYZE). Then check if SET enable_seqscan = off changes the plan and improves timing. If yes, investigate why stats are misleading — maybe increase statistics target or create extended statistics for correlated columns. Never use enable_seqscan=off in production."
+      },
+      {
+        "question": "What's the difference between Index Scan, Bitmap Index Scan, and Index Only Scan?",
+        "answerHint": "Index Scan: one row at a time from index → heap. Bitmap: collect all matching TIDs, sort by page, then access heap in page order (reduces random I/O). Index Only Scan: all needed columns are in the index, skip heap entirely (requires visibility map)."
+      }
+    ],
+    "redFlags": [
+      "Saying sequential scan is always a bug",
+      "Not understanding the cost model (random vs sequential I/O)",
+      "Suggesting to disable seq scan globally in production",
+      "Ignoring selectivity in the analysis"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-dp-pg-tuning-4",
+    "topic": "data-persistence",
+    "subtopic": "dp-pg-query-tuning",
+    "difficulty": "INTERMEDIATE",
+    "question": "Your API endpoint uses LIMIT 20 OFFSET 10000 for pagination. Users complain it gets slower as they go deeper. Why, and what's the alternative?",
+    "shortAnswer": "OFFSET forces PostgreSQL to read and discard all skipped rows — scanning 10,020 rows to return 20. As OFFSET grows, so does execution time linearly. The alternative is keyset (cursor) pagination: WHERE id > :lastSeenId ORDER BY id LIMIT 20, which has constant performance regardless of depth.",
+    "detailedAnswer": "OFFSET-based pagination is O(offset + limit) because PostgreSQL must:\n1. Execute the full query with ORDER BY\n2. Skip 'offset' rows (reading but discarding them)\n3. Return 'limit' rows\n\nAt OFFSET 500,000 with LIMIT 20, PostgreSQL processes 500,020 rows but returns only 20.\n\nKeyset pagination works by remembering the last seen value and using it as a WHERE filter:\n```sql\nSELECT * FROM orders\nWHERE created_at < :lastSeenTimestamp\n  OR (created_at = :lastSeenTimestamp AND id < :lastSeenId)\nORDER BY created_at DESC, id DESC\nLIMIT 20;\n```\n\nThis is O(limit) because the index jumps directly to the continuation point.\n\nTrade-offs of keyset pagination:\n- Cannot jump to arbitrary page N (no 'go to page 50')\n- Requires a stable, unique sort order (timestamp + id)\n- Slightly more complex client logic (store cursor state)\n- Handles concurrent inserts gracefully (no skipped/duplicated rows)\n\nFor UIs that need arbitrary page access, consider: limiting max page depth, caching total count separately, or using estimated counts.",
+    "keyPoints": [
+      "OFFSET is O(offset + limit) — linear degradation",
+      "Keyset pagination is O(limit) — constant time",
+      "Requires stable unique ordering columns",
+      "Cannot jump to arbitrary pages",
+      "Handles concurrent inserts correctly (no phantom skips)"
+    ],
+    "followUps": [
+      {
+        "question": "What if the ORDER BY column has duplicates?",
+        "answerHint": "Add a tiebreaker column (usually the primary key) to guarantee stable unique ordering. Without it, rows can appear on two pages or be skipped."
+      },
+      {
+        "question": "How do you implement this in Spring Data JPA?",
+        "answerHint": "Use Slice instead of Page (avoids COUNT), with a custom @Query using WHERE conditions for keyset. Spring's Pageable with offset-based is the default but degradates at depth."
+      }
+    ],
+    "redFlags": [
+      "Not knowing why OFFSET is slow",
+      "Suggesting to just add an index on the ORDER BY column (doesn't fix the skip cost)",
+      "Forgetting the tiebreaker for non-unique sort columns"
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-dp-pg-tuning-5",
+    "topic": "data-persistence",
+    "subtopic": "dp-pg-query-tuning",
+    "difficulty": "SENIOR",
+    "question": "Design an index strategy for a table with 100M rows queried by (tenant_id, status, created_at). The table receives 5000 inserts/second. What trade-offs are you considering?",
+    "shortAnswer": "A composite index on (tenant_id, status, created_at) covers the most selective pattern. Consider a partial index if most queries filter status='ACTIVE' (only 5% of rows). Weigh the write amplification — each index adds overhead to every INSERT. With 5000 inserts/second, unnecessary indexes directly impact throughput and autovacuum performance.",
+    "detailedAnswer": "Design considerations:\n\n**1. Query patterns determine index order:**\n- If most queries filter tenant_id + status + range on created_at → (tenant_id, status, created_at)\n- The leftmost prefix rule means this index ALSO serves queries on tenant_id alone or tenant_id + status\n\n**2. Partial index for skewed data:**\n- If 95% of queries ask for status='ACTIVE' and only 5% of rows are active:\n  CREATE INDEX idx_active ON orders(tenant_id, created_at) WHERE status = 'ACTIVE'\n- Much smaller index, better cache utilization, lower maintenance\n\n**3. Covering index to avoid heap access:**\n- If queries only need (id, created_at, amount):\n  CREATE INDEX ... INCLUDE (amount)\n- Enables Index Only Scan, zero heap fetches\n\n**4. Write amplification trade-offs:**\n- Each index adds ~1 random write per INSERT\n- At 5000 inserts/sec, each extra index = 5000 extra random I/Os/sec\n- More indexes = longer autovacuum cycles\n- More indexes = larger WAL volume\n\n**5. Monitoring strategy:**\n- pg_stat_user_indexes: track index usage (unused indexes should be dropped)\n- Index bloat monitoring\n- autovacuum lag monitoring\n\nThe goal is the MINIMUM set of indexes that covers the critical query patterns.",
+    "keyPoints": [
+      "Leftmost prefix rule determines composite index column order",
+      "Partial indexes reduce size for skewed predicates",
+      "Covering indexes (INCLUDE) eliminate heap access",
+      "Every index adds write amplification proportional to insert rate",
+      "Monitor unused indexes — they cost writes without benefiting reads"
+    ],
+    "followUps": [
+      {
+        "question": "How do you decide between one composite index vs two separate indexes?",
+        "answerHint": "Composite is better when columns are always queried together. Separate indexes allow BitmapAnd but with extra heap access. Composite also supports Index Only Scan if it covers all needed columns."
+      },
+      {
+        "question": "What happens to these indexes during peak write load?",
+        "answerHint": "Index page splits increase, WAL volume grows, autovacuum falls behind, index bloat accumulates. May need to reduce indexes during bulk loads or use CONCURRENTLY for maintenance."
+      },
+      {
+        "question": "How would you handle multi-tenant isolation in the index design?",
+        "answerHint": "tenant_id as the first column ensures each tenant's data is physically clustered in the index. This improves cache locality and makes per-tenant queries very efficient."
+      }
+    ],
+    "redFlags": [
+      "Creating an index for every possible query combination",
+      "Ignoring write amplification entirely",
+      "Not considering partial indexes for skewed data",
+      "Forgetting that index maintenance affects autovacuum"
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
   }
 ]

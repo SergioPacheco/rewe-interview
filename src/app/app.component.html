@@ -163,15 +163,28 @@
             </h3>
             @for (topic of getTopicsByGroup(group.group); track topic.id) {
               <div class="sidebar__topic">
-                <button
+                <div
                   class="sidebar__item"
                   [class.sidebar__item--expanded]="expandedTopic() === topic.id"
-                  (click)="toggleTopic(topic.id)"
                 >
-                  <span class="sidebar__icon">{{ topic.icon }}</span>
-                  <span class="sidebar__name">{{ topic.name }}</span>
-                  <span class="sidebar__chevron" [class.sidebar__chevron--open]="expandedTopic() === topic.id">›</span>
-                </button>
+                  <a
+                    class="sidebar__item-link"
+                    [routerLink]="['/topic', topic.id]"
+                    (click)="navigateToTopic(topic.id)"
+                  >
+                    <span class="sidebar__icon">{{ topic.icon }}</span>
+                    <span class="sidebar__name">{{ topic.name }}</span>
+                  </a>
+                  <button
+                    class="sidebar__chevron-btn"
+                    type="button"
+                    (click)="toggleTopic(topic.id); $event.stopPropagation()"
+                    [attr.aria-label]="'Toggle ' + topic.name + ' subtopics'"
+                    [attr.aria-expanded]="expandedTopic() === topic.id"
+                  >
+                    <span class="sidebar__chevron" [class.sidebar__chevron--open]="expandedTopic() === topic.id">›</span>
+                  </button>
+                </div>
 
                 @if (expandedTopic() === topic.id) {
                   <div class="sidebar__subtopics">

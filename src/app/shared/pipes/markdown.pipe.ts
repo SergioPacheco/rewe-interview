@@ -87,48 +87,55 @@ export class MarkdownPipe implements PipeTransform {
 
   /**
    * Convert Markdown tables (| col | col |) to HTML <table>.
+   * Skips content inside <pre>/<code> blocks to avoid mangling ASCII art.
    */
   private convertMarkdownTables(html: string): string {
-    // Match consecutive lines that start with |
-    return html.replace(/((?:^\|.+\|$\n?)+)/gm, (tableBlock) => {
-      const lines = tableBlock.trim().split('\n').filter(l => l.trim());
-      if (lines.length < 2) return tableBlock; // Need at least header + separator
+    // Protect pre/code blocks from table conversion
+    const protectedBlocks = html.split(/(<pre[\s\S]*?<\/pre>)/gi);
+    return protectedBlocks.map((part, index) => {
+      if (index % 2 === 1) return part; // Inside <pre>, leave untouched
 
-      // Check if second line is separator (|---|---|)
-      const isSeparator = (line: string) => /^\|[\s\-:]+\|/.test(line.trim());
-      const hasSeparator = lines.length >= 2 && isSeparator(lines[1]);
+      // Match consecutive lines that start with |
+      return part.replace(/((?:^\|.+\|$\n?)+)/gm, (tableBlock) => {
+        const lines = tableBlock.trim().split('\n').filter(l => l.trim());
+        if (lines.length < 2) return tableBlock; // Need at least header + separator
 
-      const parseRow = (line: string): string[] =>
-        line.split('|').slice(1, -1).map(cell => cell.trim());
+        // Check if second line is separator (|---|---|)
+        const isSeparator = (line: string) => /^\|[\s\-:]+\|/.test(line.trim());
+        const hasSeparator = lines.length >= 2 && isSeparator(lines[1]);
 
-      let tableHtml = '<table>';
+        const parseRow = (line: string): string[] =>
+          line.split('|').slice(1, -1).map(cell => cell.trim());
 
-      if (hasSeparator) {
-        // Header row
-        const headers = parseRow(lines[0]);
-        tableHtml += '<thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
+        let tableHtml = '<table>';
 
-        // Body rows (skip separator line)
-        tableHtml += '<tbody>';
-        for (let i = 2; i < lines.length; i++) {
-          if (!lines[i].trim()) continue;
-          const cells = parseRow(lines[i]);
-          tableHtml += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+        if (hasSeparator) {
+          // Header row
+          const headers = parseRow(lines[0]);
+          tableHtml += '<thead><tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr></thead>';
+
+          // Body rows (skip separator line)
+          tableHtml += '<tbody>';
+          for (let i = 2; i < lines.length; i++) {
+            if (!lines[i].trim()) continue;
+            const cells = parseRow(lines[i]);
+            tableHtml += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+          }
+          tableHtml += '</tbody>';
+        } else {
+          // No separator — all rows are body
+          tableHtml += '<tbody>';
+          for (const line of lines) {
+            const cells = parseRow(line);
+            tableHtml += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
+          }
+          tableHtml += '</tbody>';
         }
-        tableHtml += '</tbody>';
-      } else {
-        // No separator — all rows are body
-        tableHtml += '<tbody>';
-        for (const line of lines) {
-          const cells = parseRow(line);
-          tableHtml += '<tr>' + cells.map(c => `<td>${c}</td>`).join('') + '</tr>';
-        }
-        tableHtml += '</tbody>';
-      }
 
-      tableHtml += '</table>';
-      return tableHtml;
-    });
+        tableHtml += '</table>';
+        return tableHtml;
+      });
+    }).join('');
   }
 
   /** Formats text fragments while preserving authored HTML blocks. */
@@ -214,14 +221,28 @@ export class MarkdownPipe implements PipeTransform {
   /** Gives authored Learn-tab <pre><code> snippets the same IDE shell as app-code-block. */
   private enhanceCodeBlocks(html: string): string {
     return html.replace(/<pre(?:\s[^>]*)?>\s*<code(?:\s[^>]*)?>([\s\S]*?)<\/code>\s*<\/pre>/gi,
-      (_match, code) => `<section class="code-block code-block--static" aria-label="Code example">
+      (_match, code) => {
+        const trimmed = code.trim();
+        // ASCII art / diagrams: do not apply syntax highlighting
+        const isAsciiArt = /[┌┐└┘├┤│─╔╗╚╝║═+\-|]{3}/.test(trimmed) ||
+                           /^\s*[+|├└┌╔║]/.test(trimmed);
+        const highlighted = isAsciiArt ? this.escapeHtml(trimmed) : this.highlightCode(trimmed);
+        return `<section class="code-block code-block--static" aria-label="Code example">
         <header class="code-block__toolbar">
           <div class="code-block__window-controls" aria-hidden="true"><i></i><i></i><i></i></div>
           <span class="code-block__file">⌘ code</span>
         </header>
-        <pre class="code-block__pre"><code class="hljs">${this.highlightCode(code.trim())}</code></pre>
-      </section>`
+        <pre class="code-block__pre"><code class="hljs">${highlighted}</code></pre>
+      </section>`;
+      }
     );
+  }
+
+  private escapeHtml(text: string): string {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   }
 
   private highlightCode(code: string): string {

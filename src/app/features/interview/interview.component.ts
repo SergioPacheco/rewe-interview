@@ -162,6 +162,9 @@ export class InterviewComponent implements OnDestroy {
   /** Has the candidate answered the current follow-up? */
   readonly followUpAnswered = signal(false);
 
+  /** Chat-style conversation history: accumulated follow-up Q&A pairs */
+  readonly conversationHistory = signal<Array<{ question: string; hint?: string; answered: boolean }>>([]);
+
   /** Timer state */
   readonly timerActive = signal(false);
   readonly timerSeconds = signal(0);
@@ -255,13 +258,28 @@ export class InterviewComponent implements OnDestroy {
     }
 
     if (idx === null) {
-      // Start follow-up phase
+      // Start follow-up phase: add first follow-up to conversation
       this.currentFollowUpIndex.set(0);
       this.followUpAnswered.set(false);
+      this.conversationHistory.set([{
+        question: q.followUps[0].question,
+        hint: q.followUps[0].hint,
+        answered: false
+      }]);
     } else if (idx < q.followUps.length - 1) {
-      // Next follow-up
-      this.currentFollowUpIndex.set(idx + 1);
+      // Mark current as answered, add next follow-up to conversation
+      const nextIdx = idx + 1;
+      this.currentFollowUpIndex.set(nextIdx);
       this.followUpAnswered.set(false);
+      this.conversationHistory.update(history => {
+        const updated = history.map(h => ({ ...h, answered: true }));
+        updated.push({
+          question: q.followUps![nextIdx].question,
+          hint: q.followUps![nextIdx].hint,
+          answered: false
+        });
+        return updated;
+      });
     } else {
       // All follow-ups done → next main question
       this.advanceToNextQuestion();
@@ -271,6 +289,9 @@ export class InterviewComponent implements OnDestroy {
   /** Mark follow-up as answered (reveals hint if available) */
   markFollowUpAnswered(): void {
     this.followUpAnswered.set(true);
+    this.conversationHistory.update(history =>
+      history.map((h, i) => i === history.length - 1 ? { ...h, answered: true } : h)
+    );
   }
 
   /** Skip follow-ups and go directly to next question */
@@ -345,6 +366,7 @@ export class InterviewComponent implements OnDestroy {
     this.selfScore.set(null);
     this.currentFollowUpIndex.set(null);
     this.followUpAnswered.set(false);
+    this.conversationHistory.set([]);
     this.stopTimer();
     this.timerSeconds.set(0);
     // Auto-start timer when a new question appears

@@ -44,66 +44,92 @@
 
     @if (currentQuestion(); as q) {
 
-      <!-- ═══ FOLLOW-UP PHASE ═══ -->
+      <!-- ═══ FOLLOW-UP PHASE (Chat-style accumulated conversation) ═══ -->
       @if (inFollowUpPhase()) {
         <div class="sim-conversation">
-          <div class="sim-previous">
-            <span class="sim-previous__label">{{ 'simulator.previousQuestion' | t }}</span>
-            <p class="sim-previous__text">{{ q.question }}</p>
-          </div>
 
-          @if (currentFollowUp(); as fu) {
-            <div class="sim-interviewer">
-              <div class="sim-interviewer__avatar">🎙️</div>
-              <div class="sim-interviewer__content">
-                <span class="sim-interviewer__label">{{ 'simulator.interviewerProbes' | t }}</span>
-                <p class="sim-interviewer__question">{{ fu.question }}</p>
-                <div class="sim-interviewer__footer">
-                  <span class="sim-interviewer__meta">
-                    {{ (currentFollowUpIndex() ?? 0) + 1 }} / {{ totalFollowUps() }}
-                  </span>
-                  <button type="button" class="sim-listen"
-                    [class.sim-listen--active]="readingSection() === 'sim-followup'"
-                    (click)="toggleSectionAudio(fu.question, 'sim-followup')">
-                    {{ readingSection() === 'sim-followup' ? '■' : '🔊' }}
-                  </button>
+          <!-- Original question — same format as main phase -->
+          <div class="sim-interviewer">
+            <div class="sim-interviewer__avatar">🎙️</div>
+            <div class="sim-interviewer__content">
+              <span class="sim-interviewer__label">{{ 'simulator.interviewerAsks' | t }}</span>
+              <p class="sim-interviewer__question">{{ q.question }}</p>
+              @if (q.context) {
+                <p class="sim-interviewer__context">{{ q.context }}</p>
+              }
+              <div class="sim-interviewer__footer">
+                <div class="sim-interviewer__badges">
+                  <span class="badge" [class]="difficultyClass(q.difficulty)">{{ difficultyLabel(q.difficulty) }}</span>
+                  @if (q.experienceLevel) {
+                    <span class="badge-exp" [class]="experienceClass(q.experienceLevel)">
+                      {{ experienceLabel(q.experienceLevel) }}
+                    </span>
+                  }
                 </div>
               </div>
             </div>
+          </div>
 
-            @if (!followUpAnswered()) {
-              <div class="sim-actions">
-                <button class="sim-btn sim-btn--primary" (click)="markFollowUpAnswered()">
-                  ✓ {{ 'simulator.iAnswered' | t }}
-                </button>
-                <button class="sim-btn sim-btn--ghost" (click)="skipToNext()">
-                  {{ 'simulator.skipToNext' | t }} →
-                </button>
+          <!-- Original answer — same format as reveal phase -->
+          <div class="sim-reveal-container">
+            <div class="sim-reveal sim-reveal--answer">
+              <div class="sim-reveal__header">
+                <span class="sim-reveal__icon">💬</span>
+                <strong>{{ 'simulator.strongAnswer' | t }}</strong>
               </div>
-            } @else {
-              @if (fu.hint) {
-                <div class="sim-reveal sim-reveal--hint">
-                  <span class="sim-reveal__icon">💡</span>
-                  <div class="sim-reveal__body">
-                    <strong>{{ 'simulator.answerGuidance' | t }}</strong>
-                    <p [innerHTML]="fu.hint | markdown"></p>
+              <div class="sim-reveal__body" [innerHTML]="q.shortAnswer | markdown"></div>
+            </div>
+          </div>
+
+          <!-- Accumulated follow-ups (chat bubbles) -->
+          <div class="sim-followups-chat">
+            @for (entry of conversationHistory(); track $index) {
+              <!-- Follow-up question (interviewer - left) -->
+              <div class="sim-chat-bubble sim-chat-bubble--interviewer">
+                <div class="sim-chat-bubble__avatar">🎙️</div>
+                <div class="sim-chat-bubble__content">
+                  <p class="sim-chat-bubble__text">{{ entry.question }}</p>
+                </div>
+              </div>
+
+              <!-- Follow-up hint/answer (candidate - right), only if answered -->
+              @if (entry.answered && entry.hint) {
+                <div class="sim-chat-bubble sim-chat-bubble--candidate">
+                  <div class="sim-chat-bubble__content">
+                    <span class="sim-chat-bubble__label">💡 {{ 'simulator.answerGuidance' | t }}</span>
+                    <div class="sim-chat-bubble__text" [innerHTML]="entry.hint | markdown"></div>
                   </div>
                 </div>
               }
 
-              <div class="sim-actions">
-                @if ((currentFollowUpIndex() ?? 0) < totalFollowUps() - 1) {
-                  <button class="sim-btn sim-btn--primary" (click)="nextFollowUp()">
-                    {{ 'simulator.nextFollowUp' | t }} →
+              <!-- Action buttons for the LAST (current) follow-up -->
+              @if ($last && !entry.answered) {
+                <div class="sim-actions sim-actions--chat">
+                  <button class="sim-btn sim-btn--primary" (click)="markFollowUpAnswered()">
+                    ✓ {{ 'simulator.iAnswered' | t }}
                   </button>
-                } @else {
-                  <button class="sim-btn sim-btn--primary" (click)="skipToNext()">
-                    {{ 'simulator.nextQuestion' | t }} →
+                  <button class="sim-btn sim-btn--ghost" (click)="skipToNext()">
+                    {{ 'simulator.skipToNext' | t }} →
                   </button>
-                }
-              </div>
+                </div>
+              }
+
+              <!-- Next follow-up / next question buttons after answering -->
+              @if ($last && entry.answered) {
+                <div class="sim-actions sim-actions--chat">
+                  @if ((currentFollowUpIndex() ?? 0) < totalFollowUps() - 1) {
+                    <button class="sim-btn sim-btn--primary" (click)="nextFollowUp()">
+                      🎙️ {{ 'simulator.nextFollowUp' | t }} →
+                    </button>
+                  } @else {
+                    <button class="sim-btn sim-btn--primary" (click)="skipToNext()">
+                      {{ 'simulator.nextQuestion' | t }} →
+                    </button>
+                  }
+                </div>
+              }
             }
-          }
+          </div>
         </div>
 
       } @else {
@@ -197,6 +223,19 @@
                   </button>
                 </div>
               </div>
+
+              <!-- Follow-up buttons (right after answer) -->
+              @if (q.followUps && q.followUps.length > 0) {
+                <div class="sim-actions sim-actions--followups">
+                  <button class="sim-btn sim-btn--primary" (click)="nextFollowUp()">
+                    🎙️ {{ 'simulator.interviewerFollowUps' | t | replace:'{count}':'' + q.followUps.length }} →
+                  </button>
+                  <button class="sim-btn sim-btn--ghost" (click)="skipToNext()"
+                          [disabled]="selectedIndex() === totalQuestions() - 1">
+                    {{ 'simulator.skipFollowUps' | t }} →
+                  </button>
+                </div>
+              }
 
               <!-- Key Points -->
               <div class="sim-reveal sim-reveal--keypoints">
@@ -314,15 +353,7 @@
 
               <!-- Continue -->
               <div class="sim-actions sim-actions--bottom">
-                @if (q.followUps && q.followUps.length > 0) {
-                  <button class="sim-btn sim-btn--primary" (click)="nextFollowUp()">
-                    🎙️ {{ 'simulator.interviewerFollowUps' | t | replace:'{count}':'' + q.followUps.length }} →
-                  </button>
-                  <button class="sim-btn sim-btn--ghost" (click)="skipToNext()"
-                          [disabled]="selectedIndex() === totalQuestions() - 1">
-                    {{ 'simulator.skipFollowUps' | t }} →
-                  </button>
-                } @else {
+                @if (!q.followUps || q.followUps.length === 0) {
                   <button class="sim-btn sim-btn--primary" (click)="skipToNext()"
                           [disabled]="selectedIndex() === totalQuestions() - 1">
                     {{ 'simulator.nextQuestion' | t }} →

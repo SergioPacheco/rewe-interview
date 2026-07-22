@@ -5,7 +5,7 @@
     "subtopic": "solid-srp",
     "difficulty": "INTERMEDIATE",
     "question": "How do you interpret the Single Responsibility Principle in a real service?",
-    "shortAnswer": "SRP means a module should be responsible to one cohesive source of change, not that every class must contain one method. I separate concerns when they change for different reasons—for example, pricing policy, persistence, and transport formatting—but keep behavior together when it protects the same invariant. The test is cohesion and change ownership, not class size alone.",
+    "shortAnswer": "For me, the Single Responsibility Principle means that a class or service should have only one reason to change. If business rules change, I modify the business service; if the way data is stored changes, I modify the persistence layer; and if an API changes, I modify the integration layer. Separating those responsibilities makes the code more maintainable, easier to test, and reduces the risk of introducing bugs.",
     "detailedAnswer": "A responsibility is better understood as an obligation to an actor or source of change. A checkout service that calculates prices, renders PDFs, stores orders, and calls a carrier changes for unrelated business, document, database, and integration reasons. Separating those policies can localize changes and tests.\n\nSRP does not prescribe tiny classes. Splitting every method creates an anemic network of objects and makes a cohesive workflow difficult to follow. A class may coordinate several steps if they belong to one use case, while delegating policies that evolve independently. Useful signals include unrelated dependencies, tests with unrelated setup, changes by different teams, and frequent edits for unrelated requirements. Apply the principle at class, module, or service level according to the boundary that owns the behavior.",
     "keyPoints": [
       "Responsibility is a cohesive source of change, not a method count",
@@ -21,11 +21,11 @@
     "followUps": [
       {
         "question": "Can a large class still satisfy SRP?",
-        "hint": "Size is a signal; cohesion and reasons to change are the deciding factors."
+        "hint": "Yes. What matters is not size, but that everything in it changes for the same reason. A 300-line class managing a single business flow can be fine if it doesn't mix persistence, validation, and external communication."
       },
       {
-        "question": "What evidence would trigger an SRP refactoring?",
-        "hint": "Look at change history, dependency groups, ownership, and test setup."
+        "question": "What signals would tell you it's time to separate responsibilities?",
+        "hint": "When I touch a business rule and something in persistence breaks. Or when testing one part requires mocking unrelated things. That indicates mixed responsibilities."
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE"
@@ -36,7 +36,7 @@
     "subtopic": "solid-ocp",
     "difficulty": "INTERMEDIATE",
     "question": "What does the Open/Closed Principle mean, and when is applying it premature?",
-    "shortAnswer": "OCP aims to let expected variants be added through extension while stable orchestration remains unchanged. Interfaces, strategies, plugins, or data-driven rules can provide that seam. It does not mean existing code can never change. If variants are few and stable, or their common contract is not yet understood, a direct conditional may be safer than a speculative abstraction.",
+    "shortAnswer": "For me, OCP means designing the system so that new functionality can be added without modifying stable code. In Java this is usually solved with interfaces and different implementations. But I don't try to abstract everything from the start. If there's only one implementation or I don't yet know the future variants, I prefer to keep the code simple and apply the abstraction when the need actually arises. That way I avoid over-engineering.",
     "detailedAnswer": "Open for extension and closed for modification describes a design goal around a predicted axis of change. A notification workflow can depend on a Sender contract so a new channel is added as another implementation while retry, auditing, and orchestration remain stable. The important phrase is predicted axis: no design is closed against every possible change.\n\nOCP has a cost. Each extension point introduces contracts, registration, discovery, testing, and sometimes runtime ambiguity. A switch can be preferable for a small closed set, especially when the compiler can check exhaustiveness. Refactor toward an extension mechanism when change history, ownership, or product requirements show that variants evolve independently. The principle protects stable policy from recurring variation; it is not a requirement to abstract hypothetical futures.",
     "keyPoints": [
       "OCP targets a specific, expected axis of variation",
@@ -51,12 +51,12 @@
     ],
     "followUps": [
       {
-        "question": "How would you identify the right axis of extension?",
-        "hint": "Use concrete variants, change history, and ownership boundaries."
+        "question": "How would you identify when it's time to abstract?",
+        "hint": "When I already have two or three concrete variants and I see that every time a new one appears I have to modify the same block of code. That's when abstraction is justified with real evidence."
       },
       {
-        "question": "When is an exhaustive switch preferable to a strategy hierarchy?",
-        "hint": "Consider a small closed domain where all cases should change together."
+        "question": "When is a switch better than a strategy hierarchy?",
+        "hint": "When the set of options is small, closed, and known — for example, an enum with 3 or 4 values. In that case a switch is simpler to read and maintain than creating an interface with multiple implementations."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -67,7 +67,7 @@
     "subtopic": "solid-lsp",
     "difficulty": "SENIOR",
     "question": "How would you detect a Liskov Substitution Principle violation?",
-    "shortAnswer": "A subtype violates LSP when a caller that relies only on the parent contract must add subtype checks or gets behavior outside that contract. Typical signs are stronger preconditions, weaker guarantees, incompatible side effects, or unsupported inherited operations. I make the semantic contract explicit and run the same contract tests against every implementation.",
+    "shortAnswer": "For me, an LSP violation occurs when one implementation cannot replace another without changing the system's behavior. For example, if an interface defines that a method saves an order and an implementation throws an exception because it doesn't support that case, the contract is no longer being fulfilled. All implementations must offer the same behavior expected by the client.",
     "detailedAnswer": "LSP is about behavioral substitutability, not merely compiling against the same method signatures. A subtype should accept at least the inputs promised by the base contract, preserve its postconditions and invariants, and not introduce surprising failure or side-effect semantics. A ReadOnlyRepository that inherits save() but throws UnsupportedOperationException is a common warning: the abstraction promises a capability the subtype cannot provide.\n\nDetection techniques include shared contract tests, property-based tests, reviewing exception and nullability guarantees, and looking for instanceof branches in clients. The remedy may be to split interfaces by capability, use composition, or redefine the hierarchy around a truthful common contract. Some differences are valid if the contract explicitly permits them—for example, different performance characteristics—so the interview answer should distinguish documented variation from broken promises.",
     "keyPoints": [
       "LSP concerns observable behavior, not only type compatibility",
@@ -83,15 +83,15 @@
     "followUps": [
       {
         "question": "Is throwing a new exception always an LSP violation?",
-        "hint": "It depends on what failure behavior the parent contract permits."
+        "hint": "Not necessarily. If the base contract already states that an error can occur in certain cases, it's valid. The problem is when the client doesn't expect that exception because the contract promises the operation always works."
       },
       {
-        "question": "How can interface segregation repair an LSP problem?",
-        "hint": "Split capabilities so implementations promise only operations they support."
+        "question": "How would you fix an LSP violation in practice?",
+        "hint": "Usually by splitting the interface. For example, separating ReadRepository from WriteRepository, so each implementation only promises what it can actually deliver."
       },
       {
-        "question": "What should a contract test assert besides return values?",
-        "hint": "Include exceptions, side effects, ordering, nullability, and invariants."
+        "question": "How would you detect an LSP violation in existing code?",
+        "hint": "Look for implementations throwing UnsupportedOperationException, clients using instanceof to handle different subtypes, or tests that need different setup depending on the implementation."
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
@@ -102,7 +102,7 @@
     "subtopic": "solid-isp",
     "difficulty": "INTERMEDIATE",
     "question": "How does Interface Segregation improve an API, and when can it go too far?",
-    "shortAnswer": "ISP says clients should depend only on capabilities they use. Smaller role-based interfaces avoid dummy methods, reduce coupling, and make changes affect fewer consumers. The goal is cohesive contracts, not the smallest possible interfaces: excessive one-method interfaces can fragment a domain and make discovery and wiring harder.",
+    "shortAnswer": "For me, ISP means that each client should depend only on the methods it actually uses. That's why I prefer small interfaces with a clear responsibility, rather than a huge interface with many operations. This reduces coupling and makes maintenance easier. However, splitting interfaces too much isn't ideal either, because we can add unnecessary complexity and make the design harder to understand.",
     "detailedAnswer": "A broad interface couples every client and implementation to all of its operations. If a warehouse display only reads inventory, depending on an InventoryManager that also adjusts, imports, deletes, and audits stock grants unnecessary authority and causes unrelated changes to ripple. Separate ReadInventory from AdjustInventory when those roles have distinct consumers or implementations.\n\nSegregation should follow real client roles and security or ownership boundaries. It does not require one interface per method. Operations that form one cohesive protocol may be clearer together, and splitting them can hide lifecycle rules. Evidence includes implementations throwing unsupported-operation exceptions, clients mocking many irrelevant methods, or permissions that differ by capability. Balance narrow dependencies with a discoverable domain model.",
     "keyPoints": [
       "Interfaces should reflect cohesive client capabilities",
@@ -117,12 +117,12 @@
     ],
     "followUps": [
       {
-        "question": "What signals that an interface is too broad?",
-        "hint": "Look for unused mocks, unsupported operations, distinct permissions, and unrelated changes."
+        "question": "What signals tell you an interface is too broad?",
+        "hint": "When in tests I need to mock methods I don't use, or when an implementation throws UnsupportedOperationException on some method. That means the contract promises more than that implementation can offer."
       },
       {
         "question": "Can one class implement several segregated interfaces?",
-        "hint": "Yes; consumers can still depend on only the role they need."
+        "hint": "Yes, and it's common. The concrete class implements multiple interfaces, but each client depends only on the interface it needs. This reduces coupling without multiplying classes."
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
@@ -133,7 +133,7 @@
     "subtopic": "solid-dip",
     "difficulty": "SENIOR",
     "question": "What is dependency inversion, and how is it different from dependency injection?",
-    "shortAnswer": "Dependency inversion is a design rule: high-level policy and low-level details depend on an abstraction owned around the policy boundary. Dependency injection is a construction technique that supplies dependencies from outside. A DI container can wire a tightly coupled design, and DIP can be implemented with plain constructors, so the two concepts support each other but are not equivalent.",
+    "shortAnswer": "Dependency Inversion is a design principle stating that high-level modules should not depend on concrete implementations, but on abstractions like interfaces. Dependency Injection is a technique for providing those dependencies from the outside, typically through the constructor or a framework like Spring. In short, DIP defines the design and DI is a way to implement it. It's possible to apply DIP without a DI framework, and it's also possible to use DI without actually respecting the dependency inversion principle.",
     "detailedAnswer": "Without DIP, business policy may import a database client, HTTP SDK, or framework type directly. Changes in that detail then propagate inward. With DIP, the use-case layer defines the capability it needs—for example, LoadOrder or PublishEvent—and an adapter implements it using PostgreSQL or Kafka. Source-code dependencies point toward the stable policy even though runtime calls eventually reach infrastructure.\n\nDependency injection supplies an implementation through a constructor, factory, or container. It improves explicitness and test setup, but merely injecting a concrete vendor client does not invert ownership. Avoid abstraction for every helper; inversion is most valuable at volatile I/O, ownership, or architectural boundaries. Also keep contracts shaped around domain needs rather than mirroring the adapter API, otherwise the dependency is only cosmetically inverted.",
     "keyPoints": [
       "DIP controls the direction and ownership of source dependencies",
@@ -148,16 +148,16 @@
     ],
     "followUps": [
       {
-        "question": "Who should own the repository interface in a ports-and-adapters design?",
-        "hint": "Usually the policy or application side that defines the capability it needs."
+        "question": "Who should define the repository interface: the domain or the infrastructure?",
+        "hint": "The domain. The business module defines what it needs (e.g., save an order), and the infrastructure implements the how (PostgreSQL, MongoDB, etc.)."
       },
       {
         "question": "Can you apply DIP without a DI framework?",
-        "hint": "Constructor injection and a manual composition root are sufficient."
+        "hint": "Yes. You just receive the dependency through the constructor and have an entry point (main or factory) that wires everything manually."
       },
       {
-        "question": "When would introducing a port be unnecessary?",
-        "hint": "Consider stable local helpers with no ownership or volatility boundary."
+        "question": "When is it NOT worth creating an abstraction?",
+        "hint": "When the dependency is internal, stable, and doesn't cross an I/O boundary. For example, a StringUtils or a formatting helper — abstracting them adds complexity without real benefit."
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE"

@@ -5,7 +5,7 @@
     "subtopic": "solid-srp",
     "difficulty": "INTERMEDIATE",
     "question": "¿Cómo interpretas el Principio de Responsabilidad Única en un servicio real?",
-    "shortAnswer": "SRP significa que un módulo debe responder ante una única fuente cohesionada de cambio, no que cada clase deba contener un solo método. Separo las responsabilidades cuando cambian por motivos diferentes —por ejemplo, la política de precios, la persistencia y el formato de transporte—, pero mantengo juntos los comportamientos cuando protegen la misma invariante. La prueba está en la cohesión y en quién es responsable del cambio, no únicamente en el tamaño de la clase.",
+    "shortAnswer": "Para mí, el Principio de Responsabilidad Única significa que una clase o servicio debe tener un único motivo para cambiar. Si cambian las reglas de negocio, modifico el servicio de negocio; si cambia la forma de guardar los datos, modifico la persistencia; y si cambia una API, modifico la capa de integración. Separar esas responsabilidades hace que el código sea más mantenible, más fácil de probar y reduce el riesgo de introducir errores.",
     "detailedAnswer": "Una responsabilidad se entiende mejor como una obligación frente a un actor o una fuente de cambio. Un servicio de checkout que calcula precios, genera archivos PDF, almacena pedidos y llama a un transportista cambia por razones empresariales, documentales, de base de datos y de integración que no están relacionadas entre sí. Separar esas políticas permite localizar mejor los cambios y las pruebas.\n\nSRP no prescribe clases diminutas. Dividir cada método crea una red anémica de objetos y dificulta seguir un flujo de trabajo cohesionado. Una clase puede coordinar varios pasos si todos pertenecen al mismo caso de uso, delegando al mismo tiempo las políticas que evolucionan de forma independiente. Algunas señales útiles son dependencias no relacionadas, pruebas con configuraciones distintas, cambios realizados por equipos diferentes y modificaciones frecuentes por requisitos no relacionados. Aplica el principio a nivel de clase, módulo o servicio, según el límite responsable del comportamiento.",
     "keyPoints": [
       "Una responsabilidad es una fuente cohesionada de cambio, no un número de métodos",
@@ -21,11 +21,11 @@
     "followUps": [
       {
         "question": "¿Puede una clase grande cumplir SRP?",
-        "hint": "El tamaño es una señal; la cohesión y los motivos para cambiar son los factores decisivos."
+        "hint": "Sí. Lo que importa no es el tamaño, sino que todo lo que contiene cambie por el mismo motivo. Una clase de 300 líneas que gestiona un único flujo de negocio puede estar bien si no mezcla persistencia, validación y comunicación externa."
       },
       {
-        "question": "¿Qué evidencias justificarían una refactorización basada en SRP?",
-        "hint": "Analiza el historial de cambios, los grupos de dependencias, la responsabilidad de los equipos y la preparación de las pruebas."
+        "question": "¿Qué señales te indicarían que necesitas separar responsabilidades?",
+        "hint": "Cuando toco una regla de negocio y se rompe algo de persistencia. O cuando para testear una parte necesito montar mocks de cosas no relacionadas. Eso indica que hay responsabilidades mezcladas."
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE"
@@ -36,7 +36,7 @@
     "subtopic": "solid-ocp",
     "difficulty": "INTERMEDIATE",
     "question": "¿Qué significa el Principio Abierto/Cerrado y cuándo resulta prematuro aplicarlo?",
-    "shortAnswer": "OCP busca permitir que las variantes previstas se añadan mediante extensión, mientras que la orquestación estable permanece sin cambios. Las interfaces, estrategias, plugins o reglas basadas en datos pueden proporcionar ese punto de extensión. No significa que el código existente nunca pueda modificarse. Si las variantes son pocas y estables, o todavía no se comprende su contrato común, una condición directa puede ser más segura que una abstracción especulativa.",
+    "shortAnswer": "Para mí, OCP significa diseñar el sistema para añadir nuevas funcionalidades sin tener que modificar el código estable. En Java esto suele resolverse con interfaces y distintas implementaciones. Pero tampoco intento abstraer todo desde el principio. Si solo hay una implementación o no conozco todavía las futuras variantes, prefiero mantener el código simple y aplicar la abstracción cuando realmente aparezca la necesidad. Así evito sobreingeniería.",
     "detailedAnswer": "Abierto para extensión y cerrado para modificación describe un objetivo de diseño relacionado con un eje de cambio previsto. Un flujo de notificaciones puede depender de un contrato Sender, de modo que se añada un nuevo canal como otra implementación, mientras que los reintentos, la auditoría y la orquestación permanecen estables. La expresión importante es eje de cambio previsto: ningún diseño puede estar cerrado frente a todos los cambios posibles.\n\nOCP tiene un coste. Cada punto de extensión introduce contratos, registro, descubrimiento, pruebas y, en ocasiones, ambigüedad en tiempo de ejecución. Un switch puede ser preferible para un conjunto pequeño y cerrado, especialmente cuando el compilador puede comprobar que todos los casos están cubiertos. Refactoriza hacia un mecanismo de extensión cuando el historial de cambios, la responsabilidad de los equipos o los requisitos del producto demuestren que las variantes evolucionan de forma independiente. El principio protege una política estable frente a variaciones recurrentes; no obliga a abstraer futuros hipotéticos.",
     "keyPoints": [
       "OCP se centra en un eje de variación específico y esperado",
@@ -51,12 +51,12 @@
     ],
     "followUps": [
       {
-        "question": "¿Cómo identificarías el eje de extensión adecuado?",
-        "hint": "Utiliza variantes concretas, el historial de cambios y los límites de responsabilidad."
+        "question": "¿Cómo identificarías cuándo es momento de abstraer?",
+        "hint": "Cuando ya tengo dos o tres variantes concretas y veo que cada vez que aparece una nueva tengo que modificar el mismo bloque de código. Ahí es cuando la abstracción se justifica con evidencia real."
       },
       {
-        "question": "¿Cuándo es preferible un switch exhaustivo frente a una jerarquía de estrategias?",
-        "hint": "Piensa en un dominio pequeño y cerrado en el que todos los casos deban cambiar conjuntamente."
+        "question": "¿Cuándo es mejor un switch que una jerarquía de estrategias?",
+        "hint": "Cuando el conjunto de opciones es pequeño, cerrado y conocido — por ejemplo, un enum con 3 o 4 valores. En ese caso un switch es más simple de leer y mantener que crear una interfaz con varias implementaciones."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
@@ -67,7 +67,7 @@
     "subtopic": "solid-lsp",
     "difficulty": "SENIOR",
     "question": "¿Cómo detectarías una vulneración del Principio de Sustitución de Liskov?",
-    "shortAnswer": "Un subtipo vulnera LSP cuando un cliente que depende únicamente del contrato del tipo padre debe añadir comprobaciones del subtipo o recibe un comportamiento que queda fuera de ese contrato. Las señales habituales son precondiciones más restrictivas, garantías más débiles, efectos secundarios incompatibles u operaciones heredadas no admitidas. Hago explícito el contrato semántico y ejecuto las mismas pruebas de contrato contra todas las implementaciones.",
+    "shortAnswer": "Para mí, una violación de LSP ocurre cuando una implementación no puede reemplazar a otra sin cambiar el comportamiento del sistema. Por ejemplo, si una interfaz define que un método guarda un pedido y una implementación lanza una excepción porque no soporta ese caso, el contrato ya no se está cumpliendo. Todas las implementaciones deben ofrecer el mismo comportamiento esperado por el cliente.",
     "detailedAnswer": "LSP trata de la sustitución basada en el comportamiento, no únicamente de compilar con las mismas firmas de métodos. Un subtipo debería aceptar al menos las entradas prometidas por el contrato base, conservar sus postcondiciones e invariantes y no introducir semánticas inesperadas de fallo o efectos secundarios. Un ReadOnlyRepository que hereda save() pero lanza UnsupportedOperationException es una señal habitual: la abstracción promete una capacidad que el subtipo no puede proporcionar.\n\nEntre las técnicas de detección se encuentran las pruebas de contrato compartidas, las pruebas basadas en propiedades, la revisión de las garantías de excepciones y nulabilidad y la búsqueda de ramas instanceof en los clientes. La solución puede consistir en dividir interfaces por capacidad, utilizar composición o redefinir la jerarquía en torno a un contrato común que sea verdadero. Algunas diferencias son válidas si el contrato las permite explícitamente —por ejemplo, distintas características de rendimiento—, por lo que en una entrevista conviene distinguir entre una variación documentada y una promesa incumplida.",
     "keyPoints": [
       "LSP se refiere al comportamiento observable, no únicamente a la compatibilidad de tipos",
@@ -83,15 +83,15 @@
     "followUps": [
       {
         "question": "¿Lanzar una excepción nueva siempre vulnera LSP?",
-        "hint": "Depende del comportamiento de fallo permitido por el contrato del tipo padre."
+        "hint": "No necesariamente. Si el contrato base ya contempla que un error puede ocurrir en ciertos casos, es válido. El problema es cuando el cliente no espera esa excepción porque el contrato promete que la operación siempre funciona."
       },
       {
-        "question": "¿Cómo puede la Segregación de Interfaces solucionar un problema de LSP?",
-        "hint": "Divide las capacidades para que cada implementación prometa únicamente las operaciones que admite."
+        "question": "¿Cómo resolverías una violación de LSP en la práctica?",
+        "hint": "Normalmente dividiendo la interfaz. Por ejemplo, separar ReadRepository de WriteRepository, así cada implementación solo promete lo que realmente puede cumplir."
       },
       {
-        "question": "¿Qué debería comprobar una prueba de contrato además de los valores devueltos?",
-        "hint": "Incluye excepciones, efectos secundarios, orden, nulabilidad e invariantes."
+        "question": "¿Cómo detectarías una violación de LSP en código existente?",
+        "hint": "Busca implementaciones que lancen UnsupportedOperationException, clientes que hagan instanceof para tratar subtipos diferentes, o tests que necesiten configuración distinta según la implementación."
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
@@ -102,7 +102,7 @@
     "subtopic": "solid-isp",
     "difficulty": "INTERMEDIATE",
     "question": "¿Cómo mejora una API la Segregación de Interfaces y cuándo puede llevarse demasiado lejos?",
-    "shortAnswer": "ISP establece que los clientes deberían depender únicamente de las capacidades que utilizan. Las interfaces más pequeñas y basadas en roles evitan métodos ficticios, reducen el acoplamiento y hacen que los cambios afecten a menos consumidores. El objetivo son contratos cohesionados, no las interfaces más pequeñas posibles: un exceso de interfaces de un solo método puede fragmentar el dominio y dificultar el descubrimiento y la configuración.",
+    "shortAnswer": "Para mí, ISP significa que cada cliente debe depender solo de los métodos que realmente utiliza. Por eso prefiero interfaces pequeñas y con una responsabilidad clara, en lugar de una interfaz enorme con muchas operaciones. Esto reduce el acoplamiento y facilita el mantenimiento. Sin embargo, tampoco conviene dividir las interfaces en exceso, porque podemos añadir complejidad innecesaria y hacer que el diseño sea más difícil de entender.",
     "detailedAnswer": "Una interfaz demasiado amplia acopla a todos los clientes e implementaciones con todas sus operaciones. Si una pantalla de almacén solo necesita leer el inventario, depender de un InventoryManager que también ajusta, importa, elimina y audita el stock concede permisos innecesarios y provoca que cambios no relacionados se propaguen. Conviene separar ReadInventory de AdjustInventory cuando esos roles tienen consumidores o implementaciones distintos.\n\nLa segregación debería seguir roles reales de clientes y límites de seguridad o responsabilidad. No exige una interfaz por método. Las operaciones que forman un protocolo cohesionado pueden ser más claras juntas, y dividirlas puede ocultar reglas de ciclo de vida. Algunas evidencias son implementaciones que lanzan excepciones de operación no admitida, clientes que necesitan simular muchos métodos irrelevantes o permisos distintos según la capacidad. Hay que equilibrar dependencias estrechas con un modelo de dominio fácil de descubrir.",
     "keyPoints": [
       "Las interfaces deberían representar capacidades cohesionadas de los clientes",
@@ -117,12 +117,12 @@
     ],
     "followUps": [
       {
-        "question": "¿Qué señales indican que una interfaz es demasiado amplia?",
-        "hint": "Busca mocks no utilizados, operaciones no admitidas, permisos distintos y cambios no relacionados."
+        "question": "¿Qué señales te indican que una interfaz es demasiado amplia?",
+        "hint": "Cuando en los tests necesito mockear métodos que no uso, o cuando una implementación lanza UnsupportedOperationException en algún método. Eso significa que el contrato promete más de lo que esa implementación puede ofrecer."
       },
       {
         "question": "¿Puede una clase implementar varias interfaces segregadas?",
-        "hint": "Sí; los consumidores pueden seguir dependiendo únicamente del rol que necesitan."
+        "hint": "Sí, y es lo habitual. La clase concreta implementa varias interfaces, pero cada cliente depende solo de la interfaz que necesita. Así se reduce el acoplamiento sin multiplicar las clases."
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
@@ -133,7 +133,7 @@
     "subtopic": "solid-dip",
     "difficulty": "SENIOR",
     "question": "¿Qué es la inversión de dependencias y en qué se diferencia de la inyección de dependencias?",
-    "shortAnswer": "La inversión de dependencias es una regla de diseño: la política de alto nivel y los detalles de bajo nivel dependen de una abstracción cuya propiedad se sitúa cerca del límite de la política. La inyección de dependencias es una técnica de construcción que proporciona las dependencias desde el exterior. Un contenedor de DI puede configurar un diseño fuertemente acoplado y DIP puede aplicarse con constructores normales, por lo que ambos conceptos se apoyan mutuamente, pero no son equivalentes.",
+    "shortAnswer": "La Inversión de Dependencias es un principio de diseño que indica que los módulos de alto nivel no deben depender de implementaciones concretas, sino de abstracciones como interfaces. La Inyección de Dependencias es una técnica para proporcionar esas dependencias desde el exterior, normalmente mediante el constructor o un framework como Spring. En resumen, DIP define el diseño y DI es una forma de implementarlo. Es posible aplicar DIP sin un framework de DI, y también es posible usar DI sin respetar realmente el principio de inversión de dependencias.",
     "detailedAnswer": "Sin DIP, la política de negocio puede importar directamente un cliente de base de datos, un SDK HTTP o un tipo de framework. Los cambios en ese detalle se propagan entonces hacia el interior. Con DIP, la capa del caso de uso define la capacidad que necesita —por ejemplo, LoadOrder o PublishEvent— y un adaptador la implementa utilizando PostgreSQL o Kafka. Las dependencias del código fuente apuntan hacia la política estable, aunque las llamadas en tiempo de ejecución terminen llegando a la infraestructura.\n\nLa inyección de dependencias proporciona una implementación mediante un constructor, una fábrica o un contenedor. Mejora la explicitud y la preparación de las pruebas, pero inyectar simplemente un cliente concreto de un proveedor no invierte la responsabilidad. No crees una abstracción para cada helper; la inversión resulta especialmente valiosa en límites volátiles de I/O, responsabilidad o arquitectura. Además, los contratos deberían diseñarse en torno a las necesidades del dominio y no copiar la API del adaptador; de lo contrario, la dependencia solo estará invertida de forma superficial.",
     "keyPoints": [
       "DIP controla la dirección y la propiedad de las dependencias del código fuente",
@@ -148,16 +148,16 @@
     ],
     "followUps": [
       {
-        "question": "¿Quién debería ser propietario de la interfaz de repositorio en un diseño de puertos y adaptadores?",
-        "hint": "Normalmente, la capa de política o de aplicación que define la capacidad que necesita."
+        "question": "¿Quién debería definir la interfaz del repositorio: el dominio o la infraestructura?",
+        "hint": "El dominio. El módulo de negocio define qué necesita (por ejemplo, guardar un pedido), y la infraestructura implementa el cómo (PostgreSQL, MongoDB, etc.)."
       },
       {
         "question": "¿Puedes aplicar DIP sin un framework de inyección de dependencias?",
-        "hint": "La inyección por constructor y una raíz de composición manual son suficientes."
+        "hint": "Sí. Basta con recibir la dependencia por constructor y tener un punto de entrada (main o factory) que conecte todo manualmente."
       },
       {
-        "question": "¿Cuándo sería innecesario introducir un puerto?",
-        "hint": "Piensa en helpers locales estables sin un límite de responsabilidad o volatilidad."
+        "question": "¿Cuándo NO merece la pena crear una abstracción?",
+        "hint": "Cuando la dependencia es interna, estable y no cruza una frontera de I/O. Por ejemplo, un StringUtils o un helper de formateo — abstraerlos añade complejidad sin beneficio real."
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE"

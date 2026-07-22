@@ -1,7 +1,7 @@
 [
   {
     "id": "interview-java-basics-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics",
     "difficulty": "BEGINNER",
     "question": "What happens between compiling a Java source file and executing its code?",
@@ -32,7 +32,7 @@
   },
   {
     "id": "interview-java-types-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-types",
     "difficulty": "BEGINNER",
     "question": "What practical differences between primitives and wrapper types matter in production Java?",
@@ -63,7 +63,7 @@
   },
   {
     "id": "interview-java-operators-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-operators",
     "difficulty": "BEGINNER",
     "question": "What is the difference between short-circuit and non-short-circuit boolean operators in Java?",
@@ -94,7 +94,7 @@
   },
   {
     "id": "interview-java-arrays-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-arrays",
     "difficulty": "BEGINNER",
     "question": "When would you choose an array instead of a List in Java?",
@@ -125,7 +125,7 @@
   },
   {
     "id": "interview-java-loops-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-loops",
     "difficulty": "INTERMEDIATE",
     "question": "How can you safely remove elements while iterating over a Java collection?",
@@ -156,7 +156,7 @@
   },
   {
     "id": "interview-java-methods-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-methods",
     "difficulty": "INTERMEDIATE",
     "question": "Is Java pass-by-reference or pass-by-value, and why does the distinction matter?",
@@ -187,7 +187,7 @@
   },
   {
     "id": "interview-java-inheritance-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-inheritance",
     "difficulty": "INTERMEDIATE",
     "question": "How do you choose between an interface and an abstract class in modern Java?",
@@ -218,7 +218,7 @@
   },
   {
     "id": "interview-java-exceptions-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-exceptions",
     "difficulty": "INTERMEDIATE",
     "question": "How do checked and unchecked exceptions differ, and how do you choose between them?",
@@ -253,7 +253,7 @@
   },
   {
     "id": "interview-java-api-hashmap-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-api",
     "difficulty": "SENIOR",
     "question": "How does HashMap work in current Java implementations, and which details are contractual?",
@@ -289,7 +289,7 @@
   },
   {
     "id": "interview-java-api-streams-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-api",
     "difficulty": "INTERMEDIATE",
     "question": "How are Java Stream pipelines executed, and when would you prefer a loop?",
@@ -325,7 +325,7 @@
   },
   {
     "id": "interview-ej-coll-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-methods",
     "difficulty": "INTERMEDIATE",
     "question": "When would you use a static factory method instead of a constructor? Give real examples.",
@@ -356,7 +356,7 @@
   },
   {
     "id": "interview-ej-coll-2",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics",
     "difficulty": "SENIOR",
     "question": "Explain the equals/hashCode contract. What breaks if you violate it?",
@@ -381,6 +381,214 @@
       {
         "question": "Why does Java's String class cache its hashCode?",
         "hint": "Strings are immutable and frequently used as Map keys. Caching saves recomputation. hashCode is computed once on first call and stored in a field."
+      }
+    ],
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
+  },
+  {
+    "id": "interview-modern-records-1",
+    "topic": "java",
+    "subtopic": "modern-records",
+    "difficulty": "INTERMEDIATE",
+    "question": "What guarantees do Java records provide, and are record instances immutable?",
+    "shortAnswer": "A record declares a transparent data carrier: the compiler provides final component fields, accessors, a canonical constructor, equals, hashCode, and toString based on those components. Its component references cannot be reassigned after construction, but that is only shallow immutability. A record containing a mutable list is mutable through that list unless it makes defensive copies.",
+    "detailedAnswer": "Records reduce ceremony for values whose API is fundamentally their state description. Components become private final fields with accessors, and generated equality and hashing use every component. A compact canonical constructor can validate or normalize inputs, but it must preserve the stated component model. Records are implicitly final and cannot extend another class, though they can implement interfaces.\n\nCalling records immutable is imprecise. Final prevents a component reference from being reassigned; it does not freeze the referenced object. For a value record with a List component, copy mutable input in the constructor—often with `List.copyOf`—and avoid exposing other mutable state. Also consider equality stability when a record is used as a map key. Records fit DTOs, messages, and value objects when transparent structural equality is desired; entities with identity, lifecycle proxies, or hidden mutable state may be a poor fit. Sealed types solve a different problem: constraining which types can implement or extend a hierarchy.",
+    "keyPoints": [
+      "Records provide transparent state, accessors, and structural object methods",
+      "Final component fields provide shallow, not deep, immutability",
+      "Compact constructors can validate and defensively copy inputs",
+      "Records and sealed classes address different design concerns"
+    ],
+    "redFlags": [
+      "Claiming every record is deeply immutable",
+      "Using mutable components without considering defensive copies and equality",
+      "Treating a record as a drop-in replacement for every persistence entity"
+    ],
+    "followUps": [
+      {
+        "question": "How would you make a record with a List component effectively immutable?",
+        "hint": "Copy at construction and expose only the immutable copy."
+      },
+      {
+        "question": "When is a sealed interface useful alongside records?",
+        "hint": "Model a closed set of data alternatives that can be exhaustively handled."
+      },
+      {
+        "question": "Can a record define additional constructors or methods?",
+        "hint": "Yes, subject to delegating to the canonical construction and preserving record invariants."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-modern-patterns-1",
+    "topic": "java",
+    "subtopic": "modern-patterns",
+    "difficulty": "INTERMEDIATE",
+    "question": "How does pattern matching change type checks and switch expressions in Java 21?",
+    "shortAnswer": "Pattern matching combines a successful type test with a scoped variable, removing a separate cast. In Java 21, record patterns can destructure records and pattern switch can select by type. The compiler checks dominance and can prove exhaustiveness for enums or sealed hierarchies. Null remains explicit: a switch can handle case null, otherwise a null selector throws NullPointerException.",
+    "detailedAnswer": "An `instanceof String text` pattern introduces `text` only where flow analysis proves the match succeeded. This avoids repeated casts while preserving static type safety. Pattern matching for switch, finalized in Java 21, supports type patterns and guarded cases; record patterns, also finalized in Java 21, deconstruct nested data carriers.\n\nOrder matters because an earlier broad pattern can dominate a later narrow one, which the compiler rejects. Exhaustive switch expressions over a sealed hierarchy make missing domain alternatives visible at compile time, although separately compiled hierarchy changes can still surface at runtime. Pattern matching should clarify decisions over data shapes; it is not a reason to replace healthy subtype polymorphism with a large central type switch. Handle null deliberately and avoid guards whose side effects make case selection difficult to reason about.",
+    "keyPoints": [
+      "Pattern variables are scoped by flow-sensitive match analysis",
+      "Java 21 finalized pattern matching for switch and record patterns",
+      "Sealed hierarchies can support compile-time exhaustiveness checks",
+      "Null handling and case dominance must be explicit"
+    ],
+    "redFlags": [
+      "Assuming a default case also handles null automatically",
+      "Ordering a broad type pattern before a subtype pattern",
+      "Replacing cohesive polymorphic behavior with an expanding type switch"
+    ],
+    "followUps": [
+      {
+        "question": "Why can a case Object value dominate later cases?",
+        "hint": "Every non-null selector matches Object, leaving narrower cases unreachable."
+      },
+      {
+        "question": "When does an exhaustive switch still need runtime protection?",
+        "hint": "Consider separate compilation and a sealed hierarchy changed after the client was compiled."
+      },
+      {
+        "question": "When is polymorphism clearer than pattern matching?",
+        "hint": "When behavior belongs with each subtype and evolves with that subtype."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-modern-streams-1",
+    "topic": "java",
+    "subtopic": "modern-streams",
+    "difficulty": "INTERMEDIATE",
+    "question": "What is Optional good for, and what common uses make an API worse?",
+    "shortAnswer": "Optional is most useful as a return type that says a result may be absent and encourages explicit composition. It is not a universal replacement for null. Optional parameters often complicate calls, entity or DTO fields can create framework and serialization friction, and collections should usually be empty rather than optional. Also, orElse evaluates its fallback eagerly; orElseGet is lazy.",
+    "detailedAnswer": "Optional models zero or one result and offers map, flatMap, filter, orElseGet, and related operations. A repository lookup can return Optional<Order> so callers choose a default, translate absence to an error, or continue a pipeline. It should not be used only to call get after isPresent; `orElseThrow`, mapping, or a clear conditional better expresses intent.\n\nOptional is a value-based class, so code should not synchronize on it or depend on identity. An Optional itself should not be null. For parameters, overloads or a nullable boundary with validation are often more readable. For collections, return an empty collection unless absence and emptiness have different domain meanings. `orElse(expensiveCall())` invokes the fallback even when a value is present, whereas `orElseGet(this::expensiveCall)` invokes it only when needed. Framework compatibility and public API conventions should inform use rather than a blanket rule.",
+    "keyPoints": [
+      "Optional communicates possible absence most clearly in return types",
+      "Prefer composition or explicit branching over isPresent followed by get",
+      "orElse is eager while orElseGet defers fallback evaluation",
+      "Empty collections usually represent no elements without another wrapper"
+    ],
+    "redFlags": [
+      "Returning null instead of Optional.empty from an Optional-returning method",
+      "Using Optional for every field and parameter without considering consumers",
+      "Calling get without establishing presence",
+      "Ignoring eager work and side effects in orElse"
+    ],
+    "followUps": [
+      {
+        "question": "What is the difference between map and flatMap on Optional?",
+        "hint": "flatMap prevents nesting when the mapping function already returns Optional."
+      },
+      {
+        "question": "Why is Optional<List<T>> often unnecessary?",
+        "hint": "An empty list commonly expresses no results unless absence has distinct meaning."
+      },
+      {
+        "question": "When might an Optional parameter be justified?",
+        "hint": "Discuss consistency with a broader API and whether absence is a first-class input."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-modern-threads-1",
+    "topic": "java",
+    "subtopic": "modern-threads",
+    "difficulty": "SENIOR",
+    "question": "What problem do virtual threads solve, and what design constraints remain on current JDKs?",
+    "shortAnswer": "Virtual threads make thread-per-task code scale to many blocking, mostly I/O-bound operations by unmounting from carrier platform threads while blocked. They improve throughput and code simplicity, not the latency of an individual call or CPU capacity. Create one per task rather than pooling them, and limit scarce downstream resources explicitly. Since JDK 24, blocking in synchronized no longer causes the old general pinning problem; native or foreign calls can still pin.",
+    "detailedAnswer": "Virtual threads became final in Java 21. They implement the Thread API but are scheduled by the JVM over a smaller set of carrier platform threads. When supported blocking Java I/O waits, a virtual thread can unmount so the carrier runs another task. This makes straightforward synchronous code competitive with callback-heavy asynchronous designs for high-concurrency I/O workloads. CPU-bound work is still limited by cores, and a slow dependency remains slow.\n\nVirtual threads are cheap tasks, so do not pool them to throttle concurrency. Use semaphores, connection pools, rate limits, or backpressure around scarce resources. Be cautious with per-thread caches and large ThreadLocal values because the number of threads can be high. Guidance from Java 21 that any blocking operation inside synchronized pins its carrier is outdated for JDK 24 and later: JEP 491 removed nearly all monitor-related pinning. Current JDK documentation identifies native methods and foreign functions as remaining pinning cases. Verify library behavior and observe with JFR rather than applying an obsolete blanket replacement of synchronized.",
+    "keyPoints": [
+      "Virtual threads target high-throughput blocking I/O workloads",
+      "They improve scalability, not individual-operation latency or CPU capacity",
+      "Create a virtual thread per task and limit scarce resources separately",
+      "JDK 24 removed general monitor-related pinning; native and foreign calls can still pin"
+    ],
+    "redFlags": [
+      "Pooling virtual threads as though they were expensive platform threads",
+      "Claiming virtual threads make CPU-bound work faster",
+      "Repeating the Java 21 synchronized-pinning warning as universal for current JDKs",
+      "Allowing unbounded pressure on database connections or remote services"
+    ],
+    "followUps": [
+      {
+        "question": "How should you cap calls to a dependency that permits only 50 concurrent requests?",
+        "hint": "Use a semaphore, rate limiter, or resource pool rather than a virtual-thread pool."
+      },
+      {
+        "question": "What changed for synchronized code in JDK 24?",
+        "hint": "JEP 491 lets virtual threads blocked on monitors release their carriers in nearly all such cases."
+      },
+      {
+        "question": "How would you decide whether virtual threads improved a service?",
+        "hint": "Measure throughput, latency distributions, carrier utilization, downstream saturation, and pinning events."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-modern-evolution-1",
+    "topic": "java",
+    "subtopic": "modern-evolution",
+    "difficulty": "SENIOR",
+    "question": "How would you plan a production migration from Java 17 to Java 21?",
+    "shortAnswer": "I treat it as a runtime, build, library, and observability migration—not just a language upgrade. I inventory JDK internals and removed options, update the toolchain and dependencies, run unit and integration suites on Java 21, compare performance and GC behavior under representative load, then canary the runtime before adopting new language features. Preview features require explicit flags and should be a deliberate policy choice.",
+    "detailedAnswer": "Begin with an inventory: build plugins, annotation processors, agents, native libraries, container base images, TLS providers, reflection, and dependencies that touch JDK internals. Compile and test with the target toolchain, but also test the deployed artifact in the real runtime image because startup, certificates, locale data, memory ergonomics, and monitoring agents can differ. Tools such as jdeprscan and runtime warnings help identify deprecated or internal APIs.\n\nSeparate runtime adoption from source-feature adoption to reduce the change surface. Establish baseline latency, throughput, allocation, GC pauses, startup, and memory, then compare under representative traffic. Roll out by canary with an explicit rollback path. Java 17 and 21 are both LTS releases from several vendors, but support policy and patch cadence come from the chosen distribution. Records and sealed classes are final in 17; Java 21 adds final record patterns, pattern switch, virtual threads, and sequenced collections. Preview features are not ordinary compatibility commitments and require `--enable-preview` at compile and runtime.",
+    "keyPoints": [
+      "Upgrade the entire toolchain and runtime ecosystem, not only source syntax",
+      "Separate runtime migration from optional feature refactoring",
+      "Use representative tests, baselines, canaries, and rollback criteria",
+      "Preview features require explicit enablement and carry compatibility risk"
+    ],
+    "redFlags": [
+      "Assuming an LTS-to-LTS upgrade is automatically behavior-neutral",
+      "Changing runtime, framework, dependencies, and application design in one unmeasured release",
+      "Using preview features without a build and deployment policy"
+    ],
+    "followUps": [
+      {
+        "question": "Why separate runtime adoption from language refactoring?",
+        "hint": "It reduces variables during diagnosis and rollback."
+      },
+      {
+        "question": "What would you measure before and after the upgrade?",
+        "hint": "Include correctness plus latency, throughput, allocation, GC, startup, and memory."
+      },
+      {
+        "question": "What is operationally different about a preview feature?",
+        "hint": "It needs explicit flags and may change or disappear before becoming final."
+      }
+    ],
+    "experienceLevel": "STUDIED_NOT_USED"
+  },
+  {
+    "id": "interview-ej-modern-1",
+    "topic": "java",
+    "subtopic": "modern-streams",
+    "difficulty": "INTERMEDIATE",
+    "question": "When should you NOT use Java streams? Give concrete examples where traditional loops are better.",
+    "shortAnswer": "Don't use streams when: 1) you need to mutate local variables (streams require effectively final), 2) you need break/continue/return from enclosing method, 3) the logic is inherently iterative (stateful operations between elements), 4) readability suffers (deeply nested stream chains are worse than a clear loop). Streams excel at: filtering, mapping, grouping, collecting — but are not a universal replacement for loops.",
+    "detailedAnswer": "**Effective Java Item 45 — Use streams judiciously:**\n\n**Streams are WORSE for:**\n```java\n// ❌ Modifying external state\nList<String> results = new ArrayList<>();\nstream.forEach(x -> results.add(transform(x))); // side effect!\n// ✅ Use collector\nList<String> results = stream.map(this::transform).collect(toList());\n\n// ❌ Need early termination with complex condition\n// Traditional loop with break is clearer\n\n// ❌ Multiple return values or exception handling\n// Streams can't throw checked exceptions\n```\n\n**Streams are BETTER for:**\n- Transform sequences: `map`, `flatMap`\n- Filter: `filter`, `takeWhile`\n- Combine: `reduce`, `collect`\n- Search: `findFirst`, `anyMatch`\n- Group: `groupingBy`, `partitioningBy`",
+    "keyPoints": [
+      "Streams are for declarative data transformation",
+      "Side effects in streams are a code smell",
+      "Readability trumps brevity — if stream is hard to read, use a loop",
+      "parallel() only benefits large data with independent operations"
+    ],
+    "redFlags": [
+      "Uses forEach for everything instead of proper collectors",
+      "Cannot explain when loops are better",
+      "Uses parallel() without understanding when it helps"
+    ],
+    "followUps": [
+      {
+        "question": "How does Stream.parallel() actually work under the hood?",
+        "hint": "Uses ForkJoinPool.commonPool(). Splits the source (Spliterator), processes chunks in parallel, merges results. ArrayList splits well (random access), LinkedList doesn't (sequential only)."
+      },
+      {
+        "question": "What happens if you use a stream with a checked exception?",
+        "hint": "Compilation error — functional interfaces don't declare checked exceptions. Options: wrap in unchecked, extract to method with try/catch, or use a library like vavr's Try."
       }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"

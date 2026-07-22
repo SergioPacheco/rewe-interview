@@ -7,7 +7,7 @@
 
 export type TopicPriority = 0 | 1 | 2 | 3;
 export type TopicMode = 'interview' | 'practice' | 'theory';
-export type TopicGroup = 'interview' | 'backend' | 'distributed' | 'frontend' | 'quality' | 'more';
+export type TopicGroup = 'interview' | 'backend' | 'distributed' | 'frontend' | 'quality' | 'ai' | 'more';
 
 export interface Subtopic {
   id: string;

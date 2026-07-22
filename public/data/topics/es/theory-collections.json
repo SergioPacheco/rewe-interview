@@ -12,7 +12,7 @@
         "content": "<table>\n<tr><th>Need</th><th>Use</th><th>Example</th></tr>\n<tr><td>Ordered items, may have duplicates</td><td><code>ArrayList</code></td><td>Delivery stops in order</td></tr>\n<tr><td>Unique items, no order needed</td><td><code>HashSet</code></td><td>Assigned driver IDs today</td></tr>\n<tr><td>Unique items, sorted</td><td><code>TreeSet</code></td><td>Delivery times sorted</td></tr>\n<tr><td>Key → Value lookup</td><td><code>HashMap</code></td><td>Cache delivery by ID</td></tr>\n<tr><td>Key → Value, sorted keys</td><td><code>TreeMap</code></td><td>Schedule by time window</td></tr>\n<tr><td>Insertion-order map</td><td><code>LinkedHashMap</code></td><td>Recently accessed cache</td></tr>\n<tr><td>FIFO processing</td><td><code>ArrayDeque</code></td><td>Task queue</td></tr>\n</table>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics"
   },
   {
@@ -32,7 +32,7 @@
         "content": "<strong>\"When would you use LinkedList over ArrayList?\"</strong>\n\nThe honest answer: Almost never in practice. ArrayList has better cache locality (elements contiguous in memory). LinkedList has pointer overhead per element. Even for frequent insertions, ArrayList usually wins.\n\nException: Using it as a Deque (double-ended queue) where you only add/remove from ends. But ArrayDeque is often better there too.\n\n<strong>The real interview insight:</strong> Know the Big-O differences, but also know that in practice, ArrayList dominates because modern CPUs heavily favor sequential memory access."
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics"
   },
   {
@@ -52,7 +52,7 @@
         "content": "HashMap + doubly-linked list maintaining insertion order.\n\n<pre><code>Map&lt;String, Integer&gt; accessLog = new LinkedHashMap&lt;&gt;();\naccessLog.put(\"route-A\", 1);\naccessLog.put(\"route-B\", 2);\naccessLog.put(\"route-C\", 3);\n// Iteration always: route-A → route-B → route-C</code></pre>\n\n<strong>LRU Cache trick:</strong> Override <code>removeEldestEntry()</code> to auto-evict when size exceeds limit:\n<pre><code>new LinkedHashMap&lt;&gt;(16, 0.75f, true) {  // accessOrder=true\n    protected boolean removeEldestEntry(Map.Entry eldest) {\n        return size() > MAX_CACHE_SIZE;\n    }\n};</code></pre>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics"
   },
   {
@@ -68,7 +68,7 @@
         "content": "<pre><code>Set&lt;String&gt; a = new HashSet&lt;&gt;(List.of(\"A\", \"B\", \"C\"));\nSet&lt;String&gt; b = new HashSet&lt;&gt;(List.of(\"B\", \"C\", \"D\"));\n\n// Union\nSet&lt;String&gt; union = new HashSet&lt;&gt;(a);\nunion.addAll(b);  // [A, B, C, D]\n\n// Intersection\nSet&lt;String&gt; common = new HashSet&lt;&gt;(a);\ncommon.retainAll(b);  // [B, C]\n\n// Difference\nSet&lt;String&gt; onlyA = new HashSet&lt;&gt;(a);\nonlyA.removeAll(b);  // [A]</code></pre>\n\n<strong>Interview tip:</strong> \"Find common elements between two lists\" → convert to Sets and use retainAll(). O(n) instead of O(n²) nested loops."
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics"
   },
   {
@@ -92,12 +92,12 @@
         "content": "Optional&lt;T&gt; represents a value that may or may not be present. Forces you to handle the \"missing\" case explicitly.\n\n<pre><code>// Creating:\nOptional&lt;Delivery&gt; found = Optional.ofNullable(result);  // may be null\nOptional&lt;Delivery&gt; sure = Optional.of(delivery);         // never null\nOptional&lt;Delivery&gt; empty = Optional.empty();             // explicitly empty\n\n// Using:\nfound.orElseThrow(() -> new NotFoundException(\"Not found\"));\nfound.orElse(defaultDelivery);\nfound.ifPresent(d -> process(d));\nfound.map(Delivery::getDriverName).orElse(\"Unknown\");\n\n// ❌ NEVER do this:\nif (optional.isPresent()) {\n    return optional.get();  // defeats the purpose!\n}\n\n// ✓ Instead:\nreturn optional.orElseThrow(() -> new NotFoundException(...));</code></pre>\n\n<strong>Rule:</strong> Use Optional as method return type to signal \"might not exist\". Never use as field type or method parameter."
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics"
   },
   {
     "id": "theory-java-inheritance-menu",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-inheritance",
     "title": "Herencia en Java",
     "sections": [

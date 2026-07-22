@@ -44,10 +44,10 @@ export class AppComponent implements OnInit {
   readonly domainGroups: SidebarGroup[] = [
     { group: 'interview', label: 'INTERVIEW' },
     { group: 'backend', label: 'BACKEND' },
-    { group: 'distributed', label: 'DISTRIBUTED SYSTEMS' },
+    { group: 'distributed', label: 'ARCHITECTURE' },
     { group: 'frontend', label: 'FRONTEND' },
-    { group: 'quality', label: 'QUALITY & OPS' },
-    { group: 'more', label: 'MORE' }
+    { group: 'quality', label: 'DEVOPS & QUALITY' },
+    { group: 'ai', label: 'AI' },
   ];
 
   async ngOnInit(): Promise<void> {
@@ -99,7 +99,7 @@ export class AppComponent implements OnInit {
   getTopicsByGroup(group: TopicGroup): Topic[] {
     const query = this.searchQuery().toLowerCase();
     const topics = this.topicService.getByGroup(group)
-      .filter(t => t.id !== 'stories');
+      .filter(t => t.id !== 'stories' && t.id !== 'portfolio');
     if (!query) return topics;
     return topics.filter(t =>
       t.name.toLowerCase().includes(query) ||
@@ -112,7 +112,7 @@ export class AppComponent implements OnInit {
    * list of terms. Labels are topic-specific; items retain stable IDs/routes.
    */
   getSubtopicGroups(topic: Topic): SidebarSubtopicGroup[] {
-    const labels = TOPIC_PHASES[topic.id] ?? ['Learning sequence'];
+    const labels = TOPIC_PHASES[topic.id] ?? [''];
     const items = topic.subtopics ?? [];
     const size = Math.ceil(items.length / labels.length);
 
@@ -197,8 +197,7 @@ const TOPIC_PHASES: Record<string, string[]> = {
   rewe: ['Understand the role', 'Model the logistics domain', 'Prepare the conversation'],
   oop: ['Protect state and intent', 'Model variation'],
   solid: ['Separate responsibilities', 'Manage extension and substitution', 'Invert dependencies'],
-  collections: ['Language essentials', 'Flow and structure', 'Objects and standard APIs'],
-  'java-modern': ['Express intent safely', 'Transform data', 'Modern concurrency and evolution'],
+  java: ['Language essentials', 'Flow and structure', 'Objects and standard APIs', 'Express intent safely', 'Modern concurrency'],
   'data-persistence': ['SQL fundamentals', 'JPA & Hibernate', 'Distributed data (DDIA)', 'Performance & production'],
   'system-design': ['Shape the flow', 'Protect data and scale', 'Operate the system'],
   'software-architecture': ['Start with decisions', 'Shape boundaries and communication', 'Operate, evolve, and document'],

@@ -24,7 +24,7 @@
         "content": "Scope = where a variable is accessible.\n\n<pre><code>public class DeliveryService {\n    private int totalCount;             // INSTANCE scope: lives as long as object\n\n    private static int globalCount;     // CLASS scope: lives as long as class is loaded\n\n    public void process(int batchSize) { // PARAMETER scope: within method\n        int processed = 0;              // LOCAL scope: from declaration to end of block\n\n        for (int i = 0; i < batchSize; i++) {  // LOOP scope: only inside for\n            if (i > 10) {\n                int overflow = i - 10;  // BLOCK scope: only inside this if\n            }\n            // overflow NOT accessible here!\n        }\n        // i NOT accessible here!\n    }\n    // processed NOT accessible here!\n}</code></pre>\n\n<strong>Key rules:</strong>\n• Local variables MUST be initialized before use (no default value)\n• Instance fields have defaults: 0, 0.0, false, null\n• Narrower scope = better (declare variables as close to use as possible)\n• Cannot redeclare a variable in the same scope"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics"
   },
   {
@@ -48,7 +48,7 @@
         "content": "Each primitive has an object wrapper (needed for collections, null values):\n\n<table>\n<tr><th>Primitive</th><th>Wrapper</th><th>Parse method</th><th>Useful methods</th></tr>\n<tr><td>int</td><td>Integer</td><td>Integer.parseInt(\"42\")</td><td>Integer.valueOf(), Integer.MAX_VALUE</td></tr>\n<tr><td>double</td><td>Double</td><td>Double.parseDouble(\"3.14\")</td><td>Double.isNaN(), Double.compare()</td></tr>\n<tr><td>boolean</td><td>Boolean</td><td>Boolean.parseBoolean(\"true\")</td><td>Boolean.TRUE, Boolean.FALSE</td></tr>\n<tr><td>long</td><td>Long</td><td>Long.parseLong(\"100\")</td><td>Long.valueOf()</td></tr>\n<tr><td>char</td><td>Character</td><td>—</td><td>Character.isDigit(), Character.toUpperCase()</td></tr>\n</table>\n\n<strong>Autoboxing/Unboxing (automatic conversion):</strong>\n<pre><code>Integer wrapped = 42;         // autoboxing: int → Integer\nint unwrapped = wrapped;      // unboxing: Integer → int\n\nList&lt;Integer&gt; numbers = new ArrayList&lt;&gt;();\nnumbers.add(5);               // autoboxing: int 5 → Integer\nint first = numbers.get(0);   // unboxing: Integer → int</code></pre>\n\n<strong>⚠️ Trap: Unboxing null → NullPointerException</strong>\n<pre><code>Integer maybeNull = null;\nint value = maybeNull;  // NPE! Cannot unbox null.</code></pre>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-types"
   },
   {
@@ -72,7 +72,7 @@
         "content": "Operators evaluated in this order (highest to lowest):\n\n<table>\n<tr><th>Priority</th><th>Operators</th><th>Example</th></tr>\n<tr><td>1 (highest)</td><td>Postfix: <code>x++</code> <code>x--</code></td><td><code>i++</code></td></tr>\n<tr><td>2</td><td>Unary: <code>++x</code> <code>--x</code> <code>-x</code> <code>!</code></td><td><code>!valid</code></td></tr>\n<tr><td>3</td><td>Multiplicative: <code>*</code> <code>/</code> <code>%</code></td><td><code>a * b</code></td></tr>\n<tr><td>4</td><td>Additive: <code>+</code> <code>-</code></td><td><code>a + b</code></td></tr>\n<tr><td>5</td><td>Relational: <code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code> <code>instanceof</code></td><td><code>x > 5</code></td></tr>\n<tr><td>6</td><td>Equality: <code>==</code> <code>!=</code></td><td><code>a == b</code></td></tr>\n<tr><td>7</td><td>Logical AND: <code>&&</code></td><td><code>a && b</code></td></tr>\n<tr><td>8</td><td>Logical OR: <code>||</code></td><td><code>a || b</code></td></tr>\n<tr><td>9</td><td>Ternary: <code>? :</code></td><td><code>x > 0 ? x : -x</code></td></tr>\n<tr><td>10 (lowest)</td><td>Assignment: <code>=</code> <code>+=</code> <code>-=</code></td><td><code>x += 5</code></td></tr>\n</table>\n\n<strong>Rule:</strong> When in doubt, use parentheses to make intent clear:\n<pre><code>// Unclear:\nint result = a + b * c;    // is it (a+b)*c or a+(b*c)?\n// Clear:\nint result = a + (b * c);  // multiplication first, then add</code></pre>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-operators"
   },
   {
@@ -88,7 +88,7 @@
         "content": "<pre><code>// 2D array (array of arrays)\nint[][] grid = new int[3][4];  // 3 rows, 4 columns\ngrid[0][0] = 1;                // first row, first column\ngrid[2][3] = 9;                // last row, last column\n\n// Inline initialization\nint[][] matrix = {\n    {1, 2, 3},\n    {4, 5, 6},\n    {7, 8, 9}\n};\n\n// Jagged array (rows of different lengths!)\nint[][] jagged = new int[3][];\njagged[0] = new int[]{1, 2};\njagged[1] = new int[]{3, 4, 5, 6};\njagged[2] = new int[]{7};\n\n// Iteration\nfor (int row = 0; row < matrix.length; row++) {\n    for (int col = 0; col < matrix[row].length; col++) {\n        System.out.print(matrix[row][col] + \" \");\n    }\n}</code></pre>\n\n<strong>Interview trap:</strong> Java does NOT have true 2D arrays. <code>int[][]</code> is an array of arrays — each \"row\" is an independent array that can have different lengths."
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-arrays"
   },
   {
@@ -104,7 +104,7 @@
         "content": "<pre><code>// break — EXIT the loop immediately\nfor (Delivery d : deliveries) {\n    if (d.isUrgent()) {\n        processUrgent(d);\n        break;  // stop searching, exit loop\n    }\n}\n\n// continue — SKIP this iteration, go to next\nfor (Delivery d : deliveries) {\n    if (d.isCancelled()) {\n        continue;  // skip cancelled, process next\n    }\n    process(d);  // only reached for non-cancelled\n}\n\n// Labeled break — exit outer loop from inner\nouter:\nfor (Route r : routes) {\n    for (Stop s : r.getStops()) {\n        if (s.isBlocked()) {\n            break outer;  // exits BOTH loops\n        }\n    }\n}</code></pre>\n\n<strong>Interview tip:</strong> \"Infinite loop\" pattern for retry:\n<pre><code>while (true) {\n    try { return callService(); }\n    catch (TimeoutException e) {\n        if (++retries >= MAX) throw e;\n    }\n}</code></pre>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-loops"
   },
   {
@@ -128,7 +128,7 @@
         "content": "<table>\n<tr><th>Modifier</th><th>Class</th><th>Package</th><th>Subclass (other pkg)</th><th>World</th></tr>\n<tr><td><code>private</code></td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>\n<tr><td>(default)</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td></tr>\n<tr><td><code>protected</code></td><td>✓</td><td>✓</td><td>✓</td><td>✗</td></tr>\n<tr><td><code>public</code></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>\n</table>\n\n<strong>Best practice (most restrictive that works):</strong>\n• Fields: <code>private</code> (always)\n• Methods: <code>public</code> for API, <code>private</code> for internal, <code>protected</code> rarely\n• Classes: <code>public</code> if used outside package\n• Constructors: <code>private</code> for singletons/factories\n\n<strong>static keyword:</strong>\n<pre><code>class DeliveryUtils {\n    private static int count = 0;       // shared across ALL instances\n    public static final int MAX = 100;  // constant\n\n    public static Delivery create() {   // called without instance\n        count++;\n        return new Delivery();\n    }\n}\n// Usage: DeliveryUtils.create(); — no instance needed</code></pre>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-methods"
   },
   {
@@ -148,7 +148,7 @@
         "content": "<pre><code>// Throwing an exception\npublic Delivery findById(Long id) {\n    return repository.findById(id)\n        .orElseThrow(() -> new DeliveryNotFoundException(\"ID: \" + id));\n}\n\n// Declaring checked exceptions (caller must handle)\npublic void loadFromFile(String path) throws IOException {\n    Files.readAllLines(Path.of(path));  // may throw IOException\n}\n\n// Custom exception (unchecked — preferred for business logic)\npublic class DeliveryNotFoundException extends RuntimeException {\n    private final Long deliveryId;\n\n    public DeliveryNotFoundException(Long id) {\n        super(\"Delivery not found: \" + id);\n        this.deliveryId = id;\n    }\n\n    public Long getDeliveryId() { return deliveryId; }\n}</code></pre>\n\n<strong>Interview tip:</strong> \"When do you use checked vs unchecked?\"\n• Checked: caller CAN and SHOULD recover (retry, alternative path). Example: IOException.\n• Unchecked: programming error or unrecoverable business state. Example: NotFoundException, InvalidStateException.\n• Modern Java trend: prefer unchecked for business exceptions."
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-exceptions"
   },
   {
@@ -172,7 +172,7 @@
         "content": "A lambda is an anonymous function — a concise way to represent behavior.\n\n<pre><code>// Lambda syntax:\n(parameters) -> expression          // single expression\n(parameters) -> { statements; }     // block with return\n\n// Examples:\nPredicate&lt;Delivery&gt; isLate = d -> d.isLate();\nFunction&lt;Delivery, String&gt; getName = d -> d.getDriverName();\nConsumer&lt;Delivery&gt; print = d -> System.out.println(d);\nSupplier&lt;Delivery&gt; create = () -> new Delivery();\nComparator&lt;Delivery&gt; byDist = (a, b) -> a.getDistance() - b.getDistance();\n\n// Using with collections:\ndeliveries.removeIf(d -> d.isCancelled());        // Predicate\ndeliveries.forEach(d -> process(d));               // Consumer\ndeliveries.sort((a, b) -> a.compareTo(b));         // Comparator\n\n// Method references (shorthand):\ndeliveries.forEach(System.out::println);           // equivalent to d -> System.out.println(d)\ndeliveries.sort(Comparator.comparing(Delivery::getDistance));  // comparing by field</code></pre>\n\n<strong>Predicate:</strong> A function that takes one argument and returns boolean.\n<pre><code>Predicate&lt;Delivery&gt; isUrgent = d -> d.getPriority() > 8;\nPredicate&lt;Delivery&gt; isLocal = d -> d.getDistance() < 50;\n\n// Combining predicates:\nPredicate&lt;Delivery&gt; urgentLocal = isUrgent.and(isLocal);\nPredicate&lt;Delivery&gt; notUrgent = isUrgent.negate();\n\n// Using in streams:\nList&lt;Delivery&gt; filtered = deliveries.stream()\n    .filter(isUrgent.and(isLocal))\n    .collect(Collectors.toList());</code></pre>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-api"
   }
 ]

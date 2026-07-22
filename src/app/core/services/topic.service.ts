@@ -243,7 +243,7 @@ const SUBTOPIC_MAP: Record<string, Record<string, string>> = {
     'Leadership': 'beh-leadership',
     'Problem Solving': 'beh-adaptability',
   },
-  'collections': {
+  'java': {
     'Abstract classes': 'java-inheritance',
     'Access Modifiers': 'java-methods',
     'ArrayList': 'java-arrays',

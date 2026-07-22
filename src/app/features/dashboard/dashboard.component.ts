@@ -19,7 +19,7 @@ export class DashboardComponent {
 
   // Section definitions — which topics go in which section
   private readonly learnIds = [
-    'oop', 'solid', 'collections', 'java-modern', 'dsa', 'data-persistence', 'spring',
+    'java', 'oop', 'solid', 'dsa', 'data-persistence', 'spring',
     'rest', 'security', 'concurrency', 'patterns', 'testing',
     'docker', 'k8s', 'kotlin', 'angular', 'kafka', 'system-design-modeling'
   ];
@@ -68,7 +68,7 @@ export class DashboardComponent {
     'portfolio': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
     'oop': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original-wordmark.svg',
     'solid': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-plain.svg',
-    'collections': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
+    'java': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
     'data-persistence': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg',
     'system-design': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/amazonwebservices/amazonwebservices-plain-wordmark.svg',
     'behavioral': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linkedin/linkedin-original.svg',
@@ -82,7 +82,6 @@ export class DashboardComponent {
     'k8s': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kubernetes/kubernetes-original.svg',
     'kotlin': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/kotlin/kotlin-original.svg',
     'angular': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/angularjs/angularjs-original.svg',
-    'java-modern': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
   };
 
   getImageUrl(topicId: string): string {

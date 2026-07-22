@@ -24,7 +24,7 @@
         "content": "Alcance = dónde es accesible una variable.\n\n<pre><code>public class DeliveryService {\n    private int totalCount;             // Alcance de INSTANCIA: vive mientras el objeto\n\n    private static int globalCount;     // Alcance de CLASE: vive mientras la clase cargada\n\n    public void process(int batchSize) { // Alcance de PARÁMETRO: dentro del método\n        int processed = 0;              // Alcance LOCAL: desde la declaración hasta el final del bloque\n\n        for (int i = 0; i < batchSize; i++) {  // Alcance de BUCLE: solo dentro del for\n            if (i > 10) {\n                int overflow = i - 10;  // Alcance de BLOQUE: solo dentro de este if\n            }\n            // ¡overflow NO es accesible aquí!\n        }\n        // ¡i NO es accesible aquí!\n    }\n    // ¡processed NO es accesible aquí!\n}</code></pre>\n\n<strong>Reglas clave:</strong>\n• Las variables locales DEBEN inicializarse antes de usarse (no tienen valor por defecto)\n• Los campos de instancia tienen valores por defecto: 0, 0.0, false, null\n• Alcance más estrecho = mejor (declarar variables lo más cerca posible de su uso)\n• No se puede redeclarar una variable en el mismo alcance"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics"
   },
   {
@@ -48,7 +48,7 @@
         "content": "Cada primitivo tiene un wrapper en objeto (necesario para colecciones, valores null):\n\n<table>\n<tr><th>Primitivo</th><th>Wrapper</th><th>Método parse</th><th>Métodos útiles</th></tr>\n<tr><td>int</td><td>Integer</td><td>Integer.parseInt(\"42\")</td><td>Integer.valueOf(), Integer.MAX_VALUE</td></tr>\n<tr><td>double</td><td>Double</td><td>Double.parseDouble(\"3.14\")</td><td>Double.isNaN(), Double.compare()</td></tr>\n<tr><td>boolean</td><td>Boolean</td><td>Boolean.parseBoolean(\"true\")</td><td>Boolean.TRUE, Boolean.FALSE</td></tr>\n<tr><td>long</td><td>Long</td><td>Long.parseLong(\"100\")</td><td>Long.valueOf()</td></tr>\n<tr><td>char</td><td>Character</td><td>—</td><td>Character.isDigit(), Character.toUpperCase()</td></tr>\n</table>\n\n<strong>Autoboxing/Unboxing (conversión automática):</strong>\n<pre><code>Integer wrapped = 42;         // autoboxing: int → Integer\nint unwrapped = wrapped;      // unboxing: Integer → int\n\nList&lt;Integer&gt; numbers = new ArrayList&lt;&gt;();\nnumbers.add(5);               // autoboxing: int 5 → Integer\nint first = numbers.get(0);   // unboxing: Integer → int</code></pre>\n\n<strong>⚠️ Trampa: Unboxing de null → NullPointerException</strong>\n<pre><code>Integer maybeNull = null;\nint value = maybeNull;  // ¡NPE! No se puede hacer unboxing de null.</code></pre>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-types"
   },
   {
@@ -72,7 +72,7 @@
         "content": "Los operadores se evalúan en este orden (de mayor a menor prioridad):\n\n<table>\n<tr><th>Prioridad</th><th>Operadores</th><th>Ejemplo</th></tr>\n<tr><td>1 (mayor)</td><td>Postfijo: <code>x++</code> <code>x--</code></td><td><code>i++</code></td></tr>\n<tr><td>2</td><td>Unarios: <code>++x</code> <code>--x</code> <code>-x</code> <code>!</code></td><td><code>!valid</code></td></tr>\n<tr><td>3</td><td>Multiplicativos: <code>*</code> <code>/</code> <code>%</code></td><td><code>a * b</code></td></tr>\n<tr><td>4</td><td>Aditivos: <code>+</code> <code>-</code></td><td><code>a + b</code></td></tr>\n<tr><td>5</td><td>Relacionales: <code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code> <code>instanceof</code></td><td><code>x > 5</code></td></tr>\n<tr><td>6</td><td>Igualdad: <code>==</code> <code>!=</code></td><td><code>a == b</code></td></tr>\n<tr><td>7</td><td>AND lógico: <code>&&</code></td><td><code>a && b</code></td></tr>\n<tr><td>8</td><td>OR lógico: <code>||</code></td><td><code>a || b</code></td></tr>\n<tr><td>9</td><td>Ternario: <code>? :</code></td><td><code>x > 0 ? x : -x</code></td></tr>\n<tr><td>10 (menor)</td><td>Asignación: <code>=</code> <code>+=</code> <code>-=</code></td><td><code>x += 5</code></td></tr>\n</table>\n\n<strong>Regla:</strong> Ante la duda, usa paréntesis para clarificar la intención:\n<pre><code>// Poco claro:\nint result = a + b * c;    // ¿es (a+b)*c o a+(b*c)?\n// Claro:\nint result = a + (b * c);  // multiplicación primero, luego suma</code></pre>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-operators"
   },
   {
@@ -88,7 +88,7 @@
         "content": "<pre><code>// Array 2D (array de arrays)\nint[][] grid = new int[3][4];  // 3 filas, 4 columnas\ngrid[0][0] = 1;                // primera fila, primera columna\ngrid[2][3] = 9;                // última fila, última columna\n\n// Inicialización inline\nint[][] matrix = {\n    {1, 2, 3},\n    {4, 5, 6},\n    {7, 8, 9}\n};\n\n// Array irregular (filas de distinta longitud)\nint[][] jagged = new int[3][];\njagged[0] = new int[]{1, 2};\njagged[1] = new int[]{3, 4, 5, 6};\njagged[2] = new int[]{7};\n\n// Iteración\nfor (int row = 0; row < matrix.length; row++) {\n    for (int col = 0; col < matrix[row].length; col++) {\n        System.out.print(matrix[row][col] + \" \");\n    }\n}</code></pre>\n\n<strong>Trampa de entrevista:</strong> Java NO tiene arrays 2D verdaderos. <code>int[][]</code> es un array de arrays — cada \"fila\" es un array independiente que puede tener distinta longitud."
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-arrays"
   },
   {
@@ -104,7 +104,7 @@
         "content": "<pre><code>// break — SALIR del bucle inmediatamente\nfor (Delivery d : deliveries) {\n    if (d.isUrgent()) {\n        processUrgent(d);\n        break;  // parar búsqueda, salir del bucle\n    }\n}\n\n// continue — SALTAR esta iteración, ir a la siguiente\nfor (Delivery d : deliveries) {\n    if (d.isCancelled()) {\n        continue;  // saltar canceladas, procesar siguiente\n    }\n    process(d);  // solo se alcanza para no canceladas\n}\n\n// break etiquetado — salir del bucle externo desde el interno\nexterno:\nfor (Route r : routes) {\n    for (Stop s : r.getStops()) {\n        if (s.isBlocked()) {\n            break externo;  // sale de AMBOS bucles\n        }\n    }\n}</code></pre>\n\n<strong>Consejo de entrevista:</strong> Patrón de \"bucle infinito\" para reintentos:\n<pre><code>while (true) {\n    try { return callService(); }\n    catch (TimeoutException e) {\n        if (++retries >= MAX) throw e;\n    }\n}</code></pre>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-loops"
   },
   {
@@ -128,7 +128,7 @@
         "content": "<table>\n<tr><th>Modificador</th><th>Clase</th><th>Paquete</th><th>Subclase (otro pkg)</th><th>Mundo</th></tr>\n<tr><td><code>private</code></td><td>✓</td><td>✗</td><td>✗</td><td>✗</td></tr>\n<tr><td>(default)</td><td>✓</td><td>✓</td><td>✗</td><td>✗</td></tr>\n<tr><td><code>protected</code></td><td>✓</td><td>✓</td><td>✓</td><td>✗</td></tr>\n<tr><td><code>public</code></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>\n</table>\n\n<strong>Mejor práctica (lo más restrictivo posible):</strong>\n• Campos: <code>private</code> (siempre)\n• Métodos: <code>public</code> para API, <code>private</code> para interno, <code>protected</code> raramente\n• Clases: <code>public</code> si se usa fuera del paquete\n• Constructores: <code>private</code> para singletons/fábricas\n\n<strong>Palabra clave static:</strong>\n<pre><code>class DeliveryUtils {\n    private static int count = 0;       // compartido entre TODAS las instancias\n    public static final int MAX = 100;  // constante\n\n    public static Delivery create() {   // llamado sin instancia\n        count++;\n        return new Delivery();\n    }\n}\n// Uso: DeliveryUtils.create(); — no se necesita instancia</code></pre>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-methods"
   },
   {
@@ -148,7 +148,7 @@
         "content": "<pre><code>// Lanzar una excepción\npublic Delivery findById(Long id) {\n    return repository.findById(id)\n        .orElseThrow(() -> new DeliveryNotFoundException(\"ID: \" + id));\n}\n\n// Declarar excepciones checked (el llamante debe manejar)\npublic void loadFromFile(String path) throws IOException {\n    Files.readAllLines(Path.of(path));  // puede lanzar IOException\n}\n\n// Excepción personalizada (unchecked — preferida para lógica de negocio)\npublic class DeliveryNotFoundException extends RuntimeException {\n    private final Long deliveryId;\n\n    public DeliveryNotFoundException(Long id) {\n        super(\"Entrega no encontrada: \" + id);\n        this.deliveryId = id;\n    }\n\n    public Long getDeliveryId() { return deliveryId; }\n}</code></pre>\n\n<strong>Consejo de entrevista:</strong> \"¿Cuándo usas checked vs unchecked?\"\n• Checked: el llamante PUEDE y DEBE recuperarse (reintentar, ruta alternativa). Ejemplo: IOException.\n• Unchecked: error de programación o estado de negocio irrecuperable. Ejemplo: NotFoundException, InvalidStateException.\n• Tendencia moderna de Java: preferir unchecked para excepciones de negocio."
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-exceptions"
   },
   {
@@ -172,7 +172,7 @@
         "content": "Una lambda es una función anónima — una forma concisa de representar comportamiento.\n\n<pre><code>// Sintaxis lambda:\n(parámetros) -> expresión          // expresión única\n(parámetros) -> { sentencias; }    // bloque con return\n\n// Ejemplos:\nPredicate&lt;Delivery&gt; isLate = d -> d.isLate();\nFunction&lt;Delivery, String&gt; getName = d -> d.getDriverName();\nConsumer&lt;Delivery&gt; print = d -> System.out.println(d);\nSupplier&lt;Delivery&gt; create = () -> new Delivery();\nComparator&lt;Delivery&gt; byDist = (a, b) -> a.getDistance() - b.getDistance();\n\n// Uso con colecciones:\ndeliveries.removeIf(d -> d.isCancelled());        // Predicate\ndeliveries.forEach(d -> process(d));               // Consumer\ndeliveries.sort((a, b) -> a.compareTo(b));         // Comparator\n\n// Referencias a métodos (abreviatura):\ndeliveries.forEach(System.out::println);           // equivalente a d -> System.out.println(d)\ndeliveries.sort(Comparator.comparing(Delivery::getDistance));  // comparar por campo</code></pre>\n\n<strong>Predicate:</strong> Una función que recibe un argumento y retorna boolean.\n<pre><code>Predicate&lt;Delivery&gt; isUrgent = d -> d.getPriority() > 8;\nPredicate&lt;Delivery&gt; isLocal = d -> d.getDistance() < 50;\n\n// Combinar predicates:\nPredicate&lt;Delivery&gt; urgentLocal = isUrgent.and(isLocal);\nPredicate&lt;Delivery&gt; notUrgent = isUrgent.negate();\n\n// Uso con streams:\nList&lt;Delivery&gt; filtered = deliveries.stream()\n    .filter(isUrgent.and(isLocal))\n    .collect(Collectors.toList());</code></pre>"
       }
     ],
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-api"
   }
 ]

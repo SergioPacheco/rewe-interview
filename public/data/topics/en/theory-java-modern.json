@@ -12,7 +12,7 @@
         "content": "<pre><code>public record CreateDeliveryRequest(\n    @NotBlank String driverId,\n    @NotNull @Future LocalDateTime scheduledAt,\n    @Size(min = 1, max = 50) List&lt;StopRequest&gt; stops\n) {\n    // Compact constructor \u2014 validation\n    public CreateDeliveryRequest {\n        if (stops == null) stops = List.of();\n        stops = List.copyOf(stops);  // defensive copy (truly immutable)\n    }\n\n    // Custom factory method\n    public static CreateDeliveryRequest urgent(String driverId, List&lt;StopRequest&gt; stops) {\n        return new CreateDeliveryRequest(driverId, LocalDateTime.now().plusHours(1), stops);\n    }\n}\n\n// Usage:\nvar req = new CreateDeliveryRequest(\"D-42\", tomorrow, stops);\nString driver = req.driverId();  // no \"get\" prefix!\n</code></pre>\n\n<strong>When to use Records:</strong>\n\u2022 DTOs (request/response)\n\u2022 Value objects (Money, Coordinate, DateRange)\n\u2022 Kafka event payloads\n\u2022 Multi-value return types\n\u2022 Map keys (auto equals/hashCode)\n\n<strong>When NOT to use:</strong>\n\u2022 JPA entities (need mutable state + no-arg constructor)\n\u2022 Objects with complex lifecycle/behavior\n\u2022 When you need inheritance (records are final)"
       }
     ],
-    "topic": "java-modern",
+    "topic": "java",
     "subtopic": "modern-records"
   },
   {
@@ -28,7 +28,7 @@
         "content": "<pre><code>// Java 21: exhaustive switch with pattern matching\npublic String describe(DeliveryEvent event) {\n    return switch (event) {\n        case DeliveryPlanned p -> \"Planned for driver \" + p.driverId();\n        case DeliveryDispatched d -> \"Dispatched on route \" + d.route();\n        case DeliveryCompleted c -> c.stopsDelivered() + \" stops delivered\";\n        case DeliveryFailed f -> \"Failed: \" + f.reason();\n        // No default needed! Compiler knows all cases are covered.\n    };\n}\n\n// If you add a new event type \u2192 compiler ERROR in every switch\n// Forces you to handle the new case everywhere (safe evolution)</code></pre>\n\n<strong>REWE transport example:</strong>\nDelivery states are a CLOSED set. Using sealed + records ensures that every handler explicitly covers every possible state. Adding a new state becomes a compiler-assisted refactoring (not a runtime surprise)."
       }
     ],
-    "topic": "java-modern",
+    "topic": "java",
     "subtopic": "modern-records"
   },
   {
@@ -48,12 +48,12 @@
         "content": "<pre><code>// Old switch (statement \u2014 can forget break):\nString label;\nswitch (status) {\n    case PLANNED: label = \"Waiting\"; break;\n    case DISPATCHED: label = \"On the way\"; break;\n    default: label = \"Unknown\"; break;\n}\n\n// New switch (expression \u2014 returns value, no break, no fall-through):\nString label = switch (status) {\n    case PLANNED -> \"Waiting\";\n    case DISPATCHED -> \"On the way\";\n    case IN_TRANSIT -> \"Moving\";\n    case DELIVERED -> \"Done\";\n    default -> \"Unknown\";\n};\n\n// Multi-line blocks:\nint priority = switch (delivery.getType()) {\n    case EXPRESS -> {\n        log.info(\"Express delivery detected\");\n        yield 1;  // 'yield' returns value from block\n    }\n    case SAME_DAY -> { yield 2; }\n    default -> { yield 3; }\n};</code></pre>"
       }
     ],
-    "topic": "java-modern",
+    "topic": "java",
     "subtopic": "modern-patterns"
   },
   {
     "id": "theory-modern-streams",
-    "topic": "java-modern",
+    "topic": "java",
     "subtopic": "modern-streams",
     "title": "Streams & Optional \u2014 Declarative Data Pipelines",
     "sections": [
@@ -77,7 +77,7 @@
   },
   {
     "id": "theory-modern-threads",
-    "topic": "java-modern",
+    "topic": "java",
     "subtopic": "modern-threads",
     "title": "Virtual Threads \u2014 Lightweight Concurrency (Java 21)",
     "sections": [
@@ -105,7 +105,7 @@
   },
   {
     "id": "theory-modern-evolution",
-    "topic": "java-modern",
+    "topic": "java",
     "subtopic": "modern-evolution",
     "title": "Java 17 \u2192 21 Evolution \u2014 What Matters for REWE",
     "sections": [
@@ -129,7 +129,7 @@
   },
   {
     "id": "theory-modern-records-deep",
-    "topic": "java-modern",
+    "topic": "java",
     "subtopic": "modern-records",
     "title": "Records in Production — Immutability, Equality and Boundaries",
     "sections": [
@@ -145,7 +145,7 @@
   },
   {
     "id": "theory-modern-patterns-deep",
-    "topic": "java-modern",
+    "topic": "java",
     "subtopic": "modern-patterns",
     "title": "Pattern Matching — Exhaustiveness and Safe Branching",
     "sections": [
@@ -157,7 +157,7 @@
   },
   {
     "id": "theory-modern-streams-deep",
-    "topic": "java-modern",
+    "topic": "java",
     "subtopic": "modern-streams",
     "title": "Streams in Production — Lifecycle and Performance",
     "sections": [
@@ -169,7 +169,7 @@
   },
   {
     "id": "theory-modern-threads-deep",
-    "topic": "java-modern",
+    "topic": "java",
     "subtopic": "modern-threads",
     "title": "Virtual Threads — Capacity Is Still a Design Problem",
     "sections": [
@@ -181,7 +181,7 @@
   },
   {
     "id": "theory-modern-evolution-deep",
-    "topic": "java-modern",
+    "topic": "java",
     "subtopic": "modern-evolution",
     "title": "Upgrading Java Safely — Runtime, Tooling and Rollout",
     "sections": [

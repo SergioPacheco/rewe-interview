@@ -40,6 +40,12 @@ export const routes: Routes = [
     redirectTo: 'profile/case-studies',
     pathMatch: 'full'
   },
+  // Legacy redirect: /topic/collections → /topic/java
+  {
+    path: 'topic/collections',
+    redirectTo: 'topic/java',
+    pathMatch: 'full'
+  },
   // Profile section with child routes
   {
     path: 'profile',

@@ -14,7 +14,7 @@
     ],
     "answer": "[Warehouse, Priority Store, Store A, Store B]",
     "explain": "add(index, element) inserta en esa posición, desplazando los elementos a la derecha. \"Priority Store\" se ubica en el índice 1, empujando a \"Store A\" y \"Store B\" a los índices 2 y 3. ArrayList mantiene el orden de inserción y permite el acceso posicional.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-collections-02",
@@ -32,7 +32,7 @@
     ],
     "answer": "put",
     "explain": "HashMap.put(key, value) inserta o reemplaza. Combinado con getOrDefault(), es la forma idiomática de contar ocurrencias. En Java 8+, también puedes usar merge(): counts.merge(driver, 1, Integer::sum).",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-collections-03",
@@ -59,7 +59,7 @@
     ],
     "answer": "c",
     "explain": "TreeSet mantiene un orden ordenado pero NO soporta el acceso basado en índices (.get(5) no existe). Para acceso ordenado + índice, usa un ArrayList ordenado o un TreeMap con consultas posicionales. TreeSet es para unicidad ordenada con recorrido de iterador.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-collections-04",
@@ -76,7 +76,7 @@
     ],
     "answer": "2",
     "explain": "Misma clave (\"ROUTE-A\") = el valor se REEMPLAZA, no se añade. El tamaño del mapa se mantiene en 2. HashMap usa hashCode() para encontrar el bucket y luego equals() para encontrar la clave exacta. Misma clave = sobrescritura.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-collections-05",
@@ -107,7 +107,7 @@
         "answerHint": "Dos objetos iguales podrían caer en buckets diferentes. contains() y get() fallarán. Contrato: si a.equals(b), entonces a.hashCode() == b.hashCode()."
       }
     ],
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-collections-06",
@@ -125,7 +125,7 @@
     ],
     "answer": "Set",
     "explain": "Set garantiza la unicidad; añadir un duplicado se ignora silenciosamente. Pasar una List al constructor de HashSet elimina todos los duplicados. Usa Set cuando la regla de negocio SEA la unicidad.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-collections-07",
@@ -142,7 +142,7 @@
     ],
     "answer": "UnsupportedOperationException",
     "explain": "List.of() (Java 9+) crea una lista INMUTABLE. Cualquier modificación lanza UnsupportedOperationException en tiempo de ejecución. Para modificarla, envuélvela: new ArrayList<>(List.of(...)).",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-collections-08",
@@ -173,7 +173,7 @@
       }
     ],
     "explain": "Flujo de HashMap.put: hashCode → índice de bucket → si vacío, insertar. Si ocupado, recorrer cadena comparando con equals(). Si se encuentra la clave, reemplazar valor. Si no, añadir a la cadena.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-streams-01",
@@ -191,7 +191,7 @@
     ],
     "answer": "filter",
     "explain": "filter(predicate) mantiene los elementos donde el predicado devuelve true. Es el equivalente al WHERE de SQL.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-streams-02",
@@ -209,7 +209,7 @@
     ],
     "answer": "map",
     "explain": "map(function) transforma cada elemento. De Delivery → String. Es como el SELECT de SQL para extraer un campo.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-streams-03",
@@ -226,7 +226,7 @@
     ],
     "answer": "3",
     "explain": "filter(d > 15) keeps: 25, 50, 30. count() = 3. Streams are lazy — filter does not create a new list, it just filters during traversal. count() is a terminal operation that triggers processing.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-streams-04",
@@ -244,7 +244,7 @@
     ],
     "answer": "groupingBy",
     "explain": "groupingBy(classifier) creates a Map<Key, List<Element>>. Like SQL GROUP BY — group deliveries by driver name. partitioningBy splits into true/false only. toMap creates Map<Key, Value> (one entry per key).",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-streams-05",
@@ -261,7 +261,7 @@
     ],
     "answer": "55",
     "explain": "reduce(identity, accumulator) combines all elements. Starting from 0, it sums: 0+12=12, 12+8=20, 20+15=35, 35+20=55. This is the functional equivalent of a for loop with an accumulator. You can also use mapToInt().sum() for this case.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-streams-06",
@@ -288,7 +288,7 @@
     ],
     "answer": "b",
     "explain": "Usar forEach con efectos secundarios (mutación + guardado en BD) es un antipatrón. Los Streams están diseñados para pipelines de transformación, no para lógica imperativa. Usa un bucle for tradicional para operaciones de base de datos.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-streams-07",
@@ -306,7 +306,7 @@
     ],
     "answer": "orElseThrow",
     "explain": "orElseThrow(supplier) unwraps the Optional or throws if empty. NEVER call .get() without checking — it throws NoSuchElementException. orElse(default) returns a default value. orElseThrow is the standard pattern for \"find or 404\".",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-generics-01",
@@ -324,7 +324,7 @@
     ],
     "answer": "T",
     "explain": "The type parameter T (declared as <T extends Identifiable>) is used in the parameter list. This means the method works with any List of objects that implement Identifiable — List<Delivery>, List<Driver>, List<Route>. The return type preserves the specific type.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-generics-02",
@@ -341,7 +341,7 @@
     ],
     "answer": "Error de compilación: tipos incompatibles",
     "explain": "Los genéricos son INVARIANTES. List<Number> NO es un supertipo de List<Integer>. Se debe usar List<? extends Number> para aceptar una lista de Integers.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-generics-03",
@@ -359,7 +359,7 @@
     ],
     "answer": "extends",
     "explain": "? extends Number means \"any type that IS-A Number\" (Integer, Double, Long). You can READ from this list (get Number values) but NOT add to it (compiler does not know the actual type). PECS rule: Producer Extends, Consumer Super.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-generics-04",
@@ -370,7 +370,7 @@
     "interviewerIntent": "Probar la comprensión práctica de los genéricos más allá de la sintaxis.",
     "shortAnswer": "Cuando la lógica es la misma independientemente del tipo: repositorios, manejadores de eventos, envoltorios de respuesta de API. Los genéricos proporcionan seguridad de tipos sin duplicar código.",
     "modelAnswer": "Uso genéricos cuando quiero escribir una lógica una sola vez que funcione con cualquier tipo, manteniendo la seguridad en tiempo de compilación. Ejemplos comunes: Repository<T> para operaciones CRUD o ApiResponse<T> para estandarizar respuestas de API. En Java EE usábamos repositorios genéricos para evitar repetir código en cada entidad.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-collections-compare-01",
@@ -389,7 +389,7 @@
     "keyDifference": "List = \"I need ordered items (possibly with duplicates)\". Set = \"I need unique items\". Map = \"I need to look up a value by a key\". Choose based on what QUESTION you ask the collection.",
     "javaExample": "Delivery stops in order: List<Stop>. Unique driver IDs assigned today: Set<String>. Cache delivery by ID: Map<Long, Delivery>.",
     "interviewAnswer": "I choose based on the access pattern: List when I need order or index access. Set when uniqueness is the constraint. Map when I need key-based lookup. In logistics, route stops are a List (ordered), assigned drivers are a Set (unique), and delivery cache is a Map (fast lookup by ID).",
-    "topic": "collections",
+    "topic": "java",
     "answer": "**List:** Ordered, allows duplicates, index-based access. Use when order matters or duplicates are valid. ArrayList (fast random access) or LinkedList (fast insert/remove in middle).\n\n**Set / Map:** Set: unique elements, no duplicates, no index. Map: key→value pairs, unique keys, O(1) lookup. Use Set for uniqueness. Use Map for associations/lookups.\n\n\n**Key Difference:** List = \"I need ordered items (possibly with duplicates)\". Set = \"I need unique items\". Map = \"I need to look up a value by a key\". Choose based on what QUESTION you ask the collection."
   },
   {
@@ -407,7 +407,7 @@
     ],
     "answer": "10",
     "explain": "Primitives are copied by VALUE. Changing b does not affect a — they are independent copies. References (objects) share the same heap object, so changes through one reference ARE visible to the other.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-types-02",
@@ -424,7 +424,7 @@
     ],
     "answer": "99",
     "explain": "arr2 = arr1 copies the REFERENCE, not the array. Both point to the same array on the heap. Modifying through arr2 is visible through arr1. To get an independent copy: arr2 = arr1.clone() or Arrays.copyOf(arr1, arr1.length).",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-types-03",
@@ -441,7 +441,7 @@
     ],
     "answer": "Compile Error",
     "explain": "int → byte is a NARROWING conversion — possible data loss. Requires explicit cast: byte b = (byte) x; Without the cast, the compiler rejects it. With cast: 128 overflows byte (max 127) → wraps to -128.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-types-04",
@@ -459,7 +459,7 @@
     ],
     "answer": "Integer",
     "explain": "Integer.parseInt(String) converts text to primitive int. Integer.valueOf(String) returns Integer object (autoboxed). Wrapper classes: Integer, Double, Boolean, Long, etc. Used for: parsing, collections (List<Integer>), null representation.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-types-05",
@@ -476,7 +476,7 @@
     ],
     "answer": "Compile Error: count not found",
     "explain": "count is declared inside the if block — its scope ends with the closing brace. Outside the block, it does not exist. Fix: declare count before the if block. Variable scope = from declaration to the end of the enclosing block {}.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-ops-01",
@@ -493,7 +493,7 @@
     ],
     "answer": "false true",
     "explain": "== compara REFERENCIAS (¿son el mismo objeto?). equals() compara CONTENIDO. new String() crea objetos distintos en el heap, por lo que == es false. Siempre usa equals() para comparar Strings.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-ops-02",
@@ -510,7 +510,7 @@
     ],
     "answer": "DV",
     "explain": "Matches \"DISPATCHED\", prints \"D\". NO break → falls through to \"DELIVERED\", prints \"V\". Then break stops. Fall-through is a common interview trap. Without break, execution continues into the next case regardless of match.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-ops-03",
@@ -528,7 +528,7 @@
     ],
     "answer": "?",
     "explain": "Ternary: condition ? valueIfTrue : valueIfFalse. Compact alternative to if/else for simple value assignment. Avoid nesting ternaries — they become unreadable. Use for simple one-line decisions.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-ops-04",
@@ -545,7 +545,7 @@
     ],
     "answer": "No, short-circuit skips it",
     "explain": "&& is short-circuit: if left side is false, right side is NEVER evaluated. Useful for null checks: if (obj != null && obj.isValid()). The & operator (single) evaluates BOTH sides always. Use && for logic, & only for bitwise.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-arrays-01",
@@ -562,7 +562,7 @@
     ],
     "answer": "ArrayIndexOutOfBoundsException",
     "explain": "Array indices go from 0 to length-1. stops.length = 5, but index 5 does not exist (last valid is 4). This is a RUNTIME exception — compiles fine but crashes. Fix: stops[stops.length - 1] for last element.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-arrays-02",
@@ -580,7 +580,7 @@
     ],
     "answer": "int[]",
     "explain": "int[] is the Java array declaration. Array initializer {} assigns values immediately. Arrays are fixed-size, zero-indexed. For dynamic size, use ArrayList. int[] for primitives, Integer[] for nullable/collections.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-arrays-03",
@@ -597,7 +597,7 @@
     ],
     "answer": "50",
     "explain": "Enhanced for (for-each) iterates every element. 5+10+15+20 = 50. Use for-each when you need every element and do not need the index. Use traditional for when you need the index or want to skip/modify elements.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-loops-01",
@@ -614,7 +614,7 @@
     ],
     "answer": "0 1 2 ",
     "explain": "break exits the loop immediately when i==3. So it prints 0, 1, 2 then stops. continue would skip just that iteration (print 0 1 2 4 5...). break = stop the loop. continue = skip one iteration.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-loops-02",
@@ -631,7 +631,7 @@
     ],
     "answer": "0",
     "explain": "Starts at 5, decrements each iteration: 5→4→3→2→1→0. When deliveries=0, condition (0>0) is false, loop exits. Prints 0. The loop ran 5 times. while checks BEFORE each iteration; do-while checks AFTER (always runs at least once).",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-loops-03",
@@ -649,7 +649,7 @@
     ],
     "answer": ":",
     "explain": "Java enhanced for syntax: for (Type var : collection). The colon (:) separates the iteration variable from the iterable. Unlike JavaScript (of) or Python (in), Java uses colon. Available since Java 5 for arrays and Iterable.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-exceptions-01",
@@ -666,7 +666,7 @@
     ],
     "answer": "ABC",
     "explain": "finally ALWAYS executes — whether exception occurs or not, whether caught or not. Flow: print A → throw → caught by catch → print B → finally → print C. Even if catch re-throws, finally still runs.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-exceptions-02",
@@ -693,7 +693,7 @@
     ],
     "answer": "b",
     "explain": "Unchecked = extends RuntimeException. Compiler does NOT force you to catch them. NullPointerException, ArrayIndexOutOfBoundsException, IllegalArgumentException, ClassCastException — all unchecked. IOException, SQLException — checked (must catch or declare throws).",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-exceptions-03",
@@ -711,7 +711,7 @@
     ],
     "answer": "RuntimeException",
     "explain": "Extending RuntimeException makes it unchecked — callers are not forced to catch it. This is the modern Java convention for business exceptions. Extending Exception (checked) forces every caller to handle it — appropriate for recoverable I/O errors, not for \"not found\" scenarios.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-exceptions-04",
@@ -738,7 +738,7 @@
       }
     ],
     "explain": "Most specific → most general. NumberFormatException extends IllegalArgumentException extends RuntimeException extends Exception. Reversing causes \"unreachable catch block\" compile error. The first matching catch handles it.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-strings-01",
@@ -755,7 +755,7 @@
     ],
     "answer": "Warehouse",
     "explain": "Strings are IMMUTABLE. concat() returns a NEW string — it does not modify the original. The result is discarded because it is not assigned. Fix: route = route.concat(\" → Store A\"); or use StringBuilder for building strings in loops.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-strings-02",
@@ -773,7 +773,7 @@
     ],
     "answer": "StringBuilder",
     "explain": "StringBuilder is mutable — append() modifies in place without creating new objects. In a loop, String concatenation creates N new String objects (O(n²) total characters copied). StringBuilder is O(n). StringBuffer is the same but synchronized (thread-safe, rarely needed).",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-strings-03",
@@ -790,7 +790,7 @@
     ],
     "answer": "true false",
     "explain": "String literals are INTERNED (String pool) — same content = same object. a==b is true (same pool reference). new String() creates a NEW object on the heap, bypassing the pool. a==c is false (different objects). Always use .equals() for content comparison.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-datetime-01",
@@ -808,7 +808,7 @@
     ],
     "answer": "now",
     "explain": "LocalDateTime.now() returns current date+time. LocalDate.now() for date only. LocalTime.now() for time only. These are immutable — operations like plusDays(1) return NEW instances. Part of java.time package (Java 8+), replacing the problematic Date/Calendar.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-datetime-02",
@@ -825,7 +825,7 @@
     ],
     "answer": "2026-07-19",
     "explain": "LocalDate is IMMUTABLE — plusDays() returns a NEW object, it does NOT modify the original. The result is discarded. Fix: delivery = delivery.plusDays(3); Same pattern as String — all java.time classes are immutable.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-lambda-01",
@@ -843,7 +843,7 @@
     ],
     "answer": "->",
     "explain": "Java lambda syntax: (params) -> expression. Arrow operator (->) separates parameters from body. Single parameter can omit parentheses. :: is method reference (different). => does not exist in Java (that is JavaScript/C#).",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-methods-01",
@@ -860,7 +860,7 @@
     ],
     "answer": "Carlos",
     "explain": "Java pasa la REFERENCIA por valor. El método recibe una copia de la referencia que apunta al mismo objeto en el heap. Modificar el objeto a través de esa copia afecta al original.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-methods-02",
@@ -877,7 +877,7 @@
     ],
     "answer": "Maria",
     "explain": "Reassigning the parameter (driver = new Driver()) only changes the LOCAL copy of the reference. The caller still points to the original object. This proves Java is pass-by-value (of references), not pass-by-reference. Modify through ref = changes original. Reassign ref = only local effect.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-methods-03",
@@ -894,7 +894,7 @@
     ],
     "answer": "7",
     "explain": "Exact match wins: 3 and 4 are int literals → add(int, int) is called, returns int 7. If you passed 3.0 and 4.0, add(double, double) would be called. Overload resolution is compile-time based on parameter types.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-methods-04",
@@ -912,7 +912,7 @@
     ],
     "answer": "static",
     "explain": "static = belongs to the CLASS, not instances. One copy shared by all objects. Without static, each DeliveryTracker instance has its own counter. static fields: counters, constants (static final), utility methods, factory methods.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-methods-05",
@@ -939,7 +939,7 @@
     ],
     "answer": "b",
     "explain": "protected is the ANSWER — most restrictive while allowing subclass access across packages. Order from most to least restrictive: private → default (package) → protected → public. Default (no modifier) allows same-package only — subclasses in other packages cannot access.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-methods-06",
@@ -956,7 +956,7 @@
     ],
     "answer": "BA",
     "explain": "this() calls the other constructor FIRST, then continues with the rest of the current constructor. Flow: new Route() → this(\"Default\",0) → prints B → returns → prints A. Constructor chaining with this() must be the FIRST statement.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-methods-07",
@@ -974,7 +974,7 @@
     ],
     "answer": "no constructor is defined",
     "explain": "Java provides a default no-arg constructor ONLY if you define NO constructors at all. The moment you write any constructor (even with parameters), the default disappears. If you need both: write the parameterized one AND an explicit no-arg constructor.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-inherit-01",
@@ -991,7 +991,7 @@
     ],
     "answer": "VT",
     "explain": "Java always calls the parent constructor FIRST (implicit super() if not explicit). Flow: new Truck() → super() [Vehicle()] → prints V → Truck() body → prints T. Parent is ALWAYS initialized before child. This is fundamental to inheritance.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-inherit-02",
@@ -1008,7 +1008,7 @@
     ],
     "answer": "Truck",
     "explain": "Dynamic dispatch: the ACTUAL object type (Truck) determines which method runs, not the reference type (Vehicle). This is runtime polymorphism. v.type() calls Truck.type() because the object IS a Truck. The reference type only affects which methods are VISIBLE at compile time.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-inherit-03",
@@ -1025,7 +1025,7 @@
     ],
     "answer": "ClassCastException",
     "explain": "Downcasting (Vehicle → Truck) compiles because the compiler allows it (v COULD be a Truck). But at runtime, v is actually a Vehicle, not a Truck → ClassCastException. Always check with instanceof before downcasting: if (v instanceof Truck t) { ... }",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-inherit-04",
@@ -1043,7 +1043,7 @@
     ],
     "answer": "abstract",
     "explain": "abstract class can have both abstract methods (no body, subclasses must implement) AND concrete methods (with body, inherited as-is). Cannot be instantiated directly. Use when subtypes share state + partial behavior. interface is for pure contract (pre-Java 8) or default methods.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-inherit-05",
@@ -1070,7 +1070,7 @@
     ],
     "answer": "c",
     "explain": "Interfaces CANNOT have mutable instance fields. Fields in interfaces are implicitly public static final (constants only). Interfaces define behavior contracts, not state. Since Java 9, interfaces can have private methods (helper for default methods), but still no mutable state.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-inherit-06",
@@ -1087,7 +1087,7 @@
     ],
     "answer": "DT",
     "explain": "Java supports multiple interface implementation (but single class inheritance). A class can implement any number of interfaces. This is how Java achieves \"multiple inheritance of type\" without the diamond problem of multiple class inheritance.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-arraylist-01",
@@ -1105,7 +1105,7 @@
     ],
     "answer": "ArrayList",
     "explain": "ArrayList is the standard List implementation — backed by a resizable array. O(1) random access, O(1) amortized add at end, O(n) insert in middle. Declare as List<> (interface) on the left, instantiate as ArrayList<> on the right — program to the interface.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-arraylist-02",
@@ -1122,7 +1122,7 @@
     ],
     "answer": "[10, 30]",
     "explain": "remove(1) removes element at INDEX 1 (which is 20), not the value 1. To remove by value: list.remove(Integer.valueOf(1)). This autoboxing trap is a classic interview question. With List<Integer>, remove(int) = by index, remove(Integer) = by value.",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-arraylist-03",
@@ -1140,7 +1140,7 @@
     ],
     "answer": "::println",
     "explain": "System.out::println is a method reference — shorthand for (d) -> System.out.println(d). :: refers to an existing method by name. Types: ClassName::staticMethod, object::instanceMethod, ClassName::new (constructor reference).",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-arraylist-04",
@@ -1157,7 +1157,7 @@
     ],
     "answer": "[Ana, Bruno, Carlos]",
     "explain": "The lambda (a, b) -> a.compareTo(b) is a Comparator — returns negative (a before b), zero (equal), positive (a after b). String.compareTo uses alphabetical order. Shorthand: drivers.sort(Comparator.naturalOrder()) or drivers.sort(String::compareTo).",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-arraylist-05",
@@ -1175,7 +1175,7 @@
     ],
     "answer": "CANCELLED",
     "explain": "removeIf(Predicate) removes all elements matching the condition. The lambda d -> d.getStatus() == CANCELLED is a Predicate<Delivery> (takes Delivery, returns boolean). This is cleaner than iterating with Iterator and calling remove().",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-arraylist-06",
@@ -1192,7 +1192,7 @@
     ],
     "answer": "4",
     "explain": "Function<T, R> takes T and returns R. Function<String, Integer> takes a String and returns an Integer. length.apply(\"REWE\") returns \"REWE\".length() = 4. Key functional interfaces: Function (T→R), Predicate (T→boolean), Consumer (T→void), Supplier (→T).",
-    "topic": "collections"
+    "topic": "java"
   },
   {
     "id": "core-arraylist-07",
@@ -1211,13 +1211,13 @@
     "keyDifference": "Function transforms (T→R). Predicate tests (T→boolean). Consumer acts (T→void). Supplier produces (→T). These are the building blocks of the Streams API.",
     "javaExample": "filter(Predicate), map(Function), forEach(Consumer), orElseGet(Supplier). Every Stream operation uses one of these four.",
     "interviewAnswer": "The four core functional interfaces cover all lambda signatures: Function transforms data, Predicate filters, Consumer performs side effects, and Supplier provides values lazily. The Streams API is built entirely on these abstractions.",
-    "topic": "collections",
+    "topic": "java",
     "answer": "**Function & Predicate:** Function<T,R>: takes T, returns R. Example: Delivery → String (get name). Predicate<T>: takes T, returns boolean. Example: Delivery → is it late?\n\n**Consumer & Supplier:** Consumer<T>: takes T, returns void. Example: Delivery → print it. Supplier<T>: takes nothing, returns T. Example: () → create new Delivery.\n\n\n**Key Difference:** Function transforms (T→R). Predicate tests (T→boolean). Consumer acts (T→void). Supplier produces (→T). These are the building blocks of the Streams API."
   },
   {
     "id": "oca-ch1-q02",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Java Basics",
     "difficulty": "intermediate",
     "mission": "The following class diagram demonstrates the relationship between Gold and Silver, which extend the Metal class. Assume the attributes are all declared public. Which statement about the diagram is not true?",
@@ -1233,7 +1233,7 @@
   {
     "id": "oca-ch1-q03",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Java Basics",
     "difficulty": "intermediate",
     "mission": "¿Cuál es la extensión de archivo correcta para un archivo Java compilado a bytecode?",
@@ -1249,7 +1249,7 @@
   {
     "id": "oca-ch1-q04",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Java Basics",
     "difficulty": "intermediate",
     "mission": "Given that a Date class exists in both the java.util and java.sql packages, what is the result of compiling the following class??",
@@ -1266,7 +1266,7 @@
   {
     "id": "oca-ch1-q05",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Java Basics",
     "difficulty": "intermediate",
     "mission": "Which of the following is not a facet of traditional object-oriented programming languages?",
@@ -1282,7 +1282,7 @@
   {
     "id": "oca-ch1-q06",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Java Basics",
     "difficulty": "intermediate",
     "mission": "Which variables have a scope limited to a method?",
@@ -1298,7 +1298,7 @@
   {
     "id": "oca-ch1-q07",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Java Basics",
     "difficulty": "intermediate",
     "mission": "Which package is imported into every Java class by default?",
@@ -1314,7 +1314,7 @@
   {
     "id": "oca-ch1-q08",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Java Basics",
     "difficulty": "intermediate",
     "mission": "Which of the following is not a valid code comment in Java?",
@@ -1330,7 +1330,7 @@
   {
     "id": "oca-ch1-q09",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Java Basics",
     "difficulty": "intermediate",
     "mission": "Which statement about a valid .java file is true?",
@@ -1345,7 +1345,7 @@
   {
     "id": "oca-ch1-q10",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Java Basics",
     "difficulty": "intermediate",
     "mission": "Given the following application , fill in the missing values in the table starting from the top and going downward.?",
@@ -1362,7 +1362,7 @@
   {
     "id": "oca-ch1-q11",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Java Basics",
     "difficulty": "intermediate",
     "mission": "Which statement about import statements is true?",
@@ -1378,7 +1378,7 @@
   {
     "id": "oca-ch2-q02",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Data Types",
     "difficulty": "intermediate",
     "mission": "What is the output of the following?",
@@ -1395,7 +1395,7 @@
   {
     "id": "oca-ch2-q03",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Data Types",
     "difficulty": "intermediate",
     "mission": "Which is correct about an instance variable of type String?",
@@ -1411,7 +1411,7 @@
   {
     "id": "oca-ch2-q04",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Data Types",
     "difficulty": "intermediate",
     "mission": "Which of the following is not a valid variable name?",
@@ -1427,7 +1427,7 @@
   {
     "id": "oca-ch2-q05",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Data Types",
     "difficulty": "intermediate",
     "mission": "Which of these class names best follows standard Java naming conventions?",
@@ -1443,7 +1443,7 @@
   {
     "id": "oca-ch2-q06",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Data Types",
     "difficulty": "intermediate",
     "mission": "How many of the following method s compile?",
@@ -1460,7 +1460,7 @@
   {
     "id": "oca-ch2-q07",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Data Types",
     "difficulty": "intermediate",
     "mission": "Which of the following does not compile?",
@@ -1476,7 +1476,7 @@
   {
     "id": "oca-ch2-q08",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Data Types",
     "difficulty": "intermediate",
     "mission": "Which of the following is a wrapper class?",
@@ -1492,7 +1492,7 @@
   {
     "id": "oca-ch2-q09",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Data Types",
     "difficulty": "intermediate",
     "mission": "What is the result of running this code?",
@@ -1509,7 +1509,7 @@
   {
     "id": "oca-ch2-q10",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Data Types",
     "difficulty": "intermediate",
     "mission": "Which best describes what the new keyword does?",
@@ -1524,7 +1524,7 @@
   {
     "id": "oca-ch2-q11",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Data Types",
     "difficulty": "intermediate",
     "mission": "Which is the first line to trigger a compiler error? double d1 = 5f; double d2 = 5.0; float f1 = 5f; float f2 = 5.0; // p1 // p2 // p3 // p4",
@@ -1540,7 +1540,7 @@
   {
     "id": "oca-ch3-q02",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Operators & Decisions",
     "difficulty": "intermediate",
     "mission": "What is the value of tip after executing the following code snippet?",
@@ -1557,7 +1557,7 @@
   {
     "id": "oca-ch3-q03",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Operators & Decisions",
     "difficulty": "intermediate",
     "mission": "What is the output of the following application?",
@@ -1574,7 +1574,7 @@
   {
     "id": "oca-ch3-q04",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Operators & Decisions",
     "difficulty": "intermediate",
     "mission": "What is the output of the following application?",
@@ -1590,7 +1590,7 @@
   {
     "id": "oca-ch3-q05",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Operators & Decisions",
     "difficulty": "intermediate",
     "mission": "Which of the following statements about a default branch in a switch statement is correct?",
@@ -1606,7 +1606,7 @@
   {
     "id": "oca-ch3-q06",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Operators & Decisions",
     "difficulty": "intermediate",
     "mission": "What is the value of thatNumber after the execution of the following code snippet?",
@@ -1623,7 +1623,7 @@
   {
     "id": "oca-ch3-q07",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Operators & Decisions",
     "difficulty": "intermediate",
     "mission": "Which statement immediately exits a switch statement, skipping all remaining case or default branches?",
@@ -1639,7 +1639,7 @@
   {
     "id": "oca-ch3-q08",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Operators & Decisions",
     "difficulty": "intermediate",
     "mission": "Which statement about ternary expressions is true?",
@@ -1655,7 +1655,7 @@
   {
     "id": "oca-ch3-q09",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Operators & Decisions",
     "difficulty": "intermediate",
     "mission": "What is the output of the following application? package voting;?",
@@ -1672,7 +1672,7 @@
   {
     "id": "oca-ch3-q10",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Operators & Decisions",
     "difficulty": "intermediate",
     "mission": "What is the output of the following application?",
@@ -1689,7 +1689,7 @@
   {
     "id": "oca-ch3-q11",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Operators & Decisions",
     "difficulty": "intermediate",
     "mission": "Which statement about if-then statements is true?",
@@ -1705,7 +1705,7 @@
   {
     "id": "oca-ch4-q03",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Arrays",
     "difficulty": "intermediate",
     "mission": "Which of the following are primitives? int[] lowercase = new int[0]; Integer[] uppercase = new Integer[0];",
@@ -1721,7 +1721,7 @@
   {
     "id": "oca-ch4-q04",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Arrays",
     "difficulty": "intermediate",
     "mission": "How many of the following are legal declarations? []double lion; double[] tiger; double bear[];",
@@ -1737,7 +1737,7 @@
   {
     "id": "oca-ch4-q05",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Arrays",
     "difficulty": "intermediate",
     "mission": "Given the following two methods, which method call will not compile?",
@@ -1754,7 +1754,7 @@
   {
     "id": "oca-ch4-q06",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Arrays",
     "difficulty": "intermediate",
     "mission": "How do you determine the number of elements in an array?",
@@ -1770,7 +1770,7 @@
   {
     "id": "oca-ch4-q07",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Arrays",
     "difficulty": "intermediate",
     "mission": "Which of the following create an empty two-dimensional array with dimensions 2×2?",
@@ -1786,7 +1786,7 @@
   {
     "id": "oca-ch4-q08",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Arrays",
     "difficulty": "intermediate",
     "mission": "How many lines does the following code output?",
@@ -1803,7 +1803,7 @@
   {
     "id": "oca-ch4-q09",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Arrays",
     "difficulty": "intermediate",
     "mission": "What are the names of the methods to do searching and sorting respectively on arrays?",
@@ -1819,7 +1819,7 @@
   {
     "id": "oca-ch4-q10",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Arrays",
     "difficulty": "intermediate",
     "mission": "What does this code output?",
@@ -1836,7 +1836,7 @@
   {
     "id": "oca-ch4-q11",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Arrays",
     "difficulty": "intermediate",
     "mission": "Which of the following references the first and last element in a non-empty array?",
@@ -1852,7 +1852,7 @@
   {
     "id": "oca-ch4-q12",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Arrays",
     "difficulty": "intermediate",
     "mission": "How many of the following are legal declarations?",
@@ -1869,7 +1869,7 @@
   {
     "id": "oca-ch5-q02",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Loops",
     "difficulty": "intermediate",
     "mission": "Which type of loop is best known for using an index or counter?",
@@ -1885,7 +1885,7 @@
   {
     "id": "oca-ch5-q03",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Loops",
     "difficulty": "intermediate",
     "mission": "Which type of loop is guaranteed to have the body execute at least once?",
@@ -1901,7 +1901,7 @@
   {
     "id": "oca-ch5-q04",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Loops",
     "difficulty": "intermediate",
     "mission": "Which of the following can loop through an array without referring to the elements by index?",
@@ -1917,7 +1917,7 @@
   {
     "id": "oca-ch5-q05",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Loops",
     "difficulty": "intermediate",
     "mission": "What keyword is used to end the current loop iteration and proceed execution with the next iteration of that loop?",
@@ -1933,7 +1933,7 @@
   {
     "id": "oca-ch5-q06",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Loops",
     "difficulty": "intermediate",
     "mission": "What keyword is used to proceed with execution immediately after a loop?",
@@ -1948,7 +1948,7 @@
   {
     "id": "oca-ch5-q07",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Loops",
     "difficulty": "intermediate",
     "mission": "Which type of loop has three segments within parentheses?",
@@ -1964,7 +1964,7 @@
   {
     "id": "oca-ch5-q08",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Loops",
     "difficulty": "intermediate",
     "mission": "Which of the following statements is/are true? I. A traditional for loop can iterate through an array starting from index 0. II. A traditional for loop can iterate through an array starting from the end.",
@@ -1980,7 +1980,7 @@
   {
     "id": "oca-ch5-q09",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Loops",
     "difficulty": "intermediate",
     "mission": "Which of the following statements is/are true? I. A for-each loop can iterate through an array starting from index 0. II. A for-each loop can iterate through an array starting from the end.",
@@ -1996,7 +1996,7 @@
   {
     "id": "oca-ch5-q10",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Loops",
     "difficulty": "intermediate",
     "mission": "Which type of loop has a boolean condition that is first checked after a single iteration through the loop?",
@@ -2012,7 +2012,7 @@
   {
     "id": "oca-ch5-q11",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Loops",
     "difficulty": "intermediate",
     "mission": "What does the following code output?",
@@ -2028,7 +2028,7 @@
   {
     "id": "oca-ch6-q02",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Methods & Encapsulation",
     "difficulty": "intermediate",
     "mission": "What is the command to call one constructor from another constructor in the same class?",
@@ -2044,7 +2044,7 @@
   {
     "id": "oca-ch6-q03",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Methods & Encapsulation",
     "difficulty": "intermediate",
     "mission": "What is the output of the following application?",
@@ -2061,7 +2061,7 @@
   {
     "id": "oca-ch6-q04",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Methods & Encapsulation",
     "difficulty": "intermediate",
     "mission": "What is true about the following program?",
@@ -2078,7 +2078,7 @@
   {
     "id": "oca-ch6-q05",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Methods & Encapsulation",
     "difficulty": "intermediate",
     "mission": "Fill in the blank: Java uses ___________ to send data into a method.",
@@ -2094,7 +2094,7 @@
   {
     "id": "oca-ch6-q06",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Methods & Encapsulation",
     "difficulty": "intermediate",
     "mission": "Which of the following is a valid JavaBean method signature?",
@@ -2110,7 +2110,7 @@
   {
     "id": "oca-ch6-q07",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Methods & Encapsulation",
     "difficulty": "intermediate",
     "mission": "Which of the following statements about calling this() in a constructor is not true?",
@@ -2126,7 +2126,7 @@
   {
     "id": "oca-ch6-q08",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Methods & Encapsulation",
     "difficulty": "intermediate",
     "mission": "Which of the following can fill in the blank to make the class compile?",
@@ -2142,7 +2142,7 @@
   {
     "id": "oca-ch6-q09",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Methods & Encapsulation",
     "difficulty": "intermediate",
     "mission": "Fill in the blank: A ____________variable is always available to all instances of the class.",
@@ -2158,7 +2158,7 @@
   {
     "id": "oca-ch6-q10",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Methods & Encapsulation",
     "difficulty": "intermediate",
     "mission": "Which line of code, inserted at line p1, causes the application to print 5?",
@@ -2175,7 +2175,7 @@
   {
     "id": "oca-ch6-q11",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Methods & Encapsulation",
     "difficulty": "intermediate",
     "mission": "Which of the following statements is not true?",
@@ -2191,7 +2191,7 @@
   {
     "id": "oca-ch7-q02",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Inheritance",
     "difficulty": "intermediate",
     "mission": "Which modifier can be applied to an abstract interface method?",
@@ -2207,7 +2207,7 @@
   {
     "id": "oca-ch7-q03",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Inheritance",
     "difficulty": "intermediate",
     "mission": "What is the output of the following application?",
@@ -2224,7 +2224,7 @@
   {
     "id": "oca-ch7-q04",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Inheritance",
     "difficulty": "intermediate",
     "mission": "Which of the following statements about inheritance is true?",
@@ -2239,7 +2239,7 @@
   {
     "id": "oca-ch7-q05",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Inheritance",
     "difficulty": "intermediate",
     "mission": "Given the class declaration below , which value cannot be inserted into the blank line that would allow the code to compile?",
@@ -2256,7 +2256,7 @@
   {
     "id": "oca-ch7-q06",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Inheritance",
     "difficulty": "intermediate",
     "mission": "Imagine you are working with another team to build an application. You are developing code that uses a class that the other team has not finished writing yet. Which element of Java would best facilitate this development, allowing easy integration once the other team’s code is complete?",
@@ -2272,7 +2272,7 @@
   {
     "id": "oca-ch7-q07",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Inheritance",
     "difficulty": "intermediate",
     "mission": "What is the output of the following application?",
@@ -2288,7 +2288,7 @@
   {
     "id": "oca-ch7-q08",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Inheritance",
     "difficulty": "intermediate",
     "mission": "Which of the following statements about inheritance is correct?",
@@ -2304,7 +2304,7 @@
   {
     "id": "oca-ch7-q09",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Inheritance",
     "difficulty": "intermediate",
     "mission": "How many changes need to be made to the classes below to properly override the watch() method?",
@@ -2321,7 +2321,7 @@
   {
     "id": "oca-ch7-q10",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Inheritance",
     "difficulty": "intermediate",
     "mission": "Which of the following statements about overriding a method is incorrect?",
@@ -2337,7 +2337,7 @@
   {
     "id": "oca-ch7-q11",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Inheritance",
     "difficulty": "intermediate",
     "mission": "What is the output of the following application?",
@@ -2354,7 +2354,7 @@
   {
     "id": "oca-ch8-q02",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Exceptions",
     "difficulty": "intermediate",
     "mission": "Choose the answer that lists the keywords in the order that they would be used together.",
@@ -2370,7 +2370,7 @@
   {
     "id": "oca-ch8-q04",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Exceptions",
     "difficulty": "intermediate",
     "mission": "Which of the following Throwable types is it recommended not to catch in a Java application?",
@@ -2390,7 +2390,7 @@
   {
     "id": "oca-ch8-q06",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Exceptions",
     "difficulty": "intermediate",
     "mission": "Which of the following is a checked exception?",
@@ -2406,7 +2406,7 @@
   {
     "id": "oca-ch8-q07",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Exceptions",
     "difficulty": "intermediate",
     "mission": "Fill in the blanks: The ____________keyword is used in method declarations, while the ____________keyword is used to throw an exception to the surrounding process.",
@@ -2422,7 +2422,7 @@
   {
     "id": "oca-ch8-q08",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Exceptions",
     "difficulty": "intermediate",
     "mission": "If a try statement has catch blocks for both Exception and IOException, then which of the following statements is correct?",
@@ -2442,7 +2442,7 @@
   {
     "id": "oca-ch8-q10",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Exceptions",
     "difficulty": "intermediate",
     "mission": "What is the result of compiling and running the following application?",
@@ -2459,7 +2459,7 @@
   {
     "id": "oca-ch8-q11",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Exceptions",
     "difficulty": "intermediate",
     "mission": "Which of the following exception types must be handled or declared by the method in which they are thrown?",
@@ -2474,7 +2474,7 @@
   {
     "id": "oca-ch8-q12",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Exceptions",
     "difficulty": "intermediate",
     "mission": "What is the output of the following application?",
@@ -2491,7 +2491,7 @@
   {
     "id": "oca-ch8-q13",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Exceptions",
     "difficulty": "intermediate",
     "mission": "Which of the following statements about a finally block is true?",
@@ -2507,7 +2507,7 @@
   {
     "id": "oca-ch8-q14",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Exceptions",
     "difficulty": "intermediate",
     "mission": "Given that FileNotFoundException is a subclass of IOException, what is the output of the following application?",
@@ -2524,7 +2524,7 @@
   {
     "id": "oca-ch9-q02",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "String, Date, Lambda",
     "difficulty": "intermediate",
     "mission": "What is not true about a String?",
@@ -2540,7 +2540,7 @@
   {
     "id": "oca-ch9-q03",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "String, Date, Lambda",
     "difficulty": "intermediate",
     "mission": "Which of the following creates a StringBuilder with a different value than the other options?",
@@ -2556,7 +2556,7 @@
   {
     "id": "oca-ch9-q04",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "String, Date, Lambda",
     "difficulty": "intermediate",
     "mission": "What is the output of the following?",
@@ -2573,7 +2573,7 @@
   {
     "id": "oca-ch9-q05",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "String, Date, Lambda",
     "difficulty": "intermediate",
     "mission": "How many of the types ArrayList, List, and Object can fill in the blank to produce code that compiles? List frisbees = new",
@@ -2593,7 +2593,7 @@
   {
     "id": "oca-ch9-q07",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "String, Date, Lambda",
     "difficulty": "intermediate",
     "mission": "What is the result of the following code?",
@@ -2610,7 +2610,7 @@
   {
     "id": "oca-ch9-q08",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "String, Date, Lambda",
     "difficulty": "intermediate",
     "mission": "What is the output of the following? List<String> museums = new ArrayList<>(1);\nmuseums.add(\"Natural History\");\nmuseums.add(\"Science\");\nmuseums.add(\"Art\");\nmuseums.remove(2);\nSystem.out.println(museums);",
@@ -2626,7 +2626,7 @@
   {
     "id": "oca-ch9-q09",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "String, Date, Lambda",
     "difficulty": "intermediate",
     "mission": "What is the output of the following?",
@@ -2642,7 +2642,7 @@
   {
     "id": "oca-ch9-q10",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "String, Date, Lambda",
     "difficulty": "intermediate",
     "mission": "What is the main benefit of a lambda expression?",
@@ -2658,7 +2658,7 @@
   {
     "id": "oca-ch9-q11",
     "type": "PREDICT_OUTPUT",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "String, Date, Lambda",
     "difficulty": "intermediate",
     "mission": "What is the output of the following?",
@@ -2675,7 +2675,7 @@
   {
     "id": "oca-ch9-q12",
     "type": "FILL_BLANK",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "String, Date, Lambda",
     "difficulty": "intermediate",
     "mission": "The author of this method",
@@ -2692,7 +2692,7 @@
   {
     "id": "interview-jvm-01",
     "type": "ORAL_ANSWER",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Memory Management",
     "difficulty": "senior",
     "question": "¿Qué es una fuga de memoria (memory leak) en Java si existe el Garbage Collector?",
@@ -2706,7 +2706,7 @@
   {
     "id": "interview-jvm-02",
     "type": "ORAL_ANSWER",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Memory Management",
     "difficulty": "senior",
     "question": "How would you investigate an OutOfMemoryError?",
@@ -2720,7 +2720,7 @@
   {
     "id": "interview-jvm-03",
     "type": "ORAL_ANSWER",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Concurrency",
     "difficulty": "senior",
     "question": "What is the difference between volatile and synchronized?",
@@ -2734,7 +2734,7 @@
   {
     "id": "interview-jvm-04",
     "type": "ORAL_ANSWER",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "Virtual Threads",
     "difficulty": "senior",
     "question": "When would you use virtual threads?",
@@ -2747,7 +2747,7 @@
   },
   {
     "id": "ej-1",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-methods",
     "type": "ORAL_ANSWER",
     "difficulty": "INTERMEDIATE",
@@ -2756,7 +2756,7 @@
   },
   {
     "id": "ej-2",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-methods",
     "type": "PICK_INVALID",
     "difficulty": "INTERMEDIATE",
@@ -2772,7 +2772,7 @@
   },
   {
     "id": "ej-5",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-methods",
     "type": "PREDICT_OUTPUT",
     "difficulty": "INTERMEDIATE",
@@ -2782,7 +2782,7 @@
   },
   {
     "id": "ej-7",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics",
     "type": "ORAL_ANSWER",
     "difficulty": "SENIOR",
@@ -2791,7 +2791,7 @@
   },
   {
     "id": "ej-10",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics",
     "type": "PREDICT_OUTPUT",
     "difficulty": "INTERMEDIATE",
@@ -2801,7 +2801,7 @@
   },
   {
     "id": "ej-17",
-    "topic": "collections",
+    "topic": "java",
     "subtopic": "java-basics",
     "type": "ORDER_STEPS",
     "difficulty": "INTERMEDIATE",

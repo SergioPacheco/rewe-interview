@@ -1,0 +1,178 @@
+[
+  {
+    "id": "theory-ai-fundamentals",
+    "topic": "ai-engineering",
+    "subtopic": "ai-fundamentals",
+    "title": "LLMs, Tokens & Embeddings",
+    "sections": [
+      {
+        "heading": "What is a Large Language Model",
+        "content": "An LLM is a neural network trained on massive text corpora to predict the next token in a sequence. It does not 'understand' language — it models statistical relationships between tokens.\n\n<strong>Key concepts:</strong>\n• <strong>Token</strong> — the atomic unit of text for the model (roughly 4 characters in English, varies by tokenizer)\n• <strong>Context window</strong> — maximum number of tokens the model can process in a single request (input + output combined)\n• <strong>Temperature</strong> — controls randomness in token selection (0 = deterministic, 1 = creative)\n• <strong>Top-p (nucleus sampling)</strong> — limits token selection to the most probable candidates"
+      },
+      {
+        "heading": "Embeddings",
+        "content": "<strong>What:</strong> A dense vector representation of text that captures semantic meaning. Similar concepts have vectors that are close together in high-dimensional space.\n\n<strong>Used for:</strong>\n• Semantic search (finding relevant documents)\n• RAG retrieval (matching queries to knowledge base chunks)\n• Clustering and classification\n• Measuring similarity between texts\n\n<strong>Key insight:</strong> Embeddings are how AI systems 'understand' that 'car' and 'automobile' are related, even though the strings are completely different."
+      },
+      {
+        "heading": "Practical implications for engineers",
+        "content": "• <strong>Token limits matter</strong> — you cannot dump an entire codebase into a prompt. You must select relevant context.\n• <strong>Garbage in, garbage out</strong> — the quality of the output depends entirely on the quality and relevance of the input context.\n• <strong>Models are stateless</strong> — each API call is independent. 'Memory' must be managed externally.\n• <strong>Hallucination is inherent</strong> — the model generates plausible-sounding text, not necessarily correct text. Verification is mandatory."
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-prompt-engineering",
+    "topic": "ai-engineering",
+    "subtopic": "ai-prompt-engineering",
+    "title": "Prompt Engineering",
+    "sections": [
+      {
+        "heading": "What is prompt engineering",
+        "content": "Prompt engineering is the practice of structuring inputs to LLMs to produce reliable, useful outputs. It is not about 'tricking' the model — it is about providing clear context, constraints, and format specifications.\n\n<strong>Core principles:</strong>\n• Be specific about what you want\n• Provide relevant context\n• Define output format explicitly\n• Set constraints and boundaries\n• Give examples (few-shot) when the task is ambiguous"
+      },
+      {
+        "heading": "Effective patterns",
+        "content": "<strong>Role + Task + Constraints + Format:</strong>\n<pre><code>You are a senior Java developer reviewing code for a Jakarta EE application.\nTask: Review this method for N+1 query issues.\nConstraints: Only flag issues introduced in this diff, not legacy code.\nFormat: List each issue with severity (Critical/High/Medium/Low), line number, and suggested fix.</code></pre>\n\n<strong>Chain of Thought (CoT):</strong>\nAsk the model to reason step by step before answering. Improves accuracy for complex problems.\n\n<strong>Few-shot examples:</strong>\nProvide 2-3 input/output examples before the actual task. The model learns the pattern."
+      },
+      {
+        "heading": "Anti-patterns",
+        "content": "• <strong>Vague instructions</strong> — 'Make this better' produces unpredictable results\n• <strong>Missing constraints</strong> — without boundaries, the model invents features\n• <strong>Overloading a single prompt</strong> — complex tasks should be decomposed into steps\n• <strong>Ignoring output format</strong> — if you need JSON, say so explicitly\n• <strong>Treating the model as a database</strong> — it generates text, it does not retrieve facts"
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-context-engineering",
+    "topic": "ai-engineering",
+    "subtopic": "ai-context-engineering",
+    "title": "Context Engineering",
+    "sections": [
+      {
+        "heading": "Beyond prompts — managing what the model sees",
+        "content": "Context engineering is the discipline of selecting, structuring, and injecting the right information into an AI interaction. While prompt engineering focuses on how you ask, context engineering focuses on what the model knows when it answers.\n\n<strong>In enterprise development, context includes:</strong>\n• Coding standards and architectural rules (steerings)\n• Relevant source code (not all code — selected code)\n• Database schema and current state\n• Error logs, traces, metrics\n• Requirements and business rules\n• Previous decisions and constraints"
+      },
+      {
+        "heading": "Steerings as persistent context",
+        "content": "A steering document is a set of rules and constraints loaded automatically into every AI interaction within a scope.\n\n<strong>Example:</strong> A steering for SQL/PostgreSQL ensures that every time the AI generates a query, it follows team conventions:\n• UNION ALL for dual-table patterns\n• Aliases in all calculated columns\n• Guard clauses for null parameters\n• LIMIT on autocomplete queries\n\nThe AI does not need to be reminded — the rules are injected as context before every interaction."
+      },
+      {
+        "heading": "Practical context selection",
+        "content": "<strong>The 80/20 rule of context:</strong>\n• 80% of useful output comes from providing the right 20% of context\n• More context is not always better — irrelevant context dilutes signal\n• Prefer structured, authoritative sources (schema, steerings) over raw code dumps\n\n<strong>Hierarchy of context value:</strong>\n1. Explicit constraints and rules (highest value)\n2. Relevant source code (the specific files involved)\n3. Schema and data structure\n4. Error messages and logs\n5. General documentation (lowest value — often too broad)"
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-mcp",
+    "topic": "ai-engineering",
+    "subtopic": "ai-mcp",
+    "title": "MCP & Tool Use",
+    "sections": [
+      {
+        "heading": "What is MCP (Model Context Protocol)",
+        "content": "MCP is a protocol that allows AI models to call external tools and data sources during a conversation. Instead of pre-loading all information into the prompt, the model can query databases, read files, call APIs, and execute commands as needed.\n\n<strong>Architecture:</strong>\n• <strong>MCP Server</strong> — exposes tools via a standardized JSON-RPC interface\n• <strong>MCP Client</strong> — the AI assistant that discovers and invokes tools\n• <strong>Tools</strong> — individual operations the model can call (read database, query APM, search code)\n\n<strong>Why it matters:</strong> MCP transforms AI from a text generator into a system that can interact with real production infrastructure."
+      },
+      {
+        "heading": "Tool use patterns",
+        "content": "<strong>Read-only by default:</strong> MCP servers for production systems should be read-only. The AI investigates; humans act.\n\n<strong>Composable tools:</strong>\n• <code>db_query</code> — execute SELECT on production database\n• <code>db_schema</code> — show table structure\n• <code>glowroot_slow_traces</code> — find slow transactions\n• <code>kibana_errors</code> — search error logs\n• <code>sonar_issues</code> — check code quality\n\n<strong>Investigation workflow:</strong>\n1. AI identifies a slow transaction in Glowroot\n2. Fetches the SQL queries from the trace\n3. Runs EXPLAIN ANALYZE on the database\n4. Checks if there's an index that could help\n5. Presents findings with evidence\n\nAll in a single conversation — no manual copy-paste between tools."
+      },
+      {
+        "heading": "Building MCP servers",
+        "content": "<strong>Stack:</strong> Node.js + TypeScript + JSON-RPC transport (stdio or HTTP)\n\n<strong>Design principles:</strong>\n• Each server has a single domain (database, APM, logs)\n• Tools are atomic and composable\n• Read-only for production data (no DDL/DML)\n• Automatic LIMIT on queries (prevent full table scans)\n• Credentials from environment variables (never in code)\n• Health check and error handling per tool\n\n<strong>Testing:</strong> Unit tests for each tool, integration tests against test databases."
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-agents",
+    "topic": "ai-engineering",
+    "subtopic": "ai-agents",
+    "title": "Agents & ReAct",
+    "sections": [
+      {
+        "heading": "What is an AI agent",
+        "content": "An AI agent is a system that uses an LLM to decide which actions to take in order to achieve a goal. Unlike a simple prompt-response, an agent:\n\n• <strong>Plans</strong> — breaks a goal into steps\n• <strong>Acts</strong> — calls tools to gather information or perform actions\n• <strong>Observes</strong> — interprets the results of actions\n• <strong>Decides</strong> — determines the next step based on observations\n• <strong>Loops</strong> — repeats until the goal is achieved or it determines it cannot proceed"
+      },
+      {
+        "heading": "ReAct pattern (Reason + Act)",
+        "content": "<strong>The core loop:</strong>\n<pre><code>Thought: I need to find why this query is slow\nAction: db_explain(\"SELECT ... FROM turma.turma ...\")\nObservation: Seq Scan on turma, no index on id_unidade\nThought: There's a missing index. Let me check if one exists\nAction: db_indices(\"turma.turma\")\nObservation: No index on id_unidade\nThought: I can recommend creating an index\nAnswer: The query performs a sequential scan because...</code></pre>\n\n<strong>Key insight:</strong> The model explicitly states its reasoning before acting. This makes the process auditable and debuggable."
+      },
+      {
+        "heading": "Agent guardrails",
+        "content": "<strong>Without guardrails, agents are dangerous:</strong>\n• They can loop indefinitely\n• They can take destructive actions\n• They can hallucinate tool calls\n• They can exceed budget (tokens, API calls)\n\n<strong>Essential guardrails:</strong>\n• Maximum iterations per task\n• Read-only access to production systems\n• Human-in-the-loop for destructive actions (git push, deploy)\n• Token budget limits\n• Structured output validation\n• Steering documents as behavioral constraints"
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-rag",
+    "topic": "ai-engineering",
+    "subtopic": "ai-rag",
+    "title": "RAG & Evaluation",
+    "sections": [
+      {
+        "heading": "Retrieval-Augmented Generation",
+        "content": "<strong>Problem:</strong> LLMs have training cutoffs and no access to private data. They hallucinate when asked about specific systems.\n\n<strong>Solution:</strong> RAG retrieves relevant documents from a knowledge base and injects them as context before generation.\n\n<strong>Pipeline:</strong>\n1. <strong>Index</strong> — chunk documents, generate embeddings, store in vector database\n2. <strong>Query</strong> — convert user question into embedding, find similar chunks\n3. <strong>Augment</strong> — inject retrieved chunks into the prompt as context\n4. <strong>Generate</strong> — LLM answers using the provided context\n\n<strong>When to use RAG vs MCP:</strong>\n• RAG: static knowledge (documentation, policies, historical data)\n• MCP: dynamic data (current database state, live metrics, recent logs)"
+      },
+      {
+        "heading": "Chunking strategies",
+        "content": "<strong>How you split documents matters:</strong>\n• <strong>Fixed-size chunks</strong> — simple but can break mid-sentence\n• <strong>Semantic chunking</strong> — split at paragraph/section boundaries\n• <strong>Code-aware chunking</strong> — split at function/class boundaries\n• <strong>Overlap</strong> — include context from adjacent chunks to avoid losing boundary information\n\n<strong>Practical guidance:</strong>\n• Chunk size: 500-1500 tokens (depends on model context window)\n• Overlap: 10-20% of chunk size\n• Metadata: preserve source, section title, file path for attribution"
+      },
+      {
+        "heading": "Evaluation metrics",
+        "content": "<strong>How to measure RAG quality:</strong>\n\n• <strong>Relevance</strong> — are the retrieved chunks actually relevant to the question?\n• <strong>Faithfulness</strong> — does the generated answer accurately reflect the retrieved context?\n• <strong>Answer quality</strong> — is the final response correct, complete, and useful?\n• <strong>Hallucination rate</strong> — does the answer contain claims not supported by the context?\n\n<strong>Key insight:</strong> A wrong retrieval produces a confident wrong answer. Evaluation must check both retrieval quality and generation quality independently."
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-production",
+    "topic": "ai-engineering",
+    "subtopic": "ai-production",
+    "title": "AI in Production",
+    "sections": [
+      {
+        "heading": "From prototype to production",
+        "content": "<strong>What changes when AI goes to production:</strong>\n\n• <strong>Latency</strong> — LLM calls take 1-30 seconds. Design UX accordingly.\n• <strong>Cost</strong> — token usage scales with traffic. Monitor and budget.\n• <strong>Reliability</strong> — API rate limits, timeouts, model changes. Need fallbacks.\n• <strong>Observability</strong> — log prompts, responses, token usage, latency, errors.\n• <strong>Security</strong> — prompt injection, data exfiltration, PII in prompts.\n• <strong>Versioning</strong> — model updates change behavior. Pin versions where possible."
+      },
+      {
+        "heading": "Patterns for production AI",
+        "content": "<strong>Caching:</strong> Cache responses for identical or similar prompts. Embeddings help identify semantic duplicates.\n\n<strong>Fallback chain:</strong>\n1. Try primary model\n2. On timeout/error → try secondary model\n3. On failure → return cached response or graceful degradation\n\n<strong>Human-in-the-loop:</strong> For high-stakes decisions, AI suggests and human approves. Never auto-deploy AI-generated code without review.\n\n<strong>Streaming:</strong> For user-facing responses, stream tokens as they arrive rather than waiting for complete response.\n\n<strong>Rate limiting:</strong> Protect against abuse and cost explosion with per-user and per-endpoint limits."
+      },
+      {
+        "heading": "Monitoring AI systems",
+        "content": "<strong>What to monitor:</strong>\n• Token usage per request and per user (cost)\n• Latency distribution (p50, p95, p99)\n• Error rate by model and endpoint\n• Hallucination rate (via automated evaluation)\n• User satisfaction signals (thumbs up/down, regeneration rate)\n• Drift detection (output quality changes after model updates)\n\n<strong>Key insight:</strong> Traditional application monitoring (latency, errors, throughput) is necessary but not sufficient. AI systems also need quality monitoring — the system can return 200 OK with completely wrong content."
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-tools",
+    "topic": "ai-engineering",
+    "subtopic": "ai-tools",
+    "title": "AI Tools & Ecosystem for Software Engineers",
+    "sections": [
+      {
+        "heading": "Coding assistants",
+        "content": "<strong>Daily development tools:</strong>\n\n• <strong>Kiro CLI</strong> — agent-based development with steerings, skills, and MCP. Runs in the terminal with persistent context. I use this daily for enterprise Java development.\n• <strong>Cursor</strong> — AI-first IDE with Ask/Plan/Agent modes. Good for greenfield projects where the AI needs to see the whole codebase.\n• <strong>GitHub Copilot</strong> — autocomplete in VS Code/IntelliJ. Best for line-by-line suggestions within known patterns.\n• <strong>Claude Code</strong> — terminal agent for coding tasks. Strong reasoning for complex refactoring.\n\n<strong>When to use which:</strong>\n• Copilot: fast autocomplete within familiar code\n• Cursor: exploring unfamiliar codebases, multi-file changes\n• Kiro/Claude Code: enterprise workflows with constraints, MCP, and persistent memory"
+      },
+      {
+        "heading": "LLMs and reasoning models",
+        "content": "<strong>Production-relevant models:</strong>\n\n• <strong>Claude (Anthropic)</strong> — best for long context, code generation with constraints, and reasoning. My primary model for development work.\n• <strong>GPT-4o (OpenAI)</strong> — strong general purpose, good function calling, fast.\n• <strong>DeepSeek</strong> — excellent code/reasoning at lower cost. Good for batch processing.\n• <strong>Gemini (Google)</strong> — large context window (1M+ tokens), multimodal.\n\n<strong>Practical advice:</strong>\n• Use the best model you can afford for code generation and review\n• Use cheaper models for classification, summarization, and simple extraction\n• Pin model versions in production — behavior changes between releases"
+      },
+      {
+        "heading": "MCP servers and tool integration",
+        "content": "<strong>What I use in production workflow:</strong>\n\n• <strong>MCP Database</strong> — read-only queries against PostgreSQL (schema, data, EXPLAIN)\n• <strong>MCP Glowroot</strong> — APM traces, slow queries, JVM health, service calls\n• <strong>MCP Kibana</strong> — log search, error correlation, pod timelines\n• <strong>MCP SonarQube</strong> — code quality issues, security hotspots\n• <strong>MCP Azure DevOps</strong> — work items, PRs, pipelines, wiki\n• <strong>MCP Enterprise Architect</strong> — requirements, use cases, business rules\n\n<strong>Key principle:</strong> MCP servers give AI real-time access to system state. This is fundamentally different from RAG (which indexes stale documents). The AI can check current production behavior, not just documentation."
+      },
+      {
+        "heading": "Vector databases and RAG infrastructure",
+        "content": "<strong>For semantic search and knowledge retrieval:</strong>\n\n• <strong>pgvector</strong> — PostgreSQL extension. No extra infrastructure. Best when you already have Postgres.\n• <strong>Qdrant</strong> — dedicated vector DB, advanced filtering, open-source. Best for production RAG.\n• <strong>ChromaDB</strong> — lightweight, embeddable. Best for prototyping and local development.\n\n<strong>When you need a vector DB:</strong>\n• Searching documentation by meaning (not keywords)\n• Building knowledge bases for domain-specific Q&A\n• Finding similar code, tickets, or incidents\n\n<strong>When you DON'T:</strong>\n• When MCP can query the live system directly\n• When the data changes frequently (embeddings become stale)\n• When full-text search (PostgreSQL tsvector) is sufficient"
+      },
+      {
+        "heading": "Agent frameworks",
+        "content": "<strong>For building multi-step AI workflows:</strong>\n\n• <strong>LangGraph</strong> — stateful agent graphs in Python. Best for complex workflows with branching logic and human-in-the-loop.\n• <strong>LangChain</strong> — chains and agents. Large ecosystem, good for prototyping. Can become over-abstracted for simple cases.\n• <strong>CrewAI</strong> — multi-agent with roles. Good when tasks are naturally decomposed into specialist agents.\n• <strong>OpenAI Assistants API</strong> — managed agents with threads and tools. Simplest to deploy but vendor-locked.\n\n<strong>Practical advice:</strong>\n• Start with simple prompt chains. Add framework only when you need state, branching, or multi-agent coordination.\n• Most enterprise use cases need 1 agent with tools, not 5 agents talking to each other."
+      },
+      {
+        "heading": "Evaluation and observability",
+        "content": "<strong>For measuring AI quality in production:</strong>\n\n• <strong>Langfuse</strong> — open-source LLM observability. Traces, costs, latency, user feedback. Self-hostable.\n• <strong>RAGAS</strong> — evaluation framework for RAG pipelines (relevance, faithfulness, answer quality).\n• <strong>Promptfoo</strong> — automated prompt testing with CI/CD integration. Catches regressions when you change prompts.\n• <strong>LangSmith</strong> — tracing and evaluation from the LangChain ecosystem.\n\n<strong>Key insight:</strong> Without evaluation, you cannot know if your AI system is getting better or worse. Every production AI system needs automated quality checks — not just latency and error monitoring."
+      },
+      {
+        "heading": "Local models and open-source",
+        "content": "<strong>For privacy, cost control, and experimentation:</strong>\n\n• <strong>Ollama</strong> — run LLMs locally with one command. Supports Llama, Mistral, Qwen, DeepSeek.\n• <strong>Llama 3.1</strong> (Meta) — best open-source general model. 8B for fast tasks, 70B for complex reasoning.\n• <strong>DeepSeek Coder</strong> — specialized for code generation. Excellent cost/quality ratio.\n• <strong>Qwen 2.5</strong> — strong multilingual, good for non-English contexts.\n\n<strong>When to use local models:</strong>\n• Sensitive data that cannot leave the network\n• High-volume tasks where API costs become prohibitive\n• Experimentation and fine-tuning\n• Offline development environments"
+      }
+    ]
+  }
+]

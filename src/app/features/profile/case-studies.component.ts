@@ -13,13 +13,13 @@ interface CaseStudy {
  */
 const CASE_STUDY_TITLES: Record<string, string> = {
   'story-performance': 'PostgreSQL Performance Optimization',
-  'story-logistics': 'Transportation Pricing System',
+  'story-logistics': 'Freight Billing Automation',
   'story-n1': 'N+1 Query Detection and Resolution',
   'story-legacy': 'Legacy Code Modernization',
   'story-incident': 'Production Incident Management',
   'story-disagreement': 'Technical Disagreement Resolution',
   'story-learning': 'Rapid Technology Adoption',
-  'story-ai': 'AI-Assisted Development Integration',
+  'story-ai': 'AI-Assisted Engineering Platform',
   'story-template': 'Case Study Template',
 };
 

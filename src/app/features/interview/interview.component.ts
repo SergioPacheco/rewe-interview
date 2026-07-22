@@ -61,7 +61,7 @@ export class InterviewComponent implements OnDestroy {
     'behavioral': { subtopicId: 'story-incident', title: 'Production Incident Management' },
     'kafka': { subtopicId: 'story-performance', title: 'PostgreSQL Performance Optimization' },
     'software-architecture': { subtopicId: 'story-legacy', title: 'Legacy Code Modernization' },
-    'system-design': { subtopicId: 'story-logistics', title: 'Transportation Pricing System' },
+    'system-design': { subtopicId: 'story-logistics', title: 'Freight Billing Automation' },
     'spring': { subtopicId: 'story-n1', title: 'N+1 Query Detection and Resolution' },
   };
 

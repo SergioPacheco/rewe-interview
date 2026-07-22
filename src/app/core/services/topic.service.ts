@@ -191,6 +191,7 @@ export class TopicService {
       ,'theory-system-design-modeling.json'
       ,'theory-learning-depth.json'
       ,'theory-asd-summary.json'
+      ,'theory-ai-engineering.json'
     ];
 
     const paths = files.map(f => `data/topics/${lang}/${f}`);

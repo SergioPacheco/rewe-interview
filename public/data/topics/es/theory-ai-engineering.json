@@ -1,0 +1,178 @@
+[
+  {
+    "id": "theory-ai-fundamentals",
+    "topic": "ai-engineering",
+    "subtopic": "ai-fundamentals",
+    "title": "LLMs, Tokens y Embeddings",
+    "sections": [
+      {
+        "heading": "Qué es un Large Language Model",
+        "content": "Un LLM es una red neuronal entrenada con grandes corpus de texto para predecir el siguiente token en una secuencia. No 'entiende' el lenguaje — modela relaciones estadísticas entre tokens.\n\n<strong>Conceptos clave:</strong>\n• <strong>Token</strong> — la unidad atómica de texto para el modelo (aproximadamente 4 caracteres en inglés, varía según el tokenizador)\n• <strong>Ventana de contexto</strong> — número máximo de tokens que el modelo puede procesar en una sola solicitud (entrada + salida combinadas)\n• <strong>Temperature</strong> — controla la aleatoriedad en la selección de tokens (0 = determinístico, 1 = creativo)\n• <strong>Top-p (nucleus sampling)</strong> — limita la selección de tokens a los candidatos más probables"
+      },
+      {
+        "heading": "Embeddings",
+        "content": "<strong>Qué son:</strong> Una representación vectorial densa del texto que captura el significado semántico. Conceptos similares tienen vectores cercanos en un espacio de alta dimensión.\n\n<strong>Se usan para:</strong>\n• Búsqueda semántica (encontrar documentos relevantes)\n• Recuperación RAG (emparejar consultas con fragmentos de la base de conocimiento)\n• Clustering y clasificación\n• Medir similitud entre textos\n\n<strong>Insight clave:</strong> Los embeddings son cómo los sistemas de IA 'entienden' que 'coche' y 'automóvil' están relacionados, aunque las cadenas sean completamente diferentes."
+      },
+      {
+        "heading": "Implicaciones prácticas para ingenieros",
+        "content": "• <strong>Los límites de tokens importan</strong> — no se puede volcar una base de código completa en un prompt. Hay que seleccionar el contexto relevante.\n• <strong>Basura entra, basura sale</strong> — la calidad de la salida depende completamente de la calidad y relevancia del contexto de entrada.\n• <strong>Los modelos no tienen estado</strong> — cada llamada a la API es independiente. La 'memoria' debe gestionarse externamente.\n• <strong>La alucinación es inherente</strong> — el modelo genera texto que suena plausible, no necesariamente correcto. La verificación es obligatoria."
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-prompt-engineering",
+    "topic": "ai-engineering",
+    "subtopic": "ai-prompt-engineering",
+    "title": "Prompt Engineering",
+    "sections": [
+      {
+        "heading": "Qué es prompt engineering",
+        "content": "Prompt engineering es la práctica de estructurar las entradas a LLMs para producir salidas fiables y útiles. No se trata de 'engañar' al modelo — se trata de proporcionar contexto claro, restricciones y especificaciones de formato.\n\n<strong>Principios fundamentales:</strong>\n• Ser específico sobre lo que se quiere\n• Proporcionar contexto relevante\n• Definir el formato de salida explícitamente\n• Establecer restricciones y límites\n• Dar ejemplos (few-shot) cuando la tarea sea ambigua"
+      },
+      {
+        "heading": "Patrones efectivos",
+        "content": "<strong>Rol + Tarea + Restricciones + Formato:</strong>\n<pre><code>Eres un desarrollador Java senior revisando código para una aplicación Jakarta EE.\nTarea: Revisa este método buscando problemas de N+1 queries.\nRestricciones: Solo reporta problemas introducidos en este diff, no código legado.\nFormato: Lista cada problema con severidad (Crítica/Alta/Media/Baja), número de línea y corrección sugerida.</code></pre>\n\n<strong>Chain of Thought (CoT):</strong>\nPedir al modelo que razone paso a paso antes de responder. Mejora la precisión en problemas complejos.\n\n<strong>Ejemplos few-shot:</strong>\nProporcionar 2-3 ejemplos de entrada/salida antes de la tarea real. El modelo aprende el patrón."
+      },
+      {
+        "heading": "Anti-patrones",
+        "content": "• <strong>Instrucciones vagas</strong> — 'Mejora esto' produce resultados impredecibles\n• <strong>Restricciones ausentes</strong> — sin límites, el modelo inventa funcionalidades\n• <strong>Sobrecargar un solo prompt</strong> — las tareas complejas deben descomponerse en pasos\n• <strong>Ignorar el formato de salida</strong> — si necesitas JSON, dilo explícitamente\n• <strong>Tratar el modelo como una base de datos</strong> — genera texto, no recupera hechos"
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-context-engineering",
+    "topic": "ai-engineering",
+    "subtopic": "ai-context-engineering",
+    "title": "Context Engineering",
+    "sections": [
+      {
+        "heading": "Más allá de los prompts — gestionar lo que el modelo ve",
+        "content": "Context engineering es la disciplina de seleccionar, estructurar e inyectar la información correcta en una interacción con IA. Mientras prompt engineering se enfoca en cómo preguntas, context engineering se enfoca en qué sabe el modelo cuando responde.\n\n<strong>En desarrollo enterprise, el contexto incluye:</strong>\n• Estándares de código y reglas arquitectónicas (steerings)\n• Código fuente relevante (no todo el código — código seleccionado)\n• Esquema de base de datos y estado actual\n• Logs de error, trazas, métricas\n• Requisitos y reglas de negocio\n• Decisiones previas y restricciones"
+      },
+      {
+        "heading": "Steerings como contexto persistente",
+        "content": "Un documento de steering es un conjunto de reglas y restricciones cargadas automáticamente en cada interacción de IA dentro de un ámbito.\n\n<strong>Ejemplo:</strong> Un steering para SQL/PostgreSQL asegura que cada vez que la IA genera una consulta, sigue las convenciones del equipo:\n• UNION ALL para patrones de tablas duales\n• Alias en todas las columnas calculadas\n• Guard clauses para parámetros null\n• LIMIT en consultas de autocompletado\n\nLa IA no necesita que se le recuerde — las reglas se inyectan como contexto antes de cada interacción."
+      },
+      {
+        "heading": "Selección práctica de contexto",
+        "content": "<strong>La regla 80/20 del contexto:</strong>\n• El 80% de la salida útil proviene de proporcionar el 20% correcto del contexto\n• Más contexto no siempre es mejor — el contexto irrelevante diluye la señal\n• Preferir fuentes estructuradas y autoritativas (esquema, steerings) sobre volcados de código\n\n<strong>Jerarquía del valor del contexto:</strong>\n1. Restricciones y reglas explícitas (mayor valor)\n2. Código fuente relevante (los archivos específicos involucrados)\n3. Esquema y estructura de datos\n4. Mensajes de error y logs\n5. Documentación general (menor valor — a menudo demasiado amplia)"
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-mcp",
+    "topic": "ai-engineering",
+    "subtopic": "ai-mcp",
+    "title": "MCP y Uso de Herramientas",
+    "sections": [
+      {
+        "heading": "Qué es MCP (Model Context Protocol)",
+        "content": "MCP es un protocolo que permite a los modelos de IA llamar a herramientas externas y fuentes de datos durante una conversación. En lugar de pre-cargar toda la información en el prompt, el modelo puede consultar bases de datos, leer archivos, llamar APIs y ejecutar comandos según sea necesario.\n\n<strong>Arquitectura:</strong>\n• <strong>MCP Server</strong> — expone herramientas mediante una interfaz JSON-RPC estandarizada\n• <strong>MCP Client</strong> — el asistente de IA que descubre e invoca herramientas\n• <strong>Tools</strong> — operaciones individuales que el modelo puede llamar (leer BD, consultar APM, buscar código)\n\n<strong>Por qué importa:</strong> MCP transforma la IA de un generador de texto a un sistema que puede interactuar con infraestructura de producción real."
+      },
+      {
+        "heading": "Patrones de uso de herramientas",
+        "content": "<strong>Solo lectura por defecto:</strong> Los servidores MCP para sistemas de producción deben ser de solo lectura. La IA investiga; los humanos actúan.\n\n<strong>Herramientas componibles:</strong>\n• <code>db_query</code> — ejecutar SELECT en la base de datos de producción\n• <code>db_schema</code> — mostrar estructura de tabla\n• <code>glowroot_slow_traces</code> — encontrar transacciones lentas\n• <code>kibana_errors</code> — buscar logs de error\n• <code>sonar_issues</code> — verificar calidad de código\n\n<strong>Flujo de investigación:</strong>\n1. La IA identifica una transacción lenta en Glowroot\n2. Obtiene las consultas SQL de la traza\n3. Ejecuta EXPLAIN ANALYZE en la base de datos\n4. Verifica si hay un índice que pueda ayudar\n5. Presenta hallazgos con evidencia\n\nTodo en una sola conversación — sin copiar y pegar manualmente entre herramientas."
+      },
+      {
+        "heading": "Construyendo servidores MCP",
+        "content": "<strong>Stack:</strong> Node.js + TypeScript + transporte JSON-RPC (stdio o HTTP)\n\n<strong>Principios de diseño:</strong>\n• Cada servidor tiene un dominio único (base de datos, APM, logs)\n• Las herramientas son atómicas y componibles\n• Solo lectura para datos de producción (sin DDL/DML)\n• LIMIT automático en consultas (prevenir full table scans)\n• Credenciales desde variables de entorno (nunca en código)\n• Health check y manejo de errores por herramienta\n\n<strong>Testing:</strong> Tests unitarios para cada herramienta, tests de integración contra bases de datos de prueba."
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-agents",
+    "topic": "ai-engineering",
+    "subtopic": "ai-agents",
+    "title": "Agentes y ReAct",
+    "sections": [
+      {
+        "heading": "Qué es un agente de IA",
+        "content": "Un agente de IA es un sistema que usa un LLM para decidir qué acciones tomar para lograr un objetivo. A diferencia de un simple prompt-respuesta, un agente:\n\n• <strong>Planifica</strong> — descompone un objetivo en pasos\n• <strong>Actúa</strong> — llama herramientas para recopilar información o realizar acciones\n• <strong>Observa</strong> — interpreta los resultados de las acciones\n• <strong>Decide</strong> — determina el siguiente paso basándose en las observaciones\n• <strong>Itera</strong> — repite hasta lograr el objetivo o determinar que no puede continuar"
+      },
+      {
+        "heading": "Patrón ReAct (Reason + Act)",
+        "content": "<strong>El loop central:</strong>\n<pre><code>Pensamiento: Necesito encontrar por qué esta query es lenta\nAcción: db_explain(\"SELECT ... FROM turma.turma ...\")\nObservación: Seq Scan en turma, sin índice en id_unidade\nPensamiento: Falta un índice. Voy a verificar si existe uno\nAcción: db_indices(\"turma.turma\")\nObservación: Sin índice en id_unidade\nPensamiento: Puedo recomendar crear un índice\nRespuesta: La query realiza un sequential scan porque...</code></pre>\n\n<strong>Insight clave:</strong> El modelo declara explícitamente su razonamiento antes de actuar. Esto hace el proceso auditable y depurable."
+      },
+      {
+        "heading": "Guardrails para agentes",
+        "content": "<strong>Sin guardrails, los agentes son peligrosos:</strong>\n• Pueden iterar indefinidamente\n• Pueden tomar acciones destructivas\n• Pueden alucinar llamadas a herramientas\n• Pueden exceder el presupuesto (tokens, llamadas API)\n\n<strong>Guardrails esenciales:</strong>\n• Máximo de iteraciones por tarea\n• Acceso de solo lectura a sistemas de producción\n• Human-in-the-loop para acciones destructivas (git push, deploy)\n• Límites de presupuesto de tokens\n• Validación de salida estructurada\n• Documentos de steering como restricciones de comportamiento"
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-rag",
+    "topic": "ai-engineering",
+    "subtopic": "ai-rag",
+    "title": "RAG y Evaluación",
+    "sections": [
+      {
+        "heading": "Retrieval-Augmented Generation",
+        "content": "<strong>Problema:</strong> Los LLMs tienen fechas de corte de entrenamiento y no acceden a datos privados. Alucinan cuando se les pregunta sobre sistemas específicos.\n\n<strong>Solución:</strong> RAG recupera documentos relevantes de una base de conocimiento y los inyecta como contexto antes de la generación.\n\n<strong>Pipeline:</strong>\n1. <strong>Indexar</strong> — fragmentar documentos, generar embeddings, almacenar en base de datos vectorial\n2. <strong>Consultar</strong> — convertir la pregunta del usuario en embedding, encontrar fragmentos similares\n3. <strong>Aumentar</strong> — inyectar fragmentos recuperados en el prompt como contexto\n4. <strong>Generar</strong> — el LLM responde usando el contexto proporcionado\n\n<strong>Cuándo usar RAG vs MCP:</strong>\n• RAG: conocimiento estático (documentación, políticas, datos históricos)\n• MCP: datos dinámicos (estado actual de la BD, métricas en vivo, logs recientes)"
+      },
+      {
+        "heading": "Estrategias de chunking",
+        "content": "<strong>Cómo se fragmentan los documentos importa:</strong>\n• <strong>Fragmentos de tamaño fijo</strong> — simple pero puede cortar a mitad de oración\n• <strong>Chunking semántico</strong> — dividir en límites de párrafo/sección\n• <strong>Chunking consciente del código</strong> — dividir en límites de función/clase\n• <strong>Overlap</strong> — incluir contexto de fragmentos adyacentes para evitar perder información en los bordes\n\n<strong>Guía práctica:</strong>\n• Tamaño de chunk: 500-1500 tokens (depende de la ventana de contexto del modelo)\n• Overlap: 10-20% del tamaño del chunk\n• Metadatos: preservar fuente, título de sección, ruta del archivo para atribución"
+      },
+      {
+        "heading": "Métricas de evaluación",
+        "content": "<strong>Cómo medir la calidad del RAG:</strong>\n\n• <strong>Relevancia</strong> — ¿los fragmentos recuperados son realmente relevantes para la pregunta?\n• <strong>Fidelidad</strong> — ¿la respuesta generada refleja con precisión el contexto recuperado?\n• <strong>Calidad de respuesta</strong> — ¿la respuesta final es correcta, completa y útil?\n• <strong>Tasa de alucinación</strong> — ¿la respuesta contiene afirmaciones no respaldadas por el contexto?\n\n<strong>Insight clave:</strong> Una recuperación incorrecta produce una respuesta incorrecta pero confiada. La evaluación debe verificar tanto la calidad de recuperación como la calidad de generación de forma independiente."
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-production",
+    "topic": "ai-engineering",
+    "subtopic": "ai-production",
+    "title": "IA en Producción",
+    "sections": [
+      {
+        "heading": "Del prototipo a producción",
+        "content": "<strong>Qué cambia cuando la IA va a producción:</strong>\n\n• <strong>Latencia</strong> — las llamadas a LLM toman 1-30 segundos. Diseñar la UX acorde.\n• <strong>Coste</strong> — el uso de tokens escala con el tráfico. Monitorear y presupuestar.\n• <strong>Fiabilidad</strong> — rate limits de API, timeouts, cambios de modelo. Se necesitan fallbacks.\n• <strong>Observabilidad</strong> — registrar prompts, respuestas, uso de tokens, latencia, errores.\n• <strong>Seguridad</strong> — prompt injection, exfiltración de datos, PII en prompts.\n• <strong>Versionado</strong> — las actualizaciones de modelo cambian el comportamiento. Fijar versiones cuando sea posible."
+      },
+      {
+        "heading": "Patrones para IA en producción",
+        "content": "<strong>Caching:</strong> Cachear respuestas para prompts idénticos o similares. Los embeddings ayudan a identificar duplicados semánticos.\n\n<strong>Cadena de fallback:</strong>\n1. Intentar modelo primario\n2. En timeout/error → intentar modelo secundario\n3. En fallo → retornar respuesta cacheada o degradación graceful\n\n<strong>Human-in-the-loop:</strong> Para decisiones de alto impacto, la IA sugiere y el humano aprueba. Nunca auto-deployar código generado por IA sin revisión.\n\n<strong>Streaming:</strong> Para respuestas orientadas al usuario, transmitir tokens conforme llegan en lugar de esperar la respuesta completa.\n\n<strong>Rate limiting:</strong> Proteger contra abuso y explosión de costes con límites por usuario y por endpoint."
+      },
+      {
+        "heading": "Monitorización de sistemas de IA",
+        "content": "<strong>Qué monitorizar:</strong>\n• Uso de tokens por request y por usuario (coste)\n• Distribución de latencia (p50, p95, p99)\n• Tasa de error por modelo y endpoint\n• Tasa de alucinación (via evaluación automatizada)\n• Señales de satisfacción del usuario (thumbs up/down, tasa de regeneración)\n• Detección de drift (cambios de calidad tras actualizaciones del modelo)\n\n<strong>Insight clave:</strong> La monitorización tradicional de aplicaciones (latencia, errores, throughput) es necesaria pero no suficiente. Los sistemas de IA también necesitan monitorización de calidad — el sistema puede retornar 200 OK con contenido completamente incorrecto."
+      }
+    ]
+  },
+  {
+    "id": "theory-ai-tools",
+    "topic": "ai-engineering",
+    "subtopic": "ai-tools",
+    "title": "Herramientas de IA y Ecosistema para Ingenieros de Software",
+    "sections": [
+      {
+        "heading": "Asistentes de código",
+        "content": "<strong>Herramientas de desarrollo diario:</strong>\n\n• <strong>Kiro CLI</strong> — desarrollo basado en agentes con steerings, skills y MCP. Se ejecuta en terminal con contexto persistente. Lo uso a diario para desarrollo enterprise Java.\n• <strong>Cursor</strong> — IDE AI-First con modos Ask/Plan/Agent. Bueno para proyectos greenfield donde la IA necesita ver todo el codebase.\n• <strong>GitHub Copilot</strong> — autocompletado en VS Code/IntelliJ. Mejor para sugerencias línea a línea dentro de patrones conocidos.\n• <strong>Claude Code</strong> — agente de terminal para tareas de código. Razonamiento fuerte para refactorizaciones complejas.\n\n<strong>Cuándo usar cuál:</strong>\n• Copilot: autocompletado rápido en código familiar\n• Cursor: explorar codebases desconocidos, cambios multi-archivo\n• Kiro/Claude Code: workflows enterprise con restricciones, MCP y memoria persistente"
+      },
+      {
+        "heading": "LLMs y modelos de razonamiento",
+        "content": "<strong>Modelos relevantes para producción:</strong>\n\n• <strong>Claude (Anthropic)</strong> — mejor para contexto largo, generación de código con restricciones y razonamiento. Mi modelo principal para trabajo de desarrollo.\n• <strong>GPT-4o (OpenAI)</strong> — buen propósito general, buena invocación de funciones, rápido.\n• <strong>DeepSeek</strong> — excelente código/razonamiento a menor coste. Bueno para procesamiento batch.\n• <strong>Gemini (Google)</strong> — ventana de contexto grande (1M+ tokens), multimodal.\n\n<strong>Consejo práctico:</strong>\n• Usar el mejor modelo posible para generación y revisión de código\n• Usar modelos más baratos para clasificación, resumen y extracción simple\n• Fijar versiones de modelo en producción — el comportamiento cambia entre releases"
+      },
+      {
+        "heading": "Servidores MCP e integración de herramientas",
+        "content": "<strong>Lo que uso en mi workflow de producción:</strong>\n\n• <strong>MCP Database</strong> — consultas read-only contra PostgreSQL (schema, datos, EXPLAIN)\n• <strong>MCP Glowroot</strong> — trazas APM, queries lentas, salud JVM, llamadas a servicios\n• <strong>MCP Kibana</strong> — búsqueda de logs, correlación de errores, timelines de pods\n• <strong>MCP SonarQube</strong> — issues de calidad de código, hotspots de seguridad\n• <strong>MCP Azure DevOps</strong> — work items, PRs, pipelines, wiki\n• <strong>MCP Enterprise Architect</strong> — requisitos, casos de uso, reglas de negocio\n\n<strong>Principio clave:</strong> Los servidores MCP dan a la IA acceso en tiempo real al estado del sistema. Esto es fundamentalmente diferente de RAG (que indexa documentos desactualizados). La IA puede verificar el comportamiento actual de producción, no solo documentación."
+      },
+      {
+        "heading": "Bases de datos vectoriales e infraestructura RAG",
+        "content": "<strong>Para búsqueda semántica y recuperación de conocimiento:</strong>\n\n• <strong>pgvector</strong> — extensión PostgreSQL. Sin infraestructura extra. Mejor cuando ya tienes Postgres.\n• <strong>Qdrant</strong> — BD vectorial dedicada, filtrado avanzado, open-source. Mejor para RAG en producción.\n• <strong>ChromaDB</strong> — ligera, embeddable. Mejor para prototipado y desarrollo local.\n\n<strong>Cuándo necesitas una BD vectorial:</strong>\n• Buscar documentación por significado (no palabras clave)\n• Construir bases de conocimiento para Q&A de dominio específico\n• Encontrar código, tickets o incidentes similares\n\n<strong>Cuándo NO:</strong>\n• Cuando MCP puede consultar el sistema en vivo directamente\n• Cuando los datos cambian frecuentemente (embeddings se desactualizan)\n• Cuando full-text search (PostgreSQL tsvector) es suficiente"
+      },
+      {
+        "heading": "Frameworks de agentes",
+        "content": "<strong>Para construir workflows de IA multi-paso:</strong>\n\n• <strong>LangGraph</strong> — grafos de agentes con estado en Python. Mejor para workflows complejos con bifurcaciones y human-in-the-loop.\n• <strong>LangChain</strong> — chains y agentes. Gran ecosistema, bueno para prototipado. Puede sobre-abstraer para casos simples.\n• <strong>CrewAI</strong> — multi-agente con roles. Bueno cuando las tareas se descomponen naturalmente en agentes especialistas.\n• <strong>OpenAI Assistants API</strong> — agentes gestionados con threads y tools. Más simple de deployar pero vendor-locked.\n\n<strong>Consejo práctico:</strong>\n• Empezar con prompt chains simples. Agregar framework solo cuando necesites estado, bifurcaciones o coordinación multi-agente.\n• La mayoría de casos enterprise necesitan 1 agente con tools, no 5 agentes hablando entre sí."
+      },
+      {
+        "heading": "Evaluación y observabilidad",
+        "content": "<strong>Para medir la calidad de IA en producción:</strong>\n\n• <strong>Langfuse</strong> — observabilidad LLM open-source. Trazas, costes, latencia, feedback de usuarios. Self-hostable.\n• <strong>RAGAS</strong> — framework de evaluación para pipelines RAG (relevancia, fidelidad, calidad de respuesta).\n• <strong>Promptfoo</strong> — testing automatizado de prompts con integración CI/CD. Detecta regresiones al cambiar prompts.\n• <strong>LangSmith</strong> — tracing y evaluación del ecosistema LangChain.\n\n<strong>Insight clave:</strong> Sin evaluación, no se puede saber si el sistema de IA está mejorando o empeorando. Todo sistema de IA en producción necesita checks de calidad automatizados — no solo monitorización de latencia y errores."
+      },
+      {
+        "heading": "Modelos locales y open-source",
+        "content": "<strong>Para privacidad, control de costes y experimentación:</strong>\n\n• <strong>Ollama</strong> — ejecutar LLMs localmente con un comando. Soporta Llama, Mistral, Qwen, DeepSeek.\n• <strong>Llama 3.1</strong> (Meta) — mejor modelo open-source general. 8B para tareas rápidas, 70B para razonamiento complejo.\n• <strong>DeepSeek Coder</strong> — especializado en generación de código. Excelente relación coste/calidad.\n• <strong>Qwen 2.5</strong> — fuerte multilingual, bueno para contextos no-inglés.\n\n<strong>Cuándo usar modelos locales:</strong>\n• Datos sensibles que no pueden salir de la red\n• Tareas de alto volumen donde los costes de API son prohibitivos\n• Experimentación y fine-tuning\n• Ambientes de desarrollo offline"
+      }
+    ]
+  }
+]

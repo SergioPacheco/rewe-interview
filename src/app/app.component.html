@@ -175,16 +175,6 @@
 
                 @if (expandedTopic() === topic.id) {
                   <div class="sidebar__subtopics">
-                    <!-- Practice all for this topic -->
-                    @if (hasExercises(topic.id)) {
-                      <a
-                        class="sidebar__subitem sidebar__subitem--practice"
-                        [routerLink]="['/quiz', topic.id]"
-                        (click)="closeSidebarOnMobile()"
-                      >
-                        {{ 'sidebar.practiceAll' | t }}
-                      </a>
-                    }
                     @for (phase of getSubtopicGroups(topic); track phase.label) {
                       <section class="sidebar__phase">
                         <p class="sidebar__phase-label">{{ phase.label }}</p>

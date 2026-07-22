@@ -1,0 +1,794 @@
+[
+  {
+    "id": "theory-ddd-aggregate",
+    "topic": "ddd",
+    "subtopic": "ddd-aggregate",
+    "title": "Aggregate & Aggregate Root — Protecting Business Consistency",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>An <strong>Aggregate</strong> is a cluster of related Entities and Value Objects that are treated as a single unit for maintaining business consistency. Every Aggregate has exactly one <strong>Aggregate Root</strong>, which controls access to the objects inside the Aggregate.</p><blockquote>The Aggregate Root is the only object that external code may reference directly.</blockquote>"
+      },
+      {
+        "heading": "Why Aggregates Exist",
+        "content": "<p>Business rules often involve multiple objects. If every object could be modified independently, the system could easily become inconsistent.</p><pre><code>Order\n├── OrderItem\n├── Payment\n└── Shipment</code></pre><p>The Aggregate groups related objects and guarantees that business rules are always preserved.</p>"
+      },
+      {
+        "heading": "Aggregate Structure",
+        "content": "<pre><code>+---------------------------+\n|        Order              |\n|     (Aggregate Root)      |\n|---------------------------|\n| OrderItem                 |\n| OrderItem                 |\n| Payment                   |\n| ShippingAddress           |\n+---------------------------+</code></pre><p>The Order Aggregate Root owns the entire lifecycle of its internal objects.</p>"
+      },
+      {
+        "heading": "Aggregate Root Responsibilities",
+        "content": "<ul><li>Protect business invariants.</li><li>Validate state transitions.</li><li>Control modifications.</li><li>Expose business operations.</li><li>Publish Domain Events when appropriate.</li></ul>"
+      },
+      {
+        "heading": "Business Invariants",
+        "content": "<p>An <strong>Invariant</strong> is a business rule that must always remain true.</p><pre><code>Order\n\n✓ Must contain at least one item\n✓ Cannot ship before payment\n✓ Cannot be paid twice\n✓ Cannot cancel after shipping</code></pre><p>The Aggregate Root guarantees these rules regardless of who uses the application.</p>"
+      },
+      {
+        "heading": "Correct Access",
+        "content": "<pre><code>Customer\n    │\n    ▼\nOrder.pay()\nOrder.addItem()\nOrder.cancel()</code></pre><p>All modifications go through the Aggregate Root.</p>"
+      },
+      {
+        "heading": "Incorrect Access",
+        "content": "<pre><code>order.items[0].price = 0\n\npayment.status = PAID\n\nshipment.status = SHIPPED</code></pre><p>Changing internal objects directly bypasses business rules and may leave the Aggregate in an invalid state.</p>"
+      },
+      {
+        "heading": "Transaction Boundary",
+        "content": "<p>An Aggregate defines the consistency boundary of a transaction.</p><pre><code>Database Transaction\n        │\n        ▼\nEntire Aggregate\n        │\nCommit</code></pre><p>Everything inside the Aggregate should remain consistent after the transaction completes.</p>"
+      },
+      {
+        "heading": "Aggregate Size",
+        "content": "<table><tr><th>Too Small</th><th>Too Large</th></tr><tr><td>Business rules spread across multiple Aggregates.</td><td>High contention and poor scalability.</td></tr><tr><td>Difficult consistency.</td><td>Large transactions.</td></tr><tr><td>Frequent coordination.</td><td>Low performance.</td></tr></table>"
+      },
+      {
+        "heading": "Aggregate vs Database",
+        "content": "<table><tr><th>Aggregate</th><th>Database</th></tr><tr><td>Business consistency boundary.</td><td>Persistence technology.</td></tr><tr><td>Business concept.</td><td>Storage implementation.</td></tr><tr><td>May span multiple tables.</td><td>Stores data.</td></tr></table>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Consequence</th></tr><tr><td>Very large Aggregates.</td><td>Poor scalability.</td></tr><tr><td>Allowing direct access to child entities.</td><td>Broken invariants.</td></tr><tr><td>Multiple Aggregate Roots.</td><td>Unclear ownership.</td></tr><tr><td>One Aggregate per database table.</td><td>Database-driven design.</td></tr></table>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Senior engineers define Aggregates around business consistency, not around object graphs or database relationships. A good Aggregate minimizes transaction size while ensuring that all critical business invariants are always enforced.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>What is an Aggregate?</li><li>Why does every Aggregate have a Root?</li><li>What are business invariants?</li><li>Why shouldn't child entities be modified directly?</li><li>How do Aggregates define transaction boundaries?</li><li>Can an Aggregate span multiple database tables?</li><li>How large should an Aggregate be?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>An Order Aggregate may contain Order Items, Delivery Address and Payment information. Operations such as adding items, confirming payment or cancelling the order are performed through the Order Aggregate Root, ensuring that pricing, stock reservation and order status remain consistent before business events are published to other contexts.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>An Aggregate is a consistency boundary.</li><li>Every Aggregate has exactly one Aggregate Root.</li><li>Only the Aggregate Root should be accessed externally.</li><li>Business invariants are protected inside the Aggregate.</li><li>Aggregate boundaries should be defined by business rules, not by database tables.</li></ul>"
+      }
+    ]
+  },
+  {
+    "id": "theory-ddd-bounded-context",
+    "topic": "ddd",
+    "subtopic": "ddd-bounded-context",
+    "title": "Bounded Context — Defining Clear Business Boundaries",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>After identifying the business subdomains, the next challenge is deciding where one domain model ends and another begins. Domain-Driven Design solves this problem through the concept of a <strong>Bounded Context</strong>.</p><blockquote>A Bounded Context defines the explicit boundary within which a domain model is valid and its terminology has a precise meaning.</blockquote>"
+      },
+      {
+        "heading": "Why Bounded Context Exists",
+        "content": "<p>Different parts of the business often use the same word to mean different things.</p><pre><code>\"Customer\"\n\nSales\n▼\nBuyer\n\nSupport\n▼\nPerson requesting help\n\nBilling\n▼\nLegal entity responsible for payment</code></pre><p>Trying to represent all these meanings with a single Customer class usually creates confusion and unnecessary complexity.</p>"
+      },
+      {
+        "heading": "One Business, Multiple Models",
+        "content": "<pre><code>Retail Platform\n\n├── Orders\n├── Inventory\n├── Pricing\n├── Shipping\n├── Payments</code></pre><p>Each business capability has its own rules, terminology and lifecycle. Each deserves its own domain model.</p>"
+      },
+      {
+        "heading": "Bounded Context as a Boundary",
+        "content": "<pre><code>+----------------------+\n| Orders Context       |\n|----------------------|\n| Order                |\n| Customer             |\n| OrderItem            |\n+----------------------+\n\n+----------------------+\n| Shipping Context     |\n|----------------------|\n| Shipment             |\n| Address              |\n| Carrier              |\n+----------------------+ </code></pre><p>Each context owns its own model and exposes only what other contexts need.</p>"
+      },
+      {
+        "heading": "Models Are Independent",
+        "content": "<p>The same business concept may appear differently in different contexts.</p><table><tr><th>Orders</th><th>Shipping</th></tr><tr><td>Customer</td><td>Recipient</td></tr><tr><td>Address</td><td>Delivery Address</td></tr><tr><td>Order Status</td><td>Shipment Status</td></tr></table><p>Each model reflects the needs of its own context.</p>"
+      },
+      {
+        "heading": "Bounded Context Is Not a Microservice",
+        "content": "<table><tr><th>Bounded Context</th><th>Microservice</th></tr><tr><td>Business boundary.</td><td>Deployment unit.</td></tr><tr><td>Defines a domain model.</td><td>Defines runtime isolation.</td></tr><tr><td>Can exist inside a monolith.</td><td>Usually deployed independently.</td></tr></table><p>A Modular Monolith can contain several Bounded Contexts.</p>"
+      },
+      {
+        "heading": "Bounded Context in a Modular Monolith",
+        "content": "<pre><code>Application\n\n├── Orders\n├── Inventory\n├── Payments\n├── Shipping\n└── Customers</code></pre><p>Each module owns its own entities, repositories and business rules while remaining in the same application.</p>"
+      },
+      {
+        "heading": "Bounded Context in Microservices",
+        "content": "<pre><code>Orders Service\n\nInventory Service\n\nShipping Service\n\nPayments Service</code></pre><p>Microservices are one possible implementation strategy for Bounded Contexts, but they are not required.</p>"
+      },
+      {
+        "heading": "Communication Between Contexts",
+        "content": "<pre><code>Orders\n    │\nOrder Created\n    │\n    ▼\nInventory\n    │\nReserve Stock\n    │\n    ▼\nShipping</code></pre><p>Contexts communicate through explicit contracts instead of sharing internal implementation details.</p>"
+      },
+      {
+        "heading": "Signs Your Context Is Too Large",
+        "content": "<ul><li>Many unrelated business concepts.</li><li>Frequent merge conflicts between teams.</li><li>Classes with hundreds of methods.</li><li>Different business experts disagree on terminology.</li><li>Changes in one feature constantly break another.</li></ul>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Consequence</th></tr><tr><td>One global domain model.</td><td>High coupling.</td></tr><tr><td>Sharing entities between contexts.</td><td>Leaky abstractions.</td></tr><tr><td>Equating Bounded Context with Microservice.</td><td>Premature distribution.</td></tr><tr><td>Splitting contexts by technical layers.</td><td>Business boundaries disappear.</td></tr></table>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Senior engineers identify business boundaries before discussing deployment boundaries. A well-designed Bounded Context can remain inside a Modular Monolith for years and later evolve into a Microservice with minimal changes because the business separation already exists.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>What is a Bounded Context?</li><li>How does it differ from a Subdomain?</li><li>Can multiple Bounded Contexts exist inside one application?</li><li>Does every Bounded Context become a Microservice?</li><li>Why shouldn't entities be shared across contexts?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>A retail platform naturally separates Orders, Pricing, Promotions, Inventory, Logistics and Customer Management into different Bounded Contexts. Each team owns its terminology, business rules and release cadence, allowing the platform to evolve without tightly coupling unrelated business capabilities.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>Bounded Context defines where a domain model is valid.</li><li>Different contexts may use different models for similar concepts.</li><li>Bounded Context is a business boundary, not a deployment strategy.</li><li>Multiple Bounded Contexts can coexist inside a Modular Monolith.</li><li>Strong business boundaries reduce coupling and improve maintainability.</li></ul>"
+      }
+    ]
+  },
+  {
+    "id": "theory-ddd-complete-example",
+    "topic": "ddd",
+    "subtopic": "ddd-complete-example",
+    "title": "Putting Everything Together — Designing an Order Management System with DDD",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>After learning the individual building blocks of Domain-Driven Design, the next step is understanding how they fit together in a real application. This chapter combines every concept presented so far into a single Order Management System.</p><blockquote>DDD is not a collection of patterns. It is a way of modelling business complexity.</blockquote>"
+      },
+      {
+        "heading": "Business Problem",
+        "content": "<p>An online retailer allows customers to purchase products. The system must calculate prices, reserve inventory, process payments and arrange shipment while keeping business rules consistent.</p>"
+      },
+      {
+        "heading": "Step 1 — Ubiquitous Language",
+        "content": "<pre><code>Customer\nOrder\nOrder Item\nProduct\nPayment\nShipment\nWarehouse\nInvoice</code></pre><p>These terms are shared by developers, testers and business experts.</p>"
+      },
+      {
+        "heading": "Step 2 — Subdomains",
+        "content": "<pre><code>Retail Platform\n\n├── Orders\n├── Inventory\n├── Payments\n├── Shipping\n├── Pricing\n└── Customer Management</code></pre><p>Each subdomain represents a different business capability.</p>"
+      },
+      {
+        "heading": "Step 3 — Bounded Contexts",
+        "content": "<pre><code>+----------------+\n| Orders         |\n+----------------+\n\n+----------------+\n| Inventory      |\n+----------------+\n\n+----------------+\n| Payments       |\n+----------------+\n\n+----------------+\n| Shipping       |\n+----------------+</code></pre><p>Each context owns its own model and business rules.</p>"
+      },
+      {
+        "heading": "Step 4 — Context Map",
+        "content": "<pre><code>Orders\n   │\nOrderPlaced\n   ▼\nInventory\n   │\nStockReserved\n   ▼\nPayments\n   │\nPaymentApproved\n   ▼\nShipping</code></pre><p>Contexts communicate through explicit business events instead of sharing implementation details.</p>"
+      },
+      {
+        "heading": "Step 5 — Order Aggregate",
+        "content": "<pre><code>Order (Aggregate Root)\n\n├── OrderItem\n├── ShippingAddress\n└── PaymentStatus</code></pre><p>The Aggregate Root guarantees business consistency.</p>"
+      },
+      {
+        "heading": "Step 6 — Value Objects",
+        "content": "<pre><code>Money\nAddress\nEmailAddress\nQuantity</code></pre><p>These objects have no identity and are compared by value.</p>"
+      },
+      {
+        "heading": "Step 7 — Repository",
+        "content": "<pre><code>Application Service\n        │\n        ▼\nOrderRepository\n        │\n        ▼\nPostgreSQL</code></pre><p>The Repository persists the complete Aggregate without exposing persistence details.</p>"
+      },
+      {
+        "heading": "Step 8 — Application Service",
+        "content": "<pre><code>PlaceOrder\n\nLoad Customer\nLoad Product\nCreate Order\nSave Order\nPublish Event</code></pre><p>The Application Service orchestrates the use case without implementing business rules.</p>"
+      },
+      {
+        "heading": "Step 9 — Domain Service",
+        "content": "<pre><code>PricingService\n\nCalculate Discounts\nApply Promotions\nCalculate Taxes</code></pre><p>Business logic spanning multiple concepts belongs in a Domain Service.</p>"
+      },
+      {
+        "heading": "Step 10 — Domain Events",
+        "content": "<pre><code>OrderPlaced\n      │\n      ├── Reserve Stock\n      ├── Send Email\n      ├── Generate Invoice\n      └── Update Analytics</code></pre><p>Domain Events allow other Bounded Contexts to react without creating tight coupling.</p>"
+      },
+      {
+        "heading": "Complete Architecture",
+        "content": "<pre><code>                Customer\n                    │\n                    ▼\n            Application Service\n                    │\n                    ▼\n           Order Aggregate Root\n        ┌─────────┼──────────┐\n        ▼         ▼          ▼\n   OrderItem   Address    Payment\n                    │\n                    ▼\n             OrderRepository\n                    │\n                    ▼\n               PostgreSQL\n                    │\n                    ▼\n             OrderPlaced Event\n          ┌────────┼─────────┬──────────┐\n          ▼        ▼         ▼          ▼\n     Inventory  Shipping  Invoice  Notification</code></pre>"
+      },
+      {
+        "heading": "How This Evolves",
+        "content": "<table><tr><th>Architecture</th><th>Changes Required</th></tr><tr><td>Layered Architecture</td><td>None.</td></tr><tr><td>Modular Monolith</td><td>Each Bounded Context becomes a module.</td></tr><tr><td>Hexagonal Architecture</td><td>Repositories become Ports.</td></tr><tr><td>Microservices</td><td>Each Bounded Context can become an independent service.</td></tr><tr><td>Event-Driven Architecture</td><td>Domain Events become Integration Events.</td></tr></table>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Why It Is Wrong</th></tr><tr><td>One Repository per table.</td><td>Repositories persist Aggregates.</td></tr><tr><td>Business rules in Controllers.</td><td>Controllers orchestrate HTTP.</td></tr><tr><td>Business rules in Application Services.</td><td>Creates an Anemic Domain Model.</td></tr><tr><td>Sharing Entities between contexts.</td><td>Violates Bounded Context boundaries.</td></tr><tr><td>Publishing events before commit.</td><td>Can produce inconsistent systems.</td></tr></table>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Senior engineers model business capabilities before discussing frameworks or infrastructure. The same DDD model can be implemented as a layered application, a Modular Monolith or a Microservices architecture. The domain model remains stable while the technical architecture evolves to meet scalability, deployment and operational requirements.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>Walk through the lifecycle of placing an order using DDD.</li><li>Where would you place pricing logic?</li><li>Why is Order the Aggregate Root?</li><li>Where are business invariants enforced?</li><li>How do Domain Events reduce coupling?</li><li>How would this design evolve into Microservices?</li><li>How would Hexagonal Architecture fit into this design?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>A retail platform such as REWE naturally separates Orders, Inventory, Pricing, Logistics and Customer Management into different Bounded Contexts. Each team owns its Aggregate Roots, Repositories and business rules while communicating through business events. This approach supports independent evolution of business capabilities and provides a solid foundation for modular monoliths or microservices.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>DDD starts with the business domain, not the database.</li><li>Entities, Value Objects and Aggregates model business concepts.</li><li>Repositories persist Aggregates.</li><li>Application Services orchestrate use cases.</li><li>Domain Services implement cross-Aggregate business rules.</li><li>Domain Events enable loose coupling.</li><li>The same domain model can support multiple architectural styles.</li></ul>"
+      }
+    ]
+  },
+  {
+    "id": "theory-ddd-context-map",
+    "topic": "ddd",
+    "subtopic": "ddd-context-map",
+    "title": "Context Map — Integrating Bounded Contexts",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>Bounded Contexts intentionally separate business models, but business capabilities still need to collaborate. A customer places an order, inventory reserves products, payment authorises the transaction and shipping delivers the package. Domain-Driven Design introduces the <strong>Context Map</strong> to describe how these independent contexts communicate.</p><blockquote>A Context Map documents the relationships between Bounded Contexts rather than their internal implementation.</blockquote>"
+      },
+      {
+        "heading": "Why Context Maps Exist",
+        "content": "<p>Without explicit integration rules, teams gradually share entities, databases and internal APIs until all contexts become tightly coupled.</p><pre><code>Orders\n   │\n   ├── Shared Database\n   ├── Shared Entities\n   └── Direct SQL\n\nResult:\nHigh Coupling</code></pre><p>Context Maps define clean integration boundaries.</p>"
+      },
+      {
+        "heading": "A Typical Retail Example",
+        "content": "<pre><code>Customer\n    │\n    ▼\nOrders\n    │\nOrder Created\n    ▼\nInventory\n    │\nStock Reserved\n    ▼\nShipping\n    │\nShipment Created\n    ▼\nNotification</code></pre><p>Each context owns its own model while collaborating through well-defined contracts.</p>"
+      },
+      {
+        "heading": "Context Relationships",
+        "content": "<p>DDD defines several integration patterns describing how contexts depend on one another.</p><table><tr><th>Relationship</th><th>Purpose</th></tr><tr><td>Partnership</td><td>Teams collaborate closely.</td></tr><tr><td>Customer / Supplier</td><td>One context provides capabilities consumed by another.</td></tr><tr><td>Conformist</td><td>The downstream context accepts the upstream model.</td></tr><tr><td>Shared Kernel</td><td>Contexts share a carefully controlled subset of the model.</td></tr><tr><td>Anti-Corruption Layer</td><td>Protects one model from another.</td></tr><tr><td>Open Host Service</td><td>Provides stable integration interfaces.</td></tr><tr><td>Published Language</td><td>Shared contracts used for communication.</td></tr></table>"
+      },
+      {
+        "heading": "Customer / Supplier",
+        "content": "<pre><code>Pricing\n    │\nProvides Prices\n    ▼\nOrders</code></pre><p>The supplier owns the contract while the customer depends on it.</p>"
+      },
+      {
+        "heading": "Shared Kernel",
+        "content": "<pre><code>Orders\n      ▲\n      │\nShared Types\n      │\n      ▼\nShipping</code></pre><p>Only a very small and carefully maintained part of the model should be shared.</p>"
+      },
+      {
+        "heading": "Anti-Corruption Layer",
+        "content": "<pre><code>Legacy ERP\n      │\nTranslator\n      │\nOrders</code></pre><p>An Anti-Corruption Layer prevents external models from leaking into your own domain model.</p>"
+      },
+      {
+        "heading": "Published Language",
+        "content": "<pre><code>OrderCreated\nOrderCancelled\nPaymentApproved\nShipmentCreated</code></pre><p>Contexts exchange contracts instead of exposing internal implementation details.</p>"
+      },
+      {
+        "heading": "Open Host Service",
+        "content": "<pre><code>REST API\nGraphQL\nKafka Topics\nPublic Events</code></pre><p>A context exposes stable integration points that other contexts can safely consume.</p>"
+      },
+      {
+        "heading": "Choosing the Right Relationship",
+        "content": "<table><tr><th>Situation</th><th>Recommended Relationship</th></tr><tr><td>Legacy Integration</td><td>Anti-Corruption Layer</td></tr><tr><td>Independent Teams</td><td>Published Language</td></tr><tr><td>Strong Collaboration</td><td>Partnership</td></tr><tr><td>Small Shared Model</td><td>Shared Kernel</td></tr></table>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Consequence</th></tr><tr><td>Sharing the same database.</td><td>Strong coupling.</td></tr><tr><td>Sharing JPA entities.</td><td>Leaky domain models.</td></tr><tr><td>Calling internal services directly.</td><td>Broken boundaries.</td></tr><tr><td>No documented integration strategy.</td><td>Architecture erosion.</td></tr></table>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Experienced architects spend as much time designing the relationships between Bounded Contexts as they do designing the contexts themselves. Most scalability and maintainability problems originate from poorly defined integrations rather than poor object modelling.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>What is a Context Map?</li><li>How does it differ from a Bounded Context?</li><li>When would you use an Anti-Corruption Layer?</li><li>What is a Shared Kernel?</li><li>Should contexts share entities?</li><li>What is a Published Language?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>A retail platform integrates Orders, Inventory, Pricing, Logistics and Customer Management. Each context owns its business model while exchanging business events such as OrderCreated, StockReserved and ShipmentCreated through stable contracts. This allows teams to evolve independently without exposing internal implementation details.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>Context Maps describe relationships between Bounded Contexts.</li><li>Contexts should collaborate through explicit contracts.</li><li>Avoid sharing entities or databases across contexts.</li><li>Integration patterns reduce coupling while preserving business autonomy.</li><li>Well-designed Context Maps enable modular monoliths and microservices alike.</li></ul>"
+      }
+    ]
+  },
+  {
+    "id": "theory-ddd-domain-events",
+    "topic": "ddd",
+    "subtopic": "ddd-domain-events",
+    "title": "Domain Events — Capturing Business Facts",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>A <strong>Domain Event</strong> represents something important that has already happened in the business domain. It is not a command or a request—it is a record of a completed business fact.</p><blockquote>Commands express intent. Domain Events express facts.</blockquote>"
+      },
+      {
+        "heading": "Why Domain Events Exist",
+        "content": "<p>Business actions often trigger additional processes. When an order is placed, inventory must reserve stock, notifications must be sent and loyalty points may be awarded. Without Domain Events, the Order Aggregate would become tightly coupled to every other business capability.</p><pre><code>Place Order\n      │\n      ▼\nOrder Paid\n      │\n      ├── Reserve Stock\n      ├── Send Email\n      ├── Update Analytics\n      └── Generate Invoice</code></pre>"
+      },
+      {
+        "heading": "Command vs Domain Event",
+        "content": "<table><tr><th>Command</th><th>Domain Event</th></tr><tr><td>PlaceOrder</td><td>OrderPlaced</td></tr><tr><td>PayOrder</td><td>OrderPaid</td></tr><tr><td>CancelOrder</td><td>OrderCancelled</td></tr><tr><td>ShipOrder</td><td>OrderShipped</td></tr></table><p>A command asks the system to do something. A Domain Event states that something already happened.</p>"
+      },
+      {
+        "heading": "Event Flow",
+        "content": "<pre><code>User\n   │\nCommand\n   │\n   ▼\nApplication Service\n   │\n   ▼\nOrder Aggregate\n   │\nBusiness Rule\n   │\n   ▼\nOrderPaid Event\n   │\n   ├── Inventory\n   ├── Shipping\n   ├── Notification\n   └── Analytics</code></pre>"
+      },
+      {
+        "heading": "Characteristics of Domain Events",
+        "content": "<ul><li>Represent completed business facts.</li><li>Are immutable.</li><li>Use past-tense names.</li><li>Contain only relevant business information.</li><li>Can have multiple consumers.</li></ul>"
+      },
+      {
+        "heading": "Naming Conventions",
+        "content": "<table><tr><th>Good</th><th>Poor</th></tr><tr><td>OrderPlaced</td><td>CreateOrder</td></tr><tr><td>PaymentApproved</td><td>ApprovePayment</td></tr><tr><td>ShipmentCreated</td><td>CreateShipment</td></tr><tr><td>CustomerRegistered</td><td>RegisterCustomer</td></tr></table><p>Events describe facts that already occurred.</p>"
+      },
+      {
+        "heading": "Publishing Domain Events",
+        "content": "<pre><code>Order Aggregate\n      │\norder.pay()\n      │\nBusiness succeeds\n      │\n      ▼\nOrderPaid Event</code></pre><p>Domain Events are typically created after business rules have been successfully applied.</p>"
+      },
+      {
+        "heading": "Domain Events vs Integration Events",
+        "content": "<table><tr><th>Domain Event</th><th>Integration Event</th></tr><tr><td>Internal to the domain.</td><td>Shared with external systems.</td></tr><tr><td>Rich business model.</td><td>Stable public contract.</td></tr><tr><td>May evolve frequently.</td><td>Should evolve carefully.</td></tr></table><p>Many systems translate Domain Events into Integration Events before publishing them outside the bounded context.</p>"
+      },
+      {
+        "heading": "Benefits",
+        "content": "<ul><li>Loose coupling.</li><li>Better scalability.</li><li>Independent evolution of contexts.</li><li>Simpler business workflows.</li><li>Natural fit for Event-Driven Architecture.</li></ul>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Consequence</th></tr><tr><td>Naming events as commands.</td><td>Confusing intent with facts.</td></tr><tr><td>Publishing before the transaction succeeds.</td><td>Inconsistent systems.</td></tr><tr><td>Putting infrastructure data inside events.</td><td>Leaky abstractions.</td></tr><tr><td>Using events for synchronous workflows.</td><td>Unnecessary complexity.</td></tr></table>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Domain Events should model business facts, not technical implementation details. In distributed systems, they are frequently translated into Integration Events and delivered through messaging platforms such as Kafka, RabbitMQ or cloud event buses. Reliable publication often requires patterns such as the Transactional Outbox to avoid losing events when a database transaction succeeds but message publication fails.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>What is a Domain Event?</li><li>How is a Domain Event different from a Command?</li><li>Why should events use past-tense names?</li><li>When should a Domain Event be published?</li><li>What is the difference between a Domain Event and an Integration Event?</li><li>How do Domain Events reduce coupling?</li><li>Why is the Outbox Pattern commonly used with Domain Events?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>When an Order is successfully paid, the Order Aggregate may produce an OrderPaid Domain Event. Inside the Orders bounded context this event represents a completed business fact. It can later be translated into an Integration Event consumed by Inventory, Logistics and Notification services, allowing each business capability to evolve independently while maintaining clear ownership of business rules.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>Domain Events represent completed business facts.</li><li>Commands express intent; events express outcomes.</li><li>Events are immutable and use past-tense names.</li><li>Domain Events reduce coupling between Aggregates and Bounded Contexts.</li><li>In distributed systems, Domain Events often become Integration Events delivered through messaging infrastructure.</li></ul>"
+      }
+    ]
+  },
+  {
+    "id": "theory-ddd-entity",
+    "topic": "ddd",
+    "subtopic": "ddd-entity",
+    "title": "Entity — Objects with Identity and Lifecycle",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>In Domain-Driven Design, an <strong>Entity</strong> is an object defined primarily by its <strong>identity</strong> rather than by its attributes. While its state may change throughout its lifecycle, its identity remains constant.</p><blockquote>An Entity answers the question: <em>Which real-world thing does this object represent?</em></blockquote>"
+      },
+      {
+        "heading": "Why Entities Exist",
+        "content": "<p>Many business concepts evolve over time. A customer changes address, an order changes status, an employee gets promoted. Although their data changes, they are still the same business object.</p><pre><code>Customer #1023\n\nAddress: London\n▼\nAddress: Madrid\n\nSame Customer</code></pre>"
+      },
+      {
+        "heading": "Identity vs Attributes",
+        "content": "<table><tr><th>Identity</th><th>Attributes</th></tr><tr><td>Never changes.</td><td>May change.</td></tr><tr><td>Uniquely identifies the Entity.</td><td>Describe the current state.</td></tr><tr><td>Usually an ID.</td><td>Name, Address, Status...</td></tr></table>"
+      },
+      {
+        "heading": "Examples",
+        "content": "<table><tr><th>Entity</th><th>Identity</th></tr><tr><td>Customer</td><td>customerId</td></tr><tr><td>Order</td><td>orderId</td></tr><tr><td>Invoice</td><td>invoiceId</td></tr><tr><td>Shipment</td><td>shipmentId</td></tr><tr><td>Employee</td><td>employeeId</td></tr></table>"
+      },
+      {
+        "heading": "Lifecycle",
+        "content": "<pre><code>Create\n   │\n   ▼\nUpdate\n   │\n   ▼\nSuspend\n   │\n   ▼\nReactivate\n   │\n   ▼\nArchive</code></pre><p>An Entity normally has a lifecycle. It is created, modified and eventually removed or archived.</p>"
+      },
+      {
+        "heading": "Rich Domain Model",
+        "content": "<p>Entities should contain behaviour, not only data.</p><pre><code>Order\n\npay()\nship()\ncancel()\ncalculateTotal()</code></pre><p>The Entity is responsible for protecting its own business rules.</p>"
+      },
+      {
+        "heading": "Anemic Domain Model",
+        "content": "<p>An Anemic Domain Model contains only fields and getters/setters while business rules are scattered across services.</p><pre><code>Order\n\nid\nstatus\ntotal\n\ngetters\nsetters</code></pre><p>This makes the domain model weak and difficult to maintain.</p>"
+      },
+      {
+        "heading": "Rich vs Anemic",
+        "content": "<table><tr><th>Rich Domain Model</th><th>Anemic Domain Model</th></tr><tr><td>Contains behaviour.</td><td>Contains only data.</td></tr><tr><td>Protects business rules.</td><td>Rules spread across services.</td></tr><tr><td>High cohesion.</td><td>Low cohesion.</td></tr><tr><td>Preferred in DDD.</td><td>Generally considered an anti-pattern in DDD.</td></tr></table>"
+      },
+      {
+        "heading": "Entity or Value Object?",
+        "content": "<table><tr><th>Question</th><th>If YES</th></tr><tr><td>Does it have a business identity?</td><td>Entity</td></tr><tr><td>Does it have its own lifecycle?</td><td>Entity</td></tr><tr><td>Is it tracked independently?</td><td>Entity</td></tr><tr><td>Can it simply be replaced?</td><td>Probably a Value Object.</td></tr></table>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Consequence</th></tr><tr><td>Using Entities everywhere.</td><td>Complex model.</td></tr><tr><td>Entities with only getters/setters.</td><td>Anemic Domain Model.</td></tr><tr><td>Putting business rules in services.</td><td>Low cohesion.</td></tr><tr><td>Comparing Entities by attributes.</td><td>Incorrect identity semantics.</td></tr></table>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Experienced developers keep business behaviour close to the data it affects. An Entity should be responsible for maintaining its own consistency instead of relying on external services to manipulate its internal state.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>What is an Entity in DDD?</li><li>How is an Entity different from a Value Object?</li><li>Why is identity more important than attributes?</li><li>What is an Anemic Domain Model?</li><li>Should Entities contain business behaviour?</li><li>How should two Entities be compared?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>In a retail platform, entities such as Customer, Order, Shipment and Product are identified by unique business identifiers and evolve over time. Their behaviour includes operations such as placing orders, reserving stock, changing delivery addresses and cancelling shipments while preserving business consistency.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>An Entity is defined by its identity.</li><li>Its attributes may change during its lifecycle.</li><li>Entities should contain business behaviour.</li><li>Avoid the Anemic Domain Model.</li><li>Identity distinguishes an Entity from a Value Object.</li></ul>"
+      }
+    ]
+  },
+  {
+    "id": "theory-ddd-introduction",
+    "topic": "ddd",
+    "subtopic": "ddd-introduction",
+    "title": "Why Domain-Driven Design Exists — Solving Complex Business Problems",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>Most software projects do not fail because developers cannot write code. They fail because the code no longer represents the business it is supposed to support. As requirements evolve, business rules become scattered across controllers, services, repositories and database procedures until the application becomes difficult to understand and even harder to change.</p><blockquote>Domain-Driven Design (DDD) exists to keep software aligned with business knowledge as systems grow in size and complexity.</blockquote>"
+      },
+      {
+        "heading": "The Real Problem",
+        "content": "<p>Imagine an e-commerce platform. At first, creating an order appears simple: receive products, calculate the total and save the order.</p><pre><code>Create Order\n      │\n      ▼\nCalculate Total\n      │\n      ▼\nSave</code></pre><p>Months later the business introduces promotions, coupons, taxes, regional pricing, multiple payment methods, inventory reservations, fraud detection and shipping rules. What was once a simple service gradually becomes a large collection of conditional statements.</p>"
+      },
+      {
+        "heading": "The Growth of Complexity",
+        "content": "<pre><code>OrderService\n\nif VIP...\nif Coupon...\nif Black Friday...\nif International...\nif Subscription...\nif Premium Delivery...\nif Marketplace...\nif Digital Product...\n...</code></pre><p>Complexity rarely appears suddenly. It grows feature after feature until understanding the application becomes more difficult than implementing new functionality.</p>"
+      },
+      {
+        "heading": "The Anemic Domain Model",
+        "content": "<p>A common anti-pattern is the Anemic Domain Model, where domain objects contain only data while all business rules are implemented elsewhere.</p><pre><code>Customer\n\nid\nname\nemail\npoints</code></pre><p>The Customer object knows nothing about customers. Every business rule lives inside services, making behaviour difficult to discover and maintain.</p>"
+      },
+      {
+        "heading": "Why Layered Architectures Become Difficult",
+        "content": "<pre><code>Controller\n      │\n      ▼\nService\n      │\n      ▼\nRepository\n      │\n      ▼\nDatabase</code></pre><p>Layered architectures organize technical responsibilities well, but they do not automatically organize business knowledge. As applications grow, business logic tends to leak across multiple layers.</p>"
+      },
+      {
+        "heading": "DDD Changes the Focus",
+        "content": "<p>Instead of asking how to organize code, DDD starts by asking how the business works.</p><pre><code>Business Experts\n        │\n        ▼\nBusiness Model\n        │\n        ▼\nSoftware Model\n        │\n        ▼\nImplementation</code></pre><p>The software becomes a representation of the business rather than a collection of database operations.</p>"
+      },
+      {
+        "heading": "The Core Idea",
+        "content": "<blockquote>The primary goal of Domain-Driven Design is not better code. It is better understanding of the business domain.</blockquote><p>When developers and domain experts share the same mental model, software becomes easier to evolve because the implementation reflects business concepts instead of technical shortcuts.</p>"
+      },
+      {
+        "heading": "What DDD Is Not",
+        "content": "<table><tr><th>Myth</th><th>Reality</th></tr><tr><td>DDD is a framework.</td><td>DDD is a design philosophy.</td></tr><tr><td>DDD requires microservices.</td><td>DDD works equally well with modular monoliths and microservices.</td></tr><tr><td>DDD replaces Clean Architecture.</td><td>DDD models the business domain, while architectural patterns organize application structure.</td></tr><tr><td>DDD is only for large companies.</td><td>Any application with complex business rules can benefit from DDD.</td></tr></table>"
+      },
+      {
+        "heading": "DDD Building Blocks",
+        "content": "<pre><code>Domain Knowledge\n        │\n        ▼\nUbiquitous Language\n        │\n        ▼\nEntities\nValue Objects\nAggregates\nRepositories\nDomain Services\nDomain Events\nBounded Contexts</code></pre><p>These concepts are introduced to solve specific business modelling problems rather than to increase architectural complexity.</p>"
+      },
+      {
+        "heading": "A Running Example",
+        "content": "<p>Throughout this module we will use the same e-commerce platform to illustrate every DDD concept.</p><pre><code>Customer\n      │\n      ▼\nOrder\n      │\n      ▼\nPayment\n      │\n      ▼\nInventory\n      │\n      ▼\nShipment</code></pre><p>Each chapter will progressively evolve this domain model using Domain-Driven Design principles.</p>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Senior engineers recognise that most long-term software problems are modelling problems rather than programming problems. Choosing the correct domain boundaries usually has a greater impact on maintainability than selecting a particular framework or database technology.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>Why was Domain-Driven Design created?</li><li>What kinds of systems benefit most from DDD?</li><li>What problem does the Anemic Domain Model create?</li><li>Does DDD require microservices?</li><li>How does DDD differ from Clean Architecture?</li><li>Can DDD be applied to a modular monolith?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>Large retail platforms manage orders, products, pricing, promotions, logistics, suppliers and customer accounts. Each area contains distinct business rules that evolve independently. Domain-Driven Design helps engineering teams model these domains explicitly, reducing coupling between teams and allowing each business capability to evolve without impacting the entire platform.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>DDD addresses business complexity, not technical complexity.</li><li>The business domain should drive the software model.</li><li>Business knowledge belongs inside the domain model.</li><li>DDD complements architectural patterns such as Clean Architecture and Hexagonal Architecture.</li><li>Understanding the domain comes before choosing technologies.</li></ul>"
+      }
+    ]
+  },
+  {
+    "id": "theory-ddd-repository",
+    "topic": "ddd",
+    "subtopic": "ddd-repository",
+    "title": "Repository — Persisting Aggregates, Not Objects",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>A <strong>Repository</strong> provides the illusion of an in-memory collection of Aggregates. It hides persistence details and allows the domain model to work without knowing whether data comes from PostgreSQL, MongoDB, Redis or another storage technology.</p><blockquote>A Repository belongs to the Domain Layer, while its implementation belongs to the Infrastructure Layer.</blockquote>"
+      },
+      {
+        "heading": "Why Repositories Exist",
+        "content": "<p>Business code should not depend on SQL, JPA, Hibernate or any persistence framework.</p><pre><code>Application\n      │\n      ▼\nRepository\n      │\n      ▼\nDatabase</code></pre><p>The domain only knows the Repository interface.</p>"
+      },
+      {
+        "heading": "Repository Responsibilities",
+        "content": "<ul><li>Load Aggregates.</li><li>Persist Aggregates.</li><li>Remove Aggregates.</li><li>Hide persistence technology.</li><li>Provide business-oriented queries.</li></ul>"
+      },
+      {
+        "heading": "Repository Works with Aggregates",
+        "content": "<pre><code>✔ OrderRepository\n\nsave(Order)\nfindById(orderId)\ndelete(Order)\n\n❌ OrderItemRepository\n❌ PaymentRepository</code></pre><p>Repositories are created for Aggregate Roots, not for every Entity inside an Aggregate.</p>"
+      },
+      {
+        "heading": "Repository vs DAO",
+        "content": "<table><tr><th>Repository</th><th>DAO</th></tr><tr><td>Domain concept.</td><td>Infrastructure concept.</td></tr><tr><td>Works with Aggregates.</td><td>Works with database records.</td></tr><tr><td>Business-oriented.</td><td>Persistence-oriented.</td></tr><tr><td>Hides storage details.</td><td>Exposes storage operations.</td></tr></table>"
+      },
+      {
+        "heading": "Repository Interface",
+        "content": "<pre><code>OrderRepository\n\nfindById(id)\nsave(order)\ndelete(order)</code></pre><p>The interface expresses business intent, not database operations.</p>"
+      },
+      {
+        "heading": "Implementation",
+        "content": "<pre><code>Domain\n│\n├── OrderRepository (interface)\n│\nInfrastructure\n│\n└── JpaOrderRepository\n└── JdbcOrderRepository\n└── MongoOrderRepository</code></pre><p>Multiple implementations may exist without affecting the domain model.</p>"
+      },
+      {
+        "heading": "One Repository per Aggregate Root",
+        "content": "<table><tr><th>Aggregate Root</th><th>Repository</th></tr><tr><td>Order</td><td>OrderRepository</td></tr><tr><td>Customer</td><td>CustomerRepository</td></tr><tr><td>Invoice</td><td>InvoiceRepository</td></tr></table><p>Child entities are accessed through their Aggregate Root.</p>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Consequence</th></tr><tr><td>Repository for every table.</td><td>Database-driven design.</td></tr><tr><td>Returning JPA entities everywhere.</td><td>Infrastructure leaks into the domain.</td></tr><tr><td>Repositories containing business logic.</td><td>Violates separation of concerns.</td></tr><tr><td>Repositories with dozens of search methods.</td><td>Bloated interfaces.</td></tr></table>"
+      },
+      {
+        "heading": "Repository in Hexagonal Architecture",
+        "content": "<pre><code>Application Service\n        │\n        ▼\nOrderRepository (Port)\n        │\n        ▼\nJpaOrderRepository (Adapter)\n        │\n        ▼\nPostgreSQL</code></pre><p>In Hexagonal Architecture, the Repository interface is an outbound port, while the persistence implementation is an adapter.</p>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Experienced engineers keep Repositories focused on Aggregate persistence. Complex reporting, analytics and read-heavy queries are often implemented outside the domain model using dedicated read models or CQRS, preventing the Repository from becoming a generic data-access layer.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>What is a Repository?</li><li>How is a Repository different from a DAO?</li><li>Why is there one Repository per Aggregate Root?</li><li>Should a Repository contain business logic?</li><li>Where is the Repository interface located?</li><li>Where is its implementation located?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>An OrderRepository loads and persists complete Order Aggregates rather than individual database rows. The business layer remains independent from Hibernate or PostgreSQL, allowing persistence technology to evolve without changing the domain model.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>A Repository persists Aggregates, not individual Entities.</li><li>The interface belongs to the Domain Layer.</li><li>The implementation belongs to the Infrastructure Layer.</li><li>Repositories are business-oriented, not database-oriented.</li><li>Avoid treating Repositories as generic DAOs.</li></ul>"
+      }
+    ]
+  },
+  {
+    "id": "theory-ddd-services",
+    "topic": "ddd",
+    "subtopic": "ddd-services",
+    "title": "Domain Service vs Application Service — Where Business Logic Belongs",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>Not every business operation naturally belongs inside an Entity or Value Object. Domain-Driven Design introduces <strong>Domain Services</strong> for domain logic that spans multiple Aggregates or cannot reasonably belong to a single object. At the same time, <strong>Application Services</strong> coordinate use cases, repositories and external systems without containing business rules.</p><blockquote>Domain Services implement business decisions. Application Services orchestrate business operations.</blockquote>"
+      },
+      {
+        "heading": "Why Services Exist",
+        "content": "<p>Some business operations involve multiple Aggregates or external systems. Placing this logic inside an Entity would create unnecessary coupling.</p><pre><code>Customer\n     │\n     ├── Order\n     ├── Payment\n     └── Inventory\n\nBusiness operation\n      │\n      ▼\nDomain Service</code></pre>"
+      },
+      {
+        "heading": "Application Service Responsibilities",
+        "content": "<ul><li>Execute a use case.</li><li>Load Aggregates from Repositories.</li><li>Call Domain methods.</li><li>Persist Aggregates.</li><li>Publish Domain Events.</li><li>Coordinate external services.</li></ul>"
+      },
+      {
+        "heading": "Domain Service Responsibilities",
+        "content": "<ul><li>Implement domain rules.</li><li>Coordinate multiple Aggregates.</li><li>Contain business decisions.</li><li>Remain independent of infrastructure.</li></ul>"
+      },
+      {
+        "heading": "Execution Flow",
+        "content": "<pre><code>REST Controller\n        │\n        ▼\nApplication Service\n        │\n        ▼\nRepositories\n        │\n        ▼\nAggregates\n        │\n        ▼\nDomain Service (if needed)\n        │\n        ▼\nSave Aggregate\n        │\n        ▼\nPublish Domain Event</code></pre>"
+      },
+      {
+        "heading": "When an Entity Is Enough",
+        "content": "<pre><code>order.pay()\norder.cancel()\norder.ship()</code></pre><p>If the behaviour naturally belongs to a single Aggregate, keep it inside the Aggregate Root.</p>"
+      },
+      {
+        "heading": "When a Domain Service Is Appropriate",
+        "content": "<pre><code>Transfer Inventory\n\nWarehouse A\n        │\n        ▼\nWarehouse B</code></pre><p>The operation involves multiple Aggregates and business rules that do not naturally belong to only one of them.</p>"
+      },
+      {
+        "heading": "Domain Service vs Application Service",
+        "content": "<table><tr><th>Domain Service</th><th>Application Service</th></tr><tr><td>Contains business rules.</td><td>Coordinates the workflow.</td></tr><tr><td>Part of the Domain Layer.</td><td>Part of the Application Layer.</td></tr><tr><td>Independent from infrastructure.</td><td>Uses repositories and external services.</td></tr><tr><td>Expresses business concepts.</td><td>Implements use cases.</td></tr></table>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Consequence</th></tr><tr><td>Putting all business logic in Application Services.</td><td>Anemic Domain Model.</td></tr><tr><td>Creating Domain Services for everything.</td><td>God Services.</td></tr><tr><td>Repositories inside Entities.</td><td>Infrastructure leaks into the Domain.</td></tr><tr><td>Business rules in Controllers.</td><td>Poor separation of concerns.</td></tr></table>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>A useful rule is: if a business rule can naturally live inside an Aggregate, keep it there. Create a Domain Service only when the rule genuinely spans multiple Aggregates or cannot logically belong to a single one. Application Services should remain thin, acting primarily as orchestrators.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>What is the difference between a Domain Service and an Application Service?</li><li>Should Application Services contain business rules?</li><li>When should you introduce a Domain Service?</li><li>Why should Entities not access Repositories directly?</li><li>What layer owns the Domain Service?</li><li>What layer owns the Application Service?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>An Application Service may coordinate the 'Place Order' use case by loading the Customer and Order Aggregates, invoking domain operations, saving changes and publishing an OrderCreated event. A Domain Service could calculate complex pricing or promotional discounts involving multiple business concepts without depending on infrastructure.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>Application Services orchestrate use cases.</li><li>Domain Services implement domain rules that do not belong to a single Aggregate.</li><li>Keep business behaviour inside Aggregates whenever possible.</li><li>Avoid turning Application Services into large procedural classes.</li><li>Thin Application Services and rich Domain Models are a hallmark of well-designed DDD systems.</li></ul>"
+      }
+    ]
+  },
+  {
+    "id": "theory-ddd-subdomains",
+    "topic": "ddd",
+    "subtopic": "ddd-subdomains",
+    "title": "Subdomains — Dividing Business Complexity",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>Large businesses solve many different problems at the same time. An online retailer does not only sell products. It manages inventory, pricing, logistics, suppliers, payments, promotions, customer accounts and many other capabilities. Domain-Driven Design recommends dividing this complexity into <strong>Subdomains</strong>, each representing a distinct business capability.</p><blockquote>Large software systems become manageable when business complexity is divided into smaller domains.</blockquote>"
+      },
+      {
+        "heading": "Why Subdomains Exist",
+        "content": "<pre><code>Business\n    │\n    ▼\nMany Business Capabilities\n    │\n    ▼\nIndependent Subdomains\n    │\n    ▼\nIndependent Software Models</code></pre><p>Instead of modelling the entire company as one massive system, DDD encourages modelling each business capability independently.</p>"
+      },
+      {
+        "heading": "Example — Retail Platform",
+        "content": "<pre><code>Retail Platform\n\n├── Product Catalog\n├── Pricing\n├── Inventory\n├── Orders\n├── Payments\n├── Shipping\n├── Customer Accounts\n├── Promotions\n└── Suppliers</code></pre><p>Each of these areas solves different business problems and evolves independently.</p>"
+      },
+      {
+        "heading": "Business Capabilities Have Different Rules",
+        "content": "<table><tr><th>Subdomain</th><th>Main Responsibility</th></tr><tr><td>Orders</td><td>Create and manage customer orders.</td></tr><tr><td>Inventory</td><td>Track product availability.</td></tr><tr><td>Pricing</td><td>Calculate product prices.</td></tr><tr><td>Shipping</td><td>Deliver purchased products.</td></tr><tr><td>Payments</td><td>Process financial transactions.</td></tr></table><p>Each capability has its own business rules and should evolve without tightly coupling to the others.</p>"
+      },
+      {
+        "heading": "Types of Subdomains",
+        "content": "<table><tr><th>Type</th><th>Description</th></tr><tr><td>Core Domain</td><td>The business capability that provides competitive advantage.</td></tr><tr><td>Supporting Subdomain</td><td>Business functionality required to support the Core Domain.</td></tr><tr><td>Generic Subdomain</td><td>Common capabilities available in many systems.</td></tr></table>"
+      },
+      {
+        "heading": "Core Domain",
+        "content": "<p>The Core Domain contains the business logic that differentiates one company from another.</p><pre><code>Retail Company\n        │\n        ▼\nPricing Strategy\nRecommendation Engine\nPromotion Rules</code></pre><p>This is usually where the company invests most of its engineering effort.</p>"
+      },
+      {
+        "heading": "Supporting Subdomains",
+        "content": "<p>Supporting Subdomains implement business-specific functionality but are not the primary competitive advantage.</p><pre><code>Returns\nCustomer Support\nSupplier Management</code></pre>"
+      },
+      {
+        "heading": "Generic Subdomains",
+        "content": "<p>Generic Subdomains solve common problems that almost every business has.</p><pre><code>Authentication\nNotifications\nEmail\nLogging\nAudit</code></pre><p>These are often implemented using existing frameworks or third-party services.</p>"
+      },
+      {
+        "heading": "Why This Separation Matters",
+        "content": "<pre><code>Business\n      │\n      ▼\nSubdomains\n      │\n      ▼\nBounded Contexts\n      │\n      ▼\nSoftware Modules</code></pre><p>Subdomains provide the business perspective that later becomes Bounded Contexts inside the software architecture.</p>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Consequence</th></tr><tr><td>One large domain model.</td><td>High coupling.</td></tr><tr><td>Split by technical layers.</td><td>Business concepts become mixed.</td></tr><tr><td>Everything is a Core Domain.</td><td>Engineering effort is wasted.</td></tr><tr><td>Ignoring business boundaries.</td><td>Difficult maintenance.</td></tr></table>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Senior engineers begin modelling by identifying business capabilities rather than database tables or REST endpoints. Correct subdomain identification reduces coupling, simplifies team ownership and creates a foundation for scalable architectures such as Modular Monoliths and Microservices.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>What is a Subdomain?</li><li>Why are Subdomains important in DDD?</li><li>What is the difference between Core, Supporting and Generic Subdomains?</li><li>Should every Subdomain become a Microservice?</li><li>How do Subdomains relate to Bounded Contexts?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>A retail platform naturally separates into Product Catalog, Pricing, Promotions, Inventory, Orders, Logistics, Payments and Customer Accounts. Each capability evolves independently, has different business experts and follows different business rules. Identifying these Subdomains allows engineering teams to organise software around business capabilities instead of technical layers.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>Subdomains divide business complexity.</li><li>Every Subdomain represents a distinct business capability.</li><li>Core Domains contain competitive advantage.</li><li>Supporting and Generic Subdomains reduce unnecessary complexity.</li><li>Subdomains provide the foundation for Bounded Contexts.</li></ul>"
+      }
+    ]
+  },
+  {
+    "id": "theory-ddd-ubiquitous-language",
+    "topic": "ddd",
+    "subtopic": "ddd-ubiquitous-language",
+    "title": "Ubiquitous Language — Speaking the Language of the Business",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>One of the main causes of software complexity is the mismatch between the language used by business experts and the language used by developers. Domain-Driven Design introduces the concept of a <strong>Ubiquitous Language</strong>: a common vocabulary shared by developers, domain experts, testers, analysts and stakeholders.</p><blockquote>If two people describe the same business concept using different words, misunderstandings become inevitable.</blockquote>"
+      },
+      {
+        "heading": "The Communication Problem",
+        "content": "<pre><code>Business Expert\n\"Reserve a product\"\n\nDeveloper\n\"Create inventory record\"\n\nQA\n\"Lock stock\"\n\nDatabase\nreserved_quantity</code></pre><p>Although everyone refers to the same business concept, different terminology leads to confusion and inconsistent implementations.</p>"
+      },
+      {
+        "heading": "The Goal of Ubiquitous Language",
+        "content": "<pre><code>Business Experts\n        │\n        ▼\nShared Vocabulary\n        │\n        ▼\nSoftware Model\n        │\n        ▼\nSource Code</code></pre><p>The same words used during business meetings should appear in diagrams, documentation, source code and automated tests.</p>"
+      },
+      {
+        "heading": "Code Should Reflect the Business",
+        "content": "<p>Names in the source code should represent business concepts rather than technical shortcuts.</p><table><tr><th>Poor</th><th>Better</th></tr><tr><td>ProcessData()</td><td>ApproveOrder()</td></tr><tr><td>EntityManager</td><td>OrderRepository</td></tr><tr><td>Record</td><td>Shipment</td></tr><tr><td>Flag</td><td>OrderStatus</td></tr></table>"
+      },
+      {
+        "heading": "A Shared Mental Model",
+        "content": "<pre><code>Customer\n      │\nplaces\n      ▼\nOrder\n      │\ncontains\n      ▼\nOrder Items\n      │\npaid by\n      ▼\nPayment</code></pre><p>Every participant should understand these concepts in exactly the same way.</p>"
+      },
+      {
+        "heading": "Business Terms vs Technical Terms",
+        "content": "<table><tr><th>Technical Thinking</th><th>Business Thinking</th></tr><tr><td>Insert Row</td><td>Create Order</td></tr><tr><td>Update Status</td><td>Approve Payment</td></tr><tr><td>Delete Record</td><td>Cancel Reservation</td></tr><tr><td>Foreign Key</td><td>Customer owns Orders</td></tr></table><p>DDD encourages modelling business behaviour rather than database operations.</p>"
+      },
+      {
+        "heading": "Avoid Synonyms",
+        "content": "<p>Every important business concept should have a single agreed name.</p><pre><code>Customer\nClient\nBuyer\nAccount Holder</code></pre><p>Choosing one term avoids ambiguity across the codebase.</p>"
+      },
+      {
+        "heading": "Language Evolves",
+        "content": "<p>The ubiquitous language is not fixed. As the business evolves, new concepts emerge and existing terminology changes. The software model should evolve together with the business vocabulary.</p>"
+      },
+      {
+        "heading": "Example — Online Retail",
+        "content": "<pre><code>Customer\nProduct\nShopping Cart\nOrder\nPayment\nShipment\nInvoice\nRefund\nPromotion\nCoupon</code></pre><p>These are business concepts, not database tables. Their names should remain consistent throughout the application.</p>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Consequence</th></tr><tr><td>Different names for the same concept.</td><td>Miscommunication.</td></tr><tr><td>Technical names in the domain model.</td><td>Business becomes difficult to understand.</td></tr><tr><td>Database names drive the design.</td><td>Business model becomes hidden.</td></tr><tr><td>Abbreviations everywhere.</td><td>Lower readability.</td></tr></table>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Senior engineers spend significant time discussing terminology with domain experts before writing code. Correct names reduce misunderstandings, simplify onboarding and make the software easier to evolve over many years.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>What is Ubiquitous Language?</li><li>Why is a shared vocabulary important?</li><li>Should source code use technical or business terminology?</li><li>Can the Ubiquitous Language change over time?</li><li>How does Ubiquitous Language improve maintainability?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>In a retail platform, terms such as Order, Promotion, Basket, Delivery Slot, Warehouse, Supplier and Shipment have precise business meanings. Using the same terminology across teams, services, APIs and databases reduces ambiguity and enables different engineering teams to collaborate without constantly translating between technical and business language.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>Ubiquitous Language is a shared vocabulary between business and engineering.</li><li>The same terminology should appear in conversations, documentation and source code.</li><li>Business concepts should drive class names, methods and APIs.</li><li>Avoid synonyms for the same concept.</li><li>The language evolves together with the business.</li></ul>"
+      }
+    ]
+  },
+  {
+    "id": "theory-ddd-value-object",
+    "topic": "ddd",
+    "subtopic": "ddd-value-object",
+    "title": "Value Object — Objects Defined by Their Values",
+    "sections": [
+      {
+        "heading": "Introduction",
+        "content": "<p>A <strong>Value Object</strong> is an object that is identified only by the values it contains. Unlike an Entity, it has no business identity and no independent lifecycle. If its values change, a new Value Object is created.</p><blockquote>A Value Object answers the question: <em>What describes something?</em>, not <em>Which thing is it?</em>.</blockquote>"
+      },
+      {
+        "heading": "Why Value Objects Exist",
+        "content": "<p>Many business concepts describe characteristics rather than independent business objects. An address, a money amount or an email address does not usually need its own identity.</p><pre><code>Customer\n   │\n   ├── Name\n   ├── Email\n   └── Address\n\nAddress describes the Customer.\nIt is not the Customer.</code></pre>"
+      },
+      {
+        "heading": "Identity vs Value",
+        "content": "<table><tr><th>Entity</th><th>Value Object</th></tr><tr><td>Has identity.</td><td>No identity.</td></tr><tr><td>Has lifecycle.</td><td>No lifecycle.</td></tr><tr><td>Mutable.</td><td>Usually immutable.</td></tr><tr><td>Compared by ID.</td><td>Compared by value.</td></tr></table>"
+      },
+      {
+        "heading": "Common Examples",
+        "content": "<table><tr><th>Value Object</th><th>Represents</th></tr><tr><td>Address</td><td>Location information.</td></tr><tr><td>Money</td><td>Amount + Currency.</td></tr><tr><td>EmailAddress</td><td>Validated email.</td></tr><tr><td>PhoneNumber</td><td>Validated phone number.</td></tr><tr><td>Coordinates</td><td>Latitude and Longitude.</td></tr></table>"
+      },
+      {
+        "heading": "Immutability",
+        "content": "<p>Value Objects are typically immutable. Instead of modifying an existing object, a new one is created.</p><pre><code>Address\n\nGran Via 10\nMadrid\nSpain\n\n▼\n\nNew Address\n\nGran Via 15\nMadrid\nSpain</code></pre><p>This prevents unexpected side effects and makes the model easier to reason about.</p>"
+      },
+      {
+        "heading": "Equality",
+        "content": "<p>Two Value Objects are equal if all their values are equal.</p><pre><code>Money(100, EUR)\n==\nMoney(100, EUR)\n\ntrue</code></pre><p>Unlike Entities, identity is irrelevant.</p>"
+      },
+      {
+        "heading": "Encapsulating Business Rules",
+        "content": "<p>Value Objects should validate and protect their own invariants.</p><pre><code>EmailAddress\n\nvalidateFormat()\nnormalize()\ndomain()</code></pre><p>This prevents invalid values from entering the domain model.</p>"
+      },
+      {
+        "heading": "Entity vs Value Object",
+        "content": "<table><tr><th>Question</th><th>Answer</th></tr><tr><td>Needs its own identity?</td><td>Entity.</td></tr><tr><td>Has independent lifecycle?</td><td>Entity.</td></tr><tr><td>Only describes something?</td><td>Value Object.</td></tr><tr><td>Can be replaced entirely?</td><td>Value Object.</td></tr></table>"
+      },
+      {
+        "heading": "Common Mistakes",
+        "content": "<table><tr><th>Mistake</th><th>Consequence</th></tr><tr><td>Creating IDs for Value Objects.</td><td>Unnecessary complexity.</td></tr><tr><td>Making Value Objects mutable.</td><td>Hidden side effects.</td></tr><tr><td>Using primitives everywhere.</td><td>Business rules become scattered.</td></tr><tr><td>Comparing by reference.</td><td>Incorrect equality semantics.</td></tr></table>"
+      },
+      {
+        "heading": "Senior Perspective",
+        "content": "<p>Experienced developers replace primitive types with meaningful Value Objects whenever those values have business rules. Instead of passing strings or decimals everywhere, they create concepts such as EmailAddress, Money or Percentage, making the code safer and more expressive.</p>"
+      },
+      {
+        "heading": "Interview Questions",
+        "content": "<ol><li>What is a Value Object?</li><li>How is it different from an Entity?</li><li>Why are Value Objects usually immutable?</li><li>How should Value Objects be compared?</li><li>Can a Value Object contain business logic?</li><li>When would you replace a primitive with a Value Object?</li></ol>"
+      },
+      {
+        "heading": "REWE Perspective",
+        "content": "<p>Retail systems commonly model concepts such as Money, Address, EmailAddress, Quantity and Weight as Value Objects. These concepts encapsulate validation and business rules while avoiding unnecessary identities and database tables.</p>"
+      },
+      {
+        "heading": "Key Takeaways",
+        "content": "<ul><li>Value Objects are identified by their values.</li><li>They usually have no identity or lifecycle.</li><li>Immutability simplifies reasoning and improves safety.</li><li>Compare Value Objects by value, not by reference.</li><li>Encapsulate business rules inside Value Objects instead of using primitive types.</li></ul>"
+      }
+    ]
+  }
+]

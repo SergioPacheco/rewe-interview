@@ -169,6 +169,7 @@ export class TopicService {
       'theory-rest.json',
       'theory-data-persistence.json',
       'theory-dp-pg-query-tuning.json',
+      'theory-ddd.json',
       'theory-solid.json',
       'theory-concurrency.json',
       'theory-patterns.json',

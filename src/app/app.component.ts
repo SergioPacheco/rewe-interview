@@ -206,6 +206,7 @@ const TOPIC_PHASES: Record<string, string[]> = {
   'data-persistence': ['SQL fundamentals', 'JPA & Hibernate', 'Distributed data (DDIA)', 'Performance & production'],
   'system-design': ['Shape the flow', 'Protect data and scale', 'Operate the system'],
   'software-architecture': ['Start with decisions', 'Shape boundaries and communication', 'Operate, evolve, and document'],
+  ddd: ['Strategic design', 'Tactical building blocks', 'Integration and practice'],
   behavioral: ['Adapt and collaborate', 'Lead under pressure', 'Show motivation and judgement'],
   stories: ['Business impact', 'Technical decisions', 'Personal narrative'],
   portfolio: ['Product context', 'Architecture and delivery', 'Interview evidence'],

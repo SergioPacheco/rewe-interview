@@ -364,3 +364,16 @@ img, svg {
     background-position: 35% center;
   }
 }
+
+/* Remove browser default header/footer (date, title, URL) when printing.
+   Using explicit margin values suppresses default chrome in most browsers
+   while providing proper spacing between pages. */
+@page {
+  margin: 12mm 10mm;
+}
+
+@media print {
+  body {
+    margin: 0;
+  }
+}

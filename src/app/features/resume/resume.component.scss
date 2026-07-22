@@ -347,20 +347,192 @@
 
 @media print {
   .no-print { display: none !important; }
-  .resume-page { padding: 0; background: white; }
+  .resume-page {
+    padding: 0;
+    background: white;
+    min-height: auto;
+  }
+
+  .resume-page__content {
+    width: 100%;
+  }
+
   .resume {
     padding: 0;
     border: 0;
     border-radius: 0;
     box-shadow: none;
-    font-size: 10pt;
+    font-size: 8.5pt;
+    line-height: 1.4;
 
-    &__header { padding-bottom: 0.75rem; margin-bottom: 1rem; }
-    &__section { margin-bottom: 1.25rem; break-inside: avoid; }
-    &__job { padding-block: 0.75rem; break-inside: avoid; }
-    &__skills { gap: 0.4rem; }
-    &__skill-group { min-height: 0; padding: 0.5rem; }
-    &__section--summary,
-    &__section--highlight { padding: 0.75rem; }
+    &__header {
+      padding-bottom: 0.4rem;
+      margin-bottom: 0.6rem;
+      border-bottom-width: 2px;
+    }
+
+    &__eyebrow {
+      font-size: 7pt;
+      margin-bottom: 0.2rem;
+    }
+
+    &__name {
+      font-size: 18pt;
+    }
+
+    &__title {
+      font-size: 9pt;
+      margin: 0.2rem 0 0.4rem;
+    }
+
+    &__contact {
+      font-size: 7.5pt;
+      gap: 0.25rem 0.75rem;
+    }
+
+    &__section {
+      margin-bottom: 0.7rem;
+      break-inside: avoid;
+
+      p {
+        margin: 0.3rem 0 0;
+        font-size: 8.5pt;
+        line-height: 1.4;
+      }
+
+      &--summary {
+        padding: 0.5rem 0.75rem;
+        border-left-width: 3px;
+      }
+
+      &--highlight {
+        padding: 0.5rem 0.75rem;
+      }
+    }
+
+    &__section-title {
+      font-size: 8pt;
+      margin-bottom: 0.3rem;
+
+      &::after {
+        height: 0.5px;
+      }
+    }
+
+    &__skills {
+      gap: 0.3rem;
+      margin-top: 0.4rem;
+    }
+
+    &__skill-group {
+      min-height: 0;
+      padding: 0.35rem 0.5rem;
+      border-radius: 4px;
+
+      strong {
+        font-size: 7pt;
+        margin-bottom: 0.15rem;
+      }
+
+      span {
+        font-size: 7.5pt;
+        line-height: 1.35;
+      }
+    }
+
+    &__job {
+      padding-block: 0.4rem;
+      break-inside: avoid;
+
+      &--compact {
+        padding-block: 0.3rem;
+
+        h3 {
+          font-size: 8.5pt;
+        }
+
+        p {
+          font-size: 8pt;
+          margin-top: 0.15rem;
+        }
+      }
+    }
+
+    &__job-header {
+      margin-bottom: 0.25rem;
+
+      h3 {
+        font-size: 9.5pt;
+      }
+    }
+
+    &__job-company {
+      font-size: 7.5pt;
+      margin-top: 0.1rem;
+    }
+
+    &__job-period {
+      font-size: 7pt;
+      padding: 0.15rem 0.4rem;
+    }
+
+    &__job-meta {
+      font-size: 7.5pt;
+      margin-top: 0.1rem;
+    }
+
+    &__job-intro {
+      font-size: 8pt !important;
+      margin-top: 0.2rem !important;
+    }
+
+    &__job-list {
+      gap: 0.2rem;
+      margin-top: 0.3rem;
+      padding-left: 1rem;
+
+      li {
+        font-size: 8pt;
+        line-height: 1.35;
+        padding-left: 0.1rem;
+      }
+    }
+
+    &__job-highlights {
+      margin-top: 0.5rem;
+      padding: 0.4rem 0.6rem;
+
+      h4 {
+        font-size: 7.5pt;
+        margin-bottom: 0.2rem;
+      }
+
+      ul {
+        gap: 0.15rem;
+        padding-left: 1rem;
+      }
+
+      li {
+        font-size: 7.5pt;
+        line-height: 1.35;
+      }
+    }
+
+    &__link {
+      margin-top: 0.2rem !important;
+
+      a { font-size: 7.5pt; }
+    }
+
+    &__education {
+      gap: 0.3rem;
+      margin-top: 0.4rem;
+    }
+
+    &__edu-item {
+      padding-bottom: 0.3rem;
+
+      strong, span { font-size: 8pt; }
+    }
   }
 }

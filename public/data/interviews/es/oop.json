@@ -3,7 +3,7 @@
     "id": "interview-oop-encapsulation-1",
     "topic": "oop",
     "subtopic": "oop-encapsulation",
-    "difficulty": "PRINCIPIANTE",
+    "difficulty": "BEGINNER",
     "question": "¿Qué protege el encapsulamiento, más allá de simplemente hacer que los campos sean privados?",
     "shortAnswer": "El encapsulamiento otorga a un componente el control sobre su estado e invariantes. Los campos privados ayudan, pero la API pública es más importante: métodos como reserve(), confirm() o cancel() pueden validar transiciones permitidas, mientras que los setters genéricos podrían exponer un estado inválido. El encapsulamiento también oculta las decisiones de representación, permitiendo que una implementación cambie sin obligar a cambiar a todos los llamadores.",
     "detailedAnswer": "El encapsulamiento combina el estado con las operaciones que tienen permitido observarlo o cambiarlo. Su principal beneficio no es el secreto, sino la preservación de invariantes en un límite claro. Una orden (Order) que expone setStatus() y setTotal() puede ser llevada a combinaciones que el dominio no permite. Una orden que expone addItem(), pay() y cancel() puede verificar precondiciones y actualizar el estado relacionado de forma atómica.\n\nLos campos privados son un mecanismo, no la definición. Devolver una List interna mutable desde un getter, por ejemplo, sigue filtrando la representación. Las copias defensivas, las vistas inmutables, las interfaces estrechas y los límites de los módulos pueden contribuir al encapsulamiento. También existe un compromiso (trade-off): poner cada regla dentro de una entidad puede acoplarla a servicios o flujos de trabajo, por lo que las reglas que necesitan datos externos pueden pertenecer a un servicio de dominio mientras la entidad sigue protegiendo sus invariantes locales.",
@@ -32,13 +32,13 @@
         "hint": "Piensa en reglas que requieren repositorios, relojes o varios agregados."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
     "id": "interview-oop-abstraction-1",
     "topic": "oop",
     "subtopic": "oop-abstraction",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo eliges una abstracción útil y cómo puede una abstracción volverse perjudicial?",
     "shortAnswer": "Una abstracción útil expone la capacidad que un cliente necesita mientras oculta los detalles volátiles. Busco un concepto estable con múltiples consumidores o implementaciones, y luego diseño el contrato más pequeño que lo represente. Una abstracción es perjudicial cuando es especulativa, filtra detalles de implementación o fuerza implementaciones no relacionadas a usar métodos que no pueden soportar.",
     "detailedAnswer": "La abstracción es una simplificación selectiva: presenta un modelo intencional y omite detalles de los que los llamadores no deberían depender. Un PaymentGateway podría exponer authorize() y refund() mientras oculta el HTTP, la autenticación y los payloads específicos del proveedor. Ese límite puede reducir el acoplamiento y mejorar las pruebas.\n\nLa parte difícil es elegir el nivel adecuado. Abstraer cada clase detrás de una interfaz añade costes de navegación y mantenimiento sin crear necesariamente flexibilidad. Por el contrario, una interfaz que refleja el SDK de un proveedor filtra el detalle que se suponía debía aislar. Las evidencias para una abstracción incluyen conceptos repetidos, una dependencia externa volátil, un punto de extensión (seam) real para pruebas o implementaciones que respetan el mismo contrato. Comienza con código concreto cuando el concepto aún no esté claro y extrae una abstracción una vez que su forma estable sea visible.",
@@ -63,13 +63,13 @@
         "hint": "Busca tipos que 'fugan' detalles, métodos no soportados, casts frecuentes o demasiados parámetros específicos."
       }
     ],
-    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
     "id": "interview-oop-inheritance-1",
     "topic": "oop",
     "subtopic": "oop-inheritance",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cuándo es la herencia una elección de diseño adecuada en Java?",
     "shortAnswer": "La herencia es adecuada cuando existe una relación de subtipo genuina y estable, y cada subtipo puede respetar el contrato del padre. Puede compartir un protocolo y una implementación seleccionada, pero la reutilización de código por sí sola es una razón débil. Prefiero jerarquías poco profundas y verifico la sustituibilidad; si el comportamiento varía de forma independiente o debe cambiar en tiempo de ejecución, la composición suele encajar mejor.",
     "detailedAnswer": "La herencia acopla un subtipo tanto al contrato público como a las decisiones de implementación protegidas de su padre. Funciona bien para taxonomías estables o puntos de extensión de frameworks cuando un subtipo es realmente utilizable dondequiera que se espere al padre. Una jerarquía de dominio sellada (sealed) puede ser un buen ejemplo porque las alternativas y sus contratos son explícitos.\n\nLos problemas aparecen cuando la herencia se usa solo para reutilizar código. Una subclase puede sobrescribir métodos para rechazar el comportamiento del padre, depender del orden de las llamadas o heredar un estado que no puede mantener. Esas son señales de que la sustituibilidad de Liskov se ha roto. Prefiere la composición para capacidades opcionales, comportamientos ortogonales o configuración en tiempo de ejecución. Si se selecciona la herencia, mantén el contrato base pequeño, documento los invariantes, evita el estado protegido frágil y prueba el contrato contra cada subtipo.",
@@ -94,13 +94,13 @@
         "hint": "Ejecuta pruebas de contrato compartidas contra cada implementación."
       }
     ],
-    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
     "id": "interview-oop-polymorphism-1",
     "topic": "oop",
     "subtopic": "oop-polymorphism",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo ayuda el polimorfismo en tiempo de ejecución a un diseño y qué costes puede introducir?",
     "shortAnswer": "El polimorfismo en tiempo de ejecución permite que los llamadores dependan de un contrato común mientras la implementación seleccionada proporciona el comportamiento. Soporta la inyección de dependencias, integraciones reemplazables y pruebas enfocadas. No es automáticamente mejor que un condicional: demasiadas implementaciones minúsculas pueden oscurecer el flujo de control, y un contrato débil simplemente mueve la complejidad a otro lugar.",
     "detailedAnswer": "En Java, el polimorfismo en tiempo de ejecución ocurre cuando una llamada a través de una interfaz o superclase se despacha a la implementación del tipo en tiempo de ejecución del objeto. Por ejemplo, un servicio puede depender de un IntegrationClient mientras CDI selecciona una implementación de Moodle o LDAP. El llamador posee el flujo de trabajo; cada implementación posee el comportamiento específico del proveedor.\n\nEsto puede aislar el cambio y hacer posibles las pruebas de contrato. También tiene costes: la lógica de selección aún tiene que existir en algún lugar, navegar por muchas implementaciones puede ser más difícil que leer un switch pequeño, y el comportamiento puede volverse sorprendente si el contrato no establece las semánticas de error y ciclo de vida. La sobrecarga de métodos es una resolución en tiempo de compilación y no debe presentarse como el mismo mecanismo. Usa el polimorfismo cuando las implementaciones comparten un contrato significativo y es probable que evolucionen de forma independiente, no simplemente para eliminar cada condicional.",
@@ -133,7 +133,7 @@
       "title": "Capa de integración basada en CDI en SGN3",
       "description": "Los servicios de negocio dependen de interfaces de integración, y CDI selecciona las implementaciones de Moodle, LDAP o Firebase mediante calificadores."
     },
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
     "id": "interview-oop-composition-1",
@@ -172,6 +172,6 @@
       "title": "Capa de servicios compositiva en SGN3",
       "description": "Las clases de negocio se ensamblan a partir de repositorios, otros servicios y colaboradores de mensajería a través de CDI, con la herencia limitada a mapeos estables seleccionados."
     },
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

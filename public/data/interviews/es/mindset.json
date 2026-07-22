@@ -3,7 +3,7 @@
     "id": "interview-mindset-1",
     "topic": "mindset",
     "subtopic": "ms-thinking",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo abordas un problema de ingeniería cuando los requisitos están incompletos o son ambiguos?",
     "shortAnswer": "Hago visible la ambigüedad antes de proponer una solución. Identifico el resultado esperado, los usuarios, las restricciones y los riesgos; separo los hechos de las suposiciones y pregunto qué incertidumbre podría cambiar más el diseño. Luego, elijo el paso reversible más pequeño que produzca evidencia y acuerdo cómo mediremos el éxito.",
     "detailedAnswer": "Mi primer objetivo no es eliminar todas las incógnitas, sino encontrar aquellas que podrían hacernos construir algo incorrecto. Replanteo el problema en términos de negocio, listo los hechos confirmados y las suposiciones, y aclaro atributos de calidad como la latencia, disponibilidad, seguridad y fecha de entrega.\n\nLuego, mapeo la superficie de decisión: qué es costoso de revertir, qué se puede probar de forma económica y quién debe participar. Un 'spike' corto, una muestra de datos de producción o una 'rebanada' delgada de extremo a extremo (thin end-to-end slice) a menudo responde más que un largo debate de diseño. Documento las suposiciones actuales y defino un punto de revisión para que la nueva evidencia pueda cambiar la decisión sin que se considere un fracaso.\n\nUna respuesta sólida debe incluir un ejemplo real solo si el candidato puede explicar la ambigüedad original, la pregunta que hizo, la evidencia que reunió y qué cambió como resultado.",
@@ -28,13 +28,13 @@
         "question": "Cuéntame de algún caso donde una aclaración cambió tu solución original."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
     "id": "interview-mindset-2",
     "topic": "mindset",
     "subtopic": "ms-answering",
-    "difficulty": "PRINCIPIANTE",
+    "difficulty": "BEGINNER",
     "question": "¿Qué haces cuando un entrevistador te pregunta sobre una tecnología que no has usado?",
     "shortAnswer": "Digo claramente qué he hecho y qué no. Luego, conecto la pregunta con experiencia de producción adyacente, razono a partir de principios fundamentales e indico qué verificaría antes de usar esa tecnología. Prefiero dar una respuesta acotada y comprobable que convertir el estudio en supuesta experiencia de producción.",
     "detailedAnswer": "Utilizo una respuesta de tres partes. Primero, establezco el límite: por ejemplo, 'He estudiado Kafka pero no lo he operado en producción'. Segundo, lo conecto con experiencia relevante, como mensajería duradera, reintentos, colas de mensajes fallidos (DLQ) y consumidores idempotentes con JMS. Tercero, explico las diferencias importantes que necesitaría validar en lugar de insinuar que las herramientas son intercambiables.\n\nSi no conozco un dato, lo digo y explico cómo lo encontraría: documentación, un experimento enfocado, métricas o ayuda de un compañero con experiencia directa. Esto demuestra criterio. Inventar certezas es mucho más arriesgado que mostrar un proceso de aprendizaje disciplinado.\n\nEl límite exacto importa: un proyecto personal práctico, experiencia de producción transferible y la operación en producción son afirmaciones distintas.",
@@ -59,7 +59,7 @@
         "question": "¿Cómo obtendrías suficiente evidencia para hacer una recomendación de producción?"
       }
     ],
-    "experienceLevel": "INFERENCIA"
+    "experienceLevel": "INFERENCE"
   },
   {
     "id": "interview-mindset-3",
@@ -90,13 +90,13 @@
         "question": "¿Cuándo es más útil un experimento corto que continuar la discusión?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
     "id": "interview-mindset-4",
     "topic": "mindset",
     "subtopic": "ms-whiteboard",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo usarías los primeros diez minutos de una entrevista abierta de diseño de sistemas?",
     "shortAnswer": "Aclararía los usuarios, el flujo de trabajo principal, la escala, los datos y las garantías requeridas antes de dibujar componentes. Declararía suposiciones, definiría un alcance inicial y esbozaría el diseño de extremo a extremo más simple. Luego, dejaría que el riesgo mayor —como la consistencia, disponibilidad o el rendimiento— guíe la discusión profunda.",
     "detailedAnswer": "Comienzo con un pequeño conjunto de preguntas de alto impacto: quién usa el sistema, cuáles son los flujos principales de escritura y lectura, qué no debe perderse jamás, el tráfico esperado y la retención de datos, y qué tipo de fallo es el más crítico. Si el entrevistador no puede dar un número, propongo una suposición razonable y la etiqueto como tal.\n\nLuego defino el alcance y un modelo de datos mínimo, y dibujo una solicitud o evento desde la entrada hasta su completitud. Solo después de que el flujo básico es coherente, añado caché, colas, particiones o réplicas para cumplir con un requisito declarado. Narro por qué existe cada componente y señalo las rutas de fallo.\n\nReservo tiempo para probar el diseño contra un escenario concreto, resumir los compromisos e identificar qué validaría a continuación. El diagrama apoya al razonamiento; no es la respuesta por sí sola.",
@@ -127,13 +127,13 @@
         "question": "¿Cómo se comportaría el sistema durante una caída de un servicio externo?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
     "id": "interview-mindset-5",
     "topic": "mindset",
     "subtopic": "ms-mistakes",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo respondes cuando la evidencia muestra que tu decisión técnica o suposición era errónea?",
     "shortAnswer": "Hago visible el impacto, separo la suposición fallida de la culpa y decido si se necesita primero contención o rollback. Luego comparto la nueva evidencia, reviso la decisión con los responsables, verifico la corrección y registro qué debería cambiar en nuestro proceso. La lección útil es una salvaguarda repetible —por ejemplo, pruebas con volumen representativo—, no simplemente elegir la tecnología opuesta la próxima vez.",
     "detailedAnswer": "Primero declaro qué cambió: de qué suposición dependía la decisión, qué señal la contradijo y qué usuarios o sistemas están afectados. Si el impacto está activo, la contención va antes que defender el razonamiento original. Comunico la incertidumbre e involucro al responsable de la decisión en lugar de cambiar de dirección silenciosamente.\n\nLuego comparo las opciones actuales con la nueva evidencia. Eso puede significar revertir, estrechar el despliegue, aplicar una corrección hacia adelante (forward fix) o recolectar una medición acotada adicional. Preservo la evidencia, verifico el comportamiento corregido y vigilo efectos secundarios. La responsabilidad significa asumir mi contribución sin reescribir la historia como si el error fuera obvio ni asignar el fallo al 'equipo' mientras me atribuyo la recuperación personalmente.\n\nFinalmente, convierto la lección en una barrera de seguridad que habría expuesto la suposición antes: datos representativos, una prueba de compatibilidad, un SLO, una lista de revisión, criterios explícitos de rollback o un spike de tiempo limitado. Si no cambia ningún comportamiento, la retrospectiva solo ha producido una historia, no un aprendizaje.",
@@ -158,7 +158,7 @@
         "question": "¿Qué haces de forma diferente ahora en decisiones similares?"
       }
     ],
-    "experienceLevel": "INFERENCIA"
+    "experienceLevel": "INFERENCE"
   },
   {
     "id": "interview-mindset-6",
@@ -189,6 +189,6 @@
         "question": "¿Qué te haría detener o revertir el despliegue?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

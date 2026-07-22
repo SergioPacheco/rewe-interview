@@ -1,321 +1,338 @@
 <div class="interview-content">
   @if (loading()) {
-    <div class="interview-loading">Loading interview questions...</div>
+    <div class="interview-loading">{{ 'simulator.loading' | t }}</div>
   } @else if (!hasQuestions()) {
     <div class="interview-empty">
       <span class="interview-empty__icon">🎙️</span>
-      <p class="interview-empty__text">Interview questions are not yet available for this topic.</p>
-      <p class="interview-empty__hint">Check the Learn and Practice tabs in the meantime.</p>
+      <p class="interview-empty__text">{{ 'simulator.emptyTitle' | t }}</p>
+      <p class="interview-empty__hint">{{ 'simulator.emptyHint' | t }}</p>
     </div>
   } @else {
-    <!-- Question selector -->
-    <div class="question-nav">
-      <div class="question-nav__list">
-        @for (q of questions(); track q.id; let i = $index) {
-          <button
-            class="question-nav__btn"
-            [class.question-nav__btn--active]="i === selectedIndex()"
-            (click)="selectQuestion(i)">
-            <span class="question-nav__number">{{ i + 1 }}</span>
-            <span class="question-nav__diff badge" [class]="difficultyClass(q.difficulty)">{{ q.difficulty }}</span>
-          </button>
-        }
-      </div>
-      <div class="question-nav__arrows">
-        <button (click)="previous()" [disabled]="selectedIndex() === 0" class="nav-arrow">←</button>
-        <span class="nav-counter">{{ selectedIndex() + 1 }} / {{ totalQuestions() }}</span>
-        <button (click)="next()" [disabled]="selectedIndex() === totalQuestions() - 1" class="nav-arrow">→</button>
+
+    <!-- ═══ SESSION HEADER ═══ -->
+    <div class="sim-toolbar">
+      @if (questionsCompleted() > 0) {
+        <div class="sim-toolbar__stats">
+          <span class="sim-stat">✅ {{ questionsCompleted() }} {{ 'simulator.answered' | t }}</span>
+          @if (averageScore() > 0) {
+            <span class="sim-stat">⭐ {{ averageScore() }}/5</span>
+          }
+        </div>
+      }
+
+      @if (availableSubtopics().length > 1) {
+        <div class="sim-toolbar__filter">
+          <select class="sim-toolbar__select" (change)="selectSubtopic($event)" [value]="effectiveSubtopic() ?? ''">
+            <option value="">{{ 'simulator.allQuestions' | t }} ({{ allQuestions().length }})</option>
+            @for (sub of availableSubtopics(); track sub.id) {
+              <option [value]="sub.id">{{ sub.label }} ({{ sub.count }})</option>
+            }
+          </select>
+        </div>
+      }
+
+      <div class="sim-toolbar__progress">
+        <button class="sim-toolbar__arrow" (click)="previous()" [disabled]="selectedIndex() === 0" aria-label="Previous">←</button>
+        <div class="sim-progress-bar">
+          <div class="sim-progress-bar__fill"
+               [style.width.%]="((selectedIndex() + 1) / totalQuestions()) * 100"></div>
+        </div>
+        <span class="sim-toolbar__counter">{{ selectedIndex() + 1 }} / {{ totalQuestions() }}</span>
+        <button class="sim-toolbar__arrow" (click)="next()" [disabled]="selectedIndex() === totalQuestions() - 1" aria-label="Next">→</button>
       </div>
     </div>
 
-    <!-- Current question -->
     @if (currentQuestion(); as q) {
-      <article class="interview-card">
-        <!-- Header -->
-        <header class="interview-card__header">
-          <h2 class="interview-card__question">{{ q.question }}</h2>
-          <div class="interview-card__meta">
-            <span class="badge" [class]="difficultyClass(q.difficulty)">{{ q.difficulty }}</span>
-            @if (q.experienceLevel) {
-              <span class="badge-exp" [class]="experienceClass(q.experienceLevel)">
-                {{ experienceLabel(q.experienceLevel) }}
-              </span>
-            }
+
+      <!-- ═══ FOLLOW-UP PHASE ═══ -->
+      @if (inFollowUpPhase()) {
+        <div class="sim-conversation">
+          <div class="sim-previous">
+            <span class="sim-previous__label">{{ 'simulator.previousQuestion' | t }}</span>
+            <p class="sim-previous__text">{{ q.question }}</p>
           </div>
-          @if (q.context) {
-            <p class="interview-card__context">{{ q.context }}</p>
-          }
-        </header>
 
-        <!-- Clarifying Questions -->
-        @if (q.clarifyingQuestions && q.clarifyingQuestions.length > 0) {
-          <section class="interview-section">
-            <button class="interview-section__toggle" (click)="toggleSection('clarifying')"
-                    [class.interview-section__toggle--open]="isExpanded('clarifying')">
-              <span class="interview-section__icon">❓</span>
-              <span class="interview-section__title">Before answering, clarify</span>
-              <span class="interview-section__arrow">{{ isExpanded('clarifying') ? '▼' : '▶' }}</span>
-            </button>
-            @if (isExpanded('clarifying')) {
-              <div class="interview-section__body">
-                <ul class="clarifying-questions">
-                  @for (cq of q.clarifyingQuestions; track cq) {
-                    <li class="clarifying-questions__item">{{ cq }}</li>
-                  }
-                </ul>
-              </div>
-            }
-          </section>
-        }
-
-        <!-- Short Answer -->
-        <section class="interview-section">
-          <div class="interview-section__header">
-            <button class="interview-section__toggle" (click)="toggleSection('short')"
-                    [class.interview-section__toggle--open]="isExpanded('short')">
-              <span class="interview-section__icon">💬</span>
-              <span class="interview-section__title">Core Answer</span>
-              <span class="interview-section__arrow">{{ isExpanded('short') ? '▼' : '▶' }}</span>
-            </button>
-            <button
-              type="button"
-              class="interview-section__listen"
-              [class.interview-section__listen--active]="isReadingCoreAnswer()"
-              [attr.aria-label]="isReadingCoreAnswer() ? 'Stop reading Core Answer' : 'Read Core Answer in British English'"
-              [attr.title]="isReadingCoreAnswer() ? 'Stop audio' : 'Listen in British English'"
-              (click)="toggleCoreAnswerAudio(q.shortAnswer)"
-            >
-              {{ isReadingCoreAnswer() ? '■' : '🔊' }}
-            </button>
-          </div>
-          @if (isExpanded('short')) {
-            <div class="interview-section__body">
-              <div class="short-answer" [innerHTML]="q.shortAnswer | markdown"></div>
-            </div>
-          }
-        </section>
-
-        <!-- Detailed Explanation -->
-        <section class="interview-section">
-          <div class="interview-section__header">
-            <button class="interview-section__toggle" (click)="toggleSection('detailed')"
-                    [class.interview-section__toggle--open]="isExpanded('detailed')">
-              <span class="interview-section__icon">📖</span>
-              <span class="interview-section__title">Detailed Explanation</span>
-              <span class="interview-section__arrow">{{ isExpanded('detailed') ? '▼' : '▶' }}</span>
-            </button>
-            <button
-              type="button"
-              class="interview-section__listen"
-              [class.interview-section__listen--active]="readingSection() === 'detailed'"
-              aria-label="Read aloud"
-              title="Listen"
-              (click)="toggleSectionAudio(q.detailedAnswer, 'detailed')"
-            >
-              {{ readingSection() === 'detailed' ? '■' : '🔊' }}
-            </button>
-          </div>
-          @if (isExpanded('detailed')) {
-            <div class="interview-section__body">
-              <div class="detailed-answer" [innerHTML]="q.detailedAnswer | markdown"></div>
-            </div>
-          }
-        </section>
-
-        <!-- Key Points -->
-        <section class="interview-section">
-          <div class="interview-section__header">
-            <button class="interview-section__toggle" (click)="toggleSection('keypoints')"
-                    [class.interview-section__toggle--open]="isExpanded('keypoints')">
-              <span class="interview-section__icon">✅</span>
-              <span class="interview-section__title">Key Points</span>
-              <span class="interview-section__arrow">{{ isExpanded('keypoints') ? '▼' : '▶' }}</span>
-            </button>
-            <button
-              type="button"
-              class="interview-section__listen"
-              [class.interview-section__listen--active]="readingSection() === 'keypoints'"
-              aria-label="Read key points aloud"
-              title="Listen"
-              (click)="toggleSectionAudio(toSpeechList(q.keyPoints), 'keypoints')"
-            >
-              {{ readingSection() === 'keypoints' ? '■' : '🔊' }}
-            </button>
-          </div>
-          @if (isExpanded('keypoints')) {
-            <div class="interview-section__body">
-              <ul class="key-points">
-                @for (point of q.keyPoints; track point) {
-                  <li class="key-points__item">{{ point }}</li>
-                }
-              </ul>
-            </div>
-          }
-        </section>
-
-        <!-- Code Examples -->
-        @if (q.codeExamples && q.codeExamples.length > 0) {
-          <section class="interview-section">
-            <button class="interview-section__toggle" (click)="toggleSection('code')"
-                    [class.interview-section__toggle--open]="isExpanded('code')">
-              <span class="interview-section__icon">💻</span>
-              <span class="interview-section__title">Code Examples</span>
-              <span class="interview-section__arrow">{{ isExpanded('code') ? '▼' : '▶' }}</span>
-            </button>
-            @if (isExpanded('code')) {
-              <div class="interview-section__body">
-                @for (example of q.codeExamples; track example.title) {
-                  <div class="code-example">
-                    @if (example.title) {
-                      <h4 class="code-example__title">{{ example.title }}</h4>
-                    }
-                    <app-code-block
-                      [code]="example.code"
-                      [language]="example.language"
-                      [label]="example.title || 'Interview code example'"
-                    />
-                  </div>
-                }
-              </div>
-            }
-          </section>
-        }
-
-        <!-- Visual Blocks -->
-        @if (q.visualBlocks && q.visualBlocks.length > 0) {
-          <section class="interview-section">
-            <button class="interview-section__toggle" (click)="toggleSection('visual')"
-                    [class.interview-section__toggle--open]="isExpanded('visual')">
-              <span class="interview-section__icon">🎨</span>
-              <span class="interview-section__title">Visual Explanation</span>
-              <span class="interview-section__arrow">{{ isExpanded('visual') ? '▼' : '▶' }}</span>
-            </button>
-            @if (isExpanded('visual')) {
-              <div class="interview-section__body">
-                @for (block of q.visualBlocks; track block.title) {
-                  <div class="visual-block">
-                    <h4 class="visual-block__title">{{ block.title }}</h4>
-                    <pre class="visual-block__content">{{ block.content }}</pre>
-                  </div>
-                }
-              </div>
-            }
-          </section>
-        }
-
-        <!-- Follow-up Questions -->
-        @if (q.followUps && q.followUps.length > 0) {
-          <section class="interview-section">
-            <div class="interview-section__header">
-              <button class="interview-section__toggle" (click)="toggleSection('followups')"
-                      [class.interview-section__toggle--open]="isExpanded('followups')">
-                <span class="interview-section__icon">🔄</span>
-                <span class="interview-section__title">Follow-up Questions</span>
-                <span class="interview-section__arrow">{{ isExpanded('followups') ? '▼' : '▶' }}</span>
-              </button>
-              <button
-                type="button"
-                class="interview-section__listen"
-                [class.interview-section__listen--active]="readingSection() === 'followups'"
-                aria-label="Read follow-ups aloud"
-                title="Listen"
-                (click)="toggleSectionAudio(toSpeechFollowUps(q.followUps), 'followups')"
-              >
-                {{ readingSection() === 'followups' ? '■' : '🔊' }}
-              </button>
-            </div>
-            @if (isExpanded('followups')) {
-              <div class="interview-section__body">
-                @for (fu of q.followUps; track fu.question) {
-                  <div class="follow-up">
-                    <p class="follow-up__question">{{ fu.question }}</p>
-                    @if (fu.hint) {
-                      <details class="follow-up__hint-details">
-                        <summary class="follow-up__hint-toggle">Show answer cue</summary>
-                        <p class="follow-up__hint">{{ fu.hint }}</p>
-                      </details>
-                    }
-                  </div>
-                }
-              </div>
-            }
-          </section>
-        }
-
-        <!-- Red Flags -->
-        @if (q.redFlags && q.redFlags.length > 0) {
-          <section class="interview-section">
-            <div class="interview-section__header">
-              <button class="interview-section__toggle" (click)="toggleSection('redflags')"
-                      [class.interview-section__toggle--open]="isExpanded('redflags')">
-                <span class="interview-section__icon">🚩</span>
-                <span class="interview-section__title">Pitfalls to Avoid</span>
-                <span class="interview-section__arrow">{{ isExpanded('redflags') ? '▼' : '▶' }}</span>
-              </button>
-              <button
-                type="button"
-                class="interview-section__listen"
-                [class.interview-section__listen--active]="readingSection() === 'redflags'"
-                aria-label="Read pitfalls aloud"
-                title="Listen"
-                (click)="toggleSectionAudio(toSpeechList(q.redFlags), 'redflags')"
-              >
-                {{ readingSection() === 'redflags' ? '■' : '🔊' }}
-              </button>
-            </div>
-            @if (isExpanded('redflags')) {
-              <div class="interview-section__body">
-                <ul class="red-flags">
-                  @for (flag of q.redFlags; track flag) {
-                    <li class="red-flags__item">{{ flag }}</li>
-                  }
-                </ul>
-              </div>
-            }
-          </section>
-        }
-
-        <!-- Real Experience -->
-        @if (q.realExperience) {
-          <section class="interview-section">
-            <button class="interview-section__toggle" (click)="toggleSection('experience')"
-                    [class.interview-section__toggle--open]="isExpanded('experience')">
-              <span class="interview-section__icon">🏢</span>
-              <span class="interview-section__title">Evidence &amp; Experience</span>
-              <span class="interview-section__arrow">{{ isExpanded('experience') ? '▼' : '▶' }}</span>
-            </button>
-            @if (isExpanded('experience')) {
-              <div class="interview-section__body">
-                <div class="real-experience">
-                  <h4 class="real-experience__title">{{ q.realExperience.title }}</h4>
-                  <p class="real-experience__desc">{{ q.realExperience.description }}</p>
+          @if (currentFollowUp(); as fu) {
+            <div class="sim-interviewer">
+              <div class="sim-interviewer__avatar">🎙️</div>
+              <div class="sim-interviewer__content">
+                <span class="sim-interviewer__label">{{ 'simulator.interviewerProbes' | t }}</span>
+                <p class="sim-interviewer__question">{{ fu.question }}</p>
+                <div class="sim-interviewer__footer">
+                  <span class="sim-interviewer__meta">
+                    {{ (currentFollowUpIndex() ?? 0) + 1 }} / {{ totalFollowUps() }}
+                  </span>
+                  <button type="button" class="sim-listen"
+                    [class.sim-listen--active]="readingSection() === 'sim-followup'"
+                    (click)="toggleSectionAudio(fu.question, 'sim-followup')">
+                    {{ readingSection() === 'sim-followup' ? '■' : '🔊' }}
+                  </button>
                 </div>
               </div>
-            }
-          </section>
-        }
+            </div>
 
-        <!-- Tradeoffs -->
-        @if (q.tradeoffs && q.tradeoffs.length > 0) {
-          <section class="interview-section">
-            <button class="interview-section__toggle" (click)="toggleSection('tradeoffs')"
-                    [class.interview-section__toggle--open]="isExpanded('tradeoffs')">
-              <span class="interview-section__icon">⚖️</span>
-              <span class="interview-section__title">Trade-offs</span>
-              <span class="interview-section__arrow">{{ isExpanded('tradeoffs') ? '▼' : '▶' }}</span>
-            </button>
-            @if (isExpanded('tradeoffs')) {
-              <div class="interview-section__body">
-                <ul class="tradeoffs">
-                  @for (t of q.tradeoffs; track t) {
-                    <li class="tradeoffs__item">{{ t }}</li>
+            @if (!followUpAnswered()) {
+              <div class="sim-actions">
+                <button class="sim-btn sim-btn--primary" (click)="markFollowUpAnswered()">
+                  ✓ {{ 'simulator.iAnswered' | t }}
+                </button>
+                <button class="sim-btn sim-btn--ghost" (click)="skipToNext()">
+                  {{ 'simulator.skipToNext' | t }} →
+                </button>
+              </div>
+            } @else {
+              @if (fu.hint) {
+                <div class="sim-reveal sim-reveal--hint">
+                  <span class="sim-reveal__icon">💡</span>
+                  <div class="sim-reveal__body">
+                    <strong>{{ 'simulator.answerGuidance' | t }}</strong>
+                    <p [innerHTML]="fu.hint | markdown"></p>
+                  </div>
+                </div>
+              }
+
+              <div class="sim-actions">
+                @if ((currentFollowUpIndex() ?? 0) < totalFollowUps() - 1) {
+                  <button class="sim-btn sim-btn--primary" (click)="nextFollowUp()">
+                    {{ 'simulator.nextFollowUp' | t }} →
+                  </button>
+                } @else {
+                  <button class="sim-btn sim-btn--primary" (click)="skipToNext()">
+                    {{ 'simulator.nextQuestion' | t }} →
+                  </button>
+                }
+              </div>
+            }
+          }
+        </div>
+
+      } @else {
+        <!-- ═══ MAIN QUESTION PHASE ═══ -->
+        <div class="sim-conversation">
+
+          <!-- Interviewer bubble -->
+          <div class="sim-interviewer">
+            <div class="sim-interviewer__avatar">🎙️</div>
+            <div class="sim-interviewer__content">
+              <span class="sim-interviewer__label">{{ 'simulator.interviewerAsks' | t }}</span>
+              <p class="sim-interviewer__question">{{ q.question }}</p>
+              @if (q.context) {
+                <p class="sim-interviewer__context">{{ q.context }}</p>
+              }
+              <div class="sim-interviewer__footer">
+                <div class="sim-interviewer__badges">
+                  <span class="badge" [class]="difficultyClass(q.difficulty)">{{ difficultyLabel(q.difficulty) }}</span>
+                  @if (q.experienceLevel) {
+                    <span class="badge-exp" [class]="experienceClass(q.experienceLevel)">
+                      {{ experienceLabel(q.experienceLevel) }}
+                    </span>
+                  }
+                </div>
+                <button type="button" class="sim-listen"
+                  [class.sim-listen--active]="readingSection() === 'sim-question'"
+                  (click)="toggleSectionAudio(q.question + (q.context ? '. ' + q.context : ''), 'sim-question')">
+                  {{ readingSection() === 'sim-question' ? '■' : '🔊' }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          @if (!isAnswered()) {
+            <!-- ═══ THINKING PHASE ═══ -->
+            <div class="sim-think">
+              <p class="sim-think__text">{{ 'simulator.thinkPrompt' | t }}</p>
+
+              @if (q.clarifyingQuestions && q.clarifyingQuestions.length > 0) {
+                <details class="sim-think__clarify">
+                  <summary>💡 {{ 'simulator.clarifySummary' | t }}</summary>
+                  <ul>
+                    @for (cq of q.clarifyingQuestions; track cq) {
+                      <li>{{ cq }}</li>
+                    }
+                  </ul>
+                </details>
+              }
+
+              <div class="sim-think__footer">
+                <div class="sim-timer">
+                  <span class="sim-timer__display" [class.sim-timer__display--active]="timerActive()">
+                    ⏱️ {{ formatTime(timerSeconds()) }}
+                  </span>
+                  @if (timerActive()) {
+                    <button class="sim-btn sim-btn--small" (click)="stopTimer()">{{ 'simulator.pause' | t }}</button>
+                  } @else {
+                    <button class="sim-btn sim-btn--small" (click)="startTimer()">{{ 'simulator.resumeTimer' | t }}</button>
+                  }
+                </div>
+
+                <button class="sim-btn sim-btn--primary sim-btn--large" (click)="markAnswered()">
+                  ✓ {{ 'simulator.iAnswered' | t }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Show All shortcut -->
+            <div class="sim-show-all">
+              <button class="sim-btn sim-btn--ghost" (click)="revealAll()">
+                {{ 'simulator.showAll' | t }}
+              </button>
+            </div>
+
+          } @else {
+            <!-- ═══ REVEAL PHASE ═══ -->
+            <div class="sim-reveal-container">
+
+              <!-- Core Answer -->
+              <div class="sim-reveal sim-reveal--answer">
+                <div class="sim-reveal__header">
+                  <span class="sim-reveal__icon">💬</span>
+                  <strong>{{ 'simulator.strongAnswer' | t }}</strong>
+                </div>
+                <div class="sim-reveal__body" [innerHTML]="q.shortAnswer | markdown"></div>
+                <div class="sim-reveal__footer">
+                  <button type="button" class="sim-listen"
+                    [class.sim-listen--active]="readingSection() === 'sim-answer'"
+                    (click)="toggleSectionAudio(q.shortAnswer, 'sim-answer')">
+                    {{ readingSection() === 'sim-answer' ? '■' : '🔊' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Key Points -->
+              <div class="sim-reveal sim-reveal--keypoints">
+                <div class="sim-reveal__header">
+                  <span class="sim-reveal__icon">✅</span>
+                  <strong>{{ 'simulator.keyPoints' | t }}</strong>
+                </div>
+                <ul class="sim-reveal__list">
+                  @for (point of q.keyPoints; track point) {
+                    <li>{{ point }}</li>
                   }
                 </ul>
               </div>
-            }
-          </section>
-        }
-      </article>
+
+              <!-- Red Flags -->
+              @if (q.redFlags && q.redFlags.length > 0) {
+                <div class="sim-reveal sim-reveal--redflags">
+                  <div class="sim-reveal__header">
+                    <span class="sim-reveal__icon">🚩</span>
+                    <strong>{{ 'simulator.avoidSaying' | t }}</strong>
+                  </div>
+                  <ul class="sim-reveal__list sim-reveal__list--red">
+                    @for (flag of q.redFlags; track flag) {
+                      <li>{{ flag }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              <!-- Trade-offs -->
+              @if (q.tradeoffs && q.tradeoffs.length > 0) {
+                <div class="sim-reveal sim-reveal--tradeoffs">
+                  <div class="sim-reveal__header">
+                    <span class="sim-reveal__icon">⚖️</span>
+                    <strong>{{ 'simulator.tradeoffs' | t }}</strong>
+                  </div>
+                  <ul class="sim-reveal__list">
+                    @for (t of q.tradeoffs; track t) {
+                      <li>{{ t }}</li>
+                    }
+                  </ul>
+                </div>
+              }
+
+              <!-- Detailed (expandable) -->
+              @if (q.detailedAnswer) {
+                <details class="sim-reveal sim-reveal--detailed">
+                  <summary class="sim-reveal__header sim-reveal__header--clickable">
+                    <span class="sim-reveal__icon">📖</span>
+                    <strong>{{ 'simulator.detailed' | t }}</strong>
+                  </summary>
+                  <div class="sim-reveal__body" [innerHTML]="q.detailedAnswer | markdown"></div>
+                </details>
+              }
+
+              <!-- Code Examples (expandable) -->
+              @if (q.codeExamples && q.codeExamples.length > 0) {
+                <details class="sim-reveal sim-reveal--code">
+                  <summary class="sim-reveal__header sim-reveal__header--clickable">
+                    <span class="sim-reveal__icon">💻</span>
+                    <strong>Code</strong>
+                  </summary>
+                  <div class="sim-reveal__body">
+                    @for (example of q.codeExamples; track example.title) {
+                      <div class="code-example">
+                        @if (example.title) {
+                          <h4 class="code-example__title">{{ example.title }}</h4>
+                        }
+                        <app-code-block
+                          [code]="example.code"
+                          [language]="example.language"
+                          [label]="example.title || ''"
+                        />
+                      </div>
+                    }
+                  </div>
+                </details>
+              }
+
+              <!-- Real Experience (expandable) -->
+              @if (q.realExperience) {
+                <details class="sim-reveal sim-reveal--experience">
+                  <summary class="sim-reveal__header sim-reveal__header--clickable">
+                    <span class="sim-reveal__icon">🏢</span>
+                    <strong>Evidence</strong>
+                  </summary>
+                  <div class="sim-reveal__body">
+                    <h4>{{ q.realExperience.title }}</h4>
+                    <p>{{ q.realExperience.description }}</p>
+                  </div>
+                </details>
+              }
+
+              <!-- Self Assessment -->
+              @if (selfScore() === null) {
+                <div class="sim-assessment">
+                  <p class="sim-assessment__prompt">{{ 'simulator.howWell' | t }}</p>
+                  <div class="sim-assessment__stars">
+                    @for (star of [1, 2, 3, 4, 5]; track star) {
+                      <button
+                        class="sim-assessment__btn"
+                        (click)="rateSelf(star)"
+                        [attr.aria-label]="star + '/5'">
+                        {{ star <= 2 ? '😟' : star <= 3 ? '😐' : star <= 4 ? '🙂' : '🤩' }}
+                        <span class="sim-assessment__label">{{ star }}</span>
+                      </button>
+                    }
+                  </div>
+                </div>
+              } @else {
+                <div class="sim-assessment sim-assessment--done">
+                  <span>{{ 'simulator.yourConfidence' | t }} {{ selfScore() }}/5</span>
+                </div>
+              }
+
+              <!-- Continue -->
+              <div class="sim-actions sim-actions--bottom">
+                @if (q.followUps && q.followUps.length > 0) {
+                  <button class="sim-btn sim-btn--primary" (click)="nextFollowUp()">
+                    🎙️ {{ 'simulator.interviewerFollowUps' | t | replace:'{count}':'' + q.followUps.length }} →
+                  </button>
+                  <button class="sim-btn sim-btn--ghost" (click)="skipToNext()"
+                          [disabled]="selectedIndex() === totalQuestions() - 1">
+                    {{ 'simulator.skipFollowUps' | t }} →
+                  </button>
+                } @else {
+                  <button class="sim-btn sim-btn--primary" (click)="skipToNext()"
+                          [disabled]="selectedIndex() === totalQuestions() - 1">
+                    {{ 'simulator.nextQuestion' | t }} →
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
     }
   }
 </div>

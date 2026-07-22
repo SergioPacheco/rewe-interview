@@ -8,13 +8,14 @@ import { InterviewService } from '../../core/services/interview.service';
 import { TheoryChapter } from '../../models';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 import { SyntaxHighlightPipe } from '../../shared/pipes/syntax-highlight.pipe';
+import { TranslatePipe } from '../../shared/pipes/translate.pipe';
 import { ChoiceListComponent, ChoiceResult } from '../../shared/components/choice-list/choice-list.component';
 import { InterviewComponent } from '../interview/interview.component';
 
 @Component({
   selector: 'app-theory',
   standalone: true,
-  imports: [MarkdownPipe, SyntaxHighlightPipe, ChoiceListComponent, InterviewComponent],
+  imports: [MarkdownPipe, SyntaxHighlightPipe, TranslatePipe, ChoiceListComponent, InterviewComponent],
   templateUrl: './theory.component.html',
   styleUrl: './theory.component.scss',
   // Learn chapters render trusted authored HTML through [innerHTML]. Disabling
@@ -78,9 +79,109 @@ export class TheoryComponent {
     ).length
   );
 
+  /** Subtopics with exercise counts for the Practice dropdown */
+  readonly practiceSubtopics = computed(() => {
+    const topic = this.topic();
+    if (!topic?.subtopics) return [];
+    const topicId = this.topicId();
+    return topic.subtopics
+      .map(sub => {
+        const count = this.topicService.getQuestions(topicId, sub.id)
+          .filter(q =>
+            q.type !== 'ORAL_ANSWER' &&
+            q.type !== 'SYSTEM_DESIGN' &&
+            (q as any).schemaVersion !== 2
+          ).length;
+        return { id: sub.id, label: sub.label, count };
+      })
+      .filter(s => s.count > 0);
+  });
+
+  /** Total practice exercises across all subtopics */
+  readonly totalPracticeCount = computed(() =>
+    this.topicService.getQuestions(this.topicId())
+      .filter(q =>
+        q.type !== 'ORAL_ANSWER' &&
+        q.type !== 'SYSTEM_DESIGN' &&
+        (q as any).schemaVersion !== 2
+      ).length
+  );
+
+  /** Local practice subtopic override signal */
+  readonly practiceSubtopic = signal<string | null>(null);
+
   readonly hasTheory = computed(() => this.visibleChapters().length > 0);
   readonly hasExercises = computed(() => this.exerciseCount() > 0);
   readonly currentQuestion = computed(() => this.engine.currentQuestion());
+
+  // ===== LEARN NAVIGATION =====
+
+  /** Local subtopic filter for Learn tab */
+  readonly learnSubtopic = signal<string | null>(null);
+
+  /** Current chapter index in Learn tab */
+  readonly learnChapterIndex = signal(0);
+
+  /** Chapters filtered by learn subtopic (or all) */
+  readonly learnFilteredChapters = computed<TheoryChapter[]>(() => {
+    const all = this.visibleChapters();
+    const sub = this.learnSubtopic();
+    if (!sub) return all;
+    return all.filter(ch => ch.subtopic === sub);
+  });
+
+  /** Current chapter based on index */
+  readonly currentChapter = computed(() => {
+    const chapters = this.learnFilteredChapters();
+    const idx = this.learnChapterIndex();
+    return chapters[idx] ?? null;
+  });
+
+  /** Subtopics with chapter counts for Learn dropdown */
+  readonly learnSubtopics = computed(() => {
+    const topic = this.topic();
+    const all = this.visibleChapters();
+    if (!topic?.subtopics) return [];
+
+    const subtopicLabels = new Map<string, string>();
+    for (const s of topic.subtopics) {
+      subtopicLabels.set(s.id, s.label);
+    }
+
+    const subtopicMap = new Map<string, number>();
+    for (const ch of all) {
+      if (ch.subtopic) {
+        subtopicMap.set(ch.subtopic, (subtopicMap.get(ch.subtopic) ?? 0) + 1);
+      }
+    }
+    return Array.from(subtopicMap.entries())
+      .map(([id, count]) => ({
+        id,
+        label: subtopicLabels.get(id) ?? id,
+        count
+      }))
+      .filter(s => s.count > 0)
+      .sort((a, b) => a.label.localeCompare(b.label));
+  });
+
+  readonly totalLearnChapters = computed(() => this.visibleChapters().length);
+
+  /** Navigate learn chapters */
+  navigateLearn(direction: number): void {
+    const max = this.learnFilteredChapters().length;
+    const idx = this.learnChapterIndex();
+    const next = idx + direction;
+    if (next >= 0 && next < max) {
+      this.learnChapterIndex.set(next);
+    }
+  }
+
+  /** Change learn subtopic from dropdown */
+  selectLearnSubtopic(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.learnSubtopic.set(value || null);
+    this.learnChapterIndex.set(0);
+  }
 
   /** True when the current question uses Schema V2 (rich system-design format) */
   readonly isSchemaV2 = computed(() => (this.currentQuestion() as any)?.schemaVersion === 2);
@@ -181,9 +282,47 @@ export class TheoryComponent {
     }
 
     if (id && this.exerciseCount() > 0) {
-      this.engine.start(id, subtopic || undefined);
+      this.engine.start(id, subtopic || undefined, 999);
     }
 
+    this.showResult.set(false);
+    this.selectedAnswer.set('');
+    this.selectedPracticeIndex.set(null);
+    this.practiceChecked.set(false);
+  }
+
+  /** Navigate practice questions with arrows — resets answer state */
+  navigatePractice(direction: number): void {
+    if (direction > 0) {
+      this.engine.next();
+    } else {
+      this.engine.previous();
+    }
+    this.showResult.set(false);
+    this.selectedAnswer.set('');
+    this.selectedPracticeIndex.set(null);
+    this.practiceChecked.set(false);
+  }
+
+  /** Change practice subtopic from dropdown — restarts engine with new filter */
+  selectPracticeSubtopic(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.practiceSubtopic.set(value || null);
+    // Restart engine with the selected subtopic
+    const id = this.topicId();
+    if (this.engine.isActive()) {
+      this.engine.end();
+    }
+    const sub = value || undefined;
+    const count = this.topicService.getQuestions(id, sub)
+      .filter(q =>
+        q.type !== 'ORAL_ANSWER' &&
+        q.type !== 'SYSTEM_DESIGN' &&
+        (q as any).schemaVersion !== 2
+      ).length;
+    if (id && count > 0) {
+      this.engine.start(id, sub, 999);
+    }
     this.showResult.set(false);
     this.selectedAnswer.set('');
     this.selectedPracticeIndex.set(null);

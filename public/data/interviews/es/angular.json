@@ -3,7 +3,7 @@
     "id": "interview-angular-1",
     "topic": "angular",
     "subtopic": "ng-basics",
-    "difficulty": "PRINCIPIANTE",
+    "difficulty": "BEGINNER",
     "question": "¿Cómo conviven los componentes 'standalone' y los NgModules, y cómo elegirías entre ellos?",
     "shortAnswer": "Un componente 'standalone' declara los componentes, directivas y pipes que utiliza a través de sus propios 'imports' y puede enrutarse o inicializarse directamente. Los NgModules agrupan declaraciones y proveedores, y siguen siendo compatibles, especialmente en aplicaciones existentes y algunas librerías. Para código nuevo en versiones recientes de Angular, prefiero los componentes 'standalone' por defecto, migrando funcionalidades estables basadas en módulos solo cuando el cambio aporte un valor claro y existan pruebas que lo respalden.",
     "detailedAnswer": "'Standalone' es un modelo de composición, no una señal de que los módulos hayan desaparecido de Angular. Un componente 'standalone' importa sus dependencias de plantilla directamente; los proveedores de la aplicación pueden configurarse durante el 'bootstrap'; y las rutas pueden cargar el componente de forma diferida con 'loadComponent'. Esto reduce la indirección de declaraciones y exportaciones, facilitando la inspección de las dependencias de un componente.\n\nLos NgModules siguen funcionando. Una aplicación madura puede contener funcionalidades basadas en módulos, una librería de terceros puede exponer un NgModule, y una migración gradual puede mezclar ambos modelos. La decisión es contextual: el código nuevo puede usar los estándares 'standalone' actuales, mientras que el código estable basado en módulos debe migrarse solo cuando el cambio aporte valor y se disponga de pruebas adecuadas.\n\nEste proyecto de preparación para entrevistas aporta evidencia práctica sobre el modelo de composición: utiliza componentes 'standalone' de Angular 19, proveedores de configuración de aplicaciones y 'loadComponent' a nivel de ruta. Dado que Angular 19 ya no cuenta con soporte oficial, la versión del proyecto es más una deuda de actualización que una recomendación de versión actual. El ejemplo arquitectónico sigue siendo útil, pero una respuesta en una entrevista debe distinguir el patrón del ciclo de vida de la versión del repositorio.",
@@ -28,7 +28,7 @@
         "question": "¿Qué probarías antes de migrar una funcionalidad enrutada a 'standalone'?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
       "title": "Aplicación 'standalone' en una versión de Angular pendiente de actualización",
       "description": "Este proyecto utiliza componentes 'standalone' de Angular 19, configuración de proveedores a nivel de aplicación y carga diferida ('lazy loading') a nivel de ruta sin un NgModule de aplicación. Angular 19 está fuera de soporte oficial, por lo que la actualización y las nuevas pruebas forman parte de la evaluación honesta del proyecto."
@@ -38,7 +38,7 @@
     "id": "interview-angular-2",
     "topic": "angular",
     "subtopic": "ng-services",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo afectan los ámbitos de los proveedores (scopes) al ciclo de vida del servicio y a la propiedad del estado?",
     "shortAnswer": "Un servicio proporcionado en 'root' normalmente tiene una única instancia para toda la aplicación, mientras que un proveedor de ruta o componente crea una instancia para ese subárbol del inyector y su ciclo de vida. Elijo el ámbito más estrecho que coincida con el estado: los clientes compartidos sin estado pueden estar en el ámbito 'root'; el estado de un flujo de trabajo puede pertenecer a una ruta; el estado específico de un componente no debería volverse global por conveniencia.",
     "detailedAnswer": "La inyección de dependencias de Angular es jerárquica. El inyector de entorno contiene los proveedores de la aplicación y de las rutas; los inyectores de elementos pueden proporcionar dependencias para un subárbol de componentes. Proporcionar el mismo servicio en un nivel inferior crea una instancia diferente, lo que puede ser un aislamiento intencionado o un error sutil cuando los desarrolladores esperan un estado compartido.\n\nSeparo las responsabilidades del servicio. Los clientes de API y las utilidades transversales suelen ser servicios 'root' sin estado. Una fachada con ámbito de ruta puede poseer un estado que debe reiniciarse al salir de una funcionalidad. El estado de presentación local puede permanecer en el componente. La elección entre la inyección por constructor e 'inject()' es principalmente una cuestión de contexto y estilo; no cambia el ámbito del proveedor.\n\nPara servicios con estado, expongo una superficie de estado de solo lectura y métodos que expresen las transiciones permitidas, en lugar de permitir que cada componente mute los campos. También verifico si un 'singleton' almacena datos específicos del usuario o de la solicitud que deberían tener un ciclo de vida más corto.",
@@ -66,13 +66,13 @@
         "question": "¿Qué estado debería reiniciarse cuando el usuario sale de una funcionalidad?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
     "id": "interview-angular-3",
     "topic": "angular",
     "subtopic": "ng-rxjs",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo implementarías una experiencia de búsqueda donde una nueva entrada deba cancelar una solicitud HTTP anterior?",
     "shortAnswer": "Modelaría la entrada como un Observable, la normalizaría, aplicaría un 'debounce' al tecleo del usuario, ignoraría términos sin cambios y usaría 'switchMap' para la llamada HTTP, de modo que un nuevo término cancele la suscripción a la solicitud anterior. Gestionaría explícitamente los estados de carga, vacío y error, y usaría 'takeUntilDestroyed' o un límite de suscripción gestionado por Angular al suscribirme de forma imperativa.",
     "detailedAnswer": "La elección del operador surge del requisito de concurrencia. 'switchMap' mantiene solo la suscripción interna más reciente, lo que encaja con una búsqueda de tipo 'typeahead'. 'concatMap' pondría las solicitudes en cola por orden, 'exhaustMap' ignoraría las nuevas entradas mientras una solicitud esté activa y 'mergeMap' permitiría resultados concurrentes que podrían llegar desordenados. Ninguno es universalmente mejor.\n\nLa cancelación tiene límites: cancelar la suscripción puede abortar la solicitud HTTP de Angular (donde sea compatible) y evita que una respuesta obsoleta actualice la vista, pero no garantiza que una operación de servidor ya recibida se haya deshecho. La búsqueda no debe tener efectos secundarios; un comando como un pago o una inscripción requiere una semántica diferente.\n\nEl flujo también debe definir errores y estados. Un 'catchError' interno puede mantener vivo el flujo de entrada externo. El estado de carga debe derivarse con cuidado para que una solicitud cancelada no deje la interfaz en un estado inconsistente. En una plantilla, el 'pipe async' gestiona el ciclo de vida de la suscripción; en el código, 'takeUntilDestroyed' proporciona un límite de ciclo de vida.\n\nEste proyecto utiliza RxJS para valores derivados del enrutador y comportamiento de interceptores, pero una implementación de 'typeahead' de producción solo debería atribuirse si se demuestra en la aplicación correspondiente.",
@@ -100,13 +100,13 @@
         "question": "¿Cómo probarías que un resultado antiguo no puede reemplazar a uno más nuevo?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   },
   {
     "id": "interview-angular-4",
     "topic": "angular",
     "subtopic": "ng-signals",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo decides si una parte del estado de Angular debe usar Signals, RxJS o ambos?",
     "shortAnswer": "Uso Signals para el estado legible de forma síncrona y los valores derivados consumidos por las vistas de Angular, y RxJS para flujos asíncronos donde el tiempo, la cancelación, la coordinación (como el 'backpressure') o la composición de eventos sean importantes. Son complementarios: un Observable puede conectarse con 'toSignal' en el límite de la vista, mientras que una API que los consumidores necesiten componer puede seguir siendo un Observable.",
     "detailedAnswer": "La decisión depende del comportamiento, no de la idea de que una API reemplace a la otra. Una Signal tiene un valor actual y funciona bien para el estado local, el estado del servicio y las derivaciones computadas. Un Observable representa valores a lo largo del tiempo y dispone de operadores para la cancelación, concurrencia, temporización y combinación de fuentes independientes.\n\nPor ejemplo, los parámetros de ruta o un flujo HTTP pueden seguir siendo RxJS mientras se convierten con 'toSignal' para un consumo síncrono en la plantilla. Por el contrario, una API basada en Observables puede ser más apropiada cuando los consumidores necesiten componerla con otro trabajo asíncrono. Los puentes entre ambos necesitan decisiones sobre el ciclo de vida y el valor inicial; la conversión tiene implicaciones semánticas.\n\nLos 'effects' son para efectos secundarios reales, no una forma predeterminada de copiar una Signal en otra. El estado derivado normalmente debería usar 'computed', lo que mantiene clara la propiedad y evita bucles de actualización. Además, las Signals no eliminan los problemas de memoria o lógica: los efectos de larga duración, los objetos retenidos y los servicios mal delimitados pueden seguir causando problemas.\n\nEste proyecto utiliza Signals y estado computado extensamente, y conecta los observables del enrutador con 'toSignal', proporcionando evidencia directa del enfoque mixto.",
@@ -134,7 +134,7 @@
         "question": "¿Qué estado en este proyecto se beneficia de seguir siendo un Observable?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
       "title": "Signals con interoperabilidad RxJS",
       "description": "Este proyecto de Angular utiliza señales y valores computados para el estado de la interfaz y del servicio, y 'toSignal' para consumir Observables derivados del enrutador."
@@ -144,7 +144,7 @@
     "id": "interview-angular-5",
     "topic": "angular",
     "subtopic": "ng-forms",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo diseñarías un formulario complejo en Angular con validación cruzada y en el servidor?",
     "shortAnswer": "Usaría un formulario reactivo tipado, mantendría los validadores de nivel de control cerca de los mismos y ubicaría las reglas de campos cruzados en el grupo más pequeño que contenga todos los valores necesarios. Los validadores asíncronos deben usarse solo para lecturas de validación con cancelación y control de frecuencia ('throttling'). Al enviar, mapeo los errores de validación del servidor a los controles cuando sea posible y mantengo la validación de negocio del backend como la autoridad definitiva.",
     "detailedAnswer": "Los formularios reactivos tipados facilitan el razonamiento sobre el modelo del formulario, los controles deshabilitados y la carga de datos enviada. Separo tres tipos de validación: restricciones de formato local, consistencia entre campos y reglas autoritativas del servidor. Un validador de rango de fechas pertenece al grupo que contiene ambas fechas; ponerlo en un solo control oculta la dependencia.\n\nLa validación asíncrona requiere cuidado. Puede crear una solicitud por cada pulsación de tecla, entrar en condiciones de carrera con nuevas entradas y confundir fallos de conectividad con datos inválidos. Utilizo estrategias de actualización o 'debouncing' cuando es apropiado, cancelo comprobaciones obsoletas y reservo los validadores asíncronos para cuestiones que encajen en la validación de campos. Algunas comprobaciones de negocio son más claras durante el envío ('submit').\n\nLa interfaz de usuario debe mostrar los errores tras una interacción adecuada y preservar los detalles del servidor que ayuden a la corrección. Un protector de ruta ('guard') o un botón deshabilitado no son seguridad; el backend debe imponer la autorización y los invariantes.\n\nEl proyecto actual de preparación para entrevistas no proporciona evidencia significativa de formularios complejos, por lo que esta respuesta se clasifica como conocimiento estudiado. Una afirmación de producción debería provenir de SinapiPRO u otro repositorio solo tras demostrar el formulario real y sus pruebas.",
@@ -172,13 +172,13 @@
         "question": "¿Qué cambia cuando una parte del formulario se deshabilita dinámicamente?"
       }
     ],
-    "experienceLevel": "ESTUDIADO_PERO_NO_UTILIZADO"
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
     "id": "interview-angular-6",
     "topic": "angular",
     "subtopic": "ng-routing",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Qué responsabilidades pertenecen a las rutas, guards y resolvers de Angular, y qué debería quedarse fuera?",
     "shortAnswer": "Las rutas definen la navegación y los límites de la carga diferida ('lazy loading'). Los 'guards' deciden si la navegación debe continuar o redirigir, y los 'resolvers' pueden preparar los datos necesarios antes de la activación. Mejoran el flujo y la experiencia del usuario, pero no son mecanismos de seguridad; el backend debe proteger los datos y operaciones. La lógica de negocio pesada y la orquestación de larga duración pertenecen a los servicios, no a los ganchos ('hooks') de enrutamiento.",
     "detailedAnswer": "Uso la configuración de rutas para expresar la navegación de la aplicación, los límites de las funcionalidades y los parámetros. 'loadComponent' permite la división de código a nivel de ruta para funcionalidades 'standalone'. Un 'guard' es apropiado para una condición previa a la navegación, como redirigir cuando falta un estado local necesario, pero puede omitirse llamando directamente a una API y, por tanto, no puede asegurar dicha API.\n\nUn 'resolver' es útil cuando una ruta no debe renderizarse hasta que los datos esenciales estén disponibles y cuando los errores de carga o navegación tienen una política deliberada. Es menos adecuado para solicitudes opcionales, porque bloquear la activación puede hacer que la navegación se sienta lenta. Algunas pantallas se benefician de renderizar un esquema ('shell') de inmediato y cargar secciones independientes después.\n\nEste proyecto utiliza rutas 'standalone' cargadas de forma diferida, 'guards' funcionales y un 'resolver' de temas, por lo que la respuesta puede basarse en código real. Explicaría una ruta concreta y por qué existe cada gancho en lugar de afirmar que los 'guards' y 'resolvers' son siempre necesarios.",
@@ -206,7 +206,7 @@
         "question": "¿Cómo probarías un 'guard' funcional?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
       "title": "Rutas diferidas, guards funcionales y resolver",
       "description": "Este proyecto configura la carga diferida de rutas 'standalone' y utiliza 'guards' funcionales y un 'resolver' para comportamientos de navegación específicos."
@@ -244,7 +244,7 @@
         "question": "¿Cuándo vale la pena el coste de mantenimiento de un 'marble test'?"
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE",
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
       "title": "Pruebas de Angular enfocadas en este proyecto",
       "description": "El repositorio incluye pruebas para el comportamiento de la aplicación, servicios basados en señales y un pipe compartido; la cobertura es útil pero no se presenta como exhaustiva."
@@ -279,6 +279,6 @@
         "hint": "Cuando el coste principal es renderizar y mantener un número muy elevado de nodos en el DOM."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   }
 ]

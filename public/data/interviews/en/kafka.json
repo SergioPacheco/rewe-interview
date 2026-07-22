@@ -5,8 +5,8 @@
     "subtopic": "kafka-fundamentals",
     "difficulty": "BEGINNER",
     "question": "What problem does Kafka solve, and when would you choose a simpler alternative?",
-    "shortAnswer": "Kafka is a distributed event-streaming platform built around durable, partitioned logs. Producers append records; independent consumer groups track their own positions, so consumption does not delete a record and replay is possible within retention. I choose it when retention, multiple consumers, ordered processing per key or scalable streams justify its operational cost\u2014not merely because work is asynchronous.",
-    "detailedAnswer": "Kafka is useful when a system needs several of these properties together:\n\n- Durable event retention and replay\n- Multiple independent consumer groups reading the same stream\n- Horizontal scaling through partitions\n- Ordering for records that share a partition\n- Stream processing, integrations or an event backbone\n\nIt is not automatically the best choice for every asynchronous task. A conventional queue can be simpler for work distribution with broker-managed acknowledgements and per-message routing. A synchronous HTTP call may be clearer when the caller needs an immediate result and both services share the same availability boundary. A database outbox plus a smaller broker may be sufficient at modest scale.\n\nThe decision should include event volume and size, retention, replay, ordering scope, delivery semantics, schema evolution, operational ownership and failure recovery\u2014not a throughput slogan.",
+    "shortAnswer": "Kafka is a distributed event-streaming platform built around durable, partitioned logs. Producers append records; independent consumer groups track their own positions, so consumption does not delete a record and replay is possible within retention. I choose it when retention, multiple consumers, ordered processing per key or scalable streams justify its operational cost—not merely because work is asynchronous.",
+    "detailedAnswer": "Kafka is useful when a system needs several of these properties together:\n\n- Durable event retention and replay\n- Multiple independent consumer groups reading the same stream\n- Horizontal scaling through partitions\n- Ordering for records that share a partition\n- Stream processing, integrations or an event backbone\n\nIt is not automatically the best choice for every asynchronous task. A conventional queue can be simpler for work distribution with broker-managed acknowledgements and per-message routing. A synchronous HTTP call may be clearer when the caller needs an immediate result and both services share the same availability boundary. A database outbox plus a smaller broker may be sufficient at modest scale.\n\nThe decision should include event volume and size, retention, replay, ordering scope, delivery semantics, schema evolution, operational ownership and failure recovery—not a throughput slogan.",
     "keyPoints": [
       "Kafka stores partitioned logs and retains records independently of consumption",
       "Consumer groups maintain independent positions",
@@ -22,12 +22,36 @@
     ],
     "followUps": [
       {
-        "question": "How does retention change recovery options compared with a traditional work queue?",
-        "hint": "A consumer can reset its position and replay retained data; that also means handlers must tolerate reprocessing."
+        "question": "When would you NOT use Kafka?",
+        "hint": "Simple request/reply, low volume, strong ordering needs across topics"
       },
       {
-        "question": "When would a direct HTTP call be the clearer choice?",
-        "hint": "When an immediate response is required, replay is unnecessary and synchronous coupling is acceptable."
+        "question": "What would you use instead for a 100-request-per-second workload?",
+        "hint": "RabbitMQ, SQS, or even direct REST — justify based on complexity vs. benefit"
+      },
+      {
+        "question": "How would you convince a team that already wants Kafka that a simpler solution is better?",
+        "hint": "Show influence skills — data, cost, operational burden"
+      },
+      {
+        "question": "Imagine REWE processes 400,000 orders per hour. Would you use Kafka here? Why?",
+        "hint": "Scale justifies it — but discuss partition strategy, consumer groups"
+      },
+      {
+        "question": "What happens if Kafka is down for 10 minutes?",
+        "hint": "Discuss buffering, retry, circuit breaker, data loss risk"
+      },
+      {
+        "question": "How would you monitor Kafka in production?",
+        "hint": "Consumer lag, broker disk, under-replicated partitions, throughput"
+      },
+      {
+        "question": "What metrics would make you wake up at 3 AM?",
+        "hint": "Consumer lag growing, broker offline, disk full"
+      },
+      {
+        "question": "How would you migrate from RabbitMQ to Kafka in a running system?",
+        "hint": "Dual-write, shadow mode, gradual cutover, rollback plan"
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE",
@@ -43,7 +67,7 @@
     "difficulty": "SENIOR",
     "question": "What does Kafka exactly-once semantics guarantee, and what does it not guarantee for database or API side effects?",
     "shortAnswer": "Kafka transactions can make a Kafka read-process-write cycle atomic: output records and consumed offsets commit together, and `read_committed` consumers ignore aborted output. That guarantee ends at Kafka's transaction boundary. A database update or HTTP call is not made exactly once by enabling producer idempotence, so I use an idempotency key, inbox/outbox pattern or a sink with an explicit end-to-end guarantee.",
-    "detailedAnswer": "There are related but distinct guarantees:\n\n1. **Idempotent producer** prevents duplicate log entries caused by supported producer retries while preserving per-partition ordering under its configuration constraints. It does not deduplicate two independent business requests.\n2. **Kafka transaction** atomically commits records to one or more Kafka partitions and, for a consume-transform-produce loop, the consumed offsets via `sendOffsetsToTransaction`. Downstream consumers must use `isolation.level=read_committed` to hide aborted records. Kafka Streams can manage this boundary with its exactly-once processing mode.\n3. **External effects** are outside that transaction. If a consumer updates PostgreSQL and crashes before committing its Kafka offset, the record can be delivered again; if it commits the offset first, a later database failure can lose the effect.\n\nCommon external-side-effect designs:\n- Idempotent operation keyed by stable event ID, enforced by a unique constraint in the same database transaction as the business change\n- Inbox table for consumed IDs and business changes\n- Transactional outbox when a database change must later publish an event\n- Kafka Connect or another sink only when its connector and destination document the required guarantee\n\nCall the result \u2018effectively once\u2019 only after stating the observable boundary and failure cases.",
+    "detailedAnswer": "There are related but distinct guarantees:\n\n1. **Idempotent producer** prevents duplicate log entries caused by supported producer retries while preserving per-partition ordering under its configuration constraints. It does not deduplicate two independent business requests.\n2. **Kafka transaction** atomically commits records to one or more Kafka partitions and, for a consume-transform-produce loop, the consumed offsets via `sendOffsetsToTransaction`. Downstream consumers must use `isolation.level=read_committed` to hide aborted records. Kafka Streams can manage this boundary with its exactly-once processing mode.\n3. **External effects** are outside that transaction. If a consumer updates PostgreSQL and crashes before committing its Kafka offset, the record can be delivered again; if it commits the offset first, a later database failure can lose the effect.\n\nCommon external-side-effect designs:\n- Idempotent operation keyed by stable event ID, enforced by a unique constraint in the same database transaction as the business change\n- Inbox table for consumed IDs and business changes\n- Transactional outbox when a database change must later publish an event\n- Kafka Connect or another sink only when its connector and destination document the required guarantee\n\nCall the result ‘effectively once’ only after stating the observable boundary and failure cases.",
     "keyPoints": [
       "Producer idempotence handles retry duplicates within Kafka producer semantics",
       "Kafka transactions can atomically commit output records and consumed offsets",
@@ -59,12 +83,32 @@
     ],
     "followUps": [
       {
-        "question": "What happens if a database update commits and the consumer crashes before its Kafka offset commits?",
-        "hint": "The record can be delivered again; a unique event ID and business update should be handled atomically so the retry is harmless."
+        "question": "What side effects can break exactly-once guarantees?",
+        "hint": "HTTP calls, email sends, external APIs — idempotency is YOUR problem"
       },
       {
-        "question": "When is a transactional outbox useful?",
-        "hint": "When a database state change and the intent to publish an event must commit atomically without a distributed transaction."
+        "question": "How do you make a consumer idempotent?",
+        "hint": "Idempotency key, deduplication table, conditional INSERT"
+      },
+      {
+        "question": "What happens with exactly-once if your consumer crashes mid-processing?",
+        "hint": "Offset committed but side effect not done — or vice versa"
+      },
+      {
+        "question": "Would you trust exactly-once for financial transactions?",
+        "hint": "No — use saga, compensating transactions, reconciliation"
+      },
+      {
+        "question": "How do you test exactly-once behavior?",
+        "hint": "Inject failures, kill consumers, verify no duplicates in output"
+      },
+      {
+        "question": "What is the performance cost of exactly-once?",
+        "hint": "Transaction overhead, reduced throughput, higher latency"
+      },
+      {
+        "question": "When is at-least-once good enough?",
+        "hint": "Analytics, logs, notifications — where duplicates are tolerable"
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE",
@@ -79,7 +123,7 @@
     "subtopic": "kafka-architecture",
     "difficulty": "INTERMEDIATE",
     "question": "How do you choose a partition key, and what can go wrong as traffic or partition count changes?",
-    "shortAnswer": "The key defines the ordering scope and usually the load distribution. I first ask which events must be processed in order\u2014such as all events for one delivery\u2014then check cardinality and skew with real traffic. A poor key creates hot partitions or unwanted ordering gaps. Increasing the partition count can also remap keyed records, so I plan that change rather than treating it as free scaling.",
+    "shortAnswer": "The key defines the ordering scope and usually the load distribution. I first ask which events must be processed in order—such as all events for one delivery—then check cardinality and skew with real traffic. A poor key creates hot partitions or unwanted ordering gaps. Increasing the partition count can also remap keyed records, so I plan that change rather than treating it as free scaling.",
     "detailedAnswer": "A key is a domain decision before it is a hashing decision:\n\n- `delivery_id` keeps events for one delivery in one partition and therefore ordered in that partition.\n- `driver_id` gives a different ordering scope and may create skew if a small set of drivers is unusually active.\n- A low-cardinality or skewed key leaves some partitions hot and limits the consumer group's effective parallelism.\n- A null key gives no stable per-entity affinity; the default producer may use sticky batching, so it should not be used when entity ordering matters.\n\nCheck expected key distribution, peak traffic, the slowest partition's lag and whether one record type is much more expensive to process. Salting a hot key improves parallelism but sacrifices simple per-key ordering and requires downstream aggregation.\n\nAdding partitions increases potential parallelism, but hash-based partition selection can map a key differently after the count changes. Existing and new records for one logical key may then live in different partitions, so migration and ordering requirements must be explicit.",
     "keyPoints": [
       "Choose the key from the required ordering scope",
@@ -96,12 +140,32 @@
     ],
     "followUps": [
       {
-        "question": "How would you detect a hot partition?",
-        "hint": "Compare per-partition bytes, record rate, processing time and consumer lag instead of looking only at topic totals."
+        "question": "What happens if you choose a bad partition key?",
+        "hint": "Hot partition, uneven load, one consumer overwhelmed"
       },
       {
-        "question": "What trade-off does key salting introduce?",
-        "hint": "It spreads a hot entity across partitions but weakens per-entity ordering and may require a second aggregation stage."
+        "question": "Give me an example of a partition key that seems good but fails at scale.",
+        "hint": "Customer ID works until one customer generates 80% of traffic"
+      },
+      {
+        "question": "How do you rebalance when adding partitions?",
+        "hint": "New partitions get no historical data, consumers rebalance, ordering breaks for new keys"
+      },
+      {
+        "question": "What happens to ordering guarantees when you change partition count?",
+        "hint": "Same key may hash to different partition — ordering broken"
+      },
+      {
+        "question": "How would you partition orders for a grocery delivery system like REWE?",
+        "hint": "Store ID? Region? Order ID? — discuss trade-offs of each"
+      },
+      {
+        "question": "How do you detect a hot partition in production?",
+        "hint": "Consumer lag per partition, throughput skew, monitoring dashboards"
+      },
+      {
+        "question": "What would you do if you discovered a hot partition at 2 AM?",
+        "hint": "Short-term: increase consumer for that partition. Long-term: re-key"
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
@@ -113,7 +177,7 @@
     "difficulty": "INTERMEDIATE",
     "question": "How do consumer groups, offset commits and rebalancing interact?",
     "shortAnswer": "Within a consumer group, each topic partition is assigned to at most one member at a time, so partitions bound parallelism. The group stores committed offsets as recovery positions. When membership or metadata changes, partitions are reassigned; an eager rebalance revokes them broadly, while cooperative assignment can move them incrementally. Work after the last committed offset may be processed again, so handlers need an explicit commit and idempotency strategy.",
-    "detailedAnswer": "Consumer groups provide competing consumption over partitions:\n\n- Different groups read the topic independently.\n- Within one group, a partition has one active owner; consumers beyond the assignable partition count are idle.\n- The committed offset is the next recovery position, not proof that every external side effect happened exactly once.\n\nA rebalance can be triggered by members joining or leaving, missed heartbeats, subscription changes or partition changes. With eager assignment, members revoke their partitions before reassignment, causing a broader pause. Cooperative assignors can revoke and transfer partitions incrementally, reducing disruption but not removing the need for correct revoke handling. Static membership can avoid some rebalances during brief restarts, with its own operational constraints.\n\nBefore relinquishing a partition, finish or cancel in-flight work consistently and commit only offsets whose effects are complete. If processing succeeded after the last committed offset, reassignment may reprocess those records; committed offsets themselves are not \u2018lost\u2019.",
+    "detailedAnswer": "Consumer groups provide competing consumption over partitions:\n\n- Different groups read the topic independently.\n- Within one group, a partition has one active owner; consumers beyond the assignable partition count are idle.\n- The committed offset is the next recovery position, not proof that every external side effect happened exactly once.\n\nA rebalance can be triggered by members joining or leaving, missed heartbeats, subscription changes or partition changes. With eager assignment, members revoke their partitions before reassignment, causing a broader pause. Cooperative assignors can revoke and transfer partitions incrementally, reducing disruption but not removing the need for correct revoke handling. Static membership can avoid some rebalances during brief restarts, with its own operational constraints.\n\nBefore relinquishing a partition, finish or cancel in-flight work consistently and commit only offsets whose effects are complete. If processing succeeded after the last committed offset, reassignment may reprocess those records; committed offsets themselves are not ‘lost’.",
     "keyPoints": [
       "Partitions cap active consumers within a group",
       "Committed offsets are recovery positions",
@@ -146,7 +210,7 @@
     "difficulty": "SENIOR",
     "question": "Which JMS/ActiveMQ concepts transfer to Kafka, and which assumptions must you unlearn?",
     "shortAnswer": "The transferable skills are asynchronous boundaries, idempotency, retry policy, dead-letter handling, backpressure and observability. The consumption model changes: a JMS queue can have competing consumers and acknowledgements drive removal, while Kafka retains a partitioned log and consumer groups manage offsets. Kafka replay, per-partition order and rebalancing require new operational thinking; JMS and Kafka are not drop-in equivalents.",
-    "detailedAnswer": "What transfers well:\n- Designing handlers for redelivery and idempotency\n- Separating transient retry from poison-message handling\n- Defining transaction boundaries around side effects\n- Monitoring backlog/lag, failure rate and processing time\n- Controlling concurrency and avoiding unbounded work\n\nWhat needs recalibration:\n- A JMS queue may have multiple competing consumers; JMS topics provide pub/sub, including durable subscriptions. It is inaccurate to reduce JMS to \u2018one consumer per queue\u2019.\n- Acknowledged queue messages are normally removed from the destination. Kafka records remain until retention or compaction removes them, independently of a group's offset.\n- Kafka order is per partition; parallelism and key choice are linked.\n- Kafka consumers poll, commit offsets and participate in group rebalances.\n- XA can coordinate some JMS/database work but adds constraints and does not make arbitrary external effects effortless. Kafka's transactions have a different boundary.\n\nA credible transition answer names both the mature messaging habits and the Kafka concepts that still need hands-on validation.",
+    "detailedAnswer": "What transfers well:\n- Designing handlers for redelivery and idempotency\n- Separating transient retry from poison-message handling\n- Defining transaction boundaries around side effects\n- Monitoring backlog/lag, failure rate and processing time\n- Controlling concurrency and avoiding unbounded work\n\nWhat needs recalibration:\n- A JMS queue may have multiple competing consumers; JMS topics provide pub/sub, including durable subscriptions. It is inaccurate to reduce JMS to ‘one consumer per queue’.\n- Acknowledged queue messages are normally removed from the destination. Kafka records remain until retention or compaction removes them, independently of a group's offset.\n- Kafka order is per partition; parallelism and key choice are linked.\n- Kafka consumers poll, commit offsets and participate in group rebalances.\n- XA can coordinate some JMS/database work but adds constraints and does not make arbitrary external effects effortless. Kafka's transactions have a different boundary.\n\nA credible transition answer names both the mature messaging habits and the Kafka concepts that still need hands-on validation.",
     "keyPoints": [
       "Retry, idempotency and failure isolation transfer",
       "JMS queues can use competing consumers",
@@ -252,7 +316,7 @@
     "difficulty": "SENIOR",
     "question": "How does Kafka replication work, and how do you configure it to prevent data loss without sacrificing too much availability?",
     "shortAnswer": "Each partition has a leader and N-1 followers (replication factor N). Only in-sync replicas (ISR) can become leader. Configure: replication.factor=3, min.insync.replicas=2, acks=all. This tolerates 1 broker failure without data loss and without blocking writes. If 2 brokers fail, writes are blocked (protecting data) but reads continue.",
-    "detailedAnswer": "**How replication works:**\n\n1. All produces go to the partition leader\n2. Followers continuously fetch from leader (like consumers)\n3. A follower is \"in-sync\" if it replicated within replica.lag.time.max.ms (10s default)\n4. ISR = set of replicas that are caught up\n5. Leader election: only ISR members eligible (unless unclean.leader.election.enable=true)\n\n**The golden configuration (no data loss + high availability):**\n\n\n**Failure scenarios:**\n- 1 broker down: ISR=2 >= min.insync \u2192 writes continue \u2713\n- 2 brokers down: ISR=1 < min.insync \u2192 writes FAIL (NotEnoughReplicas) but no data loss \u2713\n- All brokers down: partition unavailable until ISR member returns \u2713\n\n**Trade-off:** Higher replication factor = more disk, more network, higher write latency. For 99% of cases, RF=3 + min.insync=2 is the sweet spot.",
+    "detailedAnswer": "**How replication works:**\n\n1. All produces go to the partition leader\n2. Followers continuously fetch from leader (like consumers)\n3. A follower is \"in-sync\" if it replicated within replica.lag.time.max.ms (10s default)\n4. ISR = set of replicas that are caught up\n5. Leader election: only ISR members eligible (unless unclean.leader.election.enable=true)\n\n**The golden configuration (no data loss + high availability):**\n\n\n**Failure scenarios:**\n- 1 broker down: ISR=2 >= min.insync → writes continue ✓\n- 2 brokers down: ISR=1 < min.insync → writes FAIL (NotEnoughReplicas) but no data loss ✓\n- All brokers down: partition unavailable until ISR member returns ✓\n\n**Trade-off:** Higher replication factor = more disk, more network, higher write latency. For 99% of cases, RF=3 + min.insync=2 is the sweet spot.",
     "keyPoints": [
       "Leader handles all reads/writes; followers only replicate",
       "ISR = replicas within replica.lag.time.max.ms of leader",
@@ -279,7 +343,7 @@
     "experienceLevel": "STUDIED_NOT_USED",
     "realExperience": {
       "title": "JMS replication comparison",
-      "description": "In SGN3 with ActiveMQ Artemis, replication is handled via shared storage or live/backup pairs. Kafka's ISR model is more flexible \u2014 no shared storage needed, automatic leader election, configurable durability per topic."
+      "description": "In SGN3 with ActiveMQ Artemis, replication is handled via shared storage or live/backup pairs. Kafka's ISR model is more flexible — no shared storage needed, automatic leader election, configurable durability per topic."
     }
   },
   {
@@ -326,7 +390,7 @@
     "difficulty": "INTERMEDIATE",
     "question": "What is log compaction in Kafka and how would you use it in a delivery tracking system?",
     "shortAnswer": "Log compaction keeps only the latest value per message key, removing older entries during background compaction. For delivery tracking: publish current status (PLANNED, DISPATCHED, DELIVERED) with delivery ID as key. Consumers starting fresh always see the latest status per delivery without reading full history. Like a snapshot that's always up to date.",
-    "detailedAnswer": "**How it works:**\n\nNormal retention (delete): removes entire segments after retention period.\nCompaction: within segments, removes older values for the same key.\n\n\n\n**Delivery tracking use case:**\n- Topic:  with cleanup.policy=compact\n- Key: delivery ID\n- Value: current status + metadata\n- New consumer reads from beginning \u2192 gets snapshot of all active deliveries\n- Real-time consumer reads from latest \u2192 gets live updates\n\n**Tombstones (delete a key):**\n\n\n**vs Event Sourcing:**\n- Compaction = latest state (CQRS read model)\n- Full retention = event history (event sourcing)\n- You can have both:  (delete, 30 days) +  (compact)",
+    "detailedAnswer": "**How it works:**\n\nNormal retention (delete): removes entire segments after retention period.\nCompaction: within segments, removes older values for the same key.\n\n\n\n**Delivery tracking use case:**\n- Topic:  with cleanup.policy=compact\n- Key: delivery ID\n- Value: current status + metadata\n- New consumer reads from beginning → gets snapshot of all active deliveries\n- Real-time consumer reads from latest → gets live updates\n\n**Tombstones (delete a key):**\n\n\n**vs Event Sourcing:**\n- Compaction = latest state (CQRS read model)\n- Full retention = event history (event sourcing)\n- You can have both:  (delete, 30 days) +  (compact)",
     "keyPoints": [
       "Keeps latest value per key, removes older values",
       "Tombstone (null value) = delete key after compaction",

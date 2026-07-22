@@ -80,6 +80,97 @@
   counter-reset: learn-section;
 }
 
+// Learn toolbar — same pattern as practice-toolbar and sim-toolbar
+.learn-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--color-white, #ffffff);
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.learn-toolbar__filter {
+  min-width: 0;
+}
+
+.learn-toolbar__select {
+  max-width: 14rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 0.375rem;
+  background: var(--color-white, #ffffff);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-gray-600, #111827);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 1.75rem;
+
+  &:focus {
+    outline: 2px solid var(--color-primary, #667eea);
+    outline-offset: 1px;
+  }
+}
+
+.learn-toolbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.learn-toolbar__progress-bar {
+  width: 6rem;
+  height: 0.375rem;
+  background: var(--color-gray-200, #e5e7eb);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.learn-toolbar__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 1rem;
+  transition: width 0.3s ease;
+}
+
+.learn-toolbar__counter {
+  font-size: 0.8125rem;
+  color: var(--color-gray-400, #6b7280);
+  font-weight: 500;
+  min-width: 3rem;
+  text-align: center;
+}
+
+.learn-toolbar__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 0.375rem;
+  background: var(--color-white, #ffffff);
+  cursor: pointer;
+  font-size: 0.875rem;
+
+  &:hover:not(:disabled) {
+    background: var(--color-gray-100, #f3f4f6);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
 /* Authored Learn content is transformed into this same IDE shell by MarkdownPipe. */
 .code-block--static {
   --ide-bg: #1e1e1e;
@@ -538,6 +629,97 @@
   margin-bottom: var(--sp-2);
   font-size: var(--fs-small);
   color: var(--color-gray-400);
+}
+
+// Practice toolbar with dropdown + progress (same pattern as interview sim-toolbar)
+.practice-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--color-white, #ffffff);
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.practice-toolbar__filter {
+  min-width: 0;
+}
+
+.practice-toolbar__select {
+  max-width: 14rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 0.375rem;
+  background: var(--color-white, #ffffff);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-gray-600, #111827);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 1.75rem;
+
+  &:focus {
+    outline: 2px solid var(--color-primary, #667eea);
+    outline-offset: 1px;
+  }
+}
+
+.practice-toolbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.practice-toolbar__progress-bar {
+  width: 6rem;
+  height: 0.375rem;
+  background: var(--color-gray-200, #e5e7eb);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.practice-toolbar__progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 1rem;
+  transition: width 0.3s ease;
+}
+
+.practice-toolbar__counter {
+  font-size: 0.8125rem;
+  color: var(--color-gray-400, #6b7280);
+  font-weight: 500;
+  min-width: 3rem;
+  text-align: center;
+}
+
+.practice-toolbar__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--color-gray-200, #e5e7eb);
+  border-radius: 0.375rem;
+  background: var(--color-white, #ffffff);
+  cursor: pointer;
+  font-size: 0.875rem;
+
+  &:hover:not(:disabled) {
+    background: var(--color-gray-100, #f3f4f6);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
 }
 
 .combo {

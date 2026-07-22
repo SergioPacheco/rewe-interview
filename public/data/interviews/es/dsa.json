@@ -3,7 +3,7 @@
     "id": "interview-dsa-1",
     "topic": "dsa",
     "subtopic": "dsa-collections",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo funciona un HashMap internamente y cuándo se degrada su rendimiento?",
     "shortAnswer": "HashMap utiliza un array de cubetas (buckets). El hashCode de una clave determina el índice de la cubeta. Las colisiones se manejan mediante listas enlazadas (Java 7) o árboles (Java 8+, cuando una cubeta supera los 8 elementos). Con un factor de carga de 0.75, duplica su capacidad y recalcula el hash (rehash) de todas las entradas. Se degrada cuando muchas claves colisionan en la misma cubeta, pasando de O(1) a O(n) en Java 7, u O(log n) en Java 8+ debido a la conversión a árbol.",
     "detailedAnswer": "**Estructura interna:**\n1. Array de Node<K,V> (llamado `table`), capacidad inicial de 16.\n2. `put(key, value)`: calcula `hash(key.hashCode())`, encuentra el índice de la cubeta mediante `hash & (n-1)`.\n3. Si la cubeta está vacía: inserta directamente.\n4. Si la cubeta está ocupada: recorre la cadena, comparando con `equals()`.\n5. Si la longitud de la cadena > 8 Y el tamaño de la tabla > 64: se convierte en un árbol rojo-negro.\n\n**Mecanismo de redimensionamiento:**\n- Umbral (threshold) = capacidad × factor de carga (por defecto 0.75).\n- Cuando el tamaño > umbral: crea un nuevo array (doble de capacidad), recalcula el hash de todas las entradas.\n- Esto es O(n) pero ocurre con poca frecuencia → O(1) amortizado para put.\n\n**Escenarios de degradación:**\n1. Mal hashCode (constante) → todas las claves en una cubeta → O(n) u O(log n).\n2. Ataque de inundación de hash (hash flooding) → colisiones intencionadas → mitigado por la conversión a árbol.\n3. Redimensionamiento frecuente con datos crecientes → picos de latencia durante el rehash (considerar la capacidad inicial).\n\n**Consideraciones de producción:**\n- No es seguro para hilos (thread-safe). Un put concurrente puede corromper la estructura interna (bucles infinitos en Java 7).\n- Usar ConcurrentHashMap para estados compartidos.\n- Usar capacidad inicial cuando el tamaño sea conocido: `new HashMap<>(expectedSize / 0.75 + 1)`.",
@@ -30,7 +30,7 @@
         "hint": "Bloqueo segmentado (lock striping): cada cubeta (o segmento en versiones antiguas) tiene su propio bloqueo. Varios hilos pueden escribir en diferentes cubetas simultáneamente."
       }
     ],
-    "experienceLevel": "ESTUDIADO_NO_USADO",
+    "experienceLevel": "STUDIED_NOT_USED",
     "realExperience": {
       "title": "Implementación de caché en SGN3",
       "description": "Uso de ConcurrentHashMap con computeIfAbsent para cachés de aplicación seguras para hilos. Comprendí la importancia de la capacidad inicial al cachear datos de configuración para más de 300 unidades organizativas."
@@ -67,7 +67,7 @@
         "hint": "Reducir el tamaño de la entrada antes de llamarla, cachear resultados, realizar llamadas por lotes o buscar una librería alternativa con mejor complejidad."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
       "title": "Optimización del listado de inscripciones en SGN3",
       "description": "Identifiqué un patrón O(n²) en el procesamiento de inscripciones: consultas N+1 + List.contains() en bucles de validación. Reduje de ~48,000 consultas a ~10 usando carga por lotes (batch loading) y búsquedas basadas en HashSet. La latencia bajó de 16 minutos a 2 segundos para 26,705 registros."
@@ -77,7 +77,7 @@
     "id": "interview-dsa-3",
     "topic": "dsa",
     "subtopic": "dsa-hashing",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cuál es el contrato hashCode/equals y por qué es importante para las entidades JPA?",
     "shortAnswer": "Si dos objetos son iguales (equals devuelve true), deben tener el mismo hashCode. Las entidades JPA son delicadas porque el @Id puede ser nulo antes de persistir; si usas el @Id en hashCode, todas las entidades no persistidas terminan en la misma cubeta. Soluciones: usar una clave de negocio natural o asignar un UUID en el momento de la construcción.",
     "detailedAnswer": "**El contrato:**\n1. `a.equals(b)` → `a.hashCode() == b.hashCode()` (OBLIGATORIO).\n2. El mismo hashCode NO implica igualdad (las colisiones están permitidas).\n3. hashCode debe ser consistente dentro de la ejecución de una JVM.\n4. Los campos usados en hashCode deben ser efectivamente inmutables.\n\n**Por qué JPA es problemático:**\n```java\n// @GeneratedValue significa id=null hasta persist()\nDriver d1 = new Driver(); // id=null\nDriver d2 = new Driver(); // id=null\n\n// Si equals usa id: d1.equals(d2) = true (ambos nulos)\n// Tras persistir: d1.id=1, d2.id=2 — ahora son diferentes\n// Pero si d1 ya estaba en un HashSet... está en la cubeta INCORRECTA\n```\n\n**Soluciones:**\n1. **Clave natural/de negocio:** Usar un campo que se establezca al crear y nunca cambie (numLicencia, codigoSeguimiento).\n2. **UUID en construcción:** `private final UUID uuid = UUID.randomUUID()` — asignado antes de persistir.\n3. **Recomendación de Hibernate:** Usar `getClass().hashCode()` (constante por tipo) para hashCode con equals basado en id — sacrifica búsqueda O(1) en favor de la corrección.\n\n**Regla de producción:** Nunca uses campos mutables ni IDs generados por la base de datos en hashCode para entidades que participen en Sets o como claves de Map antes de ser persistidas.",
@@ -104,7 +104,7 @@
         "hint": "Por defecto usa todos los campos incluyendo @Id, lo cual es problemático. Usar @EqualsAndHashCode(of = \"claveNegocio\") o excluir el id."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
       "title": "Igualdad de entidades en colecciones de SGN3",
       "description": "Las entidades de SGN3 usan la clase base SenaiEntity con equals basado en id. Comprendí las implicaciones cuando las entidades participan en Sets durante el procesamiento por lotes antes de ser enviadas a la base de datos."
@@ -141,7 +141,7 @@
         "hint": "Cuando la pérdida de mensajes al reiniciar el pod sea aceptable, los requisitos de latencia sean sub-milisegundo o el sistema sea de instancia única."
       }
     ],
-    "experienceLevel": "ESTUDIADO_NO_USADO",
+    "experienceLevel": "STUDIED_NOT_USED",
     "realExperience": {
       "title": "Colas JMS en SGN3 (Artemis)",
       "description": "Gestión de más de 80 colas JMS con 128 consumidores MDB. Apliqué los mismos conceptos: orden FIFO, reenvío (reintentos), DLQ para mensajes venenosos e idempotencia mediante INSERT ON CONFLICT. Kafka extiende estos patrones a escala distribuida."
@@ -151,7 +151,7 @@
     "id": "interview-dsa-5",
     "topic": "dsa",
     "subtopic": "dsa-trees",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo funciona un índice B-Tree y por qué importa el orden de las columnas en un índice compuesto?",
     "shortAnswer": "Un B-Tree es un árbol balanceado donde cada nodo contiene múltiples claves y punteros, diseñado para acceso a disco. Tiene un factor de ramificación alto (100-500), por lo que su profundidad es pequeña (3-4 para millones de filas). El orden en un índice compuesto importa porque el árbol se ordena de izquierda a derecha: la columna más a la izquierda determina el primer nivel de ramificación. Una consulta solo puede usar el índice eficientemente si proporciona predicados de izquierda a derecha sin huecos.",
     "detailedAnswer": "**Estructura B-Tree:**\n- Cada nodo = una página de disco (típicamente 8KB en PostgreSQL).\n- Factor de ramificación ~100-500 (depende del tamaño de la clave).\n- Para 10M de filas: profundidad ≈ log₂₀₀(10M) ≈ 3-4 niveles.\n- Buscar una fila = 3-4 lecturas de página de disco (frente a +100k en un escaneo completo).\n\n**El índice compuesto (a, b, c) funciona como una guía telefónica:**\n- Ordenado por: Apellido → Nombre → Ciudad.\n- PUEDES buscar: (Pérez), (Pérez, Juan), (Pérez, Juan, Madrid).\n- NO PUEDES saltar: (?, Juan, ?) — ¡debes conocer el apellido primero!\n\n**Reglas prácticas:**\n```sql\nCREATE INDEX idx ON delivery(status, driver_id, scheduled_at);\n\n-- ✅ Usa el índice (prefijo izquierdo):\nWHERE status = 'ACTIVE'\nWHERE status = 'ACTIVE' AND driver_id = 42\nWHERE status = 'ACTIVE' AND driver_id = 42 ORDER BY scheduled_at\n\n-- ⚠️ Uso parcial:\nWHERE driver_id = 42  -- se salta la columna izquierda, menos eficiente\n\n-- ❌ No puede usarlo eficazmente:\nWHERE scheduled_at > '2024-01-01'  -- solo la columna más a la derecha\n```\n\n**Estrategia de orden de columnas:**\n1. Predicados de igualdad primero (mayor selectividad).\n2. Predicados de rango / ORDER BY al final.\n3. Considerar índice de cobertura (incluir todas las columnas del SELECT) para evitar buscar en la tabla (heap lookup).",
@@ -178,7 +178,7 @@
         "hint": "Índice que incluye todas las columnas que necesita la consulta (vía INCLUDE). Evita acceder al heap. Vale la pena para consultas frecuentes en tablas muy activas."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
       "title": "Optimización de índices en SGN3 PostgreSQL",
       "description": "Diseñé índices compuestos para consultas de inscripciones usando EXPLAIN ANALYZE. Apliqué la regla del prefijo izquierdo para soportar múltiples patrones de consulta con menos índices. Reduje el tiempo de consulta de segundos a milisegundos en tablas con millones de filas."
@@ -215,7 +215,7 @@
         "hint": "Exportación del lado del servidor (streaming a archivo/S3), tarea en segundo plano con notificación o respuesta por streaming basada en cursores."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
       "title": "Optimización de reportes en SGN3",
       "description": "Diagnosticado endpoint de reporte que degradó de 2s a 16min al crecer los datos. Causa raíz: consultas N+1 × List.contains() en validación. Apliqué carga por lotes (cláusula IN), HashSet para búsquedas y filtrado en DB. Resultado: 2 segundos independientemente del volumen."
@@ -225,7 +225,7 @@
     "id": "interview-dsa-7",
     "topic": "dsa",
     "subtopic": "dsa-recursion",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cuándo es apropiada la recursividad en código de producción y cuándo debería evitarse?",
     "shortAnswer": "La recursividad es apropiada para estructuras naturalmente recursivas (árboles, JSON anidado, jerarquías) donde la profundidad es limitada y pequeña. Evítala para procesamiento lineal (usa iteración), profundidad ilimitada (riesgo de StackOverflow) y cuando no haya optimización de llamada de cola (Java no la soporta). En producción, considera siempre: profundidad máxima, tamaño de la pila y si un enfoque iterativo con una pila explícita es más seguro.",
     "detailedAnswer": "**Buenos usos de la recursividad en producción:**\n\n1. **Recorrido de árboles** (jerarquías de categorías, organigramas): profundidad limitada por reglas de negocio.\n2. **Divide y vencerás** (merge sort, búsqueda binaria): profundidad O(log n).\n3. **Parsing de estructuras anidadas** (JSON, XML, config): profundidad limitada por el esquema.\n4. **Backtracking con poda** (optimización de rutas, resolución de restricciones): con límite de profundidad.\n\n**Cuándo evitarla:**\n\n1. **Procesamiento lineal:** Procesar una lista de 100k elementos recursivamente → StackOverflow.\n2. **Profundidad ilimitada:** Árbol generado por usuario sin límite de niveles.\n3. **Ruta crítica de alto rendimiento:** La recursividad tiene sobrecarga por llamadas (asignación de frames).\n4. **Cuando la iteración es igual de legible:** No uses recursividad solo por 'ser ingenioso'.\n\n**Checklist de recursividad segura:**\n```java\n// ✅ Profundidad limitada + fail-safe\npublic List<Category> getDescendants(Category root, int maxDepth) {\n    if (maxDepth <= 0) return List.of(root); // límite de seguridad\n    List<Category> result = new ArrayList<>();\n    result.add(root);\n    for (Category child : root.getChildren()) {\n        result.addAll(getDescendants(child, maxDepth - 1));\n    }\n    return result;\n}\n\n// ✅ Convertir a iterativo cuando la profundidad es riesgosa\npublic List<Category> getDescendantsIterative(Category root) {\n    Deque<Category> stack = new ArrayDeque<>();\n    List<Category> result = new ArrayList<>();\n    stack.push(root);\n    while (!stack.isEmpty()) {\n        Category current = stack.pop();\n        result.add(current);\n        current.getChildren().forEach(stack::push);\n    }\n    return result;\n}\n```",
@@ -252,7 +252,7 @@
         "hint": "Mismo principio: almacenar resultados calculados indexados por la entrada. @Cacheable es memoización de producción con TTL, expiración y distribución."
       }
     ],
-    "experienceLevel": "ESTUDIADO_NO_USADO"
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
     "id": "interview-dsa-8",
@@ -285,7 +285,7 @@
         "hint": "ConcurrentHashMap<String, LongAdder> con computeIfAbsent. LongAdder es mejor que AtomicLong bajo alta contención."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN",
+    "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
       "title": "Caché segura para hilos en SGN3",
       "description": "Implementé cachés basadas en ConcurrentHashMap con TTL para datos de configuración y unidades organizativas. Usé computeIfAbsent para la inicialización perezosa. Comprendí los compromisos de contención en un despliegue multi-pod."

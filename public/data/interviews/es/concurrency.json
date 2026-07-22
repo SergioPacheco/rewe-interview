@@ -3,7 +3,7 @@
     "id": "interview-concurrency-threads-1",
     "topic": "concurrency",
     "subtopic": "conc-threads",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cómo configurarías un ExecutorService para una carga de trabajo en producción?",
     "shortAnswer": "Comienzo por la carga de trabajo y el recurso que se desea proteger. El trabajo intensivo en CPU (CPU-bound) suele necesitar una concurrencia cercana a los núcleos disponibles; el trabajo bloqueante puede justificar más hilos, pero los límites de conexión y tasas de transferencia (rate limits) de los sistemas externos siguen limitando la concurrencia útil. Elijo deliberadamente los límites de la cola, el comportamiento de rechazo, los nombres de los hilos, el reporte de fallos y el apagado (shutdown), validando luego con pruebas de carga en lugar de confiar en una fórmula universal de tamaño de pool.",
     "detailedAnswer": "El ExecutorService separa la entrega de tareas de la gestión de hilos, pero su configuración es parte de la capacidad del sistema. Un pool fijo con una cola ilimitada puede seguir aceptando trabajo después de que se exceda la capacidad del servicio, convirtiendo la sobrecarga en alta latencia y presión de memoria. Una cola limitada junto con un RejectedExecutionHandler explícito hace visible el comportamiento de sobrecarga: rechazar, descartar, bloquear al productor mediante otro mecanismo, o ejecutar en el hilo del llamador solo cuando se entienden las consecuencias.\n\nEstimo la concurrencia a partir de la utilización de CPU, el ratio de bloqueo, la capacidad de los sistemas externos y los objetivos de latencia, y luego mido. Nombro los hilos y expongo los fallos no capturados para que los incidentes sean diagnosticables. Defino un apagado ordenado: dejar de aceptar trabajo, esperar un periodo limitado y decidir cómo se manejan las tareas no finalizadas. En Jakarta EE u otro entorno gestionado, utilizo su ejecutor gestionado para preservar el ciclo de vida y el contexto. Los ejecutores de un-hilo-virtual-por-tarea (virtual threads) siguen una economía diferente y no deben agruparse en pools para limitar la concurrencia; los límites de recursos siguen siendo explícitos.",
@@ -32,13 +32,13 @@
         "hint": "Profundidad de la cola, hilos activos, tareas completadas y rechazadas, tiempo de espera, tiempo de ejecución y saturación."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
     "id": "interview-concurrency-sync-1",
     "topic": "concurrency",
     "subtopic": "conc-sync",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Qué garantías ofrecen synchronized y volatile, y en qué se diferencian?",
     "shortAnswer": "Un bloque synchronized proporciona exclusión mutua para el mismo monitor y una relación 'happens-before' desde una liberación (unlock) hasta un bloqueo (lock) posterior. Una escritura en una variable volatile tiene una relación 'happens-before' con una lectura posterior de esa variable y evita reordenamientos relevantes, pero no hace que una secuencia de lectura-modificación-escritura (como count++) sea atómica. Uso volatile para la publicación de estado independiente y locks cuando un invariante abarca múltiples operaciones o campos.",
     "detailedAnswer": "La sincronización resuelve tanto la coordinación como la visibilidad. Solo un hilo a la vez ejecuta el código protegido por el mismo monitor, y los cambios realizados antes de liberar ese monitor se vuelven visibles para un hilo que lo adquiera posteriormente. Por lo tanto, el objeto de bloqueo debe compartirse de manera consistente; sincronizar sobre objetos diferentes no proporciona protección común.\n\nLas lecturas y escrituras volatile tienen semántica de orden de memoria pero no una sección crítica general. Es adecuado para flags, instantáneas (snapshots) inmutables publicadas de forma segura y estados donde cada actualización es una asignación única e independiente. `count++` es una operación de lectura, suma y escritura, por lo que volatile por sí solo pierde actualizaciones bajo contención. Usa synchronized, Lock o una operación atómica dependiendo del invariante. ReentrantLock añade adquisición temporizada e interrumpible y múltiples condiciones, al coste de una disciplina explícita de try/finally. Elige el constructo más simple que exprese todo el invariante.",
@@ -67,7 +67,7 @@
         "hint": "No; la planificación y la adquisición del monitor no proporcionan un contrato de equidad."
       }
     ],
-    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
     "id": "interview-concurrency-completable-1",
@@ -103,7 +103,7 @@
         "hint": "thenCompose aplana una función que ya devuelve un CompletionStage."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
     "id": "interview-concurrency-safety-1",
@@ -139,7 +139,7 @@
         "hint": "Un valor cambia a otro y vuelve al original, ocultando una transición de estado intermedia."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
     "id": "interview-concurrency-jmm-1",
@@ -174,7 +174,7 @@
         "hint": "Construcción completa sin escape, seguida de un mecanismo de publicación visible para los lectores."
       }
     ],
-    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
     "id": "interview-concurrency-cancellation-1",
@@ -205,7 +205,7 @@
         "hint": "No asumas la reversión; reconcilia usando una clave de idempotencia o el estado de la operación y haz que el resultado sea recuperable."
       }
     ],
-    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
     "id": "interview-ej-conc-1",
@@ -236,6 +236,6 @@
         "hint": "ConcurrentHashMap siempre. Ofrece mejor concurrencia (bloqueo segmentado/striped locking, lecturas sin bloqueos) y operaciones atómicas útiles (computeIfAbsent, merge). Collections.synchronizedMap bloquea todo el mapa en cada operación."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_TRANSFERIBLE"
+    "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   }
 ]

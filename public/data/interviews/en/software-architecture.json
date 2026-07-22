@@ -21,8 +21,34 @@
       "Cannot name an architectural decision in their own system"
     ],
     "followUps": [
-      { "question": "What is the difference between architecture and design?", "hint": "The boundary is contextual; discuss scope, quality impact, stakeholders, and cost of change instead of a rigid taxonomy." },
-      { "question": "Who is responsible for architecture in your team?", "hint": "Everyone contributes, but someone must own the vision and ensure decisions are consistent." }
+      {
+        "question": "How do you explain architecture to a non-technical stakeholder?",
+        "hint": "Decisions that are expensive to change later. Use analogies."
+      },
+      {
+        "question": "What is the difference between architecture and design?",
+        "hint": "Architecture = hard to reverse. Design = can refactor tomorrow."
+      },
+      {
+        "question": "Who should make architecture decisions in your experience?",
+        "hint": "Team with guidance, not ivory tower. But someone must own the decision."
+      },
+      {
+        "question": "What architecture decision do you regret?",
+        "hint": "Be honest. Show what you learned."
+      },
+      {
+        "question": "How do you document architecture decisions?",
+        "hint": "ADRs, lightweight records with context, options, decision, consequences."
+      },
+      {
+        "question": "When is it worth revisiting an architecture decision?",
+        "hint": "Changed requirements, new evidence, pain threshold exceeded."
+      },
+      {
+        "question": "How do you balance ideal architecture with delivery pressure?",
+        "hint": "Ship first, refactor when pain proves the need. Explicit tech debt."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
@@ -52,8 +78,30 @@
       "Only thinking about functional requirements"
     ],
     "followUps": [
-      { "question": "How do you measure if your architecture achieves a quality attribute?", "hint": "Fitness functions, SLOs, metrics. Architecture evaluation is ongoing, not one-time." },
-      { "question": "Which quality-attribute trade-off did SGN3 make and how would you verify it?", "hint": "Avoid claiming that monoliths cannot scale horizontally; discuss actual coupling, deployment, transaction, capacity, and operational evidence." }
+      {
+        "question": "How do you prioritize quality attributes when they conflict?",
+        "hint": "Example: availability vs consistency, performance vs maintainability"
+      },
+      {
+        "question": "Give me a real example where you chose one quality attribute over another.",
+        "hint": "STAR format - what was the trade-off and what happened"
+      },
+      {
+        "question": "How do you measure a quality attribute in production?",
+        "hint": "Latency: p95/p99. Availability: uptime. Maintainability: time-to-change."
+      },
+      {
+        "question": "What quality attributes matter most for a grocery e-commerce like REWE?",
+        "hint": "Availability (orders), consistency (inventory), performance (checkout)"
+      },
+      {
+        "question": "How do you communicate quality attribute trade-offs to product managers?",
+        "hint": "Business language: if we optimize for speed, we risk data inconsistency here."
+      },
+      {
+        "question": "What happens when you ignore a quality attribute?",
+        "hint": "Concrete example: ignored observability then had a 4-hour incident because no visibility"
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
@@ -79,8 +127,38 @@
       "Choosing architecture based on resume, not problem"
     ],
     "followUps": [
-      { "question": "What is a modular monolith and how does it help?", "hint": "Describe independently understandable modules inside one deployable, plus concrete ownership and dependency enforcement." },
-      { "question": "How does Conway's Law influence this decision?", "hint": "Treat communication paths as a design force. Team topology may reveal useful boundaries, but it does not mechanically determine service count." }
+      {
+        "question": "Why should we NOT use microservices?",
+        "hint": "Distributed complexity, network failures, data consistency, team size"
+      },
+      {
+        "question": "When did microservices cause more problems than they solved?",
+        "hint": "Small team, shared database, distributed monolith, deployment coupling"
+      },
+      {
+        "question": "At what team size does a monolith become painful?",
+        "hint": "Usually 8-12 devs on same codebase. But depends on modularity."
+      },
+      {
+        "question": "How would you split a monolith at REWE - where would you start?",
+        "hint": "Domain boundaries: orders, inventory, delivery, payments. Start with least coupled."
+      },
+      {
+        "question": "What is a distributed monolith and how do you detect it?",
+        "hint": "Services that must deploy together, share DB, or have synchronous chains"
+      },
+      {
+        "question": "How do you handle data consistency across microservices?",
+        "hint": "Saga, eventual consistency, compensating transactions - not distributed transactions"
+      },
+      {
+        "question": "What would you ask before recommending microservices to a new project?",
+        "hint": "Team size, deployment frequency, domain boundaries, operational maturity"
+      },
+      {
+        "question": "How do you migrate without stopping feature delivery?",
+        "hint": "Strangler fig, branch by abstraction, parallel running, feature flags"
+      }
     ],
     "clarifyingQuestions": [
       "How large is the team?",
@@ -117,8 +195,14 @@
       "Over-engineering simple CRUD with hexagonal (YAGNI)"
     ],
     "followUps": [
-      { "question": "What is the difference between Clean Architecture and Hexagonal?", "hint": "Same principle (dependency inversion). Clean adds more layers (entities, use cases, interface adapters). Hexagonal is simpler (core + ports + adapters)." },
-      { "question": "When is Hexagonal Architecture overkill?", "hint": "Simple CRUD with no complex domain logic. The abstraction layers add cost without benefit." }
+      {
+        "question": "What is the difference between Clean Architecture and Hexagonal?",
+        "hint": "Same principle (dependency inversion). Clean adds more layers (entities, use cases, interface adapters). Hexagonal is simpler (core + ports + adapters)."
+      },
+      {
+        "question": "When is Hexagonal Architecture overkill?",
+        "hint": "Simple CRUD with no complex domain logic. The abstraction layers add cost without benefit."
+      }
     ],
     "codeExamples": [
       {
@@ -162,8 +246,14 @@
       "No enforcement mechanism (boundaries exist only on paper)"
     ],
     "followUps": [
-      { "question": "What is an anti-corruption layer and when do you need it?", "hint": "Translation layer between modules with different models. Prevents one module's model from infecting another." },
-      { "question": "How do you handle data that two modules both need?", "hint": "Keep one authoritative owner; consumers can call a contract or maintain purpose-specific projections. A shared kernel or database can be a conscious, governed trade-off rather than an accidental dependency." }
+      {
+        "question": "What is an anti-corruption layer and when do you need it?",
+        "hint": "Translation layer between modules with different models. Prevents one module's model from infecting another."
+      },
+      {
+        "question": "How do you handle data that two modules both need?",
+        "hint": "Keep one authoritative owner; consumers can call a contract or maintain purpose-specific projections. A shared kernel or database can be a conscious, governed trade-off rather than an accidental dependency."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
@@ -194,8 +284,14 @@
       "Making an optional dependency fail the whole use case without a business reason"
     ],
     "followUps": [
-      { "question": "What is the difference between a timeout and a circuit breaker?", "hint": "Timeout: individual call protection. Circuit breaker: stops calling after repeated failures (protects the system, not just one call)." },
-      { "question": "How do you test resilience patterns?", "hint": "Use contract tests plus controlled latency, error, disconnection, saturation, and duplicate-delivery injection. Verify business outcomes, resource recovery, alerts, and operator procedures." }
+      {
+        "question": "What is the difference between a timeout and a circuit breaker?",
+        "hint": "Timeout: individual call protection. Circuit breaker: stops calling after repeated failures (protects the system, not just one call)."
+      },
+      {
+        "question": "How do you test resilience patterns?",
+        "hint": "Use contract tests plus controlled latency, error, disconnection, saturation, and duplicate-delivery injection. Verify business outcomes, resource recovery, alerts, and operator procedures."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
@@ -225,8 +321,14 @@
       "Breaking active consumers unintentionally during a coexistence period"
     ],
     "followUps": [
-      { "question": "When can a replacement be justified?", "hint": "Compare incremental seams with replacement economics and required outcomes. Characterization, migration, cutover, and recovery evidence reduce risk; no single checklist item makes a rewrite correct." },
-      { "question": "How do you handle the database during strangler migration?", "hint": "Hardest part. Options: shared DB initially, CDC for sync, or database-per-service with eventual consistency." }
+      {
+        "question": "When can a replacement be justified?",
+        "hint": "Compare incremental seams with replacement economics and required outcomes. Characterization, migration, cutover, and recovery evidence reduce risk; no single checklist item makes a rewrite correct."
+      },
+      {
+        "question": "How do you handle the database during strangler migration?",
+        "hint": "Hardest part. Options: shared DB initially, CDC for sync, or database-per-service with eventual consistency."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
@@ -256,8 +358,14 @@
       "Cannot explain why a decision was made"
     ],
     "followUps": [
-      { "question": "How do you keep ADRs up to date?", "hint": "Mark as superseded when decisions change. New ADR references the old one. Git history preserves the timeline." },
-      { "question": "What other architecture documentation do you use?", "hint": "C4 model (context, containers, components, code). Sequence diagrams for complex flows. Deployment diagrams." }
+      {
+        "question": "How do you keep ADRs up to date?",
+        "hint": "Mark as superseded when decisions change. New ADR references the old one. Git history preserves the timeline."
+      },
+      {
+        "question": "What other architecture documentation do you use?",
+        "hint": "C4 model (context, containers, components, code). Sequence diagrams for complex flows. Deployment diagrams."
+      }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
@@ -287,8 +395,14 @@
       "No plan for schema evolution, duplicates, or failed consumers"
     ],
     "followUps": [
-      { "question": "How would you evolve an event without breaking consumers?", "hint": "Prefer compatible additions, stable semantics, contract tests, consumer inventory, and an explicit migration or versioning path for breaking changes." },
-      { "question": "How does the transactional outbox help, and what does it not solve?", "hint": "It atomically records state and publication intent. Relaying can still duplicate messages, so consumers and operational recovery remain necessary." }
+      {
+        "question": "How would you evolve an event without breaking consumers?",
+        "hint": "Prefer compatible additions, stable semantics, contract tests, consumer inventory, and an explicit migration or versioning path for breaking changes."
+      },
+      {
+        "question": "How does the transactional outbox help, and what does it not solve?",
+        "hint": "It atomically records state and publication intent. Relaying can still duplicate messages, so consumers and operational recovery remain necessary."
+      }
     ],
     "clarifyingQuestions": [
       "Does the caller require an immediate business outcome?",
@@ -325,8 +439,14 @@
       "Dual writes to a database and broker with no atomicity strategy"
     ],
     "followUps": [
-      { "question": "When is a shared database acceptable?", "hint": "Discuss a single deployment or tightly coordinated context, explicit write ownership, permissions, migration coordination, and the autonomy intentionally traded away." },
-      { "question": "How would you reconcile a projection after missed or corrupt events?", "hint": "Use checkpoints, replayable sources or authoritative snapshots, idempotent rebuilds, comparison metrics, and a documented repair procedure." }
+      {
+        "question": "When is a shared database acceptable?",
+        "hint": "Discuss a single deployment or tightly coordinated context, explicit write ownership, permissions, migration coordination, and the autonomy intentionally traded away."
+      },
+      {
+        "question": "How would you reconcile a projection after missed or corrupt events?",
+        "hint": "Use checkpoints, replayable sources or authoritative snapshots, idempotent rebuilds, comparison metrics, and a documented repair procedure."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {

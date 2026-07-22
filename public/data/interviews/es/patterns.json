@@ -3,7 +3,7 @@
     "id": "interview-patterns-strategy-1",
     "topic": "patterns",
     "subtopic": "pat-strategy",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cuándo mejora el patrón Strategy un diseño y cuándo es más claro un condicional?",
     "shortAnswer": "Strategy es útil cuando varios algoritmos implementan el mismo contrato significativo y evolucionan, se despliegan o se prueban de forma independiente. El contexto delega en la estrategia seleccionada, a menudo elegida mediante configuración o un registro. Un condicional exhaustivo pequeño puede ser más claro cuando las alternativas son cerradas, estables y comparten un único cambio cohesivo. Elijo basándome en el eje de variación real, no en el nombre del patrón.",
     "detailedAnswer": "Strategy encapsula el comportamiento intercambiable detrás de un contrato común. Un servicio de rutas podría delegar el cálculo de costes a políticas para entrega en bicicleta, furgoneta o refrigerada, manteniendo la orquestación estable. La selección puede ocurrir en una raíz de composición, configuración de DI, factoría o un mapa tipado; no debe estar dispersa entre los llamadores. Cada estrategia necesita la misma semántica de entrada y salida, incluyendo errores y efectos secundarios.\n\nEl patrón tiene un coste en tipos adicionales, registro y navegación. Si hay dos casos simples que siempre cambian juntos, un switch exhaustivo puede comunicar la decisión completa de forma más directa. Strategy también se complica cuando las implementaciones necesitan entradas incompatibles, lo que puede llevar a un objeto de contexto impreciso o a castings. Refactorizo cuando el historial de cambios muestra variantes independientes o cuando las ramas condicionales se han vuelto difíciles de probar, no únicamente porque exista una sentencia 'if'.",
@@ -32,13 +32,13 @@
         "hint": "Prueba invariantes de dominio, semántica de errores y salidas comunes a cada implementación."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
     "id": "interview-patterns-factory-1",
     "topic": "patterns",
     "subtopic": "pat-factory",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Qué problema debe resolver una factoría y cómo puede la inyección de dependencias cambiar su rol?",
     "shortAnswer": "Una factoría centraliza una decisión de creación que los llamadores no deberían conocer: seleccionar una implementación, validar entradas de construcción o ensamblar un gráfico de objetos. La inyección de dependencias (DI) puede realizar el cableado estático de la aplicación, pero una factoría sigue siendo útil cuando la selección depende de datos en tiempo de ejecución o la construcción tiene semántica de dominio. Debe devolver un contrato veraz y evitar convertirse en un localizador de servicios con dependencias ocultas.",
     "detailedAnswer": "Las factorías separan el uso de la creación. Un `CarrierClientFactory.forRegion(region)` podría validar la configuración y seleccionar un adaptador, mientras los llamadores trabajan con `CarrierClient`. Una factoría estática con nombre también puede mejorar un constructor expresando intención, cacheando instancias o devolviendo un subtipo. Factory Method delega la creación a través de un método sobrescribible; Abstract Factory crea familias relacionadas. En las entrevistas, describir la necesidad importa más que recitar cada variante del patrón.\n\nUn contenedor de DI ya ensambla componentes de larga duración a partir de una configuración conocida, por lo que añadir una factoría escrita a mano para cada servicio inyectado es redundante. La selección en tiempo de ejecución, objetos de dominio de vida corta, configuración multi-inquilino o invariantes de construcción aún pueden justificar una. Evito las factorías que exponen el contenedor, aceptan tokens de clase arbitrarios o acumulan lógica de creación no relacionada. Las dependencias deben seguir siendo explícitas y las selecciones desconocidas deben fallar con un error con significado de dominio en lugar de un nulo tardío.",
@@ -67,7 +67,7 @@
         "hint": "Los llamadores extraen dependencias ocultas de ella en lugar de declararlas."
       }
     ],
-    "experienceLevel": "ESTUDIADO_NO_UTILIZADO"
+    "experienceLevel": "STUDIED_NOT_USED"
   },
   {
     "id": "interview-patterns-observer-1",
@@ -103,13 +103,13 @@
         "hint": "La multiplicidad, el descubrimiento, el ciclo de vida y si la dependencia es obligatoria son diferencias clave."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
   {
     "id": "interview-patterns-builder-1",
     "topic": "patterns",
     "subtopic": "pat-builder",
-    "difficulty": "INTERMEDIO",
+    "difficulty": "INTERMEDIATE",
     "question": "¿Cuándo mejora Builder la construcción de objetos y qué invariantes debe preservar?",
     "shortAnswer": "Builder ayuda cuando la construcción tiene muchos valores opcionales, cuando los pasos con nombre mejoran la legibilidad o cuando la validación debe ocurrir antes de producir un objeto complejo. `build()` debe rechazar estados incompletos o inconsistentes y, normalmente, crear un objeto que ya no dependa del builder mutable. Para un valor pequeño con pocos componentes obligatorios, un constructor, una factoría con nombre o un record suele ser más simple.",
     "detailedAnswer": "Un builder acumula opciones de construcción y crea el objetivo en un único paso controlado. Evita los constructores telescópicos por posición y es útil para configuraciones inmutables, objetos de solicitud (requests) y fixtures de prueba con valores por defecto sensatos. Los valores obligatorios pueden ser aceptados por la factoría o el constructor del builder, mientras que `build()` valida los invariantes entre campos. Si se aceptan colecciones u otros valores mutables, el objetivo puede necesitar copias defensivas para que una mutación posterior del builder o del llamador no altere la instancia construida.\n\nLos builders añaden código repetitivo (boilerplate) y pueden debilitar las garantías en tiempo de compilación si cada campo es opcional hasta el build. Los builders por etapas (staged builders) pueden codificar el orden en los tipos, pero su complejidad se justifica solo para protocolos importantes. Los builders generados por Lombok reducen el código pero no validan automáticamente, no copian profundamente ni hacen que una clase sea inmutable por sí solos. Un record de Java es conciso y tiene campos finales, pero los componentes pueden seguir referenciando objetos mutables y un constructor canónico largo puede seguir siendo ilegible.",
@@ -139,6 +139,6 @@
         "hint": "Valores por defecto estables y válidos permiten que cada prueba declare solo la propiedad relevante para su comportamiento."
       }
     ],
-    "experienceLevel": "EXPERIENCIA_EN_PRODUCCIÓN"
+    "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
 ]

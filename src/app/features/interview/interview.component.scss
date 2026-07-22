@@ -1,7 +1,671 @@
-// Interview tab styles — consistent with theory.component.scss
+// Interview Mock Simulator — consistent with theory.component.scss
 
 .interview-content {
-  padding: 1.5rem 0;
+  padding: 0;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SIMULATION MODE STYLES
+// ═══════════════════════════════════════════════════════════════
+
+// Toolbar (session stats + progress)
+.sim-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  background: var(--color-bg-card, #ffffff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.sim-toolbar__stats {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.sim-toolbar__progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.sim-progress-bar {
+  width: 6rem;
+  height: 0.375rem;
+  background: var(--color-border, #e5e7eb);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.sim-progress-bar__fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 1rem;
+  transition: width 0.3s ease;
+}
+
+.sim-stat {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6b7280);
+  font-weight: 500;
+}
+
+.sim-toolbar__nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.sim-toolbar__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.375rem;
+  background: var(--color-bg-card, #ffffff);
+  cursor: pointer;
+  font-size: 0.875rem;
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-hover, #f3f4f6);
+  }
+
+  &:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+}
+
+.sim-toolbar__counter {
+  font-size: 0.8125rem;
+  color: var(--color-text-muted, #6b7280);
+  font-weight: 500;
+  min-width: 3rem;
+  text-align: center;
+}
+
+// Subtopic dropdown filter (inside toolbar)
+.sim-toolbar__filter {
+  min-width: 0;
+}
+
+.sim-toolbar__select {
+  max-width: 14rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.375rem;
+  background: var(--color-bg-card, #ffffff);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text, #111827);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+  padding-right: 1.75rem;
+
+  &:focus {
+    outline: 2px solid var(--color-primary, #667eea);
+    outline-offset: 1px;
+  }
+}
+
+// Conversation container
+.sim-conversation {
+  max-width: 48rem;
+}
+
+// Previous question context (during follow-ups)
+.sim-previous {
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: var(--color-bg-subtle, #f9fafb);
+  border-radius: 0.5rem;
+  border-left: 3px solid var(--color-border, #e5e7eb);
+}
+
+.sim-previous__label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--color-text-muted, #9ca3af);
+}
+
+.sim-previous__text {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+}
+
+// Interviewer bubble
+.sim-interviewer {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.sim-interviewer__avatar {
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  font-size: 1.125rem;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.sim-interviewer__bubble,
+.sim-interviewer__content {
+  flex: 1;
+  padding: 1.25rem 1.5rem;
+  background: var(--color-bg-card, #ffffff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0 1rem 1rem 1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.sim-interviewer__label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #667eea;
+  margin-bottom: 0.5rem;
+}
+
+.sim-interviewer__question {
+  font-size: 1.1875rem;
+  font-weight: 600;
+  line-height: 1.5;
+  margin: 0 0 0.5rem;
+  color: var(--color-text, #111827);
+}
+
+.sim-interviewer__context {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: var(--color-text-muted, #6b7280);
+  font-style: italic;
+}
+
+.sim-interviewer__meta {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #9ca3af);
+}
+
+.sim-interviewer__badges {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.sim-interviewer__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+}
+
+// Thinking phase
+.sim-think {
+  padding: 1.5rem;
+  margin-left: 3.25rem;
+  background: var(--color-bg-subtle, #fefce8);
+  border: 1px dashed #eab308;
+  border-radius: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.sim-think__text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #92400e;
+  margin: 0 0 1rem;
+}
+
+.sim-think__clarify {
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+
+  summary {
+    cursor: pointer;
+    font-weight: 500;
+    color: #92400e;
+  }
+
+  ul {
+    margin: 0.5rem 0 0;
+    padding-left: 1.25rem;
+    color: var(--color-text, #374151);
+  }
+
+  li {
+    margin: 0.25rem 0;
+  }
+}
+
+.sim-think__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+// Timer
+.sim-timer {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.sim-timer__display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+
+  &--active {
+    color: #dc2626;
+    animation: pulse-timer 1s ease-in-out infinite;
+  }
+}
+
+@keyframes pulse-timer {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+// Buttons
+.sim-btn {
+  padding: 0.625rem 1.25rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.5rem;
+  background: var(--color-bg-card, #ffffff);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-hover, #f3f4f6);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &--primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #5a6fdd 0%, #6a4196 100%);
+      color: white;
+      opacity: 1;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+  }
+
+  &--small {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  &--large {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+  }
+
+  &--skip {
+    color: var(--color-text-muted, #6b7280);
+    font-size: 0.8125rem;
+  }
+
+  &--ghost {
+    background: transparent;
+    border: none;
+    color: var(--color-text-muted, #6b7280);
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.75rem;
+
+    &:hover:not(:disabled) {
+      color: var(--color-text, #111827);
+      background: transparent;
+      text-decoration: underline;
+    }
+  }
+}
+
+// Actions row
+.sim-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  margin-left: 3.25rem;
+  flex-wrap: wrap;
+
+  &--bottom {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-border, #e5e7eb);
+  }
+}
+
+// Reveal container
+.sim-reveal-container {
+  margin-left: 3.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+// Reveal cards
+.sim-reveal {
+  padding: 1rem 1.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  animation: reveal-in 0.3s ease-out;
+
+  &--answer {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+
+  &--keypoints {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+  }
+
+  &--redflags {
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+
+  &--tradeoffs {
+    background: #fefce8;
+    border-color: #fde68a;
+  }
+
+  &--hint {
+    background: #f5f3ff;
+    border-color: #ddd6fe;
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+}
+
+.sim-reveal__header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.sim-reveal__icon {
+  font-size: 1.125rem;
+}
+
+.sim-reveal__content,
+.sim-reveal__body {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--color-text, #374151);
+}
+
+.sim-reveal__footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.75rem;
+}
+
+.sim-reveal__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    padding: 0.25rem 0;
+    padding-left: 1.25rem;
+    position: relative;
+    font-size: 0.875rem;
+
+    &::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #22c55e;
+      font-weight: 700;
+    }
+  }
+
+  &--red li {
+    color: #dc2626;
+
+    &::before {
+      content: '✗';
+      color: #dc2626;
+    }
+  }
+}
+
+@keyframes reveal-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Self-assessment
+.sim-assessment {
+  padding: 1.25rem;
+  margin-left: 3.25rem;
+  background: var(--color-bg-card, #ffffff);
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.75rem;
+  text-align: center;
+
+  &--done {
+    background: var(--color-bg-subtle, #f9fafb);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-muted, #6b7280);
+  }
+}
+
+.sim-assessment__prompt {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  margin: 0 0 0.75rem;
+  color: var(--color-text, #111827);
+}
+
+.sim-assessment__stars {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.sim-assessment__btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border, #e5e7eb);
+  border-radius: 0.5rem;
+  background: var(--color-bg-card, #ffffff);
+  cursor: pointer;
+  font-size: 1.5rem;
+  transition: all 0.15s ease;
+
+  &:hover {
+    transform: scale(1.1);
+    border-color: var(--color-primary, #667eea);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+  }
+}
+
+.sim-assessment__label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #6b7280);
+}
+
+// "Show all" shortcut during thinking phase
+.sim-show-all {
+  margin-left: 3.25rem;
+  margin-top: 0.5rem;
+  text-align: right;
+}
+
+// Expandable reveals (details/summary)
+.sim-reveal__header--clickable {
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  &::after {
+    content: '▶';
+    font-size: 0.625rem;
+    margin-left: auto;
+    color: var(--color-text-muted, #9ca3af);
+    transition: transform 0.2s;
+  }
+}
+
+details[open] > .sim-reveal__header--clickable::after {
+  transform: rotate(90deg);
+}
+
+details.sim-reveal {
+  cursor: default;
+
+  > summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+}
+
+// Audio button in simulation mode
+.sim-listen {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #a9d7cf;
+  border-radius: 1rem;
+  background: #f2faf8;
+  color: #0d6255;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover,
+  &--active {
+    border-color: #0d6255;
+    background: #dff3ee;
+  }
+
+  &--inline {
+    margin-top: 0;
+    margin-left: 0.5rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.8125rem;
+    border-radius: 50%;
+    width: 1.75rem;
+    height: 1.75rem;
+    justify-content: center;
+  }
+}
+
+// Responsive — simulation mode
+@media (max-width: 640px) {
+  .sim-toolbar {
+    padding: 0.5rem 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .sim-toolbar__mode {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .sim-interviewer {
+    gap: 0.5rem;
+  }
+
+  .sim-interviewer__avatar {
+    width: 2rem;
+    height: 2rem;
+    font-size: 0.875rem;
+  }
+
+  .sim-interviewer__bubble {
+    padding: 1rem;
+  }
+
+  .sim-interviewer__question {
+    font-size: 1.0625rem;
+  }
+
+  .sim-think {
+    margin-left: 2.5rem;
+    padding: 1rem;
+  }
+
+  .sim-actions {
+    margin-left: 2.5rem;
+  }
+
+  .sim-reveal-container {
+    margin-left: 2.5rem;
+  }
+
+  .sim-assessment {
+    margin-left: 2.5rem;
+  }
+
+  .sim-assessment__stars {
+    gap: 0.25rem;
+  }
+
+  .sim-assessment__btn {
+    padding: 0.375rem 0.5rem;
+    font-size: 1.25rem;
+  }
 }
 
 // Loading & empty states

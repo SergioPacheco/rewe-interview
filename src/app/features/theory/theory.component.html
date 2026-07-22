@@ -12,7 +12,32 @@
   @if (activeTab() === 'learn') {
     <div class="learn-content">
       @if (visibleChapters().length > 0) {
-        @for (chapter of visibleChapters(); track chapter.id) {
+
+        <!-- Learn toolbar -->
+        <div class="learn-toolbar">
+          @if (learnSubtopics().length > 1) {
+            <div class="learn-toolbar__filter">
+              <select class="learn-toolbar__select" (change)="selectLearnSubtopic($event)" [value]="learnSubtopic() ?? ''">
+                <option value="">{{ 'simulator.allQuestions' | t }} ({{ visibleChapters().length }})</option>
+                @for (sub of learnSubtopics(); track sub.id) {
+                  <option [value]="sub.id">{{ sub.label }} ({{ sub.count }})</option>
+                }
+              </select>
+            </div>
+          }
+          <div class="learn-toolbar__nav">
+            <button class="learn-toolbar__arrow" (click)="navigateLearn(-1)" [disabled]="learnChapterIndex() <= 0" aria-label="Previous">←</button>
+            <div class="learn-toolbar__progress-bar">
+              <div class="learn-toolbar__progress-fill"
+                   [style.width.%]="((learnChapterIndex() + 1) / learnFilteredChapters().length) * 100"></div>
+            </div>
+            <span class="learn-toolbar__counter">{{ learnChapterIndex() + 1 }} / {{ learnFilteredChapters().length }}</span>
+            <button class="learn-toolbar__arrow" (click)="navigateLearn(1)" [disabled]="learnChapterIndex() >= learnFilteredChapters().length - 1" aria-label="Next">→</button>
+          </div>
+        </div>
+
+        <!-- Single chapter display -->
+        @if (currentChapter(); as chapter) {
           <article class="chapter">
             <header class="chapter__header">
               <span class="chapter__eyebrow">Learning guide</span>
@@ -87,9 +112,27 @@
 
       <!-- Active session with current question -->
       @if (engine.isActive() && !engine.isComplete()) {
-        <div class="practice-progress">
-          <span>{{ engine.questionNumber() }} / {{ engine.totalInSession() }}</span>
-          @if (engine.combo() > 1) { <span class="combo">🔥 {{ engine.combo() }}x</span> }
+        <div class="practice-toolbar">
+          @if (practiceSubtopics().length > 1) {
+            <div class="practice-toolbar__filter">
+              <select class="practice-toolbar__select" (change)="selectPracticeSubtopic($event)" [value]="practiceSubtopic() ?? ''">
+                <option value="">{{ 'simulator.allQuestions' | t }} ({{ totalPracticeCount() }})</option>
+                @for (sub of practiceSubtopics(); track sub.id) {
+                  <option [value]="sub.id">{{ sub.label }} ({{ sub.count }})</option>
+                }
+              </select>
+            </div>
+          }
+          <div class="practice-toolbar__nav">
+            <button class="practice-toolbar__arrow" (click)="navigatePractice(-1)" [disabled]="engine.questionNumber() <= 1" aria-label="Previous">←</button>
+            <div class="practice-toolbar__progress-bar">
+              <div class="practice-toolbar__progress-fill"
+                   [style.width.%]="(engine.questionNumber() / engine.totalInSession()) * 100"></div>
+            </div>
+            <span class="practice-toolbar__counter">{{ engine.questionNumber() }} / {{ engine.totalInSession() }}</span>
+            <button class="practice-toolbar__arrow" (click)="navigatePractice(1)" [disabled]="engine.questionNumber() >= engine.totalInSession()" aria-label="Next">→</button>
+            @if (engine.combo() > 1) { <span class="combo">🔥 {{ engine.combo() }}x</span> }
+          </div>
         </div>
 
         @if (currentQuestion(); as q) {

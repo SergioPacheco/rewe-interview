@@ -171,6 +171,14 @@ export class QuizEngineService {
     } : null);
   }
 
+  /** Move to previous question */
+  previous(): void {
+    this.session.update(s => s && s.currentIndex > 0 ? {
+      ...s,
+      currentIndex: s.currentIndex - 1
+    } : s);
+  }
+
   /** End current session */
   end(): void {
     this.session.set(null);

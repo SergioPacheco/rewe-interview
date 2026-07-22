@@ -22,12 +22,36 @@
     ],
     "followUps": [
       {
-        "question": "¿Cómo cambia la retención las opciones de recuperación comparado con una cola de trabajo tradicional?",
-        "hint": "Un consumidor puede resetear su posición y re-procesar datos retenidos; esto también significa que los handlers deben tolerar el re-procesamiento."
+        "question": "Cuando NO usarias Kafka?",
+        "hint": "Request/reply simple, bajo volumen, necesidades fuertes de orden entre topics"
       },
       {
-        "question": "¿Cuándo sería una llamada HTTP directa la opción más clara?",
-        "hint": "Cuando se requiere una respuesta inmediata, el re-procesamiento es innecesario y el acoplamiento síncrono es aceptable."
+        "question": "Que usarias en su lugar para una carga de 100 requests por segundo?",
+        "hint": "RabbitMQ, SQS, o incluso REST directo - justifica por complejidad vs beneficio"
+      },
+      {
+        "question": "Como convencerias a un equipo que ya quiere Kafka de que una solucion mas simple es mejor?",
+        "hint": "Muestra habilidades de influencia - datos, costo, carga operacional"
+      },
+      {
+        "question": "Imagina que REWE procesa 400.000 pedidos por hora. Usarias Kafka aqui? Por que?",
+        "hint": "La escala lo justifica - pero discute estrategia de particiones, consumer groups"
+      },
+      {
+        "question": "Que pasa si Kafka se cae por 10 minutos?",
+        "hint": "Discute buffering, retry, circuit breaker, riesgo de perdida de datos"
+      },
+      {
+        "question": "Como monitoreas Kafka en produccion?",
+        "hint": "Consumer lag, disco de brokers, particiones under-replicated, throughput"
+      },
+      {
+        "question": "Que metricas te despertarian a las 3 AM?",
+        "hint": "Consumer lag creciente, broker offline, disco lleno"
+      },
+      {
+        "question": "Como migrarias de RabbitMQ a Kafka en un sistema en ejecucion?",
+        "hint": "Dual-write, shadow mode, cutover gradual, plan de rollback"
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE",
@@ -59,12 +83,32 @@
     ],
     "followUps": [
       {
-        "question": "¿Qué sucede si una actualización de base de datos se confirma y el consumidor falla antes de que su offset en Kafka se confirme?",
-        "hint": "El registro puede entregarse de nuevo; un ID de evento único y la actualización de negocio deben manejarse atómicamente para que el reintento sea inocuo."
+        "question": "Que side effects pueden romper las garantias exactly-once?",
+        "hint": "Llamadas HTTP, envio de emails, APIs externas - la idempotencia es TU problema"
       },
       {
-        "question": "¿Cuándo es útil un Transactional Outbox?",
-        "hint": "Cuando un cambio de estado en la base de datos y la intención de publicar un evento deben confirmarse atómicamente sin una transacción distribuida."
+        "question": "Como haces un consumer idempotente?",
+        "hint": "Clave de idempotencia, tabla de deduplicacion, INSERT condicional"
+      },
+      {
+        "question": "Que pasa con exactly-once si tu consumer se cae a mitad del procesamiento?",
+        "hint": "Offset committed pero side effect no hecho - o viceversa"
+      },
+      {
+        "question": "Confiarias en exactly-once para transacciones financieras?",
+        "hint": "No - usa saga, transacciones compensatorias, reconciliacion"
+      },
+      {
+        "question": "Como testas el comportamiento exactly-once?",
+        "hint": "Inyectar fallos, matar consumers, verificar no duplicados en output"
+      },
+      {
+        "question": "Cual es el costo de performance de exactly-once?",
+        "hint": "Overhead de transaccion, throughput reducido, latencia mayor"
+      },
+      {
+        "question": "Cuando es at-least-once suficiente?",
+        "hint": "Analytics, logs, notificaciones - donde duplicados son tolerables"
       }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE",
@@ -96,12 +140,32 @@
     ],
     "followUps": [
       {
-        "question": "¿Cómo detectarías una partición caliente?",
-        "hint": "Compara bytes por partición, tasa de registros, tiempo de procesamiento y lag del consumidor en lugar de mirar solo los totales del tópico."
+        "question": "Que pasa si eliges una mala partition key?",
+        "hint": "Hot partition, carga desigual, un consumer abrumado"
       },
       {
-        "question": "¿Qué compromiso (trade-off) introduce el salting de claves?",
-        "hint": "Distribuye una entidad saturada entre particiones pero debilita el orden por entidad y puede requerir una segunda etapa de agregación."
+        "question": "Dame un ejemplo de una partition key que parece buena pero falla a escala.",
+        "hint": "Customer ID funciona hasta que un cliente genera 80% del trafico"
+      },
+      {
+        "question": "Como rebalanceas al agregar particiones?",
+        "hint": "Nuevas particiones no tienen datos historicos, consumers se rebalancean, orden se rompe"
+      },
+      {
+        "question": "Que pasa con las garantias de orden cuando cambias el conteo de particiones?",
+        "hint": "La misma key puede hashear a diferente particion - orden roto"
+      },
+      {
+        "question": "Como particionarias pedidos para un sistema de delivery como REWE?",
+        "hint": "Store ID? Region? Order ID? - discute trade-offs de cada uno"
+      },
+      {
+        "question": "Como detectas una hot partition en produccion?",
+        "hint": "Consumer lag por particion, skew de throughput, dashboards de monitoreo"
+      },
+      {
+        "question": "Que harias si descubrieras una hot partition a las 2 AM?",
+        "hint": "Corto plazo: aumentar consumer para esa particion. Largo plazo: re-key"
       }
     ],
     "experienceLevel": "STUDIED_NOT_USED"
@@ -252,7 +316,7 @@
     "difficulty": "SENIOR",
     "question": "¿Cómo funciona la replicación en Kafka y cómo la configurarías para evitar la pérdida de datos sin sacrificar demasiada disponibilidad?",
     "shortAnswer": "Cada partición tiene un líder y N-1 seguidores (factor de replicación N). Solo las réplicas sincronizadas (ISR) pueden ser líderes. Configuración recomendada: replication.factor=3, min.insync.replicas=2, acks=all. Esto tolera el fallo de 1 broker sin pérdida de datos y sin bloquear escrituras. Si fallan 2 brokers, las escrituras se bloquean (protegiendo los datos) pero las lecturas continúan.",
-    "detailedAnswer": "**Cómo funciona la replicación:**\n\n1. Todas las producciones van al líder de la partición.\n2. Los seguidores obtienen datos del líder continuamente (como consumidores).\n3. Un seguidor está 'sincronizado' si replicó dentro de `replica.lag.time.max.ms` (10s por defecto).\n4. ISR = conjunto de réplicas que están al día.\n5. Elección de líder: solo los miembros del ISR son elegibles (a menos que se active `unclean.leader.election.enable`).\n\n**Configuración óptima (sin pérdida de datos + alta disponibilidad):**\nRF=3 + min.insync=2 + acks=all.\n\n**Escenarios de fallo:**\n- 1 broker caído: ISR=2 >= min.insync \u2192 las escrituras continúan.\n- 2 brokers caídos: ISR=1 < min.insync \u2192 las escrituras FALLAN (NotEnoughReplicas) pero no hay pérdida de datos.\n- Todos los brokers caídos: la partición no está disponible hasta que regrese un miembro del ISR.\n\n**Compromiso:** Un factor de replicación más alto implica más disco, red y latencia de escritura. Para la mayoría de los casos, RF=3 + min.insync=2 es el punto ideal.",
+    "detailedAnswer": "**Cómo funciona la replicación:**\n\n1. Todas las producciones van al líder de la partición.\n2. Los seguidores obtienen datos del líder continuamente (como consumidores).\n3. Un seguidor está 'sincronizado' si replicó dentro de `replica.lag.time.max.ms` (10s por defecto).\n4. ISR = conjunto de réplicas que están al día.\n5. Elección de líder: solo los miembros del ISR son elegibles (a menos que se active `unclean.leader.election.enable`).\n\n**Configuración óptima (sin pérdida de datos + alta disponibilidad):**\nRF=3 + min.insync=2 + acks=all.\n\n**Escenarios de fallo:**\n- 1 broker caído: ISR=2 >= min.insync → las escrituras continúan.\n- 2 brokers caídos: ISR=1 < min.insync → las escrituras FALLAN (NotEnoughReplicas) pero no hay pérdida de datos.\n- Todos los brokers caídos: la partición no está disponible hasta que regrese un miembro del ISR.\n\n**Compromiso:** Un factor de replicación más alto implica más disco, red y latencia de escritura. Para la mayoría de los casos, RF=3 + min.insync=2 es el punto ideal.",
     "keyPoints": [
       "El líder maneja todas las lecturas/escrituras; los seguidores solo replican",
       "ISR = réplicas dentro del tiempo máximo de lag respecto al líder",
@@ -326,7 +390,7 @@
     "difficulty": "INTERMEDIATE",
     "question": "¿Qué es la compactación de logs (log compaction) en Kafka y cómo la usarías en un sistema de seguimiento de entregas?",
     "shortAnswer": "La compactación de logs mantiene solo el último valor por cada clave de mensaje, eliminando las entradas antiguas durante la compactación en segundo plano. Para el seguimiento de entregas: publico el estado actual (PLANNED, DISPATCHED, DELIVERED) con el ID de entrega como clave. Los consumidores que empiezan de cero siempre ven el último estado por entrega sin leer todo el historial. Es como un snapshot siempre actualizado.",
-    "detailedAnswer": "**Cómo funciona:**\nLa retención normal (delete) elimina segmentos completos tras un periodo. La compactación elimina valores antiguos para una misma clave dentro de los segmentos.\n\n**Caso de uso: Seguimiento de entregas:**\n- Tópico: `delivery-status` con `cleanup.policy=compact`.\n- Clave: ID de entrega.\n- Valor: estado actual + metadatos.\n- Un nuevo consumidor lee desde el principio \u2192 obtiene un snapshot de todas las entregas activas.\n- Un consumidor en tiempo real lee desde el final \u2192 obtiene actualizaciones en vivo.\n\n**Tombstones (borrar una clave):**\nSi se envía un mensaje con clave X y valor `null`, Kafka elimina todas las entradas para esa clave tras la compactación.\n\n**vs Event Sourcing:**\n- Compactación = estado actual (modelo de lectura CQRS).\n- Retención completa = historial de eventos (event sourcing).\n- Se pueden combinar: `cleanup.policy=compact,delete` para tener el último estado pero también un límite de tiempo.",
+    "detailedAnswer": "**Cómo funciona:**\nLa retención normal (delete) elimina segmentos completos tras un periodo. La compactación elimina valores antiguos para una misma clave dentro de los segmentos.\n\n**Caso de uso: Seguimiento de entregas:**\n- Tópico: `delivery-status` con `cleanup.policy=compact`.\n- Clave: ID de entrega.\n- Valor: estado actual + metadatos.\n- Un nuevo consumidor lee desde el principio → obtiene un snapshot de todas las entregas activas.\n- Un consumidor en tiempo real lee desde el final → obtiene actualizaciones en vivo.\n\n**Tombstones (borrar una clave):**\nSi se envía un mensaje con clave X y valor `null`, Kafka elimina todas las entradas para esa clave tras la compactación.\n\n**vs Event Sourcing:**\n- Compactación = estado actual (modelo de lectura CQRS).\n- Retención completa = historial de eventos (event sourcing).\n- Se pueden combinar: `cleanup.policy=compact,delete` para tener el último estado pero también un límite de tiempo.",
     "keyPoints": [
       "Mantiene el último valor por clave, elimina los antiguos",
       "Tombstone (valor nulo) = borrar la clave tras la compactación",

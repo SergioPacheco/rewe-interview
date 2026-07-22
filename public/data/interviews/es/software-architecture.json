@@ -21,8 +21,34 @@
       "No poder nombrar una decisión arquitectónica en su propio sistema"
     ],
     "followUps": [
-      { "question": "¿Cuál es la diferencia entre arquitectura y diseño?", "hint": "El límite es contextual; hablar de alcance, impacto en la calidad, interesados y costo del cambio en lugar de una taxonomía rígida." },
-      { "question": "¿Quién es responsable de la arquitectura en tu equipo?", "hint": "Todos contribuyen, pero alguien debe ser dueño de la visión y asegurar que las decisiones sean consistentes." }
+      {
+        "question": "Como explicas arquitectura a un stakeholder no tecnico?",
+        "hint": "Decisiones que son caras de cambiar despues. Usa analogias."
+      },
+      {
+        "question": "Cual es la diferencia entre arquitectura y diseno?",
+        "hint": "Arquitectura = dificil de revertir. Diseno = puedes refactorizar manana."
+      },
+      {
+        "question": "Quien deberia tomar decisiones de arquitectura en tu experiencia?",
+        "hint": "El equipo con guia, no torre de marfil. Pero alguien debe ser dueno de la decision."
+      },
+      {
+        "question": "Que decision de arquitectura lamentas?",
+        "hint": "Se honesto. Muestra que aprendiste."
+      },
+      {
+        "question": "Como documentas decisiones de arquitectura?",
+        "hint": "ADRs, registros ligeros con contexto, opciones, decision, consecuencias."
+      },
+      {
+        "question": "Cuando vale la pena revisar una decision de arquitectura?",
+        "hint": "Requisitos cambiados, nueva evidencia, umbral de dolor excedido."
+      },
+      {
+        "question": "Como equilibras arquitectura ideal con presion de entrega?",
+        "hint": "Entregar primero, refactorizar cuando el dolor prueba la necesidad. Deuda tecnica explicita."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
@@ -52,8 +78,30 @@
       "Pensar solo en requisitos funcionales"
     ],
     "followUps": [
-      { "question": "¿Cómo mides si tu arquitectura logra un atributo de calidad?", "hint": "Funciones de aptitud, SLO, métricas. La evaluación de la arquitectura es continua, no puntual." },
-      { "question": "¿Qué compromiso de atributo de calidad hizo SGN3 y cómo lo verificarías?", "hint": "Evitar afirmar que los monolitos no pueden escalar horizontalmente; hablar del acoplamiento real, el despliegue, las transacciones, la capacidad y la evidencia operativa." }
+      {
+        "question": "Como priorizas atributos de calidad cuando entran en conflicto?",
+        "hint": "Ejemplo: disponibilidad vs consistencia, performance vs mantenibilidad"
+      },
+      {
+        "question": "Dame un ejemplo real donde elegiste un atributo sobre otro.",
+        "hint": "Formato STAR - cual fue el trade-off y que paso"
+      },
+      {
+        "question": "Como mides un atributo de calidad en produccion?",
+        "hint": "Latencia: p95/p99. Disponibilidad: uptime. Mantenibilidad: time-to-change."
+      },
+      {
+        "question": "Que atributos de calidad importan mas para un e-commerce de supermercado como REWE?",
+        "hint": "Disponibilidad (pedidos), consistencia (inventario), performance (checkout)"
+      },
+      {
+        "question": "Como comunicas trade-offs de atributos de calidad a product managers?",
+        "hint": "Lenguaje de negocio: si optimizamos velocidad, arriesgamos inconsistencia de datos aqui."
+      },
+      {
+        "question": "Que pasa cuando ignoras un atributo de calidad?",
+        "hint": "Ejemplo concreto: ignorar observabilidad y luego tener un incidente de 4 horas sin visibilidad"
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
   },
@@ -79,8 +127,38 @@
       "Elegir la arquitectura por currículum, no por el problema"
     ],
     "followUps": [
-      { "question": "¿Qué es un monolito modular y cómo ayuda?", "hint": "Describir módulos comprensibles de forma independiente dentro de un solo desplegable, más una aplicación concreta de propiedad y dependencia." },
-      { "question": "¿Cómo influye la Ley de Conway en esta decisión?", "hint": "Tratar las vías de comunicación como una fuerza de diseño. La topología del equipo puede revelar límites útiles, pero no determina mecánicamente la cantidad de servicios." }
+      {
+        "question": "Por que NO deberiamos usar microservicios?",
+        "hint": "Complejidad distribuida, fallos de red, consistencia de datos, tamano del equipo"
+      },
+      {
+        "question": "Cuando los microservicios causaron mas problemas de los que resolvieron?",
+        "hint": "Equipo pequeno, base de datos compartida, monolito distribuido, acoplamiento de deploy"
+      },
+      {
+        "question": "A que tamano de equipo un monolito se vuelve doloroso?",
+        "hint": "Usualmente 8-12 devs en el mismo codebase. Pero depende de la modularidad."
+      },
+      {
+        "question": "Como dividirias un monolito en REWE - por donde empezarias?",
+        "hint": "Fronteras de dominio: pedidos, inventario, delivery, pagos. Empezar por el menos acoplado."
+      },
+      {
+        "question": "Que es un monolito distribuido y como lo detectas?",
+        "hint": "Servicios que deben desplegarse juntos, comparten DB, o tienen cadenas sincronas"
+      },
+      {
+        "question": "Como manejas consistencia de datos entre microservicios?",
+        "hint": "Saga, consistencia eventual, transacciones compensatorias - no transacciones distribuidas"
+      },
+      {
+        "question": "Que preguntarias antes de recomendar microservicios a un proyecto nuevo?",
+        "hint": "Tamano del equipo, frecuencia de deploy, fronteras de dominio, madurez operacional"
+      },
+      {
+        "question": "Como migras sin detener la entrega de features?",
+        "hint": "Strangler fig, branch by abstraction, ejecucion paralela, feature flags"
+      }
     ],
     "clarifyingQuestions": [
       "¿Qué tan grande es el equipo?",
@@ -117,8 +195,14 @@
       "Sobrediseñar un CRUD sencillo con hexagonal (YAGNI)"
     ],
     "followUps": [
-      { "question": "¿Cuál es la diferencia entre Clean Architecture y Hexagonal?", "hint": "Mismo principio (inversión de dependencias). Clean añade más capas (entidades, casos de uso, adaptadores de interfaz). Hexagonal es más simple (núcleo + puertos + adaptadores)." },
-      { "question": "¿Cuándo es excesiva la arquitectura hexagonal?", "hint": "CRUD sencillo sin lógica de dominio compleja. Las capas de abstracción añaden costo sin beneficio." }
+      {
+        "question": "¿Cuál es la diferencia entre Clean Architecture y Hexagonal?",
+        "hint": "Mismo principio (inversión de dependencias). Clean añade más capas (entidades, casos de uso, adaptadores de interfaz). Hexagonal es más simple (núcleo + puertos + adaptadores)."
+      },
+      {
+        "question": "¿Cuándo es excesiva la arquitectura hexagonal?",
+        "hint": "CRUD sencillo sin lógica de dominio compleja. Las capas de abstracción añaden costo sin beneficio."
+      }
     ],
     "codeExamples": [
       {
@@ -162,8 +246,14 @@
       "Sin mecanismo de aplicación (los límites existen solo en el papel)"
     ],
     "followUps": [
-      { "question": "¿Qué es una capa anticorrupción y cuándo la necesitas?", "hint": "Capa de traducción entre módulos con modelos distintos. Evita que el modelo de un módulo infecte a otro." },
-      { "question": "¿Cómo manejas datos que dos módulos necesitan?", "hint": "Mantener un único propietario autoritativo; los consumidores pueden llamar a un contrato o mantener proyecciones específicas para su propósito. Un kernel o base de datos compartida puede ser un compromiso consciente y gobernado, no una dependencia accidental." }
+      {
+        "question": "¿Qué es una capa anticorrupción y cuándo la necesitas?",
+        "hint": "Capa de traducción entre módulos con modelos distintos. Evita que el modelo de un módulo infecte a otro."
+      },
+      {
+        "question": "¿Cómo manejas datos que dos módulos necesitan?",
+        "hint": "Mantener un único propietario autoritativo; los consumidores pueden llamar a un contrato o mantener proyecciones específicas para su propósito. Un kernel o base de datos compartida puede ser un compromiso consciente y gobernado, no una dependencia accidental."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
@@ -194,8 +284,14 @@
       "Hacer que una dependencia opcional falle todo el caso de uso sin una razón de negocio"
     ],
     "followUps": [
-      { "question": "¿Cuál es la diferencia entre un timeout y un cortacircuito?", "hint": "Timeout: protección de una llamada individual. Cortacircuito: deja de llamar tras fallos repetidos (protege el sistema, no solo una llamada)." },
-      { "question": "¿Cómo pruebas los patrones de resiliencia?", "hint": "Usar pruebas de contrato más inyección controlada de latencia, error, desconexión, saturación y entrega duplicada. Verificar resultados de negocio, recuperación de recursos, alertas y procedimientos del operador." }
+      {
+        "question": "¿Cuál es la diferencia entre un timeout y un cortacircuito?",
+        "hint": "Timeout: protección de una llamada individual. Cortacircuito: deja de llamar tras fallos repetidos (protege el sistema, no solo una llamada)."
+      },
+      {
+        "question": "¿Cómo pruebas los patrones de resiliencia?",
+        "hint": "Usar pruebas de contrato más inyección controlada de latencia, error, desconexión, saturación y entrega duplicada. Verificar resultados de negocio, recuperación de recursos, alertas y procedimientos del operador."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
@@ -225,8 +321,14 @@
       "Romper consumidores activos de forma no intencional durante un período de coexistencia"
     ],
     "followUps": [
-      { "question": "¿Cuándo se puede justificar un reemplazo?", "hint": "Comparar las costuras incrementales con la economía del reemplazo y los resultados requeridos. La caracterización, la migración, la transición y la evidencia de recuperación reducen el riesgo; ningún elemento de una lista por sí solo hace correcta una reescritura." },
-      { "question": "¿Cómo manejas la base de datos durante una migración strangler?", "hint": "La parte más difícil. Opciones: BD compartida al principio, CDC para sincronizar, o una base de datos por servicio con consistencia eventual." }
+      {
+        "question": "¿Cuándo se puede justificar un reemplazo?",
+        "hint": "Comparar las costuras incrementales con la economía del reemplazo y los resultados requeridos. La caracterización, la migración, la transición y la evidencia de recuperación reducen el riesgo; ningún elemento de una lista por sí solo hace correcta una reescritura."
+      },
+      {
+        "question": "¿Cómo manejas la base de datos durante una migración strangler?",
+        "hint": "La parte más difícil. Opciones: BD compartida al principio, CDC para sincronizar, o una base de datos por servicio con consistencia eventual."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {
@@ -256,8 +358,14 @@
       "No poder explicar por qué se tomó una decisión"
     ],
     "followUps": [
-      { "question": "¿Cómo mantienes actualizados los ADR?", "hint": "Marcar como reemplazado cuando cambian las decisiones. El nuevo ADR referencia al antiguo. El historial de Git preserva la línea de tiempo." },
-      { "question": "¿Qué otra documentación de arquitectura usas?", "hint": "Modelo C4 (contexto, contenedores, componentes, código). Diagramas de secuencia para flujos complejos. Diagramas de despliegue." }
+      {
+        "question": "¿Cómo mantienes actualizados los ADR?",
+        "hint": "Marcar como reemplazado cuando cambian las decisiones. El nuevo ADR referencia al antiguo. El historial de Git preserva la línea de tiempo."
+      },
+      {
+        "question": "¿Qué otra documentación de arquitectura usas?",
+        "hint": "Modelo C4 (contexto, contenedores, componentes, código). Diagramas de secuencia para flujos complejos. Diagramas de despliegue."
+      }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE",
     "realExperience": {
@@ -287,8 +395,14 @@
       "Sin plan para la evolución de esquemas, duplicados o consumidores fallidos"
     ],
     "followUps": [
-      { "question": "¿Cómo evolucionarías un evento sin romper a los consumidores?", "hint": "Preferir adiciones compatibles, semántica estable, pruebas de contrato, inventario de consumidores, y una ruta explícita de migración o versionado para cambios que rompen compatibilidad." },
-      { "question": "¿Cómo ayuda el outbox transaccional, y qué no resuelve?", "hint": "Registra de forma atómica el estado y la intención de publicación. El reenvío aún puede duplicar mensajes, así que los consumidores y la recuperación operativa siguen siendo necesarios." }
+      {
+        "question": "¿Cómo evolucionarías un evento sin romper a los consumidores?",
+        "hint": "Preferir adiciones compatibles, semántica estable, pruebas de contrato, inventario de consumidores, y una ruta explícita de migración o versionado para cambios que rompen compatibilidad."
+      },
+      {
+        "question": "¿Cómo ayuda el outbox transaccional, y qué no resuelve?",
+        "hint": "Registra de forma atómica el estado y la intención de publicación. El reenvío aún puede duplicar mensajes, así que los consumidores y la recuperación operativa siguen siendo necesarios."
+      }
     ],
     "clarifyingQuestions": [
       "¿El llamante requiere un resultado de negocio inmediato?",
@@ -325,8 +439,14 @@
       "Escrituras duales a una base de datos y un broker sin estrategia de atomicidad"
     ],
     "followUps": [
-      { "question": "¿Cuándo es aceptable una base de datos compartida?", "hint": "Hablar de un único despliegue o un contexto estrechamente coordinado, propiedad de escritura explícita, permisos, coordinación de migraciones y la autonomía sacrificada intencionalmente." },
-      { "question": "¿Cómo reconciliarías una proyección tras eventos perdidos o corruptos?", "hint": "Usar checkpoints, fuentes reproducibles o instantáneas autoritativas, reconstrucciones idempotentes, métricas de comparación y un procedimiento de reparación documentado." }
+      {
+        "question": "¿Cuándo es aceptable una base de datos compartida?",
+        "hint": "Hablar de un único despliegue o un contexto estrechamente coordinado, propiedad de escritura explícita, permisos, coordinación de migraciones y la autonomía sacrificada intencionalmente."
+      },
+      {
+        "question": "¿Cómo reconciliarías una proyección tras eventos perdidos o corruptos?",
+        "hint": "Usar checkpoints, fuentes reproducibles o instantáneas autoritativas, reconstrucciones idempotentes, métricas de comparación y un procedimiento de reparación documentado."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE",
     "realExperience": {

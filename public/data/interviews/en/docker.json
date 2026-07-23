@@ -5,7 +5,7 @@
     "subtopic": "docker-basics",
     "difficulty": "BEGINNER",
     "question": "What is the difference between an image, a container and a volume?",
-    "shortAnswer": "An image is an immutable, content-addressed package of filesystem layers and runtime metadata. A container is an instance of that image with process configuration and its own writable layer; it can be running or stopped. Stopping a container does not delete that layer, but removing the container does. A volume stores data outside the writable layer so it can outlive and be shared independently of a container.",
+    "shortAnswer": "An image is the template for an application. A container is a running instance of that image. A volume keeps data outside the container, so it can remain after the container is removed. I use volumes for data that must survive restarts, such as a database.",
     "detailedAnswer": "**Image**:\n- Read-only layers plus metadata such as entrypoint, environment defaults and exposed ports\n- Identified by content digest; a tag is only a mutable reference to an image\n- Shared layers can be reused by many containers\n\n**Container**:\n- A created instance with isolation, runtime settings and a writable layer over the image\n- Can be created, running, paused or stopped\n- `docker stop` stops its process but normally keeps the container and writable layer\n- `docker rm` removes the container and its writable layer; `--rm` requests automatic removal on exit\n\n**Volume or bind mount**:\n- Stores data outside the container writable layer\n- A named volume has its own lifecycle and normally survives container removal\n- A bind mount maps a host path and couples the workload to that host layout\n\nApplications should still be designed so containers are replaceable. Durable state belongs in a volume or external service, while caches and temporary files may intentionally remain ephemeral.",
     "keyPoints": [
       "An image is immutable content; a tag can move",
@@ -42,7 +42,7 @@
     "subtopic": "docker-basics",
     "difficulty": "INTERMEDIATE",
     "question": "How do you make a Docker build efficient, secure and reproducible?",
-    "shortAnswer": "I use a multi-stage build, a small appropriate runtime base, a non-root runtime user and `.dockerignore`. I arrange stable dependency inputs before frequently changing source and use BuildKit cache or secret mounts where needed. For reproducibility I pin the base image by digest and lock downloaded dependencies; immutability of a built image does not mean two builds from mutable inputs will match.",
+    "shortAnswer": "I use a multi-stage build to keep the final image small. I run the application as a non-root user and use `.dockerignore` to avoid copying unnecessary files. For reliable builds, I pin the base image and lock dependencies. I also keep secrets out of the image.",
     "detailedAnswer": "These goals overlap but are not identical:\n\n**Efficient**:\n- Multi-stage builds keep compilers and package managers out of the runtime image.\n- Copy dependency manifests before source when that lets dependency resolution be cached.\n- Use `.dockerignore` to reduce build context and accidental inclusion.\n- Use BuildKit cache mounts for package-manager caches rather than baking caches into the final image.\n- Combine commands when atomic package-manager behavior requires it, but do not chase the fewest possible layers at the expense of cacheability and clarity.\n\n**Secure**:\n- Run as a dedicated non-root user where the application permits it.\n- Include only required runtime packages and update them deliberately.\n- Use BuildKit secret/SSH mounts for build credentials; `ARG`, `ENV` and `COPY` can persist sensitive values in metadata or layers.\n- Scan the resulting image and record provenance/SBOM according to the delivery process.\n\n**Reproducible/auditable**:\n- Pin the base image to a digest; even version tags can be updated.\n- Lock application and OS dependency versions/checksums and control network inputs.\n- Build the artifact once, identify it by digest and promote that same artifact across environments.\n\nA pinned digest trades automatic updates for deliberate maintenance, so automation should alert or propose reviewed refreshes.",
     "keyPoints": [
       "Multi-stage builds separate build tools from runtime",
@@ -79,7 +79,7 @@
     "subtopic": "docker-compose",
     "difficulty": "INTERMEDIATE",
     "question": "How would you design a Docker Compose setup that is useful and predictable for local development?",
-    "shortAnswer": "I model only the services needed for the local workflow, pin their versions, add health checks, use named volumes deliberately and expose the minimum ports. Short-form `depends_on` gives start order, not application readiness, so either the app retries dependencies or Compose waits on a declared healthy condition. I keep secrets and environment-specific overrides out of the committed base file and document reset commands that can delete data.",
+    "shortAnswer": "For local development, I include only the services the team really needs. I pin versions, add health checks, use named volumes, and expose only needed ports. `depends_on` starts services in order, but it does not mean they are ready. So the application must retry, or Compose must wait for a health check.",
     "detailedAnswer": "A maintainable Compose setup includes:\n\n- Stable image references and explicit build contexts\n- A default network where services use DNS names rather than `localhost`\n- Health checks for dependencies such as PostgreSQL\n- Application retry/backoff, because dependencies can become unavailable after startup too\n- Named volumes for data that should survive container replacement, and disposable test volumes where isolation matters\n- Minimal host port publishing; container-to-container traffic does not require every port on the host\n- An example environment file containing names and safe defaults, not real credentials\n- Profiles or override files for optional tooling\n\n`depends_on` in short form controls creation/start order but does not prove the dependency is ready. Long-form dependencies can wait for `service_healthy` when a health check exists, but resilience still belongs in the application.\n\nBe explicit about lifecycle: `docker compose down` removes the project containers and network; `down -v` also removes declared named volumes and can destroy local database data. A ‘one command’ setup is reproducible only to the extent that images, dependencies and initialization inputs are controlled.",
     "keyPoints": [
       "Service names provide DNS inside the Compose network",
@@ -116,7 +116,7 @@
     "subtopic": "docker-basics",
     "difficulty": "INTERMEDIATE",
     "question": "A container starts locally but exits immediately in CI. What is your debugging approach?",
-    "shortAnswer": "I inspect the container's exit code, logs, effective command and environment before changing the image. I compare the immutable image digest and runtime configuration across environments, then check entrypoint/command semantics, filesystem permissions, required configuration, architecture and resource limits. I avoid turning the container into an interactive snowflake; the fix belongs in the image or declared runtime configuration.",
+    "shortAnswer": "First, I check the exit code, logs, command, and environment. Then I compare the image and runtime configuration between my machine and CI. I look at permissions, missing configuration, resource limits, and the entrypoint. The fix should be in the image or configuration, not a manual change inside one container.",
     "detailedAnswer": "A container exits when its main process exits, so `docker ps -a`, `docker logs`, inspect output and the exit code provide the initial evidence. Common causes include an incorrect entrypoint or shell-form command, a missing environment variable, a process that daemonizes, a non-root user unable to write a directory, a bind mount masking files from the image, an incompatible CPU architecture, or an out-of-memory kill. CI may also inject different command, working directory, secret or network settings than local Compose.\n\nI reproduce using the same image digest and as much of the CI runtime configuration as possible. An overridden entrypoint can help inspect a filesystem briefly, but it is a diagnostic step, not the fix. Add a clear startup validation and structured failure log for required configuration; do not print secrets. If readiness is the problem rather than immediate exit, distinguish process liveness from a service being ready to accept work.\n\nThe final change should make behavior deterministic: explicit command, correct ownership in the image, documented environment contract and an automated smoke test that starts the production image.",
     "keyPoints": [
       "A container lifecycle follows its main process and exit code",
@@ -130,8 +130,14 @@
       "Comparing only source branches while CI runs a different image digest"
     ],
     "followUps": [
-      { "question": "What does exit code 137 often suggest, and how would you confirm it?", "hint": "It commonly indicates SIGKILL, often due to an OOM condition; inspect runtime state/events and configured memory limits." },
-      { "question": "How can a bind mount make a working image fail locally?", "hint": "It can hide a directory or file that was present in the image beneath the mounted host path." }
+      {
+        "question": "What does exit code 137 often suggest, and how would you confirm it?",
+        "hint": "It commonly indicates SIGKILL, often due to an OOM condition; inspect runtime state/events and configured memory limits."
+      },
+      {
+        "question": "How can a bind mount make a working image fail locally?",
+        "hint": "It can hide a directory or file that was present in the image beneath the mounted host path."
+      }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   }

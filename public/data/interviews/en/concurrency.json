@@ -213,8 +213,8 @@
     "subtopic": "conc-threads",
     "difficulty": "SENIOR",
     "question": "What does 'synchronize access to shared mutable data' mean in practice? Is volatile enough?",
-    "shortAnswer": "Synchronization serves TWO purposes: mutual exclusion (atomicity) AND visibility (memory consistency). volatile provides visibility only \u2014 guarantees that reads see the latest write \u2014 but does NOT provide atomicity for compound operations like increment (read-modify-write). For ++count or check-then-act, you need synchronized, AtomicInteger, or Lock. Rule: if a variable is written by one thread and read by another, synchronize ALL accesses to it.",
-    "detailedAnswer": "**Effective Java Item 78:**\n\n**volatile is SUFFICIENT for:**\n```java\n// Simple flag read/written by different threads\nprivate volatile boolean stopped = false;\n// Works because read and write are each atomic for booleans\n```\n\n**volatile is NOT SUFFICIENT for:**\n```java\n// \u274c Race condition: read + increment + write is not atomic\nprivate volatile int count;\npublic void increment() { count++; } // BROKEN with multiple threads\n\n// \u2705 Solutions:\nprivate final AtomicInteger count = new AtomicInteger();\npublic void increment() { count.incrementAndGet(); }\n// OR\nprivate int count;\npublic synchronized void increment() { count++; }\n```\n\n**The visibility problem:**\nWithout synchronization, JVM may never propagate a write to other threads (hoisting optimization, CPU cache). This is not a theoretical concern \u2014 it causes real infinite loops in production.",
+    "shortAnswer": "Synchronization serves TWO purposes: mutual exclusion (atomicity) AND visibility (memory consistency). volatile provides visibility only — guarantees that reads see the latest write — but does NOT provide atomicity for compound operations like increment (read-modify-write). For ++count or check-then-act, you need synchronized, AtomicInteger, or Lock. Rule: if a variable is written by one thread and read by another, synchronize ALL accesses to it.",
+    "detailedAnswer": "**Effective Java Item 78:**\n\n**volatile is SUFFICIENT for:**\n```java\n// Simple flag read/written by different threads\nprivate volatile boolean stopped = false;\n// Works because read and write are each atomic for booleans\n```\n\n**volatile is NOT SUFFICIENT for:**\n```java\n// ❌ Race condition: read + increment + write is not atomic\nprivate volatile int count;\npublic void increment() { count++; } // BROKEN with multiple threads\n\n// ✅ Solutions:\nprivate final AtomicInteger count = new AtomicInteger();\npublic void increment() { count.incrementAndGet(); }\n// OR\nprivate int count;\npublic synchronized void increment() { count++; }\n```\n\n**The visibility problem:**\nWithout synchronization, JVM may never propagate a write to other threads (hoisting optimization, CPU cache). This is not a theoretical concern — it causes real infinite loops in production.",
     "keyPoints": [
       "Synchronization = atomicity + visibility",
       "volatile = visibility only, no atomicity",
@@ -229,7 +229,7 @@
     "followUps": [
       {
         "question": "What are Virtual Threads and how do they change concurrency patterns?",
-        "hint": "Java 21 virtual threads are lightweight (millions possible), managed by the JVM. They make thread-per-request viable again for I/O-bound work. Don't pool them. synchronized still works but can pin the carrier thread \u2014 prefer ReentrantLock for long critical sections."
+        "hint": "Java 21 virtual threads are lightweight (millions possible), managed by the JVM. They make thread-per-request viable again for I/O-bound work. Don't pool them. synchronized still works but can pin the carrier thread — prefer ReentrantLock for long critical sections."
       },
       {
         "question": "When would you use ConcurrentHashMap vs synchronized HashMap?",

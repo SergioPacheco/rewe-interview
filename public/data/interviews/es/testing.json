@@ -5,7 +5,7 @@
     "subtopic": "test-pyramid",
     "difficulty": "INTERMEDIATE",
     "question": "¿Cómo construyes una estrategia de pruebas para un servicio en lugar de simplemente apuntar a un número de cobertura?",
-    "shortAnswer": "Empiezo por los riesgos y la velocidad de retroalimentación. Las reglas de negocio puras reciben muchas pruebas unitarias enfocadas; la persistencia, la serialización y el cableado del framework reciben pruebas de integración contra componentes realistas; un pequeño conjunto de pruebas de extremo a extremo o de aceptación protege los recorridos críticos. La pirámide es una heurística, no un porcentaje fijo. Hago seguimiento de los defectos que se escapan, la inestabilidad (flakiness) y la duración de la suite junto con la cobertura, porque las líneas ejecutadas no demuestran aserciones útiles.",
+    "shortAnswer": "Primero, los riesgos y la velocidad de retroalimentación. Las reglas de negocio puras reciben muchas pruebas unitarias enfocadas; la persistencia, la serialización y el cableado del framework reciben pruebas de integración contra componentes realistas; un pequeño conjunto de pruebas de extremo a extremo o de aceptación protege los recorridos críticos. La pirámide es una heurística, no un porcentaje fijo. Hago seguimiento de los defectos que se escapan, la inestabilidad (flakiness) y la duración de la suite junto con la cobertura, porque las líneas ejecutadas no demuestran aserciones útiles.",
     "detailedAnswer": "Una estrategia mapea los modos de fallo a la prueba más barata que pueda detectarlos con confianza:\n\n- **Pruebas unitarias**: cálculos, validación, transiciones de estado y política de errores, con dependencias sustituidas en límites estables. Deben ser rápidas y facilitar la localización de fallos.\n- **Pruebas de componente/integración**: mapeos SQL, migraciones, serialización HTTP, reglas de seguridad, configuración de dependencias y contratos de mensajes usando el framework y la infraestructura relevantes.\n- **Pruebas de contrato**: supuestos entre productores y consumidores de API o eventos desplegados de forma independiente.\n- **Pruebas de extremo a extremo**: unos pocos recorridos críticos de negocio a través de la pila desplegada. Detectan problemas de cableado y entorno, pero son más lentas y difíciles de diagnosticar.\n- **Verificación en producción**: comprobaciones de salud, sondas sintéticas, canarios y monitoreo complementan las pruebas previas al lanzamiento; no las sustituyen.\n\nLa forma correcta depende de la arquitectura. Una biblioteca de transformación puede probarse mayormente con pruebas unitarias; un servicio dominado por restricciones de base de datos necesita más cobertura de integración. La cobertura puede identificar código no ejecutado, pero los objetivos útiles son la confianza en el comportamiento crítico, la retroalimentación rápida, las pruebas deterministas y las brechas visibles. Las pruebas inestables deben tener un dueño y corregirse o ponerse en cuarentena con un plazo, no normalizarse.",
     "keyPoints": [
       "Elegir las pruebas según los riesgos y las necesidades de retroalimentación",
@@ -131,8 +131,14 @@
       "Tratar la alta cobertura como evidencia de que se verificó el comportamiento relevante"
     ],
     "followUps": [
-      { "question": "¿Cuándo sería una prueba basada en propiedades una mejor salvaguarda de regresión que un solo ejemplo?", "hint": "Cuando un invariante debería cumplirse en muchas entradas generadas y el defecto escapado sugiere toda una clase de casos." },
-      { "question": "¿Qué debería demostrar una prueba de regresión antes de fusionar la corrección de producción?", "hint": "Debería fallar para el comportamiento defectuoso y pasar solo una vez que exista la corrección prevista." }
+      {
+        "question": "¿Cuándo sería una prueba basada en propiedades una mejor salvaguarda de regresión que un solo ejemplo?",
+        "hint": "Cuando un invariante debería cumplirse en muchas entradas generadas y el defecto escapado sugiere toda una clase de casos."
+      },
+      {
+        "question": "¿Qué debería demostrar una prueba de regresión antes de fusionar la corrección de producción?",
+        "hint": "Debería fallar para el comportamiento defectuoso y pasar solo una vez que exista la corrección prevista."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
   }

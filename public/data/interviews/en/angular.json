@@ -146,7 +146,7 @@
     "subtopic": "ng-forms",
     "difficulty": "INTERMEDIATE",
     "question": "How would you design a complex Angular form with cross-field and server-side validation?",
-    "shortAnswer": "I would use a typed reactive form, keep control-level validators close to controls and place cross-field rules on the smallest group that owns all required values. Async validators should be used only for validation-style reads with cancellation and throttling. On submit, I map server validation errors to controls when possible and keep backend business validation authoritative.",
+    "shortAnswer": "I use a typed reactive form, keep control-level validators close to controls and place cross-field rules on the smallest group that owns all required values. Async validators should be used only for validation-style reads with cancellation and throttling. On submit, I map server validation errors to controls when possible and keep backend business validation authoritative.",
     "detailedAnswer": "Typed reactive forms make the form model, disabled controls and submitted payload easier to reason about. I separate three kinds of validation: local format constraints, cross-field consistency and authoritative server rules. A date-range validator belongs on the group containing both dates; putting it on one control makes the dependency hidden.\n\nAsync validation needs care. It can create a request per keystroke, race with newer input and conflate connectivity failures with invalid data. I use update strategy or debouncing where appropriate, cancel obsolete checks and reserve async validators for questions that fit field validation. Some business checks are clearer during submit.\n\nThe UI should show errors after an appropriate interaction and preserve server details that help correction. A route guard or disabled button is not security; the backend must enforce authorization and invariants.\n\nThe current interview-preparation project does not provide meaningful complex-form evidence, so this answer is classified as studied knowledge. A production claim should come from SinapiPRO or another repository only after demonstrating the actual form and tests.",
     "keyPoints": [
       "Uses typed reactive forms",
@@ -218,7 +218,7 @@
     "subtopic": "ng-testing",
     "difficulty": "SENIOR",
     "question": "How do you choose what to test in an Angular application without coupling tests to implementation details?",
-    "shortAnswer": "I start from observable behavior and risk. Pure transformations can be tested without Angular; stateful services need transition and boundary tests; components should be tested through inputs, user actions and rendered output; HTTP clients need request and response behavior; and a few end-to-end tests cover critical flows. I avoid asserting private fields or exact internal method calls unless the interaction itself is the contract.",
+    "shortAnswer": "I start from observable behavior and risk. Pure transformations can be tested without Angular; stateful services need transition and boundary tests; components should be tested through inputs, user actions and rendered output. HTTP clients need request and response behavior; and a few end-to-end tests cover critical flows. I avoid asserting private fields or exact internal method calls unless the interaction itself is the contract.",
     "detailedAnswer": "The test boundary should match the failure. A pure mapper or validator does not need TestBed. A signal-based service can be tested by invoking its public methods and observing public computed state. A component test should interact with the DOM or harness and verify what the user can see or do. HttpTestingController can verify URL, method, payload and error handling without a live backend.\n\nI keep tests deterministic: no arbitrary sleeps, explicit control over asynchronous completion, and cleanup of shared state. For Signals, reading a computed value after the public transition is usually enough; effects and rendered updates may require the Angular test environment to stabilize. For RxJS, marble tests are useful only when temporal operator behavior is genuinely complex.\n\nThis project contains focused tests for the application component, progress and quiz-engine services, and a syntax-highlighting pipe. That is real evidence, but not a claim of comprehensive frontend coverage. The strongest portfolio discussion includes what remains untested and why that risk is next.",
     "keyPoints": [
       "Matches test level to the risk and boundary",
@@ -258,11 +258,26 @@
     "question": "How would you investigate and improve a slow Angular screen without prematurely rewriting it around signals?",
     "shortAnswer": "I first profile the user interaction and identify whether time is spent in network, JavaScript, rendering or change detection. I reduce unnecessary work with stable list tracking, smaller component boundaries, appropriate OnPush usage and targeted derived state. Signals can make dependencies explicit, but they do not fix expensive templates, large DOMs, repeated allocations or slow APIs by themselves.",
     "detailedAnswer": "Start from a reproducible interaction and browser/Angular profiling evidence. A slow list may need server pagination or virtualization rather than a different state primitive. In templates, avoid calling expensive methods or creating new arrays/objects on every check; move deterministic derivation to computed state and keep it cheap. Use a stable `track` identity for repeated items so Angular can preserve DOM nodes.\n\nComponent boundaries and OnPush reduce the area that needs checking when inputs are immutable and updates are explicit. Signals are valuable for local reactive state and computed dependencies, while RxJS remains appropriate for asynchronous streams and cancellation. Interoperability should be deliberate so subscriptions and effects are cleaned up and side effects do not create feedback loops.\n\nAfter each change, re-profile the same scenario and protect the result with a focused test or performance budget where feasible. The aim is measured user-perceived improvement, not maximizing use of a particular Angular feature.",
-    "keyPoints": ["Profile before choosing an optimization", "Large data and DOM problems may need pagination or virtualization", "Use stable tracking and cheap derived template state", "Signals clarify dependencies but do not remove all rendering cost"],
-    "redFlags": ["Replacing every Observable with a signal without a data-flow reason", "Using index tracking for a mutable/reordered business list", "Claiming OnPush prevents every render or change-detection cost"],
+    "keyPoints": [
+      "Profile before choosing an optimization",
+      "Large data and DOM problems may need pagination or virtualization",
+      "Use stable tracking and cheap derived template state",
+      "Signals clarify dependencies but do not remove all rendering cost"
+    ],
+    "redFlags": [
+      "Replacing every Observable with a signal without a data-flow reason",
+      "Using index tracking for a mutable/reordered business list",
+      "Claiming OnPush prevents every render or change-detection cost"
+    ],
     "followUps": [
-      { "question": "Why is a stable track key important when list items are reordered?", "hint": "It lets Angular retain the correct DOM/component instance rather than treating each position as a new identity." },
-      { "question": "When would virtualization be more valuable than optimizing change detection?", "hint": "When the primary cost is rendering and maintaining a very large number of DOM nodes." }
+      {
+        "question": "Why is a stable track key important when list items are reordered?",
+        "hint": "It lets Angular retain the correct DOM/component instance rather than treating each position as a new identity."
+      },
+      {
+        "question": "When would virtualization be more valuable than optimizing change detection?",
+        "hint": "When the primary cost is rendering and maintaining a very large number of DOM nodes."
+      }
     ],
     "experienceLevel": "TRANSFERABLE_EXPERIENCE"
   }

@@ -88,7 +88,7 @@
     "subtopic": "rest-versioning",
     "difficulty": "SENIOR",
     "question": "How do you evolve an HTTP API and decide whether a change needs a new version?",
-    "shortAnswer": "I first try to evolve the existing contract compatibly. A new version is for a change whose semantics or representation cannot be introduced without breaking supported clients, not for every release. Path, media-type or header versioning can all work; I choose based on routing, caching and client tooling. I document compatibility assumptions, test consumer contracts, announce deprecation, observe usage and provide a migration window.",
+    "shortAnswer": "I first try to evolve the existing contract compatibly. A new version is for a change whose semantics or representation cannot be introduced without breaking supported clients, not for every release. Path, media-type or header versioning can all work. I choose based on routing, caching and client tooling. I document compatibility assumptions, test consumer contracts, announce deprecation, observe usage and provide a migration window.",
     "detailedAnswer": "Start from the published contract and real consumer behavior. Common breaking changes include removing/renaming fields, changing types or meanings, tightening previously accepted input, changing error semantics, or altering pagination/order guarantees. Adding an optional response field is usually compatible for tolerant readers, but strict deserializers or signed schemas can still break—so validate actual clients rather than treating ‘additive’ as universally safe.\n\nVersioning options:\n- **Path** (`/v2/orders`): explicit and easy to route/document, but version identity becomes part of resource paths.\n- **Media type or other header negotiation**: keeps resource paths stable but can be less visible to tools, gateways and caches unless `Vary` and routing are handled correctly.\n- **Coordinated unversioned evolution**: viable for tightly controlled internal consumers, but only with deployment coordination and contract tests.\n\nKeep domain logic shared where semantics remain the same, but do not force two genuinely different contracts through one ambiguous model. Publish migration examples and dates. The standardized `Deprecation` response header can signal that a resource is deprecated, a deprecation link can point to guidance, and `Sunset` can announce when it is expected to stop responding. Telemetry should show which consumers still use the old contract before removal.",
     "keyPoints": [
       "Version contracts for incompatible changes, not every implementation release",
@@ -143,8 +143,14 @@
       "Treating every server error as automatically retryable"
     ],
     "followUps": [
-      { "question": "When would you return 409 versus 412 for a failed update?", "hint": "Discuss a domain-state conflict versus failure of an explicit request precondition such as If-Match." },
-      { "question": "How can an API return a correlation ID without making it predictable or sensitive?", "hint": "Generate a request-scoped opaque identifier and keep the full diagnostic context only in protected telemetry." }
+      {
+        "question": "When would you return 409 versus 412 for a failed update?",
+        "hint": "Discuss a domain-state conflict versus failure of an explicit request precondition such as If-Match."
+      },
+      {
+        "question": "How can an API return a correlation ID without making it predictable or sensitive?",
+        "hint": "Generate a request-scoped opaque identifier and keep the full diagnostic context only in protected telemetry."
+      }
     ],
     "experienceLevel": "PRODUCTION_EXPERIENCE"
   }
